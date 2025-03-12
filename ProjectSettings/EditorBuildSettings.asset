@@ -8,7 +8,16 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/SplashScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/Scenes/JoinScene.unity
+    guid: 5863da062c0279f4a9f77896683cc66b
+  - enabled: 1
+    path: Assets/Scenes/LobbyScene.unity
+    guid: 080392029c6f13947817eba59708337f
+  - enabled: 1
+    path: Assets/Scenes/GameScene.unity
+    guid: f807b67426757ee43a1565bee472550e
   m_configObjects:
-    com.unity.adaptiveperformance.simulator.provider_settings: {fileID: 11400000, guid: 9227e98e4b6e046c5b175924d7b5d070, type: 2}
+    com.unity.adaptiveperformance.simulator.provider_settings: {fileID: 11400000, guid: 0454db7cd8bb1664693cce26d92cbcb5, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0
