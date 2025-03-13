@@ -32,8 +32,11 @@ public class MultiClientBuilder
             BuildPipeline.BuildPlayer(scenes, clientExe, BuildTarget.StandaloneWindows64, BuildOptions.None);
             Debug.Log($"Client {i} 빌드 완료! ({clientExe})");
 
+            // 클라이언트 설정 저장
+            SaveClientSettings(clientPath, i);
+
             // 실행 시 창 모드 적용하는 설정 파일 생성
-            CreateWindowedConfig(clientPath);
+            CreateWindowedConfig(clientPath, i);
         }
 
         // 빌드된 클라이언트 실행
@@ -49,11 +52,43 @@ public class MultiClientBuilder
             .ToArray();
     }
 
-    // 창 모드 적용하는 설정 파일 생성
-    private static void CreateWindowedConfig(string clientPath)
+    // 무작위 30자 문자열 생성
+    private static string GenerateRandomString(int length = 30)
     {
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        return new string(Enumerable.Repeat(chars, length)
+            .Select(s => s[Random.Range(0, s.Length)]).ToArray());
+    }
+
+    // 클라이언트 설정 저장 또는 로드
+    private static void SaveClientSettings(string clientPath, int clientNumber)
+    {
+        string settingsFile = "ClientSettings.txt";
+        string clientFolder = $"Client{clientNumber}";
+
+        // 기존 설정 파일이 있는 경우 -> 불러오기
+        if (File.Exists(Path.Combine(clientPath, settingsFile)))
+        {
+            Debug.Log($"Client {clientNumber} 기존 설정 로드");
+            ClientSettings settings = JsonUtils.LoadFromFile<ClientSettings>(clientFolder, settingsFile);
+            //JsonUtils.SaveToFile(settings, clientFolder, settingsFile); // 재저장 (갱신)
+        }
+        else
+        {
+            // 초기 빌드인 경우 -> 새 설정 생성
+            ClientSettings settings = new ClientSettings(GenerateRandomString(), 1280, 720);
+            JsonUtils.SaveToFile(settings, clientFolder, settingsFile);
+        }
+    }
+
+    // 창 모드 적용하는 설정 파일 생성
+    private static void CreateWindowedConfig(string clientPath, int clientNumber)
+    {
+        string settingsFile = Path.Combine(clientPath, "ClientSettings.txt");
+        ClientSettings settings = JsonUtils.LoadFromFile<ClientSettings>($"Client{clientNumber}", "ClientSettings.txt");
+
         string configPath = Path.Combine(clientPath, "windowed.txt");
-        File.WriteAllText(configPath, $"-screen-width {1280} -screen-height {720} -screen-fullscreen 0");
+        File.WriteAllText(configPath, $"-screen-width {settings.ScreenWidth} -screen-height {settings.ScreenHeight} -screen-fullscreen 0");
     }
 
     // 빌드된 클라이언트 실행 (창 모드 강제 적용)
