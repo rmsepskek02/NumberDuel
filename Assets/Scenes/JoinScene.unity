@@ -242,6 +242,7 @@ MonoBehaviour:
   joinButton: {fileID: 1041236294}
   inputId: {fileID: 593546460}
   inputPassword: {fileID: 390694194}
+  txtPath: {fileID: 0}
 --- !u!1 &390694192
 GameObject:
   m_ObjectHideFlags: 0

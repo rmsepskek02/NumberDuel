@@ -18,6 +18,7 @@ namespace Manager
         public Button joinButton;
         public TMP_InputField inputId;
         public TMP_InputField inputPassword;
+        public TextMeshProUGUI txtPath;
         #endregion
         // Start is called before the first frame update
         void Start()

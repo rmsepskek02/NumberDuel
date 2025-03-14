@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.IO;
 using Utills;
+using Manager;
 
 public class GameManager : SingletonDontDestroy<GameManager>
 {
@@ -24,9 +25,14 @@ public class GameManager : SingletonDontDestroy<GameManager>
     /// </summary>
     private string GetClientFolderName()
     {
-        // 실행 파일 이름을 기반으로 클라이언트 폴더 결정
-        string exeName = Path.GetFileNameWithoutExtension(Application.dataPath);
-        return exeName.Replace(" ", "").Trim(); // 공백 제거 및 정리
+        // 실행 파일이 위치한 폴더 가져오기
+        string exeFolder = Path.GetDirectoryName(Application.dataPath);
+
+        // 실행 파일 이름 가져오기 (예: Client1.exe -> Client1)
+        string exeName = Path.GetFileNameWithoutExtension(exeFolder);
+
+        // 최종적으로 Client1\Client1_Data 형식의 폴더 경로 반환
+        return exeName;
     }
 
     /// <summary>
@@ -45,6 +51,6 @@ public class GameManager : SingletonDontDestroy<GameManager>
 
         // 저장
         JsonUtils.SaveToFile(settings, clientFolder, settingsFile);
-        Debug.Log($"Updated Resolution Saved: {width} x {height}");
+        Debug.Log($"Updated Resolution Saved: {width} x {height} in {clientFolder}");
     }
 }
