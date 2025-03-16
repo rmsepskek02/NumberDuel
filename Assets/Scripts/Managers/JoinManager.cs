@@ -27,6 +27,7 @@ namespace Manager
             // AppId, 지역, 서버에 요청
             // 요청하고 받아야 함
             PhotonNetwork.ConnectUsingSettings();
+            inputId.text = GameManager.Instance.clinetSettings.ClientID;
         }
 
         // Update is called once per frame

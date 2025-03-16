@@ -7,22 +7,36 @@ public class GameManager : SingletonDontDestroy<GameManager>
 {
     private string clientFolder;
     private string settingsFile = "ClientSettings.txt"; // JSON 저장 파일명
+    public ClientSettings clinetSettings;
+
+    protected override void Awake()
+    {
+        base.Awake();
+        // 클라이언트 폴더명 결정 (빌드된 클라이언트인지 확인)
+        clientFolder = GetClientFolderName();
+        LoadClientSettings();
+    }
 
     private void Start()
     {
-        // 클라이언트 폴더명 결정 (빌드된 클라이언트인지 확인)
-        clientFolder = GetClientFolderName();
-    }
 
+    }
+    
+    // 앱 종료시
     private void OnApplicationQuit()
     {
         // 현재 해상도를 저장
         SaveClientSettings();
     }
 
-    /// <summary>
-    /// 현재 실행 중인 클라이언트 폴더 이름 가져오기
-    /// </summary>
+    // ClientId 로드
+    private void LoadClientSettings()
+    {
+        // 기존 설정 불러오기 (ClientID 유지)
+        clinetSettings = JsonUtils.LoadFromFile<ClientSettings>(clientFolder, settingsFile);
+    }
+
+    // 현재 실행 중인 클라이언트 폴더 이름 가져오기
     private string GetClientFolderName()
     {
         // 실행 파일이 위치한 폴더 가져오기
@@ -44,13 +58,11 @@ public class GameManager : SingletonDontDestroy<GameManager>
         int width = Screen.width;
         int height = Screen.height;
 
-        // 기존 설정 불러오기 (ClientID 유지)
-        ClientSettings settings = JsonUtils.LoadFromFile<ClientSettings>(clientFolder, settingsFile);
-        settings.ScreenWidth = width;
-        settings.ScreenHeight = height;
+        clinetSettings.ScreenWidth = width;
+        clinetSettings.ScreenHeight = height;
 
         // 저장
-        JsonUtils.SaveToFile(settings, clientFolder, settingsFile);
+        JsonUtils.SaveToFile(clinetSettings, clientFolder, settingsFile);
         Debug.Log($"Updated Resolution Saved: {width} x {height} in {clientFolder}");
     }
 }

@@ -96,19 +96,7 @@ namespace Manager
             base.OnRoomListUpdate(roomList);
             Debug.Log($"방 목록 업데이트 ({roomList.Count}개)");
 
-            roomCache.Clear(); // 기존 목록 초기화
-
-            foreach (RoomInfo room in roomList)
-            {
-                // 방이 가득 찬 경우 목록에서 제외
-                if (room.PlayerCount >= room.MaxPlayers)
-                {
-                    Debug.Log($"방 {room.Name}이 가득 차서 목록에서 제외됨.");
-                    continue;
-                }
-
-                roomCache[room.Name] = room;
-            }
+            UpdateRoomCache(roomList); // 기존 방 목록을 유지하면서 업데이트
 
             UpdateRoomListUI();
         }
@@ -120,11 +108,11 @@ namespace Manager
             {
                 if (room.RemovedFromList)
                 {
-                    roomCache.Remove(room.Name);
+                    roomCache.Remove(room.Name); // 삭제된 방만 제거
                 }
                 else
                 {
-                    roomCache[room.Name] = room;
+                    roomCache[room.Name] = room; // 기존 방 유지하면서 업데이트
                 }
             }
         }
