@@ -13,8 +13,8 @@ public class ClientSettings
     public ClientSettings()
     {
         ClientID = "DefaultClient";
-        ScreenWidth = 1280;
-        ScreenHeight = 720;
+        ScreenWidth = 1920;
+        ScreenHeight = 1080;
     }
 
     // 사용자 정의 값이 있는 생성자

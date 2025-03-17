@@ -49,15 +49,17 @@ namespace Manager
                 IsVisible = true,
                 IsOpen = true,
                 CustomRoomProperties = new ExitGames.Client.Photon.Hashtable
-                {
-                    { "roomName", roomName },
-                    { "roomPassword", roomPassword }
-                },
-                CustomRoomPropertiesForLobby = new[] { "roomName", "roomPassword" }
+        {
+            { "roomName", roomName },
+            { "roomPassword", roomPassword },
+            { "currentPlayers", 1 } // 방장 포함 1명으로 초기화
+        },
+                CustomRoomPropertiesForLobby = new[] { "roomName", "roomPassword", "currentPlayers" } // 로비에서도 확인 가능하도록 설정
             };
 
             PhotonNetwork.CreateRoom(roomName, roomOptions);
         }
+
 
         public override void OnCreatedRoom()
         {
@@ -90,31 +92,42 @@ namespace Manager
             Debug.LogError($"방 참가 실패: {message}");
         }
 
-        // 방 목록 업데이트
         public override void OnRoomListUpdate(List<RoomInfo> roomList)
         {
             base.OnRoomListUpdate(roomList);
             Debug.Log($"방 목록 업데이트 ({roomList.Count}개)");
 
-            UpdateRoomCache(roomList); // 기존 방 목록을 유지하면서 업데이트
-
-            UpdateRoomListUI();
-        }
-
-
-        void UpdateRoomCache(List<RoomInfo> roomList)
-        {
             foreach (RoomInfo room in roomList)
             {
                 if (room.RemovedFromList)
                 {
-                    roomCache.Remove(room.Name); // 삭제된 방만 제거
+                    roomCache.Remove(room.Name); // 삭제된 방 제거
                 }
                 else
                 {
-                    roomCache[room.Name] = room; // 기존 방 유지하면서 업데이트
+                    // Custom Properties에서 현재 인원 가져오기
+                    int currentPlayers = room.CustomProperties.ContainsKey("currentPlayers") ? (int)room.CustomProperties["currentPlayers"] : 0;
+                    int maxPlayers = room.MaxPlayers;
+
+                    // 최대 인원이 찼으면 목록에서 제거
+                    if (currentPlayers >= maxPlayers)
+                    {
+                        if (roomCache.ContainsKey(room.Name))
+                        {
+                            roomCache.Remove(room.Name);
+                            Debug.Log($"방 {room.Name}이 가득 차서 목록에서 제외됨.");
+                        }
+                    }
+                    else
+                    {
+                        // 인원이 줄어들면 다시 목록에 추가
+                        roomCache[room.Name] = room;
+                        Debug.Log($"방 {room.Name}에 자리가 생겨 다시 목록에 추가됨.");
+                    }
                 }
             }
+
+            UpdateRoomListUI(); // UI 업데이트
         }
 
         void UpdateRoomListUI()
