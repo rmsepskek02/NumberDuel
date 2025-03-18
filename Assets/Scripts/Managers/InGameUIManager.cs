@@ -17,17 +17,23 @@ namespace Manager
         public Button endButton;
         public Button leaveButton;
         public TextMeshProUGUI turn;
+        public Sprite enabledStartSprite;
+        public Sprite enabledLeaveSprite;
+        public Sprite enabledEndSprite;
+        public Sprite disabledSprite;
         public bool isStart;
 
         void Start()
         {
             tm = FindAnyObjectByType<PunTurnManager>();
             pm = FindAnyObjectByType<PhotonManager>();
-            UpdateStartButton(1);
+            UpdateButtons(1);
 
             startButton.onClick.AddListener(OnClickStart);
             endButton.onClick.AddListener(OnClickEnd);
             leaveButton.onClick.AddListener(OnClickLeave);
+            SetButtonState(leaveButton, true, enabledLeaveSprite);
+            SetButtonState(endButton, false, disabledSprite);
         }
 
         void Update()
@@ -42,19 +48,19 @@ namespace Manager
             photonManager.YourTurn += DisableEndTurnButton;
             photonManager.EnterPlayer += OnPlayerEnter;
             photonManager.LeavePlayer += OnPlayerLeave;
-            photonManager.UpdatePlayerCount += UpdateStartButton;
+            photonManager.UpdatePlayerCount += UpdateButtons;
         }
 
         // 내 턴일 때 버튼 활성화
         private void EnableEndTurnButton()
         {
-            endButton.interactable = true;
+            SetButtonState(endButton, true, enabledEndSprite);
         }
 
         // 상대 턴일 때 버튼 비활성화
         private void DisableEndTurnButton()
         {
-            endButton.interactable = false;
+            SetButtonState(endButton, false, enabledEndSprite);
         }
 
         // 게임을 시작하는 버튼 클릭
@@ -101,17 +107,15 @@ namespace Manager
         }
 
         // 인원 수 업데이트 (Start 버튼 활성화)
-        private void UpdateStartButton(int playerCount)
+        private void UpdateButtons(int playerCount)
         {
             if (playerCount == 2)
             {
-                startButton.gameObject.SetActive(PhotonNetwork.IsMasterClient);
-                startButton.interactable = true;
+                SetButtonState(startButton, true, enabledStartSprite, PhotonNetwork.IsMasterClient);
             }
             else
             {
-                startButton.gameObject.SetActive(PhotonNetwork.IsMasterClient);
-                startButton.interactable = false;
+                SetButtonState(startButton, false, enabledStartSprite, PhotonNetwork.IsMasterClient);
             }
         }
 
@@ -120,14 +124,21 @@ namespace Manager
             Debug.Log("UI 리셋");
 
             // 시작 버튼 다시 활성화
-            startButton.gameObject.SetActive(PhotonNetwork.IsMasterClient);
-            startButton.interactable = false;
+            SetButtonState(startButton, false, enabledStartSprite, PhotonNetwork.IsMasterClient);
 
             // 턴 종료 버튼 비활성화
-            endButton.interactable = false;
+            SetButtonState(endButton, false, enabledEndSprite);
 
             // 게임 시작 상태 초기화
             isStart = false;
+        }
+
+        // 버튼 상태 설정 (외부에서 호출)
+        public void SetButtonState(Button button, bool isInteractable, Sprite enabledSprite, bool isActive = true)
+        {
+            button.gameObject.SetActive(isActive);
+            button.interactable = isInteractable;
+            button.GetComponent<Image>().sprite = isInteractable ? enabledSprite : disabledSprite;
         }
     }
 }

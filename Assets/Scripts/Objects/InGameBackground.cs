@@ -3,9 +3,6 @@ using UnityEngine;
 public class InGameBackground : MonoBehaviour
 {
     public Camera mainCamera;  // 메인 카메라 (Orthographic 사용)
-    public float baseWidth = 1920f;  // 기준 해상도 너비
-    public float baseHeight = 1080f; // 기준 해상도 높이
-    public float scaleFactor = 1.0f; // 크기 조절 배율 (조정 가능)
 
     void Start()
     {
@@ -23,20 +20,15 @@ public class InGameBackground : MonoBehaviour
 
     void ResizePlane()
     {
-        float currentWidth = Screen.width;
-        float currentHeight = Screen.height;
+        if (mainCamera == null) return;
 
-        // 해상도 비율 계산 (기본 해상도 대비)
-        float widthRatio = currentWidth / baseWidth;
-        float heightRatio = currentHeight / baseHeight;
-        float matchRatio = Mathf.Lerp(widthRatio, heightRatio, 0.5f); // Canvas Scaler처럼 적용
+        float cameraHeight = mainCamera.orthographicSize * 0.2f;
+        float cameraWidth = cameraHeight * mainCamera.aspect;
 
-        // Plane의 크기 조정 (Scale 변경)
-        transform.localScale = new Vector3(matchRatio * scaleFactor, 1, matchRatio * scaleFactor);
+        // Plane의 크기를 현재 해상도에 딱 맞게 조정
+        transform.localScale = new Vector3(cameraWidth, 1, cameraHeight);
 
-        // Plane을 카메라에 맞게 위치 조정 (정확한 중앙 정렬)
-        float cameraHeight = mainCamera.orthographicSize * 2;
-        float cameraWidth = cameraHeight * (Screen.width / (float)Screen.height);
+        // Plane의 위치를 카메라 중심에 맞춤
         transform.position = new Vector3(mainCamera.transform.position.x, mainCamera.transform.position.y, 0);
     }
 }
