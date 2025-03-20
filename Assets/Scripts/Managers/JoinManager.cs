@@ -23,6 +23,8 @@ namespace Manager
         // Start is called before the first frame update
         void Start()
         {
+            // 서버 지역 설정
+            PhotonNetwork.PhotonServerSettings.AppSettings.FixedRegion = "kr";
             // 서버 접속
             // AppId, 지역, 서버에 요청
             // 요청하고 받아야 함

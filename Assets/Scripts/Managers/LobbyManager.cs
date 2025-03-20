@@ -19,6 +19,9 @@ namespace Manager
         public TMP_InputField roomPasswordInputField;
         public Transform roomListContent;
         public GameObject roomItemFactory;
+        public Sprite enableRoomListSprite;
+        public Sprite fullRoomListSprite;
+        public Sprite lockRoomListSprite;
 
         Dictionary<string, RoomInfo> roomCache = new Dictionary<string, RoomInfo>();
         string roomNameText;
@@ -109,21 +112,29 @@ namespace Manager
                     int currentPlayers = room.CustomProperties.ContainsKey("currentPlayers") ? (int)room.CustomProperties["currentPlayers"] : 0;
                     int maxPlayers = room.MaxPlayers;
 
-                    // 최대 인원이 찼으면 목록에서 제거
-                    if (currentPlayers >= maxPlayers)
-                    {
-                        if (roomCache.ContainsKey(room.Name))
-                        {
-                            roomCache.Remove(room.Name);
-                            Debug.Log($"방 {room.Name}이 가득 차서 목록에서 제외됨.");
-                        }
-                    }
-                    else
-                    {
-                        // 인원이 줄어들면 다시 목록에 추가
-                        roomCache[room.Name] = room;
-                        Debug.Log($"방 {room.Name}에 자리가 생겨 다시 목록에 추가됨.");
-                    }
+                    // 방이 가득 찼거나 비밀번호가 있어도 제거하지 않음
+                    roomCache[room.Name] = room;
+                    Debug.Log($"방 추가됨: {room.Name}, 인원 {currentPlayers}/{maxPlayers}");
+
+                    //// Custom Properties에서 현재 인원 가져오기
+                    //int currentPlayers = room.CustomProperties.ContainsKey("currentPlayers") ? (int)room.CustomProperties["currentPlayers"] : 0;
+                    //int maxPlayers = room.MaxPlayers;
+
+                    //// 최대 인원이 찼으면 목록에서 제거
+                    //if (currentPlayers >= maxPlayers)
+                    //{
+                    //    if (roomCache.ContainsKey(room.Name))
+                    //    {
+                    //        roomCache.Remove(room.Name);
+                    //        Debug.Log($"방 {room.Name}이 가득 차서 목록에서 제외됨.");
+                    //    }
+                    //}
+                    //else
+                    //{
+                    //    // 인원이 줄어들면 다시 목록에 추가
+                    //    roomCache[room.Name] = room;
+                    //    Debug.Log($"방 {room.Name}에 자리가 생겨 다시 목록에 추가됨.");
+                    //}
                 }
             }
 
@@ -149,6 +160,41 @@ namespace Manager
                 if (itemComponent != null)
                 {
                     itemComponent.SetInfo(roomInfo);
+                    // 방 상태에 따라 스프라이트 변경
+                    int currentPlayers = roomInfo.CustomProperties.ContainsKey("currentPlayers") ? (int)roomInfo.CustomProperties["currentPlayers"] : 0;
+                    int maxPlayers = roomInfo.MaxPlayers;
+                    bool hasPassword = roomInfo.CustomProperties.ContainsKey("roomPassword") && !string.IsNullOrEmpty((string)roomInfo.CustomProperties["roomPassword"]);
+
+                    Sprite selectedSprite;
+
+                    if (currentPlayers >= maxPlayers)
+                    {
+                        selectedSprite = fullRoomListSprite; // 인원 가득 찬 방
+                    }
+                    else if (hasPassword)
+                    {
+                        selectedSprite = lockRoomListSprite; // 비밀번호 있는 방
+                    }
+                    else
+                    {
+                        selectedSprite = enableRoomListSprite; // 접속 가능한 방
+                    }
+
+                    // RoomItem의 Image 컴포넌트 변경
+                    if (itemComponent.TryGetComponent(out UnityEngine.UI.Image roomImage))
+                    {
+                        roomImage.sprite = selectedSprite;
+                    }
+                    else
+                    {
+                        Debug.LogWarning("RoomItem 프리팹에 Image 컴포넌트가 없습니다!");
+                    }
+
+                    // 방을 선택할 때 처리할 로직
+                    itemComponent.OnClickAction = (string roomName) =>
+                    {
+                        roomNameInputField.text = roomName;
+                    };
                 }
                 else
                 {
