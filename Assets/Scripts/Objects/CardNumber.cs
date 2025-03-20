@@ -1,0 +1,70 @@
+using TMPro;
+using UnityEngine;
+
+public class CardText : MonoBehaviour
+{
+    public TextMeshPro textMesh; // TextMeshPro 참조
+    private string _textValue = "1";  // 기본값 (초기 숫자)
+
+    // 프로퍼티 (숫자 또는 기호를 저장)
+    public string TextValue
+    {
+        get { return _textValue; }
+        set
+        {
+            // 숫자 또는 기호인지 검사
+            if (IsValidInput(value))
+            {
+                _textValue = FormatNumber(value); // 변환된 값 저장
+                UpdateText();
+            }
+            else
+            {
+                Debug.LogWarning($"CardText: '{value}'는 허용되지 않는 값입니다.");
+            }
+        }
+    }
+
+    void Start()
+    {
+        if (textMesh == null)
+        {
+            textMesh = GetComponent<TextMeshPro>();
+        }
+        _textValue = Global.Divide;
+
+        UpdateText(); // 초기 텍스트 표시
+    }
+
+    void UpdateText()
+    {
+        if (textMesh != null)
+        {
+            textMesh.text = _textValue; // TextMeshPro에 적용
+        }
+    }
+
+    // 숫자 입력 검증: 기호를 허용하고, 숫자는 변환 후 적용
+    private bool IsValidInput(string value)
+    {
+        // 기호인지 확인
+        if (System.Array.Exists(Global.AllowedSymbols, symbol => symbol == value))
+        {
+            return true;
+        }
+
+        // 숫자일 경우만 변환 허용 (최대값 제한은 FormatNumber에서 처리)
+        return long.TryParse(value, out _);
+    }
+
+    // 숫자를 변환 (1000 이상이면 '1.2k' 형식 적용, 최대 999k)
+    private string FormatNumber(string value)
+    {
+        if (long.TryParse(value, out long number))
+        {
+            if (number >= 1000000) return "999k"; // 최대값 제한
+            if (number >= 1000) return (number / 1000f).ToString("0.0") + "k"; // 1.2k 형식
+        }
+        return value; // 기호는 그대로 반환
+    }
+}

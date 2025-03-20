@@ -118,7 +118,6 @@ namespace Manager
                 SetButtonState(startButton, false, enabledStartSprite, PhotonNetwork.IsMasterClient);
             }
         }
-
         public void ResetUI()
         {
             Debug.Log("UI ¸®¼Â");
