@@ -54,6 +54,10 @@ public static class Global
     public static readonly string[] AllowedSymbols = { Plus, Minus, Multiply, Divide, Equal };
     #endregion
 
+    #region Path
+    public static readonly string Card = "Card";
+    #endregion
+
     // 사용법 Sample
     // Color selectedColor = Global.GetColorByName("red"); // 빨간색 반환
     // textMeshPro.color = Global.Purple; // 보라색 적용
