@@ -181,6 +181,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 4982297139560126397, guid: b7db8d64bcd64384796c3ab49ed20606, type: 3}
       insertIndex: -1
       addedObject: {fileID: 34822884}
+    - targetCorrespondingSourceObject: {fileID: 4982297139560126397, guid: b7db8d64bcd64384796c3ab49ed20606, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 34822889}
     - targetCorrespondingSourceObject: {fileID: 4815014488293899454, guid: b7db8d64bcd64384796c3ab49ed20606, type: 3}
       insertIndex: -1
       addedObject: {fileID: 0}
@@ -214,6 +217,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c96a6efb367abc846837da687dd68a6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &34822889
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 34822878}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81c3ab5916f73ee439ad3b40edae1d20, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mainCamera: {fileID: 0}
 --- !u!1 &60350472
 GameObject:
   m_ObjectHideFlags: 0
@@ -2869,7 +2885,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 1, z: 0}
-  m_LocalScale: {x: 1.9796438, y: 1, z: 1}
+  m_LocalScale: {x: 1.9040178, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 696535037}
@@ -2887,6 +2903,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mainCamera: {fileID: 304007902}
+  meshAxis: 1
   screenOffset: {x: 0, y: 0}
 --- !u!1 &1472981561
 GameObject:
