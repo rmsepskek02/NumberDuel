@@ -5,6 +5,9 @@ using Utills;
 
 namespace Manager
 {
+    /// <summary>
+    /// 게임의 Resource를 관리하는 매니저
+    /// </summary>
     public class ResourcesManager : Singleton<ResourcesManager>
     {
         [SerializeField] 

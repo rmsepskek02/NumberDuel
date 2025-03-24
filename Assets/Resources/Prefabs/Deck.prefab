@@ -336,6 +336,7 @@ GameObject:
   - component: {fileID: 2986405174835271645}
   - component: {fileID: 298021264335791674}
   - component: {fileID: 2443177931352374132}
+  - component: {fileID: 6132069066480006847}
   m_Layer: 0
   m_Name: Deck
   m_TagString: Untagged
@@ -377,3 +378,16 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9015374581691400967}
   m_Mesh: {fileID: 0}
+--- !u!114 &6132069066480006847
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9015374581691400967}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81c3ab5916f73ee439ad3b40edae1d20, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mainCamera: {fileID: 0}

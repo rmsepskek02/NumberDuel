@@ -3,66 +3,69 @@ using System.IO;
 using Utills;
 using Manager;
 
-public class GameManager : SingletonDontDestroy<GameManager>
+namespace Manager
 {
-    private string clientFolder;
-    private string settingsFile = "ClientSettings.txt"; // JSON 저장 파일명
-    public ClientSettings clinetSettings;
-
-    protected override void Awake()
+    public class GameManager : SingletonDontDestroy<GameManager>
     {
-        base.Awake();
-        // 클라이언트 폴더명 결정 (빌드된 클라이언트인지 확인)
-        clientFolder = GetClientFolderName();
-        LoadClientSettings();
-    }
+        private string clientFolder;
+        private string settingsFile = "ClientSettings.txt"; // JSON 저장 파일명
+        public ClientSettings clinetSettings;
 
-    private void Start()
-    {
+        protected override void Awake()
+        {
+            base.Awake();
+            // 클라이언트 폴더명 결정 (빌드된 클라이언트인지 확인)
+            clientFolder = GetClientFolderName();
+            LoadClientSettings();
+        }
 
-    }
-    
-    // 앱 종료시
-    private void OnApplicationQuit()
-    {
-        // 현재 해상도를 저장
-        SaveClientSettings();
-    }
+        private void Start()
+        {
 
-    // ClientId 로드
-    private void LoadClientSettings()
-    {
-        // 기존 설정 불러오기 (ClientID 유지)
-        clinetSettings = JsonUtils.LoadFromFile<ClientSettings>(clientFolder, settingsFile);
-    }
+        }
 
-    // 현재 실행 중인 클라이언트 폴더 이름 가져오기
-    private string GetClientFolderName()
-    {
-        // 실행 파일이 위치한 폴더 가져오기
-        string exeFolder = Path.GetDirectoryName(Application.dataPath);
+        // 앱 종료시
+        private void OnApplicationQuit()
+        {
+            // 현재 해상도를 저장
+            SaveClientSettings();
+        }
 
-        // 실행 파일 이름 가져오기 (예: Client1.exe -> Client1)
-        string exeName = Path.GetFileNameWithoutExtension(exeFolder);
+        // ClientId 로드
+        private void LoadClientSettings()
+        {
+            // 기존 설정 불러오기 (ClientID 유지)
+            clinetSettings = JsonUtils.LoadFromFile<ClientSettings>(clientFolder, settingsFile);
+        }
 
-        // 최종적으로 Client1\Client1_Data 형식의 폴더 경로 반환
-        return exeName;
-    }
+        // 현재 실행 중인 클라이언트 폴더 이름 가져오기
+        private string GetClientFolderName()
+        {
+            // 실행 파일이 위치한 폴더 가져오기
+            string exeFolder = Path.GetDirectoryName(Application.dataPath);
 
-    /// <summary>
-    /// 현재 해상도를 저장하여 ClientSettings.txt 업데이트
-    /// </summary>
-    private void SaveClientSettings()
-    {
-        // 현재 해상도 가져오기
-        int width = Screen.width;
-        int height = Screen.height;
+            // 실행 파일 이름 가져오기 (예: Client1.exe -> Client1)
+            string exeName = Path.GetFileNameWithoutExtension(exeFolder);
 
-        clinetSettings.ScreenWidth = width;
-        clinetSettings.ScreenHeight = height;
+            // 최종적으로 Client1\Client1_Data 형식의 폴더 경로 반환
+            return exeName;
+        }
 
-        // 저장
-        JsonUtils.SaveToFile(clinetSettings, clientFolder, settingsFile);
-        Debug.Log($"Updated Resolution Saved: {width} x {height} in {clientFolder}");
+        /// <summary>
+        /// 현재 해상도를 저장하여 ClientSettings.txt 업데이트
+        /// </summary>
+        private void SaveClientSettings()
+        {
+            // 현재 해상도 가져오기
+            int width = Screen.width;
+            int height = Screen.height;
+
+            clinetSettings.ScreenWidth = width;
+            clinetSettings.ScreenHeight = height;
+
+            // 저장
+            JsonUtils.SaveToFile(clinetSettings, clientFolder, settingsFile);
+            Debug.Log($"Updated Resolution Saved: {width} x {height} in {clientFolder}");
+        }
     }
 }
