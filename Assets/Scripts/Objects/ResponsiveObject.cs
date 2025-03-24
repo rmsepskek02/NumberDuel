@@ -1,53 +1,71 @@
 using UnityEngine;
 
+//[ExecuteAlways]
+[RequireComponent(typeof(MeshFilter))]
 public class ResponsiveObject : MonoBehaviour
 {
     public Camera mainCamera;
-    public Vector2 scaleFactor = new Vector2(1f, 1f); // 크기 조정 비율
-    public Vector2 positionOffset = new Vector2(0f, 0f); // 위치 조정 오프셋
-    public bool maintainAspectRatio = true; // 가로세로 비율 유지 여부
+    public bool maintainAspectRatio = true;
 
-    private Vector2 lastScreenSize;
+    private Vector2 initialScreenSize;
+    private Vector3 originalScale;
+    private Vector3 originalPosition;
 
-    void Start()
+    private Vector3 lastPosition;
+    private bool isManuallyMoved = false;
+
+    private void Awake()
     {
-        if (mainCamera == null)
-        {
-            mainCamera = Camera.main;
-        }
-        ResizeObject();
+        if (mainCamera == null) mainCamera = Camera.main;
     }
 
-    void Update()
+    private void OnEnable()
     {
-        // 해상도가 변경될 경우 크기 재조정
-        if (lastScreenSize.x != Screen.width || lastScreenSize.y != Screen.height)
+        if (originalScale == Vector3.zero)
         {
-            ResizeObject();
-            lastScreenSize = new Vector2(Screen.width, Screen.height);
+            originalScale = transform.localScale;
+            originalPosition = transform.position;
+            initialScreenSize = new Vector2(Screen.width, Screen.height);
         }
+
+        lastPosition = transform.position;
+        Resize();
     }
 
-    /// <summary>
-    /// 오브젝트를 해상도에 맞게 크기와 위치 조정
-    /// </summary>
-    void ResizeObject()
+    private void Update()
     {
-        if (mainCamera == null) return;
+        // 수동 이동 감지 (드래그 등)
+        if (!isManuallyMoved && transform.position != lastPosition)
+        {
+            isManuallyMoved = true;
+        }
 
-        float cameraHeight = mainCamera.orthographicSize * 0.2f;
-        float cameraWidth = cameraHeight * mainCamera.aspect;
+        Resize();
+        lastPosition = transform.position;
+    }
 
-        // 오브젝트 크기 조정
-        float newWidth = cameraWidth * scaleFactor.x;
-        float newHeight = maintainAspectRatio ? newWidth / transform.localScale.x * transform.localScale.y : cameraHeight * scaleFactor.y;
+    private void Resize()
+    {
+        if (originalScale == Vector3.zero) return;
 
-        transform.localScale = new Vector3(newWidth, transform.localScale.y, newHeight);
+        float initialArea = initialScreenSize.x * initialScreenSize.y;
+        float currentArea = Screen.width * Screen.height;
+        float scaleFactor = Mathf.Sqrt(currentArea / initialArea);
+        float finalScale = maintainAspectRatio ? scaleFactor : 1f;
 
-        // 오브젝트 위치 조정 (카메라를 기준으로 상대적인 위치 적용)
-        float posX = mainCamera.transform.position.x + (cameraWidth * positionOffset.x);
-        float posY = mainCamera.transform.position.y + (cameraHeight * positionOffset.y);
+        transform.localScale = new Vector3(
+            originalScale.x * finalScale,
+            originalScale.y,
+            originalScale.z * finalScale
+        );
 
-        transform.position = new Vector3(posX, posY, transform.position.z);
+        if (!isManuallyMoved)
+        {
+            transform.position = new Vector3(
+                originalPosition.x * finalScale,
+                originalPosition.y * finalScale,
+                originalPosition.z
+            );
+        }
     }
 }
