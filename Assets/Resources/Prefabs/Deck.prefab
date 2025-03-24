@@ -335,7 +335,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2986405174835271645}
   - component: {fileID: 298021264335791674}
-  - component: {fileID: 6785247476071090571}
+  - component: {fileID: 2443177931352374132}
   m_Layer: 0
   m_Name: Deck
   m_TagString: Untagged
@@ -369,19 +369,11 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9015374581691400967}
   m_CullTransparentMesh: 1
---- !u!114 &6785247476071090571
-MonoBehaviour:
+--- !u!33 &2443177931352374132
+MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9015374581691400967}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0617ec8f5454b4e82447f27b4b34f0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mainCamera: {fileID: 0}
-  scaleFactor: {x: 1, y: 1}
-  positionOffset: {x: 0, y: 0}
-  maintainAspectRatio: 1
+  m_Mesh: {fileID: 0}
