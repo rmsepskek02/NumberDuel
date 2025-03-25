@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using Utills;
 
-public class MultiClientBuilder
+public class QuickBuilder
 {
     private static string buildPath = "Builds"; // 기본 빌드 경로
 
@@ -110,5 +110,24 @@ public class MultiClientBuilder
                 Debug.LogError($"Client {i} 실행 파일을 찾을 수 없습니다: {clientExe}");
             }
         }
+    }
+
+    [MenuItem("Tools/Build Android")]
+    public static void BuildAndroid()
+    {
+        string[] scenes = GetEnabledScenes();
+
+        string path = "Builds/Android/MyGame.apk";
+
+        BuildPlayerOptions options = new BuildPlayerOptions
+        {
+            scenes = scenes,
+            locationPathName = path,
+            target = BuildTarget.Android,
+            options = BuildOptions.AutoRunPlayer // 연결된 디바이스 빌드
+        };
+
+        BuildPipeline.BuildPlayer(options);
+        Debug.Log($"Android 빌드 완료: {path}");
     }
 }

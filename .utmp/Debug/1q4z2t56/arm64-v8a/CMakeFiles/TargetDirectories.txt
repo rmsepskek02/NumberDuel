@@ -1,0 +1,8 @@
+D:/Dmain/dev/Portfolio/NumberDuel/.utmp/Debug/1q4z2t56/arm64-v8a/CMakeFiles/edit_cache.dir
+D:/Dmain/dev/Portfolio/NumberDuel/.utmp/Debug/1q4z2t56/arm64-v8a/CMakeFiles/rebuild_cache.dir
+D:/Dmain/dev/Portfolio/NumberDuel/.utmp/Debug/1q4z2t56/arm64-v8a/GameActivity/CMakeFiles/game.dir
+D:/Dmain/dev/Portfolio/NumberDuel/.utmp/Debug/1q4z2t56/arm64-v8a/GameActivity/CMakeFiles/edit_cache.dir
+D:/Dmain/dev/Portfolio/NumberDuel/.utmp/Debug/1q4z2t56/arm64-v8a/GameActivity/CMakeFiles/rebuild_cache.dir
+D:/Dmain/dev/Portfolio/NumberDuel/.utmp/Debug/1q4z2t56/arm64-v8a/FramePacing/CMakeFiles/swappywrapper.dir
+D:/Dmain/dev/Portfolio/NumberDuel/.utmp/Debug/1q4z2t56/arm64-v8a/FramePacing/CMakeFiles/edit_cache.dir
+D:/Dmain/dev/Portfolio/NumberDuel/.utmp/Debug/1q4z2t56/arm64-v8a/FramePacing/CMakeFiles/rebuild_cache.dir

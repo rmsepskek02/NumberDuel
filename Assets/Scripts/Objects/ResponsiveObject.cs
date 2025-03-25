@@ -31,20 +31,7 @@ namespace Objects
 
         private void OnEnable()
         {
-            if (originalScale == Vector3.zero)
-            {
-                originalScale = transform.localScale;
-                originalPosition = transform.position;
-
-                float camHeight = baseOrthoSize * 2f;
-                float camWidth = camHeight * mainCamera.aspect;
-
-                positionRatio = new Vector2(
-                    (originalPosition.x - mainCamera.transform.position.x) / camWidth,
-                    (originalPosition.y - mainCamera.transform.position.y) / camHeight
-                );
-            }
-
+            CacheInitialTransform();
             lastPosition = transform.position;
             Resize();
         }
@@ -58,10 +45,12 @@ namespace Objects
             lastPosition = transform.position;
         }
 
+        /// <summary>
+        /// 카메라 크기에 따라 스케일과 위치를 조정
+        /// </summary>
         private void Resize()
         {
             float currentOrthoSize = mainCamera.orthographicSize;
-
             float scaleFactor = Mathf.Min(currentOrthoSize / baseOrthoSize, 1f);
             transform.localScale = originalScale * scaleFactor;
 
@@ -77,7 +66,28 @@ namespace Objects
             }
         }
 
+        /// <summary>
+        /// 최초 위치, 스케일, 위치 비율을 기록해두는 함수
+        /// </summary>
+        private void CacheInitialTransform()
+        {
+            if (originalScale != Vector3.zero) return;
 
+            originalScale = transform.localScale;
+            originalPosition = transform.position;
+
+            float camHeight = baseOrthoSize * 2f;
+            float camWidth = camHeight * mainCamera.aspect;
+
+            positionRatio = new Vector2(
+                (originalPosition.x - mainCamera.transform.position.x) / camWidth,
+                (originalPosition.y - mainCamera.transform.position.y) / camHeight
+            );
+        }
+
+        /// <summary>
+        /// 기준 카메라 사이즈를 FixedAspectCamera 기준으로 가져옴
+        /// </summary>
         private float GetBaseOrthoSize()
         {
             FixedAspectCamera aspectController = mainCamera.GetComponent<FixedAspectCamera>();
@@ -91,101 +101,3 @@ namespace Objects
         }
     }
 }
-
-
-//using UnityEngine;
-
-//namespace Objects
-//{
-//    [RequireComponent(typeof(MeshFilter))]
-//    public class ResponsiveObject : MonoBehaviour
-//    {
-//        public Camera mainCamera;
-
-//        private float baseOrthoSize;
-//        private Vector3 originalScale;
-//        private Vector3 originalPosition;
-//        private Vector2 safeRatio; // Safe Area 내에서의 비율
-
-//        private Vector3 lastPosition;
-//        private bool isManuallyMoved = false;
-
-//        private void Awake()
-//        {
-//            if (mainCamera == null)
-//                mainCamera = Camera.main;
-
-//            baseOrthoSize = GetBaseOrthoSize();
-//        }
-
-//        private void OnEnable()
-//        {
-//            if (originalScale == Vector3.zero)
-//            {
-//                originalScale = transform.localScale;
-//                originalPosition = transform.position;
-
-//                // 기준 카메라 사이즈로 SafeArea 포지션 비율 계산
-//                float camHeight = baseOrthoSize * 2f;
-//                float camWidth = camHeight * mainCamera.aspect;
-
-//                Rect safeArea = Screen.safeArea;
-//                Vector2 anchorMin = new Vector2(safeArea.x / Screen.width, safeArea.y / Screen.height);
-//                Vector2 anchorMax = new Vector2((safeArea.x + safeArea.width) / Screen.width,
-//                                                (safeArea.y + safeArea.height) / Screen.height);
-
-//                float safeW = anchorMax.x - anchorMin.x;
-//                float safeH = anchorMax.y - anchorMin.y;
-
-//                float xRatio = ((originalPosition.x - mainCamera.transform.position.x) / camWidth - anchorMin.x + 0.5f) / safeW;
-//                float yRatio = ((originalPosition.y - mainCamera.transform.position.y) / camHeight - anchorMin.y + 0.5f) / safeH;
-
-//                safeRatio = new Vector2(xRatio, yRatio);
-//            }
-
-//            lastPosition = transform.position;
-//            Resize();
-//        }
-
-//        private void Update()
-//        {
-//            if (!isManuallyMoved && transform.position != lastPosition)
-//                isManuallyMoved = true;
-
-//            Resize();
-//            lastPosition = transform.position;
-//        }
-
-//        private void Resize()
-//        {
-//            float currentOrthoSize = mainCamera.orthographicSize;
-//            float scaleFactor = Mathf.Min(currentOrthoSize / baseOrthoSize, 1f);
-//            transform.localScale = originalScale * scaleFactor;
-
-//            if (!isManuallyMoved)
-//            {
-//                float camHeight = currentOrthoSize * 2f;
-//                float camWidth = camHeight * mainCamera.aspect;
-
-//                Rect safeArea = Screen.safeArea;
-//                Vector2 anchorMin = new Vector2(safeArea.x / Screen.width, safeArea.y / Screen.height);
-//                Vector2 anchorMax = new Vector2((safeArea.x + safeArea.width) / Screen.width,
-//                                                (safeArea.y + safeArea.height) / Screen.height);
-
-//                float safeW = anchorMax.x - anchorMin.x;
-//                float safeH = anchorMax.y - anchorMin.y;
-
-//                float posX = mainCamera.transform.position.x + camWidth * (anchorMin.x + safeW * safeRatio.x - 0.5f);
-//                float posY = mainCamera.transform.position.y + camHeight * (anchorMin.y + safeH * safeRatio.y - 0.5f);
-
-//                transform.position = new Vector3(posX, posY, originalPosition.z);
-//            }
-//        }
-
-//        private float GetBaseOrthoSize()
-//        {
-//            FixedAspectCamera camAspect = mainCamera.GetComponent<FixedAspectCamera>();
-//            return camAspect != null ? camAspect.baseOrthoSize : mainCamera.orthographicSize;
-//        }
-//    }
-//}

@@ -40,7 +40,6 @@ public static class Global
         }
         return Color.white; // 기본값 (변환 실패 시 흰색)
     }
-
     #endregion
 
     #region Symbols
@@ -58,9 +57,27 @@ public static class Global
     public static readonly string Card = "Card";
     #endregion
 
+    #region Resources - Material Names
+    public static readonly string MatRedCardEmpty = "Red_Card_Empty";
+    public static readonly string MatYellowCardEmpty = "Yellow_Card_Empty";
+    public static readonly string MatPurpleCardEmpty = "Purple_Card_Empty";
+    public static readonly string MatGreenCardEmpty = "Green_Card_Empty";
+    public static readonly string MatBackCard = "Back_Card";
+    #endregion
+
+    #region Resources - Image Names
+    public static readonly string ImgColorBack = "color_back";
+    public static readonly string ImgColorGreenEmpty = "color_green_empty";
+    public static readonly string ImgColorPurpleEmpty = "color_purple_empty";
+    public static readonly string ImgColorYellowEmpty = "color_yellow_empty";
+    public static readonly string ImgColorRedEmpty = "color_red_empty";
+    #endregion
+
     // 사용법 Sample
     // Color selectedColor = Global.GetColorByName("red"); // 빨간색 반환
     // textMeshPro.color = Global.Purple; // 보라색 적용
     // cardRenderer.material.color = Global.Green; // 초록색 적용
     // string plusSymbol = Global.Plus; // "+" 기호 사용
+    // string redMatName = Global.RedCardEmptyMat; // 머티리얼 이름 사용
+    // string redImgName = Global.ColorRedEmptyImg; // 이미지 이름 사용
 }

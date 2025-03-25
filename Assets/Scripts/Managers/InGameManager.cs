@@ -12,6 +12,8 @@ namespace Manager
     {
         #region Variables
         PunTurnManager turnManager;
+        public GameObject myDeck;
+        public GameObject yourDeck;
         public List<int> playerList = new List<int>();
         public List<string> playerADeck;
         public List<string> playerBDeck;
@@ -42,12 +44,20 @@ namespace Manager
         private void Start()
         {
             turnManager = FindAnyObjectByType<PunTurnManager>();
+            SetCardColor();
             //choice.SetActive(false);
             //joker.SetActive(false);
             //InitRoom();
         }
 
-
+        // TODO :: πÊ¿Â¿Ã ª°∞≠ º’¥‘¿Ã ∆ƒ∂˚
+        private void SetCardColor()
+        {
+            GameObject myDeckChildgo = myDeck.transform.GetChild(0).gameObject;
+            GameObject yourDeckChildgo = yourDeck.transform.GetChild(0).gameObject;
+            ResourcesManager.Instance.ApplyMaterialToObject(myDeckChildgo, Global.MatRedCardEmpty);
+            ResourcesManager.Instance.ApplyMaterialToObject(yourDeckChildgo, Global.MatPurpleCardEmpty);
+        }
         //public string RemoveCardForDeck(int playerNumber)
         //{
         //    string drawCard = "";
