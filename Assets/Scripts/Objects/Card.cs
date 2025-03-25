@@ -1,53 +1,60 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Objects;
 
 namespace Objects
 {
     /// <summary>
-    /// 카드 오브젝트의 클릭 이벤트를 처리하는 컴포넌트
-    /// 드래그 기능(DragObject)과 병행되며, 드래그와 클릭을 정확히 구분하여 처리
+    /// 카드 오브젝트의 클릭 이벤트를 처리하는 컴포넌트.
+    /// DragObject와 함께 사용되어, 드래그와 클릭을 정확히 구분하여 처리함.
     /// </summary>
     public class Card : MonoBehaviour
     {
-        private DragObject dragObject; // 드래그 상태 확인용 컴포넌트 참조
+        private DragObject dragObject; // 드래그 여부를 판단하기 위한 참조
+        public TextMeshPro testText;   // 클릭 시 이름을 표시할 텍스트
 
-        private void Awake()
+        void Awake()
         {
-            // 동일한 오브젝트에 존재하는 DragObject 컴포넌트 참조
             dragObject = GetComponent<DragObject>();
         }
 
-        private void LateUpdate()
+        void LateUpdate()
         {
-            // 마우스 버튼을 뗐을 때 실행 (드래그가 끝난 뒤 처리되도록 LateUpdate 사용)
-            if (Mouse.current.leftButton.wasReleasedThisFrame)
+            Vector2 inputPos;
+            bool released = false;
+
+            // 입력 구분 (에디터/PC vs 모바일)
+#if UNITY_EDITOR || UNITY_STANDALONE
+            released = Mouse.current.leftButton.wasReleasedThisFrame;
+            inputPos = Mouse.current.position.ReadValue();
+#else
+            released = Touchscreen.current.primaryTouch.press.wasReleasedThisFrame;
+            inputPos = Touchscreen.current.primaryTouch.position.ReadValue();
+#endif
+
+            // 드래그가 아니고, 포인터가 오브젝트 위에 있을 경우 클릭으로 처리
+            if (released && !dragObject.WasDragged && IsPointerOver(inputPos))
             {
-                // 드래그가 아니고, 마우스가 이 오브젝트 위에 있다면 클릭으로 판단
-                if (!dragObject.WasDragged && IsMouseOver())
-                {
-                    OnClick();
-                }
+                OnClick();
             }
         }
 
         /// <summary>
-        /// 현재 마우스 포인터가 이 오브젝트 위에 있는지 확인
+        /// 주어진 입력 위치가 이 오브젝트 위에 있는지 Raycast로 확인
         /// </summary>
-        /// <returns>포인터가 이 오브젝트 위에 있으면 true</returns>
-        private bool IsMouseOver()
+        private bool IsPointerOver(Vector2 inputPos)
         {
-            Ray ray = Camera.main.ScreenPointToRay(Mouse.current.position.ReadValue());
+            Ray ray = Camera.main.ScreenPointToRay(inputPos);
             return Physics.Raycast(ray, out RaycastHit hit) && hit.collider.gameObject == gameObject;
         }
 
         /// <summary>
-        /// 카드가 클릭되었을 때 호출되는 로직
+        /// 클릭 시 호출되는 로직
         /// </summary>
         private void OnClick()
         {
             Debug.Log($"Card '{gameObject.name}' was clicked!");
-            // 여기에 클릭 시 수행할 동작 추가 가능
+            testText.text = gameObject.name; // UI 텍스트에 카드 이름 표시
         }
     }
 }

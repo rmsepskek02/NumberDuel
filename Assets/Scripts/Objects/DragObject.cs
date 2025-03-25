@@ -1,98 +1,80 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace Objects
+/// <summary>
+/// 오브젝트를 마우스 또는 터치 입력으로 드래그할 수 있도록 하는 컴포넌트.
+/// PC/모바일 모두 지원하며, 일정 거리 이상 움직이면 드래그로 간주함.
+/// </summary>
+public class DragObject : MonoBehaviour
 {
-    /// <summary>
-    /// 오브젝트를 마우스로 드래그할 수 있도록 하는 컴포넌트
-    /// Unity의 New Input System 기반으로 동작
-    /// </summary>
-    [RequireComponent(typeof(Collider))]
-    public class DragObject : MonoBehaviour
+    private Camera mainCamera;         // 입력을 월드 위치로 변환하기 위한 카메라
+    private Vector3 offset;            // 클릭 지점과 오브젝트 중심 사이 거리
+    private float zDistance;           // 카메라와 오브젝트 사이 z축 거리
+    private bool isDragging;           // 현재 드래그 중인지 여부
+
+    private Vector2 dragStartPos;      // 드래그 시작 시 마우스/터치 위치
+    private bool wasDragged = false;   // 드래그가 수행되었는지 여부
+    private float dragThreshold = 10f; // 드래그로 인식할 최소 이동 거리 (픽셀)
+
+    public bool WasDragged => wasDragged; // 외부에서 참조할 수 있도록 제공 (클릭 판별에 사용)
+
+    void Start()
     {
-        private Camera mainCamera;             // 드래그 시 사용할 카메라
-        private bool isDragging = false;       // 현재 드래그 중인지 여부
-        private Vector3 offset;                // 클릭 위치와 오브젝트 중심 간 거리
-        private float zDistance;               // 카메라와의 거리 (Z축)
-        private Vector2 startMousePos;         // 마우스를 누른 초기 위치
-        private float dragThreshold = 1f;      // 드래그로 인식할 최소 거리 (픽셀)
+        mainCamera = Camera.main;
+    }
 
-        /// <summary>
-        /// 드래그가 일어난 프레임에서 true가 됨 (클릭과 구분용)
-        /// </summary>
-        public bool WasDragged { get; private set; }
+    void Update()
+    {
+        Vector2 inputPos = Vector2.zero;
+        bool pressed = false;
+        bool released = false;
+        bool isPressed = false;
 
-        private void Awake()
+        // 입력 구분 (에디터/PC vs 모바일)
+#if UNITY_EDITOR || UNITY_STANDALONE
+        pressed = Mouse.current.leftButton.wasPressedThisFrame;
+        released = Mouse.current.leftButton.wasReleasedThisFrame;
+        isPressed = Mouse.current.leftButton.isPressed;
+        inputPos = Mouse.current.position.ReadValue();
+#else
+        pressed = Touchscreen.current.primaryTouch.press.wasPressedThisFrame;
+        released = Touchscreen.current.primaryTouch.press.wasReleasedThisFrame;
+        isPressed = Touchscreen.current.primaryTouch.press.isPressed;
+        inputPos = Touchscreen.current.primaryTouch.position.ReadValue();
+#endif
+
+        Ray ray = mainCamera.ScreenPointToRay(inputPos);
+
+        // 드래그 시작
+        if (pressed)
         {
-            // 메인 카메라 참조
-            mainCamera = Camera.main;
-        }
+            wasDragged = false;
+            dragStartPos = inputPos;
 
-        private void Update()
-        {
-            // 마우스 누름 시작
-            if (Mouse.current.leftButton.wasPressedThisFrame)
-            {
-                TryStartDrag();
-            }
-
-            // 마우스 놓을 때
-            if (Mouse.current.leftButton.wasReleasedThisFrame)
-            {
-                TryEndDrag();
-            }
-
-            // 드래그 중이면 마우스 위치로 이동
-            if (isDragging)
-            {
-                Vector3 mouseWorldPos = GetMouseWorldPosition();
-                transform.position = mouseWorldPos + offset;
-            }
-        }
-
-        /// <summary>
-        /// 드래그 시작 조건 검사 및 초기값 설정
-        /// </summary>
-        private void TryStartDrag()
-        {
-            startMousePos = Mouse.current.position.ReadValue();
-
-            // 마우스 아래에 있는 오브젝트인지 확인
-            Ray ray = mainCamera.ScreenPointToRay(startMousePos);
             if (Physics.Raycast(ray, out RaycastHit hit) && hit.collider.gameObject == gameObject)
             {
-                zDistance = Vector3.Distance(transform.position, mainCamera.transform.position);
-                Vector3 mouseWorldPos = GetMouseWorldPosition();
-                offset = transform.position - mouseWorldPos;
-
+                zDistance = Vector3.Distance(mainCamera.transform.position, transform.position);
+                offset = transform.position - mainCamera.ScreenToWorldPoint(new Vector3(inputPos.x, inputPos.y, zDistance));
                 isDragging = true;
-                WasDragged = false;
             }
         }
 
-        /// <summary>
-        /// 드래그 종료 처리 및 드래그 여부 판정
-        /// </summary>
-        private void TryEndDrag()
+        // 드래그 중 이동 처리
+        if (isDragging && isPressed)
         {
-            if (isDragging)
+            Vector3 worldPos = mainCamera.ScreenToWorldPoint(new Vector3(inputPos.x, inputPos.y, zDistance));
+            transform.position = worldPos + offset;
+
+            if (!wasDragged && Vector2.Distance(inputPos, dragStartPos) > dragThreshold)
             {
-                float moved = Vector2.Distance(Mouse.current.position.ReadValue(), startMousePos);
-                WasDragged = moved >= dragThreshold; // 일정 거리 이상 움직이면 드래그로 간주
+                wasDragged = true; // 일정 거리 이상 이동했을 경우 드래그로 간주
             }
-
-            isDragging = false;
         }
 
-        /// <summary>
-        /// 마우스 위치를 월드 좌표로 변환
-        /// </summary>
-        /// <returns>월드 공간상의 마우스 위치</returns>
-        private Vector3 GetMouseWorldPosition()
+        // 드래그 종료
+        if (released)
         {
-            Vector3 screenMousePos = Mouse.current.position.ReadValue();
-            screenMousePos.z = zDistance; // Z축 거리 보정
-            return mainCamera.ScreenToWorldPoint(screenMousePos);
+            isDragging = false;
         }
     }
 }

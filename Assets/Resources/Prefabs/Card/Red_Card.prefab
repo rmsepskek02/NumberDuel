@@ -202,6 +202,9 @@ GameObject:
   - component: {fileID: 5904458336214482158}
   - component: {fileID: 2924307493945992442}
   - component: {fileID: 6431862596610508862}
+  - component: {fileID: 3733245985923481344}
+  - component: {fileID: 2548982608509446241}
+  - component: {fileID: 3234991239588229831}
   m_Layer: 0
   m_Name: Red_Card
   m_TagString: Untagged
@@ -219,7 +222,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: -1}
-  m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
+  m_LocalScale: {x: 0.15, y: 0.15, z: 0.15}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5626430907716664925}
@@ -300,3 +303,41 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &3733245985923481344
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4982297139560126397}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2b6d4505ce802447a9f381cb53f2108, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &2548982608509446241
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4982297139560126397}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c96a6efb367abc846837da687dd68a6c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  testText: {fileID: 0}
+--- !u!114 &3234991239588229831
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4982297139560126397}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81c3ab5916f73ee439ad3b40edae1d20, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mainCamera: {fileID: 0}
