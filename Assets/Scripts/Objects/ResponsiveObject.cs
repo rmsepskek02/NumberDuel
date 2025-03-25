@@ -2,16 +2,18 @@ using UnityEngine;
 
 namespace Objects
 {
+    /// <summary>
+    /// FixedAspectCamera와 연동하여, 카메라의 orthographicSize 변화에 따라
+    /// 오브젝트의 스케일과 위치를 자동으로 조정하는 컴포넌트
+    /// - 가로 비율이 줄어들 경우엔 스케일과 위치 유지
+    /// - 세로 비율이 줄어들 경우엔 축소 및 위치 재조정
+    /// </summary>
     [RequireComponent(typeof(MeshFilter))]
     public class ResponsiveObject : MonoBehaviour
     {
         public Camera mainCamera;
+        private float baseOrthoSize;
 
-        [Tooltip("해상도 변화에 따른 스케일 최소값과 최대값")]
-        public float minScaleFactor = 0.5f;
-        public float maxScaleFactor = 1.5f;
-
-        private Vector2 initialScreenSize;
         private Vector3 originalScale;
         private Vector3 originalPosition;
         private Vector2 positionRatio;
@@ -21,7 +23,10 @@ namespace Objects
 
         private void Awake()
         {
-            if (mainCamera == null) mainCamera = Camera.main;
+            if (mainCamera == null)
+                mainCamera = Camera.main;
+
+            baseOrthoSize = GetBaseOrthoSize();
         }
 
         private void OnEnable()
@@ -30,10 +35,10 @@ namespace Objects
             {
                 originalScale = transform.localScale;
                 originalPosition = transform.position;
-                initialScreenSize = new Vector2(Screen.width, Screen.height);
 
-                float camHeight = mainCamera.orthographicSize * 2f;
+                float camHeight = baseOrthoSize * 2f;
                 float camWidth = camHeight * mainCamera.aspect;
+
                 positionRatio = new Vector2(
                     (originalPosition.x - mainCamera.transform.position.x) / camWidth,
                     (originalPosition.y - mainCamera.transform.position.y) / camHeight
@@ -47,9 +52,7 @@ namespace Objects
         private void Update()
         {
             if (!isManuallyMoved && transform.position != lastPosition)
-            {
                 isManuallyMoved = true;
-            }
 
             Resize();
             lastPosition = transform.position;
@@ -57,20 +60,14 @@ namespace Objects
 
         private void Resize()
         {
-            if (originalScale == Vector3.zero) return;
+            float currentOrthoSize = mainCamera.orthographicSize;
 
-            float currentArea = Screen.width * Screen.height;
-            float initialArea = initialScreenSize.x * initialScreenSize.y;
-            float scaleFactor = Mathf.Sqrt(currentArea / initialArea);
-
-            // 클램프 적용으로 과도한 크기 제한
-            scaleFactor = Mathf.Clamp(scaleFactor, minScaleFactor, maxScaleFactor);
-
+            float scaleFactor = Mathf.Min(currentOrthoSize / baseOrthoSize, 1f);
             transform.localScale = originalScale * scaleFactor;
 
             if (!isManuallyMoved)
             {
-                float camHeight = mainCamera.orthographicSize * 2f;
+                float camHeight = currentOrthoSize * 2f;
                 float camWidth = camHeight * mainCamera.aspect;
 
                 float posX = mainCamera.transform.position.x + camWidth * positionRatio.x;
@@ -78,6 +75,19 @@ namespace Objects
 
                 transform.position = new Vector3(posX, posY, originalPosition.z);
             }
+        }
+
+
+        private float GetBaseOrthoSize()
+        {
+            FixedAspectCamera aspectController = mainCamera.GetComponent<FixedAspectCamera>();
+            if (aspectController != null)
+            {
+                return aspectController.baseOrthoSize;
+            }
+
+            Debug.LogWarning("FixedAspectCamera 컴포넌트를 찾을 수 없습니다. 현재 orthographicSize를 기준으로 사용합니다.");
+            return mainCamera.orthographicSize;
         }
     }
 }
