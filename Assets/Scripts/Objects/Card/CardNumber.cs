@@ -31,7 +31,8 @@ public class CardText : MonoBehaviour
         {
             textMesh = GetComponent<TextMeshPro>();
         }
-        _textValue = Global.Divide;
+        //_textValue = Global.Divide;
+        TextValue = "1415634634";
 
         UpdateText(); // 초기 텍스트 표시
     }

@@ -14,10 +14,13 @@ namespace Objects
         private bool isDragging;   // 현재 드래그 중인지 여부
 
         private Vector2 dragStartPos;   // 드래그 시작 지점의 입력 위치
-        private bool wasDragged = false; // 일정 거리 이상 움직였는지 여부
-        private float dragThreshold = 10f; // 드래그로 간주할 최소 거리
+        private bool wasDragged = false;    // 일정 거리 이상 움직였는지 여부
+        private bool dragEnded = false;
+        private float dragThreshold = 1f; // 드래그로 간주할 최소 거리
+        public bool IsDragging => isDragging;
 
-        public bool WasDragged => wasDragged; // 외부에서 드래그 여부를 확인할 수 있도록 제공
+
+        public bool WasDragged => wasDragged || dragEnded; // 외부에서 드래그 여부를 확인할 수 있도록 제공
 
 
         void Start()
@@ -53,6 +56,11 @@ namespace Objects
                 Vector3 worldPos = mainCamera.ScreenToWorldPoint(new Vector3(inputPos.x, inputPos.y, zDistance));
                 transform.position = worldPos + offset;
 
+                // 회전 고정 (부모의 X 회전 유지, Y만 정면으로)
+                Vector3 localEuler = transform.localEulerAngles;
+                localEuler.y = 0;
+                transform.localEulerAngles = localEuler;
+
                 // 일정 거리 이상 움직였으면 드래그로 간주
                 if (!wasDragged && Vector2.Distance(inputPos, dragStartPos) > dragThreshold)
                     wasDragged = true;
@@ -60,9 +68,15 @@ namespace Objects
 
             // 드래그 해제
             if (released)
+            {
                 isDragging = false;
+                dragEnded = wasDragged;
+            }
         }
-
+        void LateUpdate()
+        {
+            dragEnded = false;
+        }
 
         private Vector2 GetInputPosition()
         {
