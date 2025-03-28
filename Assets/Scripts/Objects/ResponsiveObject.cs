@@ -20,6 +20,7 @@ namespace Objects
 
         private Vector3 lastPosition;
         private bool isManuallyMoved = false;
+        public bool IsLockedByHover { get; set; } = false;
 
         private void Awake()
         {
@@ -52,7 +53,10 @@ namespace Objects
         {
             float currentOrthoSize = mainCamera.orthographicSize;
             float scaleFactor = Mathf.Min(currentOrthoSize / baseOrthoSize, 1f);
-            transform.localScale = originalScale * scaleFactor;
+            if (!IsLockedByHover)
+            {
+                transform.localScale = originalScale * scaleFactor;
+            }
 
             if (!isManuallyMoved)
             {
