@@ -3,13 +3,19 @@ using UnityEngine.InputSystem;
 
 namespace Objects
 {
+    /// <summary>
+    /// 오브젝트 드래그 처리를 담당
+    /// 클릭과 드래그 구분, 카메라 기준 위치 조정, 드래그 종료 처리 등을 수행
+    /// </summary>
     public class DragObject : MonoBehaviour
     {
+        // 카메라 기준으로 오브젝트 위치 조정
         private Camera mainCamera;
         private Vector3 offset;
         private float zDistance;
         private bool isDragging;
 
+        // 드래그 감지 변수
         private Vector2 dragStartPos;
         private bool wasDragged = false;
         private bool dragEnded = false;
@@ -17,11 +23,11 @@ namespace Objects
 
         private bool dragEndedOnce = false;
 
-        public bool IsDragging => isDragging;
-        public bool WasDragged => wasDragged || dragEnded;
-        public bool DragEndedOnce => dragEndedOnce;
-        public bool ClickRequested { get; private set; } = false;
-        public bool WasClickRelease { get; private set; } = false;
+        public bool IsDragging => isDragging;                         // 현재 드래그 중인지 여부
+        public bool WasDragged => wasDragged || dragEnded;            // 드래그된 적 있는지 여부
+        public bool DragEndedOnce => dragEndedOnce;                   // 드래그가 한번 종료된 적 있는지 여부
+        public bool ClickRequested { get; private set; } = false;     // 클릭으로 시작된 입력인지 여부
+        public bool WasClickRelease { get; private set; } = false;    // 클릭으로 해제되었는지 여부
 
         private Transform rootTransform;
 
@@ -40,6 +46,7 @@ namespace Objects
 
             Ray ray = mainCamera.ScreenPointToRay(inputPos);
 
+            // 클릭 시작
             if (pressed && Physics.Raycast(ray, out RaycastHit hit) && hit.collider.gameObject == gameObject)
             {
                 wasDragged = false;
@@ -51,22 +58,26 @@ namespace Objects
                 ClickRequested = true;
             }
 
+            // 드래그 중
             if (isDragging && isPressed)
             {
                 Vector3 worldPos = mainCamera.ScreenToWorldPoint(new Vector3(inputPos.x, inputPos.y, zDistance));
                 rootTransform.position = worldPos + offset;
 
+                // 회전 Y값 고정
                 Vector3 localEuler = rootTransform.localEulerAngles;
                 localEuler.y = 0;
                 rootTransform.localEulerAngles = localEuler;
 
+                // 일정 거리 이상 이동하면 드래그로 간주
                 if (!wasDragged && Vector2.Distance(inputPos, dragStartPos) > dragThreshold)
                 {
                     wasDragged = true;
-                    ClickRequested = false;
+                    ClickRequested = false; // 클릭이 아니라 드래그
                 }
             }
 
+            // 입력 해제 시
             if (released)
             {
                 if (isDragging)
@@ -88,15 +99,16 @@ namespace Objects
         public void ResetDragEndFlag()
         {
             dragEndedOnce = false;
-            WasClickRelease = false; // ← 여기로 옮겨야 Hover에서 읽은 후에 초기화됨
+            WasClickRelease = false; // HoverCardMotion에서 복귀 판단 후 초기화
         }
 
         void LateUpdate()
         {
             dragEnded = false;
-            // WasClickRelease는 여기서 초기화하지 않음 (중요!)
+            // WasClickRelease는 여기서 초기화하면 안 됨 (타이밍 문제)
         }
 
+        // 입력 관련 유틸 메서드
         private Vector2 GetInputPosition()
         {
 #if UNITY_EDITOR || UNITY_STANDALONE
