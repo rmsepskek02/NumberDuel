@@ -13,22 +13,24 @@ namespace Objects
         private Vector2 dragStartPos;
         private bool wasDragged = false;
         private bool dragEnded = false;
-        private float dragThreshold = 10f;
+        private float dragThreshold = 1f;
 
         private bool dragEndedOnce = false;
 
         public bool IsDragging => isDragging;
         public bool WasDragged => wasDragged || dragEnded;
         public bool DragEndedOnce => dragEndedOnce;
+        public bool ClickRequested { get; private set; } = false;
+        public bool WasClickRelease { get; private set; } = false;
 
         private Transform rootTransform;
-        public bool ClickRequested { get; private set; } = false;
 
         void Start()
         {
             mainCamera = Camera.main;
             rootTransform = transform.parent;
         }
+
         void Update()
         {
             Vector2 inputPos = GetInputPosition();
@@ -46,7 +48,7 @@ namespace Objects
                 zDistance = Vector3.Distance(mainCamera.transform.position, rootTransform.position);
                 offset = rootTransform.position - mainCamera.ScreenToWorldPoint(new Vector3(inputPos.x, inputPos.y, zDistance));
                 isDragging = true;
-                ClickRequested = true; // 후보 클릭 요청
+                ClickRequested = true;
             }
 
             if (isDragging && isPressed)
@@ -61,7 +63,7 @@ namespace Objects
                 if (!wasDragged && Vector2.Distance(inputPos, dragStartPos) > dragThreshold)
                 {
                     wasDragged = true;
-                    ClickRequested = false; // 드래그로 판별되면 클릭 취소
+                    ClickRequested = false;
                 }
             }
 
@@ -72,21 +74,27 @@ namespace Objects
                     dragEnded = true;
                     dragEndedOnce = true;
                     isDragging = false;
+
+                    WasClickRelease = ClickRequested && !wasDragged;
                 }
             }
         }
+
         public void ResetClickFlag()
         {
             ClickRequested = false;
-        }
-        void LateUpdate()
-        {
-            dragEnded = false;
         }
 
         public void ResetDragEndFlag()
         {
             dragEndedOnce = false;
+            WasClickRelease = false; // ← 여기로 옮겨야 Hover에서 읽은 후에 초기화됨
+        }
+
+        void LateUpdate()
+        {
+            dragEnded = false;
+            // WasClickRelease는 여기서 초기화하지 않음 (중요!)
         }
 
         private Vector2 GetInputPosition()

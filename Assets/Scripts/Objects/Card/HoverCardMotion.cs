@@ -82,11 +82,9 @@ namespace Objects
         {
             bool isDragging = dragObject.IsDragging;
 
-            // 드래그가 끝났으면 복귀 시작
-            if (!isDragging && dragObject.DragEndedOnce)
+            if (!isDragging && dragObject.DragEndedOnce && !dragObject.WasClickRelease)
                 isReturning = true;
 
-            // 드래그 중이면 Hover 효과 포함 아무것도 안 함
             if (isDragging)
                 return;
 
@@ -107,38 +105,35 @@ namespace Objects
             }
             else if (isReturning)
             {
-                // Sprite 복귀
                 transform.localPosition = Vector3.Lerp(transform.localPosition, originalLocalPosition, Time.deltaTime * returnSpeed);
                 transform.localRotation = Quaternion.Lerp(transform.localRotation, originalLocalRotation, Time.deltaTime * returnSpeed);
                 transform.localScale = Vector3.Lerp(transform.localScale, originalLocalScale, Time.deltaTime * returnSpeed);
 
-                // 부모 복귀
                 if (rootTransform != null)
                 {
                     rootTransform.localPosition = Vector3.Lerp(rootTransform.localPosition, originalRootPosition, Time.deltaTime * returnSpeed);
                     rootTransform.localRotation = Quaternion.Lerp(rootTransform.localRotation, originalRootRotation, Time.deltaTime * returnSpeed);
                 }
 
-                // 복귀 완료 시 플래그 리셋
                 if (Vector3.Distance(transform.localPosition, originalLocalPosition) < 0.001f &&
                     Vector3.Distance(rootTransform.localPosition, originalRootPosition) < 0.001f)
                 {
                     isReturning = false;
-                    dragObject.ResetDragEndFlag();
+                    dragObject.ResetDragEndFlag(); // 여기서만 WasClickRelease도 같이 초기화됨
                 }
             }
             else if (!isHovered && !isReturning)
             {
-                // 호버가 끝났지만 드래그 상태도 아닌 경우 (조용히 원래 상태로 복귀)
                 transform.localPosition = Vector3.Lerp(transform.localPosition, originalLocalPosition, Time.deltaTime * returnSpeed);
                 transform.localScale = Vector3.Lerp(transform.localScale, originalLocalScale, Time.deltaTime * returnSpeed);
+                transform.localRotation = Quaternion.Lerp(transform.localRotation, originalLocalRotation, Time.deltaTime * returnSpeed);
 
                 if (rootTransform != null)
                 {
                     rootTransform.localPosition = Vector3.Lerp(rootTransform.localPosition, originalRootPosition, Time.deltaTime * returnSpeed);
+                    rootTransform.localRotation = Quaternion.Lerp(rootTransform.localRotation, originalRootRotation, Time.deltaTime * returnSpeed);
                 }
             }
-
         }
 
         private void OnHoverEnter()
