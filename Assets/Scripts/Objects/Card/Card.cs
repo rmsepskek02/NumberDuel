@@ -3,10 +3,6 @@ using UnityEngine;
 
 namespace Objects
 {
-    /// <summary>
-    /// 카드 오브젝트의 클릭 이벤트를 처리하는 컴포넌트.
-    /// DragObject와 함께 사용되어, 드래그와 클릭을 정확히 구분하여 처리함.
-    /// </summary>
     public class Card : ClickableObjectBase
     {
         private DragObject dragObject;
@@ -17,12 +13,21 @@ namespace Objects
             dragObject = GetComponent<DragObject>();
         }
 
-        protected override bool CanTriggerClick() => dragObject != null && !dragObject.WasDragged;
+        protected override bool CanTriggerClick()
+        {
+            return dragObject != null && dragObject.ClickRequested;
+        }
 
         protected override void OnClick()
         {
             Debug.Log($"Card '{gameObject.name}' was clicked!");
-            testText.text = gameObject.name;
+
+            if (testText != null)
+            {
+                testText.text = gameObject.name;
+            }
+
+            dragObject.ResetClickFlag(); // 클릭 처리 완료 후 초기화
         }
     }
 }

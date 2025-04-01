@@ -3,24 +3,27 @@ using UnityEngine.InputSystem;
 
 namespace Objects
 {
-    /// <summary>
-    /// 카드에 마우스 오버 시 시각적 효과를 주는 컴포넌트
-    /// </summary>
     public class HoverCardMotion : MonoBehaviour
     {
+        private Transform rootTransform;
+
         private Vector3 originalLocalPosition;
         private Quaternion originalLocalRotation;
         private Vector3 originalLocalScale;
         private float originalY;
 
+        private Vector3 originalRootPosition;
+        private Quaternion originalRootRotation;
+        private float originalRootY;
+
         private bool initialized = false;
         private bool isHovered = false;
-        private bool wasHovered = false;
+        private bool isReturning = false;
 
         [Header("Hover Settings")]
-        public float hoverScale = 1.3f;          // 확대 배율
-        public float hoverYOffset = 0.3f;        // 위로 띄우는 높이
-        public float returnSpeed = 10f;          // 원래 상태로 돌아가는 속도
+        public float hoverScale = 1.3f;
+        public float hoverYOffset = 0.3f;
+        public float returnSpeed = 10f;
 
         private DragObject dragObject;
         private ResponsiveObject responsiveObject;
@@ -29,15 +32,23 @@ namespace Objects
         {
             dragObject = GetComponent<DragObject>();
             responsiveObject = GetComponent<ResponsiveObject>();
+            rootTransform = transform.parent;
         }
 
-        // 초기 상태 저장 (레이아웃 완료 후 호출됨)
         public void SetInitialState()
         {
             originalLocalPosition = transform.localPosition;
             originalLocalRotation = transform.localRotation;
             originalLocalScale = transform.localScale;
             originalY = originalLocalPosition.y;
+
+            if (rootTransform != null)
+            {
+                originalRootPosition = rootTransform.localPosition;
+                originalRootRotation = rootTransform.localRotation;
+                originalRootY = originalRootPosition.y;
+            }
+
             initialized = true;
         }
 
@@ -46,79 +57,102 @@ namespace Objects
             if (!initialized || dragObject == null)
                 return;
 
-            // 현재 마우스가 이 카드 위에 있는지 Ray로 확인
             Vector2 inputPos = Mouse.current.position.ReadValue();
             Ray ray = Camera.main.ScreenPointToRay(inputPos);
 
-            bool isHit = Physics.Raycast(ray, out RaycastHit hit) && hit.collider != null && hit.collider.gameObject == gameObject;
+            bool isHit = Physics.Raycast(ray, out RaycastHit hit) &&
+                         hit.collider != null &&
+                         hit.collider.gameObject == gameObject;
 
-            // hover 시작
-            if (isHit && !wasHovered)
+            if (isHit && !isHovered)
             {
-                wasHovered = true;
+                isHovered = true;
                 OnHoverEnter();
             }
-            // hover 종료
-            else if (!isHit && wasHovered && !dragObject.IsDragging)
+            else if (!isHit && isHovered && !dragObject.IsDragging)
             {
-                wasHovered = false;
+                isHovered = false;
                 OnHoverExit();
             }
 
             UpdateTransform();
         }
 
-        // 시각적 위치/크기/회전을 갱신
         private void UpdateTransform()
         {
-            // 1. 드래그 중인 경우: 위치 고정, 복귀 X
-            if (dragObject.IsDragging)
+            bool isDragging = dragObject.IsDragging;
+
+            // 드래그가 끝났으면 복귀 시작
+            if (!isDragging && dragObject.DragEndedOnce)
+                isReturning = true;
+
+            // 드래그 중이면 Hover 효과 포함 아무것도 안 함
+            if (isDragging)
                 return;
 
-            // 2. Hover 중인 경우: 확대된 상태 유지
-            if (isHovered)
+            if (isHovered && !isReturning)
             {
                 Vector3 targetPos = originalLocalPosition;
                 targetPos.y = originalY + hoverYOffset;
 
                 transform.localPosition = Vector3.Lerp(transform.localPosition, targetPos, Time.deltaTime * returnSpeed);
                 transform.localScale = Vector3.Lerp(transform.localScale, originalLocalScale * hoverScale, Time.deltaTime * returnSpeed);
-                return;
+
+                if (rootTransform != null)
+                {
+                    Vector3 rootPos = rootTransform.localPosition;
+                    rootPos.y = Mathf.Lerp(rootPos.y, originalRootY + hoverYOffset, Time.deltaTime * returnSpeed);
+                    rootTransform.localPosition = rootPos;
+                }
             }
-
-            // 3. 드래그가 끝났거나 Hover 종료 시: 원래 상태로 복귀
+            else if (isReturning)
             {
-                // Y좌표 먼저 복귀
-                Vector3 currentPos = transform.localPosition;
-                Vector3 targetYPos = new Vector3(currentPos.x, originalY, currentPos.z);
-                transform.localPosition = Vector3.Lerp(currentPos, targetYPos, Time.deltaTime * returnSpeed * 1.5f);
-
-                // 이후 전체 위치 및 회전, 스케일 복귀
+                // Sprite 복귀
                 transform.localPosition = Vector3.Lerp(transform.localPosition, originalLocalPosition, Time.deltaTime * returnSpeed);
                 transform.localRotation = Quaternion.Lerp(transform.localRotation, originalLocalRotation, Time.deltaTime * returnSpeed);
                 transform.localScale = Vector3.Lerp(transform.localScale, originalLocalScale, Time.deltaTime * returnSpeed);
+
+                // 부모 복귀
+                if (rootTransform != null)
+                {
+                    rootTransform.localPosition = Vector3.Lerp(rootTransform.localPosition, originalRootPosition, Time.deltaTime * returnSpeed);
+                    rootTransform.localRotation = Quaternion.Lerp(rootTransform.localRotation, originalRootRotation, Time.deltaTime * returnSpeed);
+                }
+
+                // 복귀 완료 시 플래그 리셋
+                if (Vector3.Distance(transform.localPosition, originalLocalPosition) < 0.001f &&
+                    Vector3.Distance(rootTransform.localPosition, originalRootPosition) < 0.001f)
+                {
+                    isReturning = false;
+                    dragObject.ResetDragEndFlag();
+                }
             }
+            else if (!isHovered && !isReturning)
+            {
+                // 호버가 끝났지만 드래그 상태도 아닌 경우 (조용히 원래 상태로 복귀)
+                transform.localPosition = Vector3.Lerp(transform.localPosition, originalLocalPosition, Time.deltaTime * returnSpeed);
+                transform.localScale = Vector3.Lerp(transform.localScale, originalLocalScale, Time.deltaTime * returnSpeed);
+
+                if (rootTransform != null)
+                {
+                    rootTransform.localPosition = Vector3.Lerp(rootTransform.localPosition, originalRootPosition, Time.deltaTime * returnSpeed);
+                }
+            }
+
         }
 
         private void OnHoverEnter()
         {
-            isHovered = true;
             if (responsiveObject != null)
                 responsiveObject.IsLockedByHover = true;
 
-            // 자식오브젝트 중 가장 앞으로 보내기
             transform.SetSiblingIndex(transform.parent.childCount - 1);
-
-            Debug.Log($"[Hover ON] {gameObject.name}");
         }
 
         private void OnHoverExit()
         {
-            isHovered = false;
             if (responsiveObject != null)
                 responsiveObject.IsLockedByHover = false;
-
-            Debug.Log($"[Hover OFF] {gameObject.name}");
         }
     }
 }
