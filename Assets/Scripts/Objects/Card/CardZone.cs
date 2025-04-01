@@ -31,14 +31,19 @@ namespace Objects
             if (!cards.Contains(card))
             {
                 cards.Add(card);
-                card.SetParent(transform); // 이 CardZone을 부모로 설정
+                card.SetParent(transform);
                 UpdateLayout();
 
-                // 손패일 경우 hover 효과 부여
                 if (zoneType == ZoneType.Hand)
-                    AddHover(card);
+                {
+                    // card가 CardSprite인 경우에만 Hover 추가
+                    var target = card.GetComponentInChildren<SpriteRenderer>()?.transform;
+                    if (target != null)
+                        AddHover(target);
+                }
             }
         }
+
 
         // 카드를 이 영역에서 제거
         public void RemoveCard(Transform card)

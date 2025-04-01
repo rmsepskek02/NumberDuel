@@ -55,8 +55,6 @@ namespace Manager
         {
             GameObject myDeckChildgo = myDeck.transform.GetChild(0).gameObject;
             GameObject yourDeckChildgo = yourDeck.transform.GetChild(0).gameObject;
-            ResourcesManager.Instance.ApplyMaterialToObject(myDeckChildgo, Global.MatRedCardEmpty);
-            ResourcesManager.Instance.ApplyMaterialToObject(yourDeckChildgo, Global.MatPurpleCardEmpty);
         }
         //public string RemoveCardForDeck(int playerNumber)
         //{

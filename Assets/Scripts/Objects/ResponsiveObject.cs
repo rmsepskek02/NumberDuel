@@ -8,7 +8,6 @@ namespace Objects
     /// - 가로 비율이 줄어들 경우엔 스케일과 위치 유지
     /// - 세로 비율이 줄어들 경우엔 축소 및 위치 재조정
     /// </summary>
-    [RequireComponent(typeof(MeshFilter))]
     public class ResponsiveObject : MonoBehaviour
     {
         public Camera mainCamera;

@@ -205,7 +205,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a6c49ccbc755fd94d9e9c909ebf800bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cardPrefab: {fileID: 4982297139560126397, guid: b7db8d64bcd64384796c3ab49ed20606, type: 3}
+  cardPrefab: {fileID: 4982297139560126397, guid: d91449cdd8ed5fb4aa639e45711eb2a9, type: 3}
   playerHandZone: {fileID: 15016878}
   spawnCount: 10
 --- !u!1 &60350472
@@ -2474,7 +2474,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a6c49ccbc755fd94d9e9c909ebf800bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cardPrefab: {fileID: 628387647926074295, guid: 8a0116d468d2da748b4b0369c0cffa36, type: 3}
+  cardPrefab: {fileID: 628387647926074295, guid: 530ec8d7b8719f34bb4dd4ebe8840788, type: 3}
   playerHandZone: {fileID: 1158633535}
   spawnCount: 10
 --- !u!114 &1158633535
@@ -3345,7 +3345,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 1, z: 1}
-  m_LocalScale: {x: 2.084702, y: 1, z: 1.0504104}
+  m_LocalScale: {x: 1.9380182, y: 1, z: 1.0504104}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 696535037}
@@ -3586,7 +3586,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a6c49ccbc755fd94d9e9c909ebf800bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cardPrefab: {fileID: 4982297139560126397, guid: b7db8d64bcd64384796c3ab49ed20606, type: 3}
+  cardPrefab: {fileID: 4982297139560126397, guid: d91449cdd8ed5fb4aa639e45711eb2a9, type: 3}
   playerHandZone: {fileID: 1506725191}
   spawnCount: 4
 --- !u!114 &1506725191
@@ -4020,7 +4020,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a6c49ccbc755fd94d9e9c909ebf800bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cardPrefab: {fileID: 4982297139560126397, guid: b7db8d64bcd64384796c3ab49ed20606, type: 3}
+  cardPrefab: {fileID: 4982297139560126397, guid: d91449cdd8ed5fb4aa639e45711eb2a9, type: 3}
   playerHandZone: {fileID: 1810711299}
   spawnCount: 5
 --- !u!4 &1810711301
@@ -4321,7 +4321,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a6c49ccbc755fd94d9e9c909ebf800bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cardPrefab: {fileID: 8955681245216662332, guid: 2709c5f3a507e6c44b87d069ee8a0d43, type: 3}
+  cardPrefab: {fileID: 8955681245216662332, guid: d1e20433a6ad96a45b3f9ff5d1d60634, type: 3}
   playerHandZone: {fileID: 1988366961}
   spawnCount: 5
 --- !u!114 &1988366961
