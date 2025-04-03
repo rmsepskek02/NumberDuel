@@ -59,26 +59,26 @@ namespace Objects
             }
         }
 
-        // 카드에 HoverCardMotion 컴포넌트를 추가
+        // 카드에 CardMortion 컴포넌트를 추가
         private void AddHover(Transform card)
         {
-            if (!card.TryGetComponent(out HoverCardMotion hover))
-                hover = card.gameObject.AddComponent<HoverCardMotion>();
+            if (!card.TryGetComponent(out CardMortion hover))
+                hover = card.gameObject.AddComponent<CardMortion>();
 
             // 다음 프레임에서 초기 위치 저장 (레이아웃 반영 후 정확하게)
             StartCoroutine(DelaySetInitialState(hover));
         }
 
-        private System.Collections.IEnumerator DelaySetInitialState(HoverCardMotion hover)
+        private System.Collections.IEnumerator DelaySetInitialState(CardMortion hover)
         {
             yield return null; // 1 프레임 대기
             hover.SetInitialState();
         }
 
-        // HoverCardMotion 제거
+        // CardMortion 제거
         private void RemoveHover(Transform card)
         {
-            if (card.TryGetComponent(out HoverCardMotion hover))
+            if (card.TryGetComponent(out CardMortion hover))
                 Destroy(hover);
         }
 

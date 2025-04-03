@@ -7,7 +7,7 @@ namespace Objects
     /// 오브젝트 드래그 처리를 담당
     /// 클릭과 드래그 구분, 카메라 기준 위치 조정, 드래그 종료 처리 등을 수행
     /// </summary>
-    public class DragObject : MonoBehaviour
+    public class ObjectMouseEvent : MonoBehaviour
     {
         // 카메라 기준으로 오브젝트 위치 조정
         private Camera mainCamera;
@@ -19,7 +19,7 @@ namespace Objects
         private Vector2 dragStartPos;
         private bool wasDragged = false;
         private bool dragEnded = false;
-        private float dragThreshold = 1f;
+        private float dragThreshold = 10f;
 
         private bool dragEndedOnce = false;
 
@@ -64,18 +64,22 @@ namespace Objects
                 Vector3 worldPos = mainCamera.ScreenToWorldPoint(new Vector3(inputPos.x, inputPos.y, zDistance));
                 rootTransform.position = worldPos + offset;
 
-                // 회전 Y값 고정
-                Vector3 localEuler = rootTransform.localEulerAngles;
-                localEuler.y = 0;
-                rootTransform.localEulerAngles = localEuler;
-
                 // 일정 거리 이상 이동하면 드래그로 간주
                 if (!wasDragged && Vector2.Distance(inputPos, dragStartPos) > dragThreshold)
                 {
                     wasDragged = true;
                     ClickRequested = false; // 클릭이 아니라 드래그
                 }
+
+                // 실제 드래그일 때만 Y 회전 고정
+                if (wasDragged)
+                {
+                    Vector3 localEuler = rootTransform.localEulerAngles;
+                    localEuler.y = 0;
+                    rootTransform.localEulerAngles = localEuler;
+                }
             }
+
 
             // 입력 해제 시
             if (released)

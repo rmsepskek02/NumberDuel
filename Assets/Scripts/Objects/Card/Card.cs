@@ -10,18 +10,18 @@ namespace Objects
     /// </summary>
     public class Card : ClickableObjectBase
     {
-        private DragObject dragObject;
+        private ObjectMouseEvent objectMouseEvent;
         public TextMeshPro testText;
 
         private void Awake()
         {
-            dragObject = GetComponent<DragObject>();
+            objectMouseEvent = GetComponent<ObjectMouseEvent>();
         }
 
         protected override bool CanTriggerClick()
         {
             // 드래그가 아닌 클릭 요청일 때만 클릭 처리 허용
-            return dragObject != null && dragObject.ClickRequested;
+            return objectMouseEvent != null && objectMouseEvent.ClickRequested;
         }
 
         protected override void OnClick()
@@ -34,7 +34,7 @@ namespace Objects
             }
 
             // 클릭 처리 후 클릭 상태 초기화
-            dragObject.ResetClickFlag();
+            objectMouseEvent.ResetClickFlag();
         }
     }
 }
