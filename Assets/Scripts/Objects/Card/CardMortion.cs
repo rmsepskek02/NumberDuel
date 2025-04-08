@@ -4,10 +4,18 @@ using UnityEngine.InputSystem;
 namespace Objects
 {
     /// <summary>
-    /// 카드의 Hover 애니메이션과 클릭 회전, 복귀를 담당하는 스크립트
+    /// 카드의 Hover 애니메이션 및 클릭 후 회전 복귀, 위치 복귀 등을 담당하는 컴포넌트
+    /// - 드래그 중에는 복귀 방지
+    /// - Hover 시 확대 및 Y축 이동
+    /// - 클릭 후 회전 복원
     /// </summary>
     public class CardMortion : MonoBehaviour
     {
+        [Header("Hover Settings")]
+        [SerializeField] private float hoverScale = 1.3f;     // Hover 시 확대 비율
+        [SerializeField] private float hoverYOffset = 0.3f;   // Hover 시 위로 뜨는 높이
+        [SerializeField] private float returnSpeed = 10f;     // 복귀 속도
+
         private Transform rootTransform;
 
         private Vector3 originalLocalPosition;
@@ -24,11 +32,6 @@ namespace Objects
         private bool isReturning = false;
         private bool isRotatingToZero = false;
 
-        [Header("Hover Settings")]
-        public float hoverScale = 1.3f;
-        public float hoverYOffset = 0.3f;
-        public float returnSpeed = 10f;
-
         private ObjectMouseEvent objectMouseEvent;
         private ResponsiveObject responsiveObject;
         private Camera mainCamera;
@@ -41,6 +44,9 @@ namespace Objects
             mainCamera = Camera.main;
         }
 
+        /// <summary>
+        /// 현재 Transform의 초기 상태를 기록 (복귀 기준점으로 사용)
+        /// </summary>
         public void SetInitialState()
         {
             originalLocalPosition = transform.localPosition;
@@ -69,7 +75,6 @@ namespace Objects
             isHovered = false;
 #endif
 
-            // 클릭 해제 시 회전 시작
             if (objectMouseEvent.WasClickRelease)
             {
                 isRotatingToZero = true;
@@ -79,6 +84,9 @@ namespace Objects
             UpdateTransform();
         }
 
+        /// <summary>
+        /// 마우스가 카드 위에 있는지 확인하고 Hover 상태 갱신
+        /// </summary>
         private void HandleMouseHover()
         {
             Vector2 inputPos = Mouse.current.position.ReadValue();
@@ -101,21 +109,21 @@ namespace Objects
             }
         }
 
+        /// <summary>
+        /// 카드의 위치, 회전, 스케일을 상태에 따라 부드럽게 보간합니다.
+        /// </summary>
         private void UpdateTransform()
         {
-            // 항상 스케일 업데이트: 호버 중이면 확대, 아니면 원래 스케일로 복귀
             Vector3 targetScale = isHovered ? originalLocalScale * hoverScale : originalLocalScale;
             transform.localScale = Vector3.Lerp(transform.localScale, targetScale, Time.deltaTime * returnSpeed);
 
-            // 드래그 중일 때는 위치, 회전 업데이트만 건너뛰도록 함
             if (objectMouseEvent.IsDragging)
                 return;
 
-            // (이하 기존 로직 그대로 진행)
             if (!objectMouseEvent.IsDragging && objectMouseEvent.DragEndedOnce && !objectMouseEvent.WasClickRelease)
                 isReturning = true;
 
-            // 1. 복귀 애니메이션
+            // 복귀 처리
             if (isReturning)
             {
                 transform.localPosition = Vector3.Lerp(transform.localPosition, originalLocalPosition, Time.deltaTime * returnSpeed);
@@ -137,7 +145,7 @@ namespace Objects
                 return;
             }
 
-            // 2. 클릭 후 회전 보간
+            // 클릭 후 회전 복귀 처리
             if (isRotatingToZero)
             {
                 Quaternion current = transform.localRotation;
@@ -155,14 +163,12 @@ namespace Objects
 
                 float angle = Quaternion.Angle(transform.localRotation, target);
                 if (angle < 0.5f)
-                {
                     isRotatingToZero = false;
-                }
 
                 return;
             }
 
-            // 3. 호버 중일 때 (위치 업데이트만 진행; 스케일은 이미 위에서 처리됨)
+            // Hover 상태일 때 위치만 위로 보간
             if (isHovered)
             {
                 Vector3 targetPos = originalLocalPosition;
@@ -181,7 +187,9 @@ namespace Objects
             }
         }
 
-
+        /// <summary>
+        /// Hover 시작 시 처리
+        /// </summary>
         private void OnHoverEnter()
         {
             if (responsiveObject != null)
@@ -190,6 +198,9 @@ namespace Objects
             transform.SetSiblingIndex(transform.parent.childCount - 1);
         }
 
+        /// <summary>
+        /// Hover 종료 시 처리
+        /// </summary>
         private void OnHoverExit()
         {
             if (responsiveObject != null)

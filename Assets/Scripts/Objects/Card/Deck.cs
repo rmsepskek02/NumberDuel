@@ -10,16 +10,16 @@ namespace Objects
     /// - 클릭 또는 터치가 덱 오브젝트 위에서 발생했는지 감지하여 OnClick 호출
     /// - 모바일과 PC 모두 대응함
     /// </summary>
-    public class Deck : ClickableObjectBase
-    {
-        public TextMeshPro testText;
+    //public class Deck : ClickableObjectBase
+    //{
+    //    public TextMeshPro testText;
 
-        protected override bool CanTriggerClick() => true;
+    //    protected override bool CanTriggerClick() => true;
 
-        protected override void OnClick()
-        {
-            Debug.Log($"Deck '{gameObject.name}' was clicked!");
-            testText.text = gameObject.name;
-        }
-    }
+    //    protected override void OnClick()
+    //    {
+    //        Debug.Log($"Deck '{gameObject.name}' was clicked!");
+    //        testText.text = gameObject.name;
+    //    }
+    //}
 }

@@ -1,77 +1,88 @@
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.InputSystem;
 
 namespace Objects
 {
     /// <summary>
-    /// 오브젝트 드래그 처리를 담당
-    /// 클릭과 드래그 구분, 카메라 기준 위치 조정, 드래그 종료 처리 등을 수행
+    /// 오브젝트의 마우스 입력을 감지하여 드래그/클릭 상태를 처리하는 컴포넌트
+    /// - 클릭과 드래그를 거리 기반으로 구분
+    /// - Raycast를 통해 자신의 오브젝트가 클릭된 경우만 처리
+    /// - 클릭 발생 시 외부로 이벤트 발행
     /// </summary>
     public class ObjectMouseEvent : MonoBehaviour
     {
-        // 카메라 기준으로 오브젝트 위치 조정
-        private Camera mainCamera;
-        private Vector3 offset;
-        private float zDistance;
-        private bool isDragging;
+        [Header("Input Settings")]
+        [SerializeField] private Camera mainCamera;         // 입력 감지를 위한 카메라
+        [SerializeField] private float dragThreshold = 10f; // 드래그 판단 거리 (px)
 
-        // 드래그 감지 변수
-        private Vector2 dragStartPos;
-        private bool wasDragged = false;
-        private bool dragEnded = false;
-        private float dragThreshold = 10f;
-
-        private bool dragEndedOnce = false;
-
-        public bool IsDragging => isDragging;                         // 현재 드래그 중인지 여부
-        public bool WasDragged => wasDragged || dragEnded;            // 드래그된 적 있는지 여부
-        public bool DragEndedOnce => dragEndedOnce;                   // 드래그가 한번 종료된 적 있는지 여부
-        public bool ClickRequested { get; private set; } = false;     // 클릭으로 시작된 입력인지 여부
-        public bool WasClickRelease { get; private set; } = false;    // 클릭으로 해제되었는지 여부
+        [Header("Click Event")]
+        public UnityAction OnClicked; // 클릭 시 외부에 알리는 이벤트
 
         private Transform rootTransform;
 
-        void Start()
+        private Vector3 offset;
+        private float zDistance;
+        private Vector2 dragStartPos;
+
+        private bool wasDragged = false;
+        private bool isDragging = false;
+        private bool dragEnded = false;
+        private bool dragEndedOnce = false;
+        private bool clickRequested = false;
+        private bool wasClickRelease = false;
+
+        #region Public Properties
+
+        public bool IsDragging => isDragging;
+        public bool WasDragged => wasDragged || dragEnded;
+        public bool DragEndedOnce => dragEndedOnce;
+        public bool ClickRequested => clickRequested;
+        public bool WasClickRelease => wasClickRelease;
+
+        #endregion
+
+        private void Awake()
         {
-            mainCamera = Camera.main;
-            rootTransform = transform.parent;
+            if (mainCamera == null)
+                mainCamera = Camera.main;
+
+            rootTransform = transform.parent != null ? transform.parent : transform;
         }
 
-        void Update()
+        private void Update()
         {
             Vector2 inputPos = GetInputPosition();
             bool pressed = GetInputPressed();
             bool released = GetInputReleased();
-            bool isPressed = GetInputHeld();
+            bool isHeld = GetInputHeld();
 
             Ray ray = mainCamera.ScreenPointToRay(inputPos);
 
             // 클릭 시작
-            if (pressed && Physics.Raycast(ray, out RaycastHit hit) && hit.collider.gameObject == gameObject)
+            if (pressed && Physics.Raycast(ray, out RaycastHit hit) && hit.collider != null && hit.collider.transform.IsChildOf(transform))
             {
-                wasDragged = false;
                 dragStartPos = inputPos;
-
                 zDistance = Vector3.Distance(mainCamera.transform.position, rootTransform.position);
                 offset = rootTransform.position - mainCamera.ScreenToWorldPoint(new Vector3(inputPos.x, inputPos.y, zDistance));
+
                 isDragging = true;
-                ClickRequested = true;
+                wasDragged = false;
+                clickRequested = true;
             }
 
             // 드래그 중
-            if (isDragging && isPressed)
+            if (isDragging && isHeld)
             {
                 Vector3 worldPos = mainCamera.ScreenToWorldPoint(new Vector3(inputPos.x, inputPos.y, zDistance));
                 rootTransform.position = worldPos + offset;
 
-                // 일정 거리 이상 이동하면 드래그로 간주
                 if (!wasDragged && Vector2.Distance(inputPos, dragStartPos) > dragThreshold)
                 {
                     wasDragged = true;
-                    ClickRequested = false; // 클릭이 아니라 드래그
+                    clickRequested = false; // 클릭이 아님
                 }
 
-                // 실제 드래그일 때만 Y 회전 고정
                 if (wasDragged)
                 {
                     Vector3 localEuler = rootTransform.localEulerAngles;
@@ -80,39 +91,63 @@ namespace Objects
                 }
             }
 
-
-            // 입력 해제 시
-            if (released)
+            // 입력 해제
+            if (released && isDragging)
             {
-                if (isDragging)
-                {
-                    dragEnded = true;
-                    dragEndedOnce = true;
-                    isDragging = false;
+                dragEnded = true;
+                dragEndedOnce = true;
+                isDragging = false;
 
-                    WasClickRelease = ClickRequested && !wasDragged;
+                wasClickRelease = clickRequested && !wasDragged;
+
+                // 클릭으로 인정된 경우에만 이벤트 호출
+                if (clickRequested && !wasDragged)
+                {
+                    OnClicked?.Invoke();
                 }
             }
         }
 
+        private void LateUpdate()
+        {
+            dragEnded = false;
+
+            if (!isDragging)
+                clickRequested = false;
+        }
+
+        #region Public Reset Methods
+
         public void ResetClickFlag()
         {
-            ClickRequested = false;
+            clickRequested = false;
         }
 
         public void ResetDragEndFlag()
         {
             dragEndedOnce = false;
-            WasClickRelease = false; // HoverCardMotion에서 복귀 판단 후 초기화
+            wasClickRelease = false;
         }
 
-        void LateUpdate()
+        #endregion
+
+        #region Raycast Utility
+
+        public bool IsPointerOverMe(Vector2 inputPos)
         {
-            dragEnded = false;
-            // WasClickRelease는 여기서 초기화하면 안 됨 (타이밍 문제)
+            Ray ray = mainCamera.ScreenPointToRay(inputPos);
+            if (Physics.Raycast(ray, out RaycastHit hit))
+            {
+                var owner = hit.collider.GetComponentInParent<ObjectMouseEvent>();
+                return owner == this;
+            }
+            return false;
         }
 
-        // 입력 관련 유틸 메서드
+        #endregion
+
+        #region Input Helpers
+
         private Vector2 GetInputPosition()
         {
 #if UNITY_EDITOR || UNITY_STANDALONE
@@ -148,5 +183,7 @@ namespace Objects
             return Touchscreen.current.primaryTouch.press.isPressed;
 #endif
         }
+
+        #endregion
     }
 }
