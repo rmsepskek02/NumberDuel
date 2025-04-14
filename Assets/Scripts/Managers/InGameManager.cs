@@ -12,8 +12,8 @@ namespace Manager
     {
         #region Variables
         PunTurnManager turnManager;
-        public GameObject myDeck;
-        public GameObject yourDeck;
+        //public GameObject myDeck;
+        //public GameObject yourDeck;
         public List<int> playerList = new List<int>();
         public List<string> playerADeck;
         public List<string> playerBDeck;
@@ -53,8 +53,6 @@ namespace Manager
         // TODO :: πÊ¿Â¿Ã ª°∞≠ º’¥‘¿Ã ∆ƒ∂˚
         private void SetCardColor()
         {
-            GameObject myDeckChildgo = myDeck.transform.GetChild(0).gameObject;
-            GameObject yourDeckChildgo = yourDeck.transform.GetChild(0).gameObject;
         }
         //public string RemoveCardForDeck(int playerNumber)
         //{

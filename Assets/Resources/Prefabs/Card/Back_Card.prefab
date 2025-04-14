@@ -137,6 +137,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   testText: {fileID: 0}
+  onClicked:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &9002867003642160533
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -149,6 +152,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2b6d4505ce802447a9f381cb53f2108, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  mainCamera: {fileID: 0}
+  dragThreshold: 10
 --- !u!1 &628387647926074295
 GameObject:
   m_ObjectHideFlags: 0
@@ -158,7 +163,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3078960344281047763}
-  - component: {fileID: 9033191621472060610}
   m_Layer: 0
   m_Name: Back_Card
   m_TagString: Untagged
@@ -182,16 +186,3 @@ Transform:
   - {fileID: 9060221424364655536}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
---- !u!114 &9033191621472060610
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 628387647926074295}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 81c3ab5916f73ee439ad3b40edae1d20, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mainCamera: {fileID: 0}

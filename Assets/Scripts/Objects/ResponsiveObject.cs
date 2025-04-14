@@ -1,5 +1,6 @@
 using UnityEngine;
 
+// TODO :: 없어도 상관없는듯??? 해상도에 따라 변하는건 카메라의 FixedAspectCamera 의한 거였음
 namespace Objects
 {
     /// <summary>
@@ -20,6 +21,7 @@ namespace Objects
         private Vector3 lastPosition;
         private bool isManuallyMoved = false;
         public bool IsLockedByHover { get; set; } = false;
+        public bool disableAutoPosition = false; // 외부에서 조절할 수 있게 public
 
         private void Awake()
         {
@@ -41,7 +43,11 @@ namespace Objects
             if (!isManuallyMoved && transform.position != lastPosition)
                 isManuallyMoved = true;
 
-            Resize();
+            if (!disableAutoPosition)
+            {
+                Resize();
+            }
+
             lastPosition = transform.position;
         }
 

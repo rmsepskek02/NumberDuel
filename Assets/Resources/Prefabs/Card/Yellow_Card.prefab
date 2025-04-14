@@ -328,6 +328,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   testText: {fileID: 0}
+  onClicked:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &8005967290753543868
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -340,6 +343,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2b6d4505ce802447a9f381cb53f2108, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  mainCamera: {fileID: 0}
+  dragThreshold: 10
 --- !u!1 &5580272945877059124
 GameObject:
   m_ObjectHideFlags: 0
@@ -349,7 +354,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3450813533439364206}
-  - component: {fileID: -2376528284494238068}
   m_Layer: 0
   m_Name: Yellow_Card
   m_TagString: Untagged
@@ -373,16 +377,3 @@ Transform:
   - {fileID: 7245099141812598248}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
---- !u!114 &-2376528284494238068
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5580272945877059124}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 81c3ab5916f73ee439ad3b40edae1d20, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mainCamera: {fileID: 0}
