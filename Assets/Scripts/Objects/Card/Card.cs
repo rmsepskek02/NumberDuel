@@ -5,41 +5,73 @@ using UnityEngine.Events;
 namespace Objects
 {
     /// <summary>
-    /// 개별 카드 오브젝트의 클릭 처리를 담당하는 클래스
-    /// - ObjectMouseEvent를 통해 클릭 감지
-    /// - 클릭 시 카드 이름 출력 및 외부 이벤트 호출
-    /// - 카드마다 고유한 반응을 설정할 수 있도록 인스턴스 이벤트 제공
+    /// 개별 카드 오브젝트의 상태 및 클릭 반응을 관리하는 컴포넌트
+    /// - ICard 구현을 통해 Zone에서 인터랙션 설정을 받을 수 있음
+    /// - ObjectMouseEvent로부터 클릭 이벤트를 수신함
     /// </summary>
-    [RequireComponent(typeof(ObjectMouseEvent))]
-    public class Card : MonoBehaviour
+    public class Card : MonoBehaviour, ICard
     {
         [Header("Display")]
-        [SerializeField] private TextMeshPro testText; // 클릭 시 이름을 출력할 텍스트
+        [SerializeField] private TextMeshPro testText; // 클릭 시 이름 출력용 텍스트
 
         [Header("Events")]
-        public UnityEvent<Card> onClicked; // 외부에서 구독 가능한 카드 단위 클릭 이벤트
+        public UnityEvent<Card> onClicked; // 외부에서 구독 가능한 카드 클릭 이벤트
+
+        private ObjectMouseEvent mouseEvent;
 
         private void Awake()
         {
-            // ObjectMouseEvent와 연결하여 클릭 이벤트 처리
-            var mouseEvent = GetComponent<ObjectMouseEvent>();
-            mouseEvent.OnClicked += HandleClick;
+            // 자식에서 입력 감지 컴포넌트 찾아 연결
+            mouseEvent = GetComponentInChildren<ObjectMouseEvent>();
+            if (mouseEvent != null)
+                mouseEvent.OnClicked += HandleClick;
         }
 
         /// <summary>
-        /// ObjectMouseEvent를 통해 클릭되었을 때 호출되는 내부 처리 메서드
+        /// 클릭 시 실행되는 내부 로직
         /// </summary>
         private void HandleClick()
         {
-            // 텍스트에 카드 이름 표시
             if (testText != null)
                 testText.text = gameObject.name;
 
-            // 디버그 로그 출력
             Debug.Log($"[Card] Clicked: {gameObject.name}");
-
-            // 외부 이벤트 호출 (개별 카드 인스턴스용)
             onClicked?.Invoke(this);
+        }
+
+        /// <summary>
+        /// Zone 정보에 따라 카드 상호작용 권한 설정
+        /// </summary>
+        public void SetInteraction(CardZone.ZoneType zoneType, CardZone.OwnerType ownerType)
+        {
+            if (zoneType == CardZone.ZoneType.Hand && ownerType == CardZone.OwnerType.Player)
+                ApplyInteraction(CardInteractionType.DragAndClick);
+            else if (zoneType == CardZone.ZoneType.Field)
+                ApplyInteraction(CardInteractionType.ClickOnly);
+            else
+                ApplyInteraction(CardInteractionType.None);
+        }
+
+        /// <summary>
+        /// Interaction 유형에 따라 드래그/클릭 허용 여부 설정
+        /// </summary>
+        private void ApplyInteraction(CardInteractionType type)
+        {
+            if (mouseEvent == null)
+                mouseEvent = GetComponentInChildren<ObjectMouseEvent>();
+
+            mouseEvent.isClickable = (type == CardInteractionType.ClickOnly || type == CardInteractionType.DragAndClick);
+            mouseEvent.isDraggable = (type == CardInteractionType.DragAndClick);
+        }
+
+        /// <summary>
+        /// 카드 상호작용 종류를 정의하는 내부 열거형
+        /// </summary>
+        private enum CardInteractionType
+        {
+            None,
+            ClickOnly,
+            DragAndClick
         }
     }
 }

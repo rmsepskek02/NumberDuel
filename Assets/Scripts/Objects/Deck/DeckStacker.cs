@@ -48,8 +48,6 @@ namespace Objects
                 // 회전은 덱 기준 그대로 유지
                 card.transform.localRotation = Quaternion.identity;
 
-                Debug.Log($"Card {i} position: {card.transform.localPosition}");
-
                 // 리스트에 추가 (필요 시 관리용)
                 stackedCards.Add(card);
             }

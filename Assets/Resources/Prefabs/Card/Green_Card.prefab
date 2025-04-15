@@ -9,6 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7263385247236650570}
+  - component: {fileID: 5494874689648521571}
+  - component: {fileID: 6729317202480692719}
   m_Layer: 0
   m_Name: Green_Card
   m_TagString: Untagged
@@ -24,14 +26,43 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4058057893557581555}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.15, y: 0.15, z: 0.15}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6802408763378017575}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5494874689648521571
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4058057893557581555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c96a6efb367abc846837da687dd68a6c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  testText: {fileID: 0}
+  onClicked:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &6729317202480692719
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4058057893557581555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 270176575bf7f864cae17a6331313207, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mainCamera: {fileID: 0}
 --- !u!1 &4094057064038625566
 GameObject:
   m_ObjectHideFlags: 0
@@ -43,8 +74,6 @@ GameObject:
   - component: {fileID: 6802408763378017575}
   - component: {fileID: 8529499375106189865}
   - component: {fileID: 7749107137623016489}
-  - component: {fileID: 1755080508182536940}
-  - component: {fileID: 6974582728764367972}
   - component: {fileID: 4684832700431964715}
   m_Layer: 0
   m_Name: GreenCardSprite
@@ -145,34 +174,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.2, y: 0.28, z: 0.2}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &1755080508182536940
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4094057064038625566}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a5562be9a061b494cbd882b5c4dfe02d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &6974582728764367972
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4094057064038625566}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c96a6efb367abc846837da687dd68a6c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  testText: {fileID: 0}
-  onClicked:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!114 &4684832700431964715
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -187,6 +188,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mainCamera: {fileID: 0}
   dragThreshold: 10
+  isDraggable: 1
+  isClickable: 1
 --- !u!1 &6844236185382029440
 GameObject:
   m_ObjectHideFlags: 0

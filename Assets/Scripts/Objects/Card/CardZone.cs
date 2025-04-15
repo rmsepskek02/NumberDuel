@@ -31,6 +31,11 @@ namespace Objects
             {
                 cards.Add(card);
                 card.SetParent(transform);
+
+                // 카드 인터랙션 권한 설정
+                ICard cardInterface = card.GetComponentInChildren<ICard>();
+                cardInterface?.SetInteraction(zoneType, ownerType);
+
                 UpdateLayout();
 
                 if (zoneType == ZoneType.Hand)
@@ -41,6 +46,7 @@ namespace Objects
                 }
             }
         }
+
 
         /// <summary>
         /// 카드 제거 후 배치 갱신
@@ -79,13 +85,13 @@ namespace Objects
         /// </summary>
         private void AddHover(Transform card)
         {
-            if (!card.TryGetComponent(out CardMortion hover))
-                hover = card.gameObject.AddComponent<CardMortion>();
+            if (!card.TryGetComponent(out CardMotion hover))
+                hover = card.gameObject.AddComponent<CardMotion>();
 
             StartCoroutine(DelaySetInitialState(hover));
         }
 
-        private System.Collections.IEnumerator DelaySetInitialState(CardMortion hover)
+        private System.Collections.IEnumerator DelaySetInitialState(CardMotion hover)
         {
             yield return null;
             hover.SetInitialState();
@@ -96,7 +102,7 @@ namespace Objects
         /// </summary>
         private void RemoveHover(Transform card)
         {
-            if (card.TryGetComponent(out CardMortion hover))
+            if (card.TryGetComponent(out CardMotion hover))
                 Destroy(hover);
         }
     }
