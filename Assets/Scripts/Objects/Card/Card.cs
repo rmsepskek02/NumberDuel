@@ -21,10 +21,33 @@ namespace Objects
 
         private void Awake()
         {
-            // 자식에서 입력 감지 컴포넌트 찾아 연결
             mouseEvent = GetComponentInChildren<ObjectMouseEvent>();
-            if (mouseEvent != null)
-                mouseEvent.OnClicked += HandleClick;
+        }
+
+        private void OnEnable()
+        {
+            RegisterEvents();
+        }
+
+        private void OnDisable()
+        {
+            UnregisterEvents();
+        }
+
+        private void RegisterEvents()
+        {
+            if (mouseEvent == null)
+                return;
+
+            mouseEvent.OnClickReleased += HandleClick;
+        }
+
+        private void UnregisterEvents()
+        {
+            if (mouseEvent == null)
+                return;
+
+            mouseEvent.OnClickReleased -= HandleClick;
         }
 
         /// <summary>

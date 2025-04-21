@@ -5,11 +5,13 @@ using UnityEngine.InputSystem;
 namespace Objects
 {
     /// <summary>
-    /// 마우스/터치 입력을 감지하고,
-    /// Hover, Click, Drag 상태를 외부에 이벤트로 전달하는 컴포넌트
+    /// 마우스/터치 입력을 감지하여
+    /// Hover, Click, Drag 상태를 외부 이벤트로 전달하는 컴포넌트
     /// </summary>
     public class ObjectMouseEvent : MonoBehaviour
     {
+        #region ───── Inspector Fields ─────
+
         [Header("Input Settings")]
         [SerializeField] private Camera mainCamera;
         [SerializeField] private float dragThreshold = 10f;
@@ -21,37 +23,37 @@ namespace Objects
         [Header("Events")]
         public UnityAction OnHoverEnter;
         public UnityAction OnHoverExit;
-        public UnityAction OnClicked;
+        public UnityAction OnClickPressed;
+        public UnityAction OnClickReleased;
         public UnityAction OnBeginDrag;
         public UnityAction OnEndDrag;
+        public UnityAction<bool> OnToggleChanged;
+
+        #endregion
+
+        #region ───── Internal Fields ─────
 
         private Vector2 dragStartPos;
         private float zDistance;
-
-        private bool isHovered = false;
-        private bool isDragging = false;
-        private bool wasDragged = false;
-        private bool dragEndedOnce = false;
-        private bool clickRequested = false;
-        private bool wasClickRelease = false;
-        private bool isToggleOn = false;
+        private bool isHovered;
+        private bool isDragging;
+        private bool wasDragged;
+        private bool clickRequested;
+        private bool isToggleOn;
 
         private DragHandler dragHandler;
         private Transform rootTransform;
 
-        #region Public Properties
-        public bool IsDragging => isDragging;
-        public bool DragEndedOnce => dragEndedOnce;
-        public bool WasClickRelease => wasClickRelease;
-        public bool IsToggleOn => isToggleOn;
         #endregion
+
+        #region ───── Unity Lifecycle ─────
 
         private void Awake()
         {
             if (mainCamera == null)
                 mainCamera = Camera.main;
 
-            rootTransform = transform.parent != null ? transform.parent : transform;
+            rootTransform = transform.parent ?? transform;
             dragHandler = rootTransform.GetComponent<DragHandler>();
 
             if (dragHandler == null && isDraggable)
@@ -65,9 +67,28 @@ namespace Objects
             bool released = GetInputReleased();
             bool isHeld = GetInputHeld();
 
-            Ray ray = mainCamera.ScreenPointToRay(inputPos);
+            HandleHoverRaycast(inputPos);
+            HandleInputPress(inputPos, pressed);
+            HandleDragUpdate(inputPos, isHeld);
+            HandleInputRelease(released);
+        }
 
-            // Hover 판정
+        private void LateUpdate()
+        {
+            if (!isDragging)
+                clickRequested = false;
+        }
+
+        #endregion
+
+        #region ───── Input Logic ─────
+
+        /// <summary>
+        /// Hover 상태 판정 및 이벤트 발행
+        /// </summary>
+        private void HandleHoverRaycast(Vector2 inputPos)
+        {
+            Ray ray = mainCamera.ScreenPointToRay(inputPos);
             bool isHit = Physics.Raycast(ray, out RaycastHit hit) &&
                          hit.collider != null &&
                          (hit.collider.transform == transform || hit.collider.transform.IsChildOf(transform));
@@ -82,91 +103,119 @@ namespace Objects
                 isHovered = false;
                 OnHoverExit?.Invoke();
             }
-
-            // 입력 시작
-            if (pressed && isClickable && isHit)
-            {
-                dragStartPos = inputPos;
-                zDistance = Vector3.Distance(mainCamera.transform.position, rootTransform.position);
-
-                isDragging = true;
-                wasDragged = false;
-                clickRequested = true;
-            }
-
-            // 입력 유지 중: 드래그 판정
-            if (isDragging && isDraggable && isHeld)
-            {
-                float dragDistance = Vector2.Distance(inputPos, dragStartPos);
-                if (!wasDragged && dragDistance > dragThreshold)
-                {
-                    wasDragged = true;
-                    clickRequested = false;
-
-                    if (dragHandler != null)
-                        dragHandler.StartDrag(dragStartPos);
-
-                    OnBeginDrag?.Invoke();
-                }
-
-                if (wasDragged)
-                {
-                    Vector3 rot = rootTransform.localEulerAngles;
-                    rot.y = 0f;
-                    rootTransform.localEulerAngles = rot;
-                }
-            }
-
-            // 입력 해제
-            if (released && isDragging)
-            {
-                isDragging = false;
-                dragEndedOnce = true;
-                wasClickRelease = clickRequested && !wasDragged;
-
-                if (dragHandler != null)
-                    dragHandler.EndDrag();
-
-                if (wasDragged)
-                    OnEndDrag?.Invoke();
-
-                if (clickRequested && !wasDragged && isClickable)
-                {
-                    isToggleOn = !isToggleOn;
-                    OnClicked?.Invoke();
-                }
-            }
         }
 
-        private void LateUpdate()
+        /// <summary>
+        /// 입력 시작 처리 (클릭/드래그 후보)
+        /// </summary>
+        private void HandleInputPress(Vector2 inputPos, bool pressed)
         {
-            dragEndedOnce = false;
+            if (!pressed || !isClickable || !isHovered)
+                return;
 
-            if (!isDragging)
+            dragStartPos = inputPos;
+            zDistance = Vector3.Distance(mainCamera.transform.position, rootTransform.position);
+
+            isDragging = true;
+            wasDragged = false;
+            clickRequested = true;
+
+            OnClickPressed?.Invoke();
+        }
+
+        /// <summary>
+        /// 드래그 진행 처리
+        /// </summary>
+        private void HandleDragUpdate(Vector2 inputPos, bool isHeld)
+        {
+            if (!isDragging || !isDraggable || !isHeld)
+                return;
+
+            float dragDistance = Vector2.Distance(inputPos, dragStartPos);
+            if (!wasDragged && dragDistance > dragThreshold)
+            {
+                wasDragged = true;
                 clickRequested = false;
+
+                dragHandler?.StartDrag(dragStartPos);
+                OnBeginDrag?.Invoke();
+            }
+
+            if (wasDragged)
+            {
+                Vector3 rot = rootTransform.localEulerAngles;
+                rot.y = 0f;
+                rootTransform.localEulerAngles = rot;
+            }
         }
 
-        #region Public Methods
-
-        public void ResetClickFlag()
+        /// <summary>
+        /// 입력 해제 처리 (클릭/드래그 종료 판단)
+        /// </summary>
+        private void HandleInputRelease(bool released)
         {
-            clickRequested = false;
-        }
+            if (!released || !isDragging)
+                return;
 
-        public void ResetDragEndFlag()
-        {
-            dragEndedOnce = false;
-            wasClickRelease = false;
-        }
+            isDragging = false;
 
-        public void ForceResetToggle()
-        {
-            isToggleOn = false;
+            if (wasDragged)
+            {
+                dragHandler?.EndDrag();
+                OnEndDrag?.Invoke();
+                isToggleOn = false; // 드래그 종료 시 토글 리셋
+            }
+            else if (clickRequested && isClickable)
+            {
+                isToggleOn = !isToggleOn;
+                OnToggleChanged?.Invoke(isToggleOn);
+                OnClickReleased?.Invoke();
+            }
         }
 
         #endregion
 
-        #region Input Helpers
+        #region ───── Listener Utilities ─────
+
+        public void RegisterListeners(
+            UnityAction onHoverEnter,
+            UnityAction onHoverExit,
+            UnityAction onClickPressed,
+            UnityAction onClickReleased,
+            UnityAction onBeginDrag,
+            UnityAction onEndDrag,
+            UnityAction<bool> onToggleChanged)
+        {
+            OnHoverEnter += onHoverEnter;
+            OnHoverExit += onHoverExit;
+            OnClickPressed += onClickPressed;
+            OnClickReleased += onClickReleased;
+            OnBeginDrag += onBeginDrag;
+            OnEndDrag += onEndDrag;
+            OnToggleChanged += onToggleChanged;
+        }
+
+        public void UnregisterListeners(
+            UnityAction onHoverEnter,
+            UnityAction onHoverExit,
+            UnityAction onClickPressed,
+            UnityAction onClickReleased,
+            UnityAction onBeginDrag,
+            UnityAction onEndDrag,
+            UnityAction<bool> onToggleChanged)
+        {
+            OnHoverEnter -= onHoverEnter;
+            OnHoverExit -= onHoverExit;
+            OnClickPressed -= onClickPressed;
+            OnClickReleased -= onClickReleased;
+            OnBeginDrag -= onBeginDrag;
+            OnEndDrag -= onEndDrag;
+            OnToggleChanged -= onToggleChanged;
+        }
+
+        #endregion
+
+        #region ───── Input Helpers ─────
 
         private Vector2 GetInputPosition()
         {
