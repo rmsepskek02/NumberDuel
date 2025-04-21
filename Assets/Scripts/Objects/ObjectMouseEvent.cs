@@ -6,47 +6,44 @@ namespace Objects
 {
     /// <summary>
     /// 마우스/터치 입력을 감지하고,
-    /// 클릭 및 드래그 여부를 판단하여 외부에 이벤트를 전달
+    /// Hover, Click, Drag 상태를 외부에 이벤트로 전달하는 컴포넌트
     /// </summary>
     public class ObjectMouseEvent : MonoBehaviour
     {
         [Header("Input Settings")]
-        [SerializeField] private Camera mainCamera;         // 입력 기준 카메라
-        [SerializeField] private float dragThreshold = 10f; // 드래그로 간주될 최소 이동 거리 (픽셀)
-
-        [Header("Click Event")]
-        public UnityAction OnClicked; // 클릭 발생 시 외부로 전달하는 이벤트
-
-        [Header("Hover Event")]
-        public UnityAction OnHoverEnter;
-        public UnityAction OnHoverExit;
+        [SerializeField] private Camera mainCamera;
+        [SerializeField] private float dragThreshold = 10f;
 
         [Header("Interaction Control")]
         public bool isDraggable = true;
         public bool isClickable = true;
-        private bool isHovered = false;
+
+        [Header("Events")]
+        public UnityAction OnHoverEnter;
+        public UnityAction OnHoverExit;
+        public UnityAction OnClicked;
+        public UnityAction OnBeginDrag;
+        public UnityAction OnEndDrag;
 
         private Vector2 dragStartPos;
         private float zDistance;
 
+        private bool isHovered = false;
         private bool isDragging = false;
         private bool wasDragged = false;
         private bool dragEndedOnce = false;
         private bool clickRequested = false;
         private bool wasClickRelease = false;
-
-        private bool isToggleOn = false; // 클릭 토글 상태
+        private bool isToggleOn = false;
 
         private DragHandler dragHandler;
         private Transform rootTransform;
 
         #region Public Properties
-
         public bool IsDragging => isDragging;
         public bool DragEndedOnce => dragEndedOnce;
         public bool WasClickRelease => wasClickRelease;
         public bool IsToggleOn => isToggleOn;
-
         #endregion
 
         private void Awake()
@@ -55,12 +52,10 @@ namespace Objects
                 mainCamera = Camera.main;
 
             rootTransform = transform.parent != null ? transform.parent : transform;
-
             dragHandler = rootTransform.GetComponent<DragHandler>();
+
             if (dragHandler == null && isDraggable)
-            {
                 Debug.LogWarning("[ObjectMouseEvent] DragHandler가 상위 오브젝트에 없습니다.");
-            }
         }
 
         private void Update()
@@ -70,15 +65,26 @@ namespace Objects
             bool released = GetInputReleased();
             bool isHeld = GetInputHeld();
 
-            HandleHoverRaycast();
-
             Ray ray = mainCamera.ScreenPointToRay(inputPos);
 
+            // Hover 판정
+            bool isHit = Physics.Raycast(ray, out RaycastHit hit) &&
+                         hit.collider != null &&
+                         (hit.collider.transform == transform || hit.collider.transform.IsChildOf(transform));
+
+            if (isHit && !isHovered)
+            {
+                isHovered = true;
+                OnHoverEnter?.Invoke();
+            }
+            else if (!isHit && isHovered && !isDragging)
+            {
+                isHovered = false;
+                OnHoverExit?.Invoke();
+            }
+
             // 입력 시작
-            if (pressed && isClickable &&
-                Physics.Raycast(ray, out RaycastHit hit) &&
-                hit.collider != null &&
-                hit.collider.transform.IsChildOf(transform))
+            if (pressed && isClickable && isHit)
             {
                 dragStartPos = inputPos;
                 zDistance = Vector3.Distance(mainCamera.transform.position, rootTransform.position);
@@ -86,18 +92,21 @@ namespace Objects
                 isDragging = true;
                 wasDragged = false;
                 clickRequested = true;
-
-                if (isDraggable && dragHandler != null)
-                    dragHandler.StartDrag(inputPos);
             }
 
-            // 드래그 중
+            // 입력 유지 중: 드래그 판정
             if (isDragging && isDraggable && isHeld)
             {
-                if (!wasDragged && Vector2.Distance(inputPos, dragStartPos) > dragThreshold)
+                float dragDistance = Vector2.Distance(inputPos, dragStartPos);
+                if (!wasDragged && dragDistance > dragThreshold)
                 {
                     wasDragged = true;
                     clickRequested = false;
+
+                    if (dragHandler != null)
+                        dragHandler.StartDrag(dragStartPos);
+
+                    OnBeginDrag?.Invoke();
                 }
 
                 if (wasDragged)
@@ -118,7 +127,9 @@ namespace Objects
                 if (dragHandler != null)
                     dragHandler.EndDrag();
 
-                // 실제 클릭 인정되면 토글 전환 + 이벤트 발행
+                if (wasDragged)
+                    OnEndDrag?.Invoke();
+
                 if (clickRequested && !wasDragged && isClickable)
                 {
                     isToggleOn = !isToggleOn;
@@ -129,15 +140,13 @@ namespace Objects
 
         private void LateUpdate()
         {
-            // 드래그 종료 플래그는 한 프레임만 유지
             dragEndedOnce = false;
 
-            // 클릭 플래그는 드래그 아닐 때만 유지
             if (!isDragging)
                 clickRequested = false;
         }
 
-        #region Public Reset Methods
+        #region Public Methods
 
         public void ResetClickFlag()
         {
@@ -149,31 +158,7 @@ namespace Objects
             dragEndedOnce = false;
             wasClickRelease = false;
         }
-        private void HandleHoverRaycast()
-        {
-            Vector2 inputPos = GetInputPosition();
-            Ray ray = mainCamera.ScreenPointToRay(inputPos);
 
-            bool isHit = Physics.Raycast(ray, out RaycastHit hit) &&
-                         hit.collider != null &&
-                         (hit.collider.transform == transform || hit.collider.transform.IsChildOf(transform));
-
-            if (isHit && !isHovered)
-            {
-                isHovered = true;
-                OnHoverEnter?.Invoke();
-            }
-            else if (!isHit && isHovered && !IsDragging)
-            {
-                isHovered = false;
-                OnHoverExit?.Invoke();
-            }
-        }
-
-        /// <summary>
-        /// 외부에서 클릭 토글 상태를 강제로 초기화
-        /// (Hover 해제 시 회전 복귀 후 상태 동기화를 위해 사용)
-        /// </summary>
         public void ForceResetToggle()
         {
             isToggleOn = false;

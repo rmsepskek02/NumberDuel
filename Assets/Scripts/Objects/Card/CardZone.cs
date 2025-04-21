@@ -87,14 +87,6 @@ namespace Objects
         {
             if (!card.TryGetComponent(out CardMotion hover))
                 hover = card.gameObject.AddComponent<CardMotion>();
-
-            StartCoroutine(DelaySetInitialState(hover));
-        }
-
-        private System.Collections.IEnumerator DelaySetInitialState(CardMotion hover)
-        {
-            yield return null;
-            hover.SetInitialState();
         }
 
         /// <summary>
