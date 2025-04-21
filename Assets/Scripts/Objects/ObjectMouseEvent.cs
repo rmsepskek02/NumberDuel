@@ -17,9 +17,14 @@ namespace Objects
         [Header("Click Event")]
         public UnityAction OnClicked; // 클릭 발생 시 외부로 전달하는 이벤트
 
+        [Header("Hover Event")]
+        public UnityAction OnHoverEnter;
+        public UnityAction OnHoverExit;
+
         [Header("Interaction Control")]
         public bool isDraggable = true;
         public bool isClickable = true;
+        private bool isHovered = false;
 
         private Vector2 dragStartPos;
         private float zDistance;
@@ -64,6 +69,8 @@ namespace Objects
             bool pressed = GetInputPressed();
             bool released = GetInputReleased();
             bool isHeld = GetInputHeld();
+
+            HandleHoverRaycast();
 
             Ray ray = mainCamera.ScreenPointToRay(inputPos);
 
@@ -141,6 +148,26 @@ namespace Objects
         {
             dragEndedOnce = false;
             wasClickRelease = false;
+        }
+        private void HandleHoverRaycast()
+        {
+            Vector2 inputPos = GetInputPosition();
+            Ray ray = mainCamera.ScreenPointToRay(inputPos);
+
+            bool isHit = Physics.Raycast(ray, out RaycastHit hit) &&
+                         hit.collider != null &&
+                         (hit.collider.transform == transform || hit.collider.transform.IsChildOf(transform));
+
+            if (isHit && !isHovered)
+            {
+                isHovered = true;
+                OnHoverEnter?.Invoke();
+            }
+            else if (!isHit && isHovered && !IsDragging)
+            {
+                isHovered = false;
+                OnHoverExit?.Invoke();
+            }
         }
 
         /// <summary>

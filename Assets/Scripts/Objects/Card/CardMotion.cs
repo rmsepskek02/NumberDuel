@@ -46,13 +46,21 @@ namespace Objects
         private void OnEnable()
         {
             if (objectMouseEvent != null)
+            {
                 objectMouseEvent.OnClicked += HandleClick;
+                objectMouseEvent.OnHoverEnter += HandleHoverEnter;
+                objectMouseEvent.OnHoverExit += HandleHoverExit;
+            }
         }
 
         private void OnDisable()
         {
             if (objectMouseEvent != null)
+            {
                 objectMouseEvent.OnClicked -= HandleClick;
+                objectMouseEvent.OnHoverEnter -= HandleHoverEnter;
+                objectMouseEvent.OnHoverExit -= HandleHoverExit;
+            }
         }
 
         private void Start()
@@ -91,12 +99,6 @@ namespace Objects
             if (!initialized || objectMouseEvent == null)
                 return;
 
-#if UNITY_EDITOR || UNITY_STANDALONE
-            HandleMouseHover();
-#else
-            isHovered = false;
-#endif
-
             UpdateTransform();
         }
 
@@ -113,6 +115,24 @@ namespace Objects
         }
 
         /// <summary>
+        /// Hover 진입 시 처리
+        /// </summary>
+        private void HandleHoverEnter()
+        {
+            isHovered = true;
+            transform.SetSiblingIndex(transform.parent.childCount - 1);
+        }
+
+        /// <summary>
+        /// Hover 해제 시 처리
+        /// </summary>
+        private void HandleHoverExit()
+        {
+            isHovered = false;
+            isReturning = true;
+        }
+
+        /// <summary>
         /// 클릭 상태에 따라 목표 회전값 설정
         /// </summary>
         private void SetTargetRotation(bool alignToFront)
@@ -124,36 +144,10 @@ namespace Objects
         }
 
         /// <summary>
-        /// 마우스 Hover 판정 처리
-        /// </summary>
-        private void HandleMouseHover()
-        {
-            Vector2 inputPos = Mouse.current.position.ReadValue();
-            Ray ray = mainCamera.ScreenPointToRay(inputPos);
-
-            bool isHit = Physics.Raycast(ray, out RaycastHit hit) &&
-                         hit.collider != null &&
-                         hit.collider.gameObject == gameObject;
-
-            if (isHit && !isHovered)
-            {
-                isHovered = true;
-                OnHoverEnter();
-            }
-            else if (!isHit && isHovered && !objectMouseEvent.IsDragging)
-            {
-                isHovered = false;
-                OnHoverExit();
-                isReturning = true;
-            }
-        }
-
-        /// <summary>
-        /// Hover, 회전, 복귀 등 위치/스케일/회전 보간 처리
+        /// 회전, Hover, 복귀 등 위치/스케일/회전 보간 처리
         /// </summary>
         private void UpdateTransform()
         {
-            // 크기 보간
             Vector3 targetScale = isHovered ? originalLocalScale * hoverScale : originalLocalScale;
             transform.localScale = Vector3.Lerp(transform.localScale, targetScale, Time.deltaTime * returnSpeed);
 
@@ -183,7 +177,7 @@ namespace Objects
                 }
             }
 
-            // Hover 중일 때: Y축 보간 유지
+            // Hover 상태일 때: 위치 보간
             if (isHovered)
             {
                 Vector3 targetPos = originalLocalPosition;
@@ -209,15 +203,12 @@ namespace Objects
                 {
                     rootTransform.localPosition = Vector3.Lerp(rootTransform.localPosition, originalRootPosition, Time.deltaTime * returnSpeed);
 
-                    // 클릭 상태와 상관없이 무조건 원래 회전값으로 복귀
+                    // 회전 복귀 및 토글 상태 초기화
                     targetRotation = originalRootRotation;
                     isRotating = true;
 
-                    // 토글 상태는 Hover 해제일 경우에만 초기화
-                    if (!isHovered && objectMouseEvent.IsToggleOn)
-                    {
+                    if (objectMouseEvent.IsToggleOn)
                         objectMouseEvent.ForceResetToggle();
-                    }
                 }
 
                 if (Vector3.Distance(transform.localPosition, originalLocalPosition) < 0.001f &&
@@ -229,16 +220,6 @@ namespace Objects
 
                 return;
             }
-        }
-
-        private void OnHoverEnter()
-        {
-            transform.SetSiblingIndex(transform.parent.childCount - 1);
-        }
-
-        private void OnHoverExit()
-        {
-            // 회전 복귀는 UpdateTransform 내에서 처리됨
         }
     }
 }
