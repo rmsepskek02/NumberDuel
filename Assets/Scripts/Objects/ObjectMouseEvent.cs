@@ -61,6 +61,10 @@ namespace Objects
 
             rootTransform = transform.parent ?? transform;
             dragHandler = rootTransform.GetComponent<DragHandler>();
+
+            // DragHandler가 없으면 드래그 불가능 처리
+            if (dragHandler == null)
+                isDraggable = false;
         }
 
         private void Update()
@@ -133,17 +137,24 @@ namespace Objects
 
             float dragDistance = Vector2.Distance(inputPos, dragStartPos);
 
-            // 드래그 조건 충족 시 시작 처리
+            // 드래그 거리 조건 충족
             if (!wasDragged && dragDistance > dragThreshold)
             {
                 wasDragged = true;
                 clickRequested = false;
 
-                dragHandler?.StartDrag(dragStartPos);
-                OnBeginDrag?.Invoke();
+                if (dragHandler != null)
+                {
+                    dragHandler.StartDrag(dragStartPos);
+                    OnBeginDrag?.Invoke();
+                }
+                else
+                {
+                    // 드래그 불가 카드일 경우에도 클릭으로 인식되지 않도록 처리
+                    isDragging = false;
+                }
             }
 
-            // 드래그 중이면 Y축 회전 고정 (카드가 돌아가지 않도록)
             if (wasDragged)
             {
                 Vector3 rot = rootTransform.localEulerAngles;

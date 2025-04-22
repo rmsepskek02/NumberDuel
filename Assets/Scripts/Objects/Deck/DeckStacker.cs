@@ -6,6 +6,7 @@ namespace Objects
     /// <summary>
     /// 카드 덱 외형 생성용 클래스
     /// 카드들을 일정한 Y 오프셋으로 겹쳐 쌓아 덱처럼 보이게 한다
+    /// 생성된 카드에서는 DragHandler를 제거하여 드래그 불가 상태로 만든다
     /// </summary>
     public class DeckStacker : MonoBehaviour
     {
@@ -31,6 +32,7 @@ namespace Objects
 
         /// <summary>
         /// 카드 프리팹을 여러 장 생성하고 덱처럼 쌓아 올린다
+        /// 생성 후 DragHandler를 제거하여 드래그가 되지 않도록 한다
         /// </summary>
         private void CreateDeckVisual()
         {
@@ -47,6 +49,13 @@ namespace Objects
 
                 // 회전은 덱 기준 그대로 유지
                 card.transform.localRotation = Quaternion.identity;
+
+                // 드래그 기능 제거
+                DragHandler dragHandler = card.GetComponent<DragHandler>();
+                if (dragHandler != null)
+                {
+                    Destroy(dragHandler);
+                }
 
                 // 리스트에 추가 (필요 시 관리용)
                 stackedCards.Add(card);
