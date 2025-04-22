@@ -12,14 +12,13 @@ namespace Manager
     {
         [SerializeField] 
         private SerializableDictionary<string, GameObject> prefabCache = new SerializableDictionary<string, GameObject>();
-        [SerializeField] 
-        private SerializableDictionary<string, Material> materialCache = new SerializableDictionary<string, Material>();
+        //[SerializeField] 
+        //private SerializableDictionary<string, Material> materialCache = new SerializableDictionary<string, Material>();
 
         protected override void Awake()
         {
             base.Awake();
             LoadAllPrefabs(Global.Card);
-            LoadAllMaterial(Global.Card);
         }
         private void OnDestroy()
         {
@@ -32,7 +31,7 @@ namespace Manager
         public void ClearCache()
         {
             prefabCache.Clear();
-            materialCache.Clear();
+            //materialCache.Clear();
             Debug.Log("[ResourcesManager] 캐시 초기화 완료.");
         }
 
@@ -95,7 +94,7 @@ namespace Manager
 
             foreach (Material material in materials)
             {
-                materialCache[material.name] = material;
+                //materialCache[material.name] = material;
             }
 
             Debug.Log($"[ResourcesManager] {materials.Length}개의 프리팹이 로드됨.");
@@ -104,23 +103,23 @@ namespace Manager
         /// <summary>
         /// Material을 로드하고 캐싱 (Resources 폴더 내에서 로드)
         /// </summary>
-        public Material GetMaterial(string path,string materialName)
-        {
-            if (!materialCache.ContainsKey(materialName))
-            {
-                Material loadedMaterial = Resources.Load<Material>($"Materials/{path}/{materialName}");
-                if (loadedMaterial != null)
-                {
-                    materialCache[materialName] = loadedMaterial;
-                }
-                else
-                {
-                    Debug.LogError($"[ResourcesManager] Material '{materialName}'을 찾을 수 없습니다.");
-                    return null;
-                }
-            }
-            return materialCache[materialName];
-        }
+        //public Material GetMaterial(string path,string materialName)
+        //{
+            //if (!materialCache.ContainsKey(materialName))
+            //{
+            //    Material loadedMaterial = Resources.Load<Material>($"Materials/{path}/{materialName}");
+            //    if (loadedMaterial != null)
+            //    {
+            //        materialCache[materialName] = loadedMaterial;
+            //    }
+            //    else
+            //    {
+            //        Debug.LogError($"[ResourcesManager] Material '{materialName}'을 찾을 수 없습니다.");
+            //        return null;
+            //    }
+            //}
+            //return materialCache[materialName];
+        //}
 
         /// <summary>
         /// 특정 오브젝트의 Material을 변경
@@ -135,16 +134,16 @@ namespace Manager
                 return;
             }
 
-            if (!materialCache.TryGetValue(materialName, out Material material))
-            {
-                Debug.LogError($"[ResourcesManager] '{materialName}' Material을 찾을 수 없습니다.");
-                return;
-            }
+            //if (!materialCache.TryGetValue(materialName, out Material material))
+            //{
+            //    Debug.LogError($"[ResourcesManager] '{materialName}' Material을 찾을 수 없습니다.");
+            //    return;
+            //}
 
             Renderer renderer = targetObject.GetComponent<Renderer>();
             if (renderer != null)
             {
-                renderer.material = material;
+                //renderer.material = material;
                 Debug.Log($"[ResourcesManager] '{targetObject.name}' 오브젝트의 Material을 '{materialName}'로 변경함.");
             }
             else
