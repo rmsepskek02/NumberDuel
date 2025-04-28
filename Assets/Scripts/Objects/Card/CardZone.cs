@@ -1,5 +1,7 @@
+using Photon.Realtime;
 using System.Collections.Generic;
 using UnityEngine;
+using static Objects.CardZone;
 
 namespace Objects
 {
@@ -14,7 +16,9 @@ namespace Objects
         public enum OwnerType { Player, Opponent }
 
         [Header("Zone Settings")]
+        public ZoneType Zone => zoneType;
         [SerializeField] private ZoneType zoneType;
+        public OwnerType Owner => ownerType;
         [SerializeField] private OwnerType ownerType;
 
         [Header("Layout Helper")]
@@ -37,16 +41,27 @@ namespace Objects
                 cardInterface?.SetInteraction(zoneType, ownerType);
 
                 UpdateLayout();
-
                 if (zoneType == ZoneType.Hand)
                 {
+                    var root = card; // 카드 루트
+                    AddDragHandler(root); // DragHandler는 카드 루트에만 1회 추가
+
                     var target = card.GetComponentInChildren<SpriteRenderer>()?.transform;
                     if (target != null)
+                    {
                         AddHover(target);
+                    }
                 }
             }
         }
 
+        /// <summary>
+        /// 카드 포함 여부 확인 (외부에서 조회용)
+        /// </summary>
+        public bool Contains(Transform card)
+        {
+            return cards.Contains(card);
+        }
 
         /// <summary>
         /// 카드 제거 후 배치 갱신
@@ -57,9 +72,6 @@ namespace Objects
             {
                 cards.Remove(card);
                 UpdateLayout();
-
-                if (zoneType == ZoneType.Hand)
-                    RemoveHover(card);
             }
         }
 
@@ -90,12 +102,14 @@ namespace Objects
         }
 
         /// <summary>
-        /// 카드의 Hover 애니메이션 제거
+        /// 카드에 DragHandler 추가
         /// </summary>
-        private void RemoveHover(Transform card)
+        private void AddDragHandler(Transform card)
         {
-            if (card.TryGetComponent(out CardMotion hover))
-                Destroy(hover);
+            if (!card.TryGetComponent<DragHandler>(out _))
+            {
+                card.gameObject.AddComponent<DragHandler>();
+            }
         }
     }
 }

@@ -96,18 +96,25 @@ namespace Objects
         {
             Ray ray = mainCamera.ScreenPointToRay(inputPos);
 
-            bool isHit = Physics.Raycast(ray, out RaycastHit hit) &&
-                         (hit.collider.transform == transform || hit.collider.transform.IsChildOf(transform));
+            // Detector 레이어 제외한 모든 레이어 마스크 만들기
+            int detectorLayer = LayerMask.NameToLayer("Detector");
+            int detectorLayerMask = 1 << detectorLayer;
+            int everythingExceptDetector = ~detectorLayerMask; // Detector만 제외!
 
-            if (isHit && !isHovered)
+            if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, everythingExceptDetector))
             {
-                isHovered = true;
-                OnHoverEnter?.Invoke();
-            }
-            else if (!isHit && isHovered && !isDragging)
-            {
-                isHovered = false;
-                OnHoverExit?.Invoke();
+                bool isHit = (hit.collider.transform == transform || hit.collider.transform.IsChildOf(transform));
+
+                if (isHit && !isHovered)
+                {
+                    isHovered = true;
+                    OnHoverEnter?.Invoke();
+                }
+                else if (!isHit && isHovered && !isDragging)
+                {
+                    isHovered = false;
+                    OnHoverExit?.Invoke();
+                }
             }
         }
 

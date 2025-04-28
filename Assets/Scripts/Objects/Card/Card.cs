@@ -40,6 +40,7 @@ namespace Objects
                 return;
 
             mouseEvent.OnClickReleased += HandleClick;
+            mouseEvent.OnEndDrag += HandleEndDrag;
         }
 
         private void UnregisterEvents()
@@ -48,6 +49,7 @@ namespace Objects
                 return;
 
             mouseEvent.OnClickReleased -= HandleClick;
+            mouseEvent.OnEndDrag -= HandleEndDrag;
         }
 
         /// <summary>
@@ -85,6 +87,20 @@ namespace Objects
 
             mouseEvent.isClickable = (type == CardInteractionType.ClickOnly || type == CardInteractionType.DragAndClick);
             mouseEvent.isDraggable = (type == CardInteractionType.DragAndClick);
+        }
+
+        /// <summary>
+        /// 카드가 Drag가 끝난 시점에 호출
+        /// </summary>
+        private void HandleEndDrag()
+        {
+            var detector = FindAnyObjectByType<CardPlayDetector>();
+            if (detector == null) return;
+
+            if (detector.IsCardInside(transform))
+            {
+                detector.TryPlayCard(transform);
+            }
         }
 
         /// <summary>

@@ -50,6 +50,7 @@ namespace Objects
         private Tween rotateTween;
 
         private bool isReturning; // 현재 복귀 애니메이션 중인지 여부
+        private bool isLockedExternally = false;
 
         private void Awake()
         {
@@ -118,8 +119,6 @@ namespace Objects
         /// </summary>
         private void HandleHoverExit()
         {
-            if (isReturning) return;
-
             AnimateHoverExit();
             AnimateRotation(originalRootRotation);
             objectMouseEvent?.ForceResetToggle();
@@ -141,7 +140,7 @@ namespace Objects
         /// </summary>
         private void HandleDragBegin()
         {
-            CancelAllTweens();
+            CancelMoveAndScaleTweens();
         }
 
         /// <summary>
@@ -161,10 +160,9 @@ namespace Objects
             scaleTween?.Kill();
             scaleTween = transform.DOScale(originalLocalScale * hoverScale, moveDuration).SetEase(moveEase);
 
-            moveTween = transform.DOLocalMoveY(originalY + hoverYOffset, moveDuration).SetEase(moveEase);
-
-            if (rootTransform != null)
+            if (!isReturning && rootTransform != null)
             {
+                rootMoveTween?.Kill();
                 rootMoveTween = rootTransform.DOLocalMoveY(originalRootPosition.y + hoverYOffset, moveDuration).SetEase(moveEase);
             }
         }
@@ -174,13 +172,12 @@ namespace Objects
         /// </summary>
         private void AnimateHoverExit()
         {
-            CancelMoveAndScaleTweens();
-
+            scaleTween?.Kill();
             scaleTween = transform.DOScale(originalLocalScale, moveDuration).SetEase(moveEase);
-            moveTween = transform.DOLocalMoveY(originalY, moveDuration).SetEase(moveEase);
 
-            if (rootTransform != null)
+            if (!isReturning && rootTransform != null)
             {
+                rootMoveTween?.Kill();
                 rootMoveTween = rootTransform.DOLocalMoveY(originalRootPosition.y, moveDuration).SetEase(moveEase);
             }
         }
@@ -204,13 +201,18 @@ namespace Objects
         /// </summary>
         private void AnimateReturnToOriginal()
         {
+            if (isLockedExternally) return;
+
             isReturning = true;
             objectMouseEvent?.SetInteractionBlocked(true);
 
-            CancelAllTweens();
+            // 기존 트윈 제거
+            moveTween?.Kill();
+            rootMoveTween?.Kill();
+            rotateTween?.Kill();
 
+            // 위치만 복귀
             moveTween = transform.DOLocalMove(originalLocalPosition, moveDuration).SetEase(moveEase);
-            scaleTween = transform.DOScale(originalLocalScale, moveDuration).SetEase(moveEase);
 
             if (rootTransform != null)
             {
@@ -218,15 +220,15 @@ namespace Objects
                 AnimateRotation(originalRootRotation);
             }
 
+            // 복귀 완료 처리
             DOVirtual.DelayedCall(moveDuration, () =>
             {
                 isReturning = false;
                 objectMouseEvent?.SetInteractionBlocked(false);
 
-                // 복귀 완료 후 마우스가 여전히 카드 위에 있으면 다시 Hover 연출 적용
                 if (objectMouseEvent != null && objectMouseEvent.IsHovered)
                 {
-                    AnimateHoverEnter();
+                    AnimateHoverEnter(); // 복귀 끝난 뒤 Hover 적용
                 }
             });
         }
@@ -248,6 +250,72 @@ namespace Objects
         {
             CancelMoveAndScaleTweens();
             rotateTween?.Kill();
+        }
+
+        /// <summary>
+        /// 강제로 Transform 원래 값 복구
+        /// </summary>
+        private void ForceResetTransform()
+        {
+            transform.localScale = originalLocalScale;
+            transform.localPosition = originalLocalPosition;
+
+            if (rootTransform != null)
+            {
+                rootTransform.localPosition = originalRootPosition;
+                rootTransform.localRotation = originalRootRotation;
+            }
+        }
+
+        /// <summary>
+        /// 현재 Transform 상태를 원래 상태로 다시 저장
+        /// (부채꼴 재배치된 뒤 호출)
+        /// </summary>
+        private void RefreshOriginalState()
+        {
+            originalLocalPosition = transform.localPosition;
+            originalLocalScale = transform.localScale;
+            originalY = originalLocalPosition.y;
+
+            if (rootTransform != null)
+            {
+                originalRootPosition = rootTransform.localPosition;
+                originalRootRotation = rootTransform.localRotation;
+            }
+        }
+
+        private void RestartReturnMotion()
+        {
+            if (isReturning)
+            {
+                CancelAllTweens();
+
+                moveTween = transform.DOLocalMove(originalLocalPosition, moveDuration).SetEase(moveEase);
+
+                if (rootTransform != null)
+                {
+                    rootMoveTween = rootTransform.DOLocalMove(originalRootPosition, moveDuration).SetEase(moveEase);
+                    AnimateRotation(originalRootRotation);
+                }
+            }
+        }
+
+        private void LockMotion()
+        {
+            isLockedExternally = true;
+            CancelAllTweens(); // 강제 Kill도 같이 해줌
+        }
+
+        // 외부 사용 함수
+        public void ResetReturnMotion()
+        {
+            RefreshOriginalState();
+            RestartReturnMotion();
+        }
+        public void LockAndReset()
+        {
+            LockMotion();
+            ForceResetTransform();
         }
     }
 }
