@@ -32,7 +32,7 @@ public class CardText : MonoBehaviour
             textMesh = GetComponent<TextMeshPro>();
         }
         //_textValue = Global.Divide;
-        TextValue = "1415634634";
+        TextValue = GenerateRandomNumberString();
 
         UpdateText(); // 초기 텍스트 표시
     }
@@ -63,9 +63,20 @@ public class CardText : MonoBehaviour
     {
         if (long.TryParse(value, out long number))
         {
-            if (number >= 1000000) return "999k"; // 최대값 제한
-            if (number >= 1000) return (number / 1000f).ToString("0.0") + "k"; // 1.2k 형식
+            if (number >= 1_000_000)
+                return "999k"; // 최대값 제한
+            if (number >= 10_000)
+                return (number / 1000).ToString() + "k"; // 정수 k 형식 (소수점 없음)
+            if (number >= 1000)
+                return (number / 1000f).ToString("0.0") + "k"; // 1.2k 형식 (소수점 1자리)
         }
-        return value; // 기호는 그대로 반환
+        return value; // 숫자가 아니면 원본 그대로
+    }
+
+    // TODO :: TEST 함수
+    public string GenerateRandomNumberString()
+    {
+        int randomNumber = Random.Range(1, 1_000_003); // 최대값은 1_000_000_000 포함되게
+        return randomNumber.ToString();
     }
 }
