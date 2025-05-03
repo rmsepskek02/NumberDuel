@@ -1,7 +1,8 @@
 using Photon.Realtime;
 using System.Collections.Generic;
 using UnityEngine;
-using static Objects.CardZone;
+using Manager;
+using UnityEngine.AdaptivePerformance.VisualScripting;
 
 namespace Objects
 {
@@ -9,6 +10,7 @@ namespace Objects
     /// 카드가 배치되는 Zone (손패, 필드 등)을 관리하는 컴포넌트
     /// - 카드 리스트 관리
     /// - 배치는 CardLayoutHelper에 위임
+    /// - 카드의 Sprite 및 Material 설정 포함
     /// </summary>
     public class CardZone : MonoBehaviour
     {
@@ -24,55 +26,68 @@ namespace Objects
         [Header("Layout Helper")]
         [SerializeField] private CardLayoutHelper layoutHelper;
 
-        private readonly List<Transform> cards = new();
+        private readonly List<Transform> cards = new List<Transform>();
 
         /// <summary>
         /// 카드 추가 후 배치 갱신
         /// </summary>
         public void AddCard(Transform card)
         {
-            if (!cards.Contains(card))
+            if (cards.Contains(card)) return;
+
+            cards.Add(card);
+            card.SetParent(transform);
+
+            // 카드 인터랙션 권한 설정
+            ICard cardInterface = card.GetComponentInChildren<ICard>();
+            cardInterface?.SetInteraction(zoneType, ownerType);
+
+            // Opponent 손패일 경우 텍스트 비활성화
+            if (ownerType == OwnerType.Opponent && zoneType == ZoneType.Hand)
             {
-                cards.Add(card);
-                card.SetParent(transform);
+                var tmp = card.GetComponentInChildren<TMPro.TextMeshPro>();
+                if (tmp != null)
+                    tmp.gameObject.SetActive(false);
+            }
 
-                // 카드 인터랙션 권한 설정
-                ICard cardInterface = card.GetComponentInChildren<ICard>();
-                cardInterface?.SetInteraction(zoneType, ownerType);
+            if (zoneType == ZoneType.Hand)
+            {
+                // Glow 효과 비활성화
+                var glow = card.GetComponentInChildren<CardEffect>();
+                if (glow != null)
+                    glow.enabled = false;
+            }
 
-                UpdateLayout();
-                if (zoneType == ZoneType.Hand)
-                {
-                    var root = card; // 카드 루트
-                    AddDragHandler(root); // DragHandler는 카드 루트에만 1회 추가
+            if (zoneType == ZoneType.Field)
+            {
+                // Glow 효과 활성화
+                var glow = card.GetComponentInChildren<CardEffect>();
+                if (glow != null)
+                    glow.enabled = true;
+            }
 
-                    var target = card.GetComponentInChildren<SpriteRenderer>()?.transform;
-                    if (target != null)
-                    {
-                        AddHover(target);
-                    }
-                }
+            UpdateLayout();
+
+            if (zoneType == ZoneType.Hand)
+            {
+                AddDragHandler(card);
+                AddHover(card.GetComponentInChildren<SpriteRenderer>()?.transform);
             }
         }
 
         /// <summary>
         /// 카드 포함 여부 확인 (외부에서 조회용)
         /// </summary>
-        public bool Contains(Transform card)
-        {
-            return cards.Contains(card);
-        }
+        public bool Contains(Transform card) => cards.Contains(card);
 
         /// <summary>
         /// 카드 제거 후 배치 갱신
         /// </summary>
         public void RemoveCard(Transform card)
         {
-            if (cards.Contains(card))
-            {
-                cards.Remove(card);
-                UpdateLayout();
-            }
+            if (!cards.Contains(card)) return;
+            cards.Remove(card);
+            UpdateLayout();
         }
 
         /// <summary>
@@ -97,8 +112,8 @@ namespace Objects
         /// </summary>
         private void AddHover(Transform card)
         {
-            if (!card.TryGetComponent(out CardMotion hover))
-                hover = card.gameObject.AddComponent<CardMotion>();
+            if (!card.TryGetComponent<CardMotion>(out _))
+                card.gameObject.AddComponent<CardMotion>();
         }
 
         /// <summary>
@@ -107,9 +122,7 @@ namespace Objects
         private void AddDragHandler(Transform card)
         {
             if (!card.TryGetComponent<DragHandler>(out _))
-            {
                 card.gameObject.AddComponent<DragHandler>();
-            }
         }
     }
 }

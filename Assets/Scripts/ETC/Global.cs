@@ -11,12 +11,16 @@ public static class Global
     public static readonly Color Green = HexToColor("#18AD83");
     public static readonly Color Purple = HexToColor("#6855B2");
     public static readonly Color Yellow = HexToColor("#DB8E3D");
+    public static readonly Color GlowGreen = HexToColor("#05FF00"); // 연두 Glow
+    public static readonly Color GlowRed = HexToColor("#FF000A");   // 붉은 Glow
 
     // 주요 색상 (HEX 값)
     public static readonly string RedHex = "#BE373B";
     public static readonly string GreenHex = "#18AD83";
     public static readonly string PurpleHex = "#6855B2";
     public static readonly string YellowHex = "#DB8E3D";
+    public static readonly string GlowGreenHex = "#05FF00";
+    public static readonly string GlowRedHex = "#FF000A";
 
     // 색상을 문자열로 가져오는 함수
     public static Color GetColorByName(string colorName)
@@ -40,6 +44,7 @@ public static class Global
         }
         return Color.white; // 기본값 (변환 실패 시 흰색)
     }
+
     #endregion
 
     #region Symbols
