@@ -28,6 +28,16 @@ namespace Objects
 
         private readonly List<Transform> cards = new List<Transform>();
 
+        public static Transform AllZonesRoot { get; private set; }
+
+        private void Awake()
+        {
+            if (AllZonesRoot == null)
+            {
+                AllZonesRoot = transform.parent;
+            }
+        }
+
         /// <summary>
         /// 카드 추가 후 배치 갱신
         /// </summary>
@@ -124,5 +134,7 @@ namespace Objects
             if (!card.TryGetComponent<DragHandler>(out _))
                 card.gameObject.AddComponent<DragHandler>();
         }
+
+
     }
 }

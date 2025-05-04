@@ -1,6 +1,7 @@
+using Manager;
+using System;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Events;
 
 namespace Objects
 {
@@ -11,17 +12,25 @@ namespace Objects
     /// </summary>
     public class Card : MonoBehaviour, ICard
     {
-        [Header("Display")]
-        [SerializeField] private TextMeshPro testText; // 클릭 시 이름 출력용 텍스트
+        private TextMeshPro cardText;
+        private SpriteRenderer spriteRenderer;
 
-        [Header("Events")]
-        public UnityEvent<Card> onClicked; // 외부에서 구독 가능한 카드 클릭 이벤트
+        public static event Action<Card> onClicked; // 외부에서 구독 가능한 카드 클릭 이벤트
+        public static event Action<Transform> OnCardDropped; // 카드가 드래그에서 해제됐을 때 알림
+
+        public CardZone.ZoneType CurrentZoneType { get; private set; }
+        public CardZone.OwnerType CurrentOwnerType { get; private set; }
+        public bool IsSecret { get; private set; }
 
         private ObjectMouseEvent mouseEvent;
+
+        private static readonly string SecretSpriteName = "color_back 1_0";
 
         private void Awake()
         {
             mouseEvent = GetComponentInChildren<ObjectMouseEvent>();
+            cardText = GetComponentInChildren<TextMeshPro>();
+            spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         }
 
         private void OnEnable()
@@ -53,13 +62,38 @@ namespace Objects
         }
 
         /// <summary>
+        /// 카드를 비밀 상태로 설정하거나 해제합니다.
+        /// </summary>
+        public void SetSecret(bool isSecret)
+        {
+            IsSecret = isSecret;
+
+            if (cardText != null)
+                cardText.gameObject.SetActive(!isSecret);
+
+            if (spriteRenderer != null)
+            {
+                if (isSecret)
+                {
+                    var secretSprite = ResourcesManager.Instance.GetSprite(Global.Card, SecretSpriteName);
+                    if (secretSprite != null)
+                        spriteRenderer.sprite = secretSprite;
+                    else
+                        Debug.LogWarning($"[Card] Secret Sprite '{SecretSpriteName}' not found.");
+                }
+                else
+                {
+                    // 원래 Sprite로 되돌릴 로직이 필요하면 여기에 작성
+                    spriteRenderer.sprite = ResourcesManager.Instance.GetPlayerSprite();
+                }
+            }
+        }
+
+        /// <summary>
         /// 클릭 시 실행되는 내부 로직
         /// </summary>
         private void HandleClick()
         {
-            if (testText != null)
-                testText.text = gameObject.name;
-
             Debug.Log($"[Card] Clicked: {gameObject.name}");
             onClicked?.Invoke(this);
         }
@@ -69,6 +103,9 @@ namespace Objects
         /// </summary>
         public void SetInteraction(CardZone.ZoneType zoneType, CardZone.OwnerType ownerType)
         {
+            CurrentZoneType = zoneType;
+            CurrentOwnerType = ownerType;
+
             if (zoneType == CardZone.ZoneType.Hand && ownerType == CardZone.OwnerType.Player)
                 ApplyInteraction(CardInteractionType.DragAndClick);
             else if (zoneType == CardZone.ZoneType.Field)
@@ -94,13 +131,7 @@ namespace Objects
         /// </summary>
         private void HandleEndDrag()
         {
-            var detector = FindAnyObjectByType<CardPlayDetector>();
-            if (detector == null) return;
-
-            if (detector.IsCardInside(transform))
-            {
-                detector.TryPlayCard(transform);
-            }
+            OnCardDropped?.Invoke(transform); // Detector가 이걸 받아 처리
         }
 
         /// <summary>

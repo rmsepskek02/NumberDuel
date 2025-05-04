@@ -76,7 +76,8 @@ public class CardText : MonoBehaviour
     // TODO :: TEST 함수
     public string GenerateRandomNumberString()
     {
-        int randomNumber = Random.Range(1, 1_000_003); // 최대값은 1_000_000_000 포함되게
+        //int randomNumber = Random.Range(1, 1_000_003); // 최대값은 1_000_000_000 포함되게
+        int randomNumber = Random.Range(1, 6); // 최대값은 1_000_000_000 포함되게
         return randomNumber.ToString();
     }
 }

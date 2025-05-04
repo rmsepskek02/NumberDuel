@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using UnityEngine;
 
 namespace Objects
@@ -10,15 +12,54 @@ namespace Objects
         [Tooltip("카드가 낼 때 이동할 Zone")]
         [SerializeField] private CardZone targetZone;
 
-        [Tooltip("모든 Zone들이 등록된 상위 오브젝트")]
-        [SerializeField] private Transform allZonesRoot;
+        [Tooltip("카드 모드 선택을 표시하는 셀렉터")]
+        [SerializeField] private CardModeSelector cardModeSelector;
 
         private BoxCollider detectorCollider;
+
+        public static event Action<Transform, CardZone> OnCardPlayRequested;
 
         private void Awake()
         {
             detectorCollider = GetComponent<BoxCollider>();
+
+            cardModeSelector = FindFirstObjectByType<CardModeSelector>();
+            if (cardModeSelector == null)
+            {
+                Debug.LogError("[CardPlayDetector] CardModeSelector를 씬에서 찾을 수 없습니다.");
+            }
         }
+
+        private void OnEnable()
+        {
+            Card.OnCardDropped += HandleCardDropped;
+            Card.onClicked += HandleCardClicked;
+        }
+
+        private void OnDisable()
+        {
+            Card.OnCardDropped -= HandleCardDropped;
+            Card.onClicked -= HandleCardClicked;
+        }
+
+        private void HandleCardDropped(Transform card)
+        {
+            if (!IsCardInside(card))
+                return;
+
+            TryPlayCard(card);
+        }
+
+        private void HandleCardClicked(Card card)
+        {
+            // 카드가 손패이고 플레이어 소유일 때만 플레이 요청 처리
+            if (card.CurrentZoneType == CardZone.ZoneType.Hand 
+                && card.CurrentOwnerType == CardZone.OwnerType.Player)
+            {
+                TryPlayCard(card.transform);
+            }
+        }
+
 
         /// <summary>
         /// 해당 카드가 이 Detector 영역 안에 있는지 판단
@@ -31,62 +72,35 @@ namespace Objects
         }
 
         /// <summary>
-        /// 카드 낸 처리 수행
+        /// 카드 낸 처리 수행 (모드 선택을 위해 CardModeSelector를 활성화)
         /// </summary>
         public void TryPlayCard(Transform card)
         {
+            // 카드 움직임 정지 및 초기화
             var motion = card.GetComponentInChildren<CardMotion>();
             if (motion != null)
             {
-                motion?.LockAndReset();
-            }
-            else
-            {
-                Debug.LogWarning(">>> CardMotion NOT FOUND");
+                motion.LockAndReset();
             }
 
-            var fromZone = FindCurrentZone(card);
-            if (fromZone != null)
-                fromZone.RemoveCard(card);
-
+            // 드래그와 Hover 컴포넌트 제거
             RemoveGameplayComponents(card);
-            targetZone.AddCard(card);
-        }
 
-        /// <summary>
-        /// 카드가 현재 속해있는 CardZone 부모 오브젝트 찾는 함수
-        /// </summary>
-        /// <param name="card">드래그하여 움직인 카드</param>
-        /// <returns>CardZone 부모 오브젝트</returns>
-        private CardZone FindCurrentZone(Transform card)
-        {
-            if (allZonesRoot == null) return null;
-
-            foreach (var zone in allZonesRoot.GetComponentsInChildren<CardZone>())
-            {
-                if (zone.Contains(card))
-                    return zone;
-            }
-
-            return null;
+            // 카드 모드 선택 요청 이벤트 발행
+            OnCardPlayRequested?.Invoke(card, targetZone);
         }
 
         /// <summary>
         /// DragHandler와 CardMotion 제거 하는 함수
         /// </summary>
-        /// <param name="card">드래그하여 움직인 카드</param>
         private void RemoveGameplayComponents(Transform card)
         {
-            // 카드 루트에 붙은 DragHandler 제거
             if (card.TryGetComponent(out DragHandler drag))
                 Destroy(drag);
 
-            // 카드 내부에 있는 Hover용 CardMotion 제거
             var motion = card.GetComponentInChildren<CardMotion>();
             if (motion != null)
-            {
                 Destroy(motion);
-            }
         }
     }
 }
