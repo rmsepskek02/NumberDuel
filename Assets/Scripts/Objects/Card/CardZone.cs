@@ -134,7 +134,5 @@ namespace Objects
             if (!card.TryGetComponent<DragHandler>(out _))
                 card.gameObject.AddComponent<DragHandler>();
         }
-
-
     }
 }

@@ -5,6 +5,8 @@ public class CardText : MonoBehaviour
 {
     public TextMeshPro textMesh; // TextMeshPro 참조
     private string _textValue = "1";  // 기본값 (초기 숫자)
+    private long _rawValue = 1; // 원래 숫자 값도 보관
+    public long RawValue => _rawValue; // 외부에서 원본 접근 가능
 
     // 프로퍼티 (숫자 또는 기호를 저장)
     public string TextValue
@@ -12,15 +14,19 @@ public class CardText : MonoBehaviour
         get { return _textValue; }
         set
         {
-            // 숫자 또는 기호인지 검사
             if (IsValidInput(value))
             {
-                _textValue = FormatNumber(value); // 변환된 값 저장
+                if (long.TryParse(value, out var parsed))
+                {
+                    _rawValue = parsed; // 원본 저장
+                    _textValue = FormatNumber(value); // 표시용 저장
+                }
+                else
+                {
+                    _textValue = value; // 기호일 경우
+                }
+
                 UpdateText();
-            }
-            else
-            {
-                Debug.LogWarning($"CardText: '{value}'는 허용되지 않는 값입니다.");
             }
         }
     }

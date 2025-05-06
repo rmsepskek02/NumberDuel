@@ -2,6 +2,7 @@ using UnityEngine;
 using Objects;
 using Manager;
 using TMPro;
+using DG.Tweening;
 
 /// <summary>
 /// 사용자가 카드를 드래그해 필드로 가져오면,
@@ -16,20 +17,32 @@ public class CardModeSelector : MonoBehaviour
     [SerializeField] private CardModeOption secretOption;
     [SerializeField] private TextMeshPro openValueText;
 
+    //[SerializeField] private ObjectMouseEvent cancelButtonEvent;
+
     private Transform pendingCard;
     private CardZone targetZone;
+    private ObjectMouseEvent bgClick;
+    [SerializeField] private float maxScale = 30f;
 
     private void Start()
     {
         openOption.SetSelector(this);
         secretOption.SetSelector(this);
 
-        // Open 카드 Sprite를 현재 플레이어 카드로 설정
-        var sr = openOption.GetComponentInChildren<SpriteRenderer>();
+        // 배경 클릭 시 Cancel 처리
+        bgClick = dimBackground.GetComponent<ObjectMouseEvent>();
+        if (bgClick != null)
+            bgClick.OnClickReleased += OnCancelPressed;
+
+        // Open 카드 Sprite 설정
+        SpriteRenderer sr = openOption.GetComponentInChildren<SpriteRenderer>();
         if (sr != null)
             sr.sprite = ResourcesManager.Instance.GetPlayerSprite();
 
-        SetUIActive(false); // 시작 시 UI 비활성화
+        //if (cancelButtonEvent != null)
+        //    cancelButtonEvent.OnClickReleased += OnCancelPressed;
+
+        SetUIActive(false);
     }
 
     private void OnEnable()
@@ -40,6 +53,9 @@ public class CardModeSelector : MonoBehaviour
     private void OnDisable()
     {
         CardPlayDetector.OnCardPlayRequested -= HandleCardPlayRequested;
+        
+        if (bgClick != null)
+            bgClick.OnClickReleased -= OnCancelPressed;
     }
 
     private void HandleCardPlayRequested(Transform card, CardZone zone)
@@ -58,12 +74,28 @@ public class CardModeSelector : MonoBehaviour
 
         SetUIActive(true);
 
-        // 카드의 숫자 텍스트 → Open UI에 표시
+        // 초기 스케일 설정
+        openOption.transform.localScale = Vector3.zero;
+        secretOption.transform.localScale = Vector3.zero;
+
+        // 카드 텍스트 설정
         var cardText = card.GetComponentInChildren<CardText>();
         if (cardText != null && openValueText != null)
         {
             openValueText.text = "Open\n" + cardText.TextValue;
         }
+
+        // DOTween 애니메이션 실행
+        float duration = 0.2f;
+        Ease easeType = Ease.OutBack;
+
+        openOption.transform
+            .DOScale(Vector3.one * maxScale, duration)
+            .SetEase(easeType);
+
+        secretOption.transform
+            .DOScale(Vector3.one * maxScale, duration)
+            .SetEase(easeType);
     }
 
     /// <summary>
@@ -102,6 +134,16 @@ public class CardModeSelector : MonoBehaviour
                     break;
                 }
             }
+
+            // Open으로 낸 카드만, 필드에 있을 때, 이번 턴에 수정된 적이 없어야 공격 가능
+            bool isField = targetZone.Zone == CardZone.ZoneType.Field;
+            bool isPlayerCard = targetZone.Owner == CardZone.OwnerType.Player;
+            bool isOpen = mode == CardModeType.Open;
+
+            if (isField && isPlayerCard)
+            {
+                cardComponent.SetCanAttack(isOpen);
+            }
         }
 
         // Secret 모드일 경우 시각 효과 적용
@@ -113,6 +155,13 @@ public class CardModeSelector : MonoBehaviour
         {
             cardComponent.SetSecret(false);
         }
+
+        // 이 시점에서 CardMotion/DragHandler 제거
+        DragHandler drag = pendingCard.GetComponent<DragHandler>();
+        if (drag != null) Destroy(drag);
+
+        CardMotion motion = pendingCard.GetComponentInChildren<CardMotion>();
+        if (motion != null) Destroy(motion);
 
         // Zone에 카드 추가
         targetZone.AddCard(pendingCard);

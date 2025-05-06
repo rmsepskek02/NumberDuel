@@ -25,14 +25,14 @@ public static class Global
     // 색상을 문자열로 가져오는 함수
     public static Color GetColorByName(string colorName)
     {
-        switch (colorName.ToLower())
-        {
-            case "red": return Red;
-            case "green": return Green;
-            case "purple": return Purple;
-            case "yellow": return Yellow;
-            default: return Color.white; // 기본값 (흰색)
-        }
+        string lower = colorName.ToLower();
+
+        if (lower.Contains("red")) return Red;
+        if (lower.Contains("green")) return Green;
+        if (lower.Contains("yellow")) return Yellow;
+        if (lower.Contains("purple")) return Purple;
+
+        return Color.white;
     }
 
     // HEX → RGB 변환 함수

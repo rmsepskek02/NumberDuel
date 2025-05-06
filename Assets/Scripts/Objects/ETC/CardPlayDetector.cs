@@ -83,9 +83,6 @@ namespace Objects
                 motion.LockAndReset();
             }
 
-            // 드래그와 Hover 컴포넌트 제거
-            RemoveGameplayComponents(card);
-
             // 카드 모드 선택 요청 이벤트 발행
             OnCardPlayRequested?.Invoke(card, targetZone);
         }
@@ -93,14 +90,14 @@ namespace Objects
         /// <summary>
         /// DragHandler와 CardMotion 제거 하는 함수
         /// </summary>
-        private void RemoveGameplayComponents(Transform card)
-        {
-            if (card.TryGetComponent(out DragHandler drag))
-                Destroy(drag);
+        //private void RemoveGameplayComponents(Transform card)
+        //{
+        //    if (card.TryGetComponent(out DragHandler drag))
+        //        Destroy(drag);
 
-            var motion = card.GetComponentInChildren<CardMotion>();
-            if (motion != null)
-                Destroy(motion);
-        }
+        //    var motion = card.GetComponentInChildren<CardMotion>();
+        //    if (motion != null)
+        //        Destroy(motion);
+        //}
     }
 }

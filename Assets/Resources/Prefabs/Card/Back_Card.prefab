@@ -87,7 +87,7 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 2
+  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!65 &169892306174392782
 BoxCollider:
@@ -172,10 +172,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c96a6efb367abc846837da687dd68a6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  testText: {fileID: 0}
-  onClicked:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!114 &7503285677522806382
 MonoBehaviour:
   m_ObjectHideFlags: 0

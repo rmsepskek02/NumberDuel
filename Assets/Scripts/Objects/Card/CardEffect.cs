@@ -38,6 +38,12 @@ namespace Objects
 
         public void SetGlow(bool enable)
         {
+            if (!gameObject.activeInHierarchy)
+            {
+                Debug.LogWarning($"[CardEffect] {gameObject.name} is inactive. Cannot start Coroutine.");
+                return;
+            }
+
             float target = enable ? 1f : 0f;
 
             if (glowRoutine != null)

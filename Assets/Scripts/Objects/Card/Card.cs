@@ -21,6 +21,9 @@ namespace Objects
         public CardZone.ZoneType CurrentZoneType { get; private set; }
         public CardZone.OwnerType CurrentOwnerType { get; private set; }
         public bool IsSecret { get; private set; }
+        public bool CanAttack { get; private set; } = false;
+        public bool WasModifiedThisTurn { get; private set; } = false;
+        public bool IsOpen => !IsSecret;
 
         private ObjectMouseEvent mouseEvent;
 
@@ -87,6 +90,38 @@ namespace Objects
                     spriteRenderer.sprite = ResourcesManager.Instance.GetPlayerSprite();
                 }
             }
+        }
+
+        public void SetCanAttack(bool canAttack)
+        {
+            CanAttack = canAttack;
+
+            var effect = GetComponentInChildren<CardEffect>();
+            if (effect != null)
+            {
+                effect.SetGlow(canAttack); // Glow 켜기/끄기
+
+                // 색상 설정 (기본: 내 카드 = 연두색)
+                if (canAttack)
+                {
+                    Color glowColor = CurrentOwnerType == CardZone.OwnerType.Player
+                        ? Global.GlowGreen
+                        : Global.GlowRed;
+
+                    effect.LerpGlowColor(glowColor, 0.2f); // 부드럽게 색 변경
+                }
+            }
+        }
+
+        public void SetWasModifiedThisTurn(bool modified)
+        {
+            WasModifiedThisTurn = modified;
+            if (modified) SetCanAttack(false);
+        }
+
+        public bool IsAttackableThisTurn()
+        {
+            return IsOpen && !WasModifiedThisTurn;
         }
 
         /// <summary>
