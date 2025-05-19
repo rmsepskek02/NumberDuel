@@ -78,6 +78,10 @@ public static class Global
     public static readonly string ImgColorRedEmpty = "color_red_empty";
     #endregion
 
+    #region Resources - Sprite Names
+    public static readonly string SpriteColorBlack = "color_back 1_0";
+    #endregion
+
     // 사용법 Sample
     // Color selectedColor = Global.GetColorByName("red"); // 빨간색 반환
     // textMeshPro.color = Global.Purple; // 보라색 적용

@@ -27,8 +27,6 @@ namespace Objects
 
         private ObjectMouseEvent mouseEvent;
 
-        private static readonly string SecretSpriteName = "color_back 1_0";
-
         private void Awake()
         {
             mouseEvent = GetComponentInChildren<ObjectMouseEvent>();
@@ -78,11 +76,11 @@ namespace Objects
             {
                 if (isSecret)
                 {
-                    var secretSprite = ResourcesManager.Instance.GetSprite(Global.Card, SecretSpriteName);
+                    var secretSprite = ResourcesManager.Instance.GetSprite(Global.Card, Global.SpriteColorBlack);
                     if (secretSprite != null)
                         spriteRenderer.sprite = secretSprite;
                     else
-                        Debug.LogWarning($"[Card] Secret Sprite '{SecretSpriteName}' not found.");
+                        Debug.LogWarning($"[Card] Secret Sprite '{Global.SpriteColorBlack}' not found.");
                 }
                 else
                 {

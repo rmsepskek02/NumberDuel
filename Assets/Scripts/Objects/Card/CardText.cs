@@ -43,6 +43,17 @@ public class CardText : MonoBehaviour
         UpdateText(); // 초기 텍스트 표시
     }
 
+    /// <summary>
+    /// RawValue를 외부에서 변경할 수 있도록 하는 메서드.
+    /// 내부적으로 표시용 텍스트도 자동으로 갱신됩니다.
+    /// </summary>
+    public void SetRawValue(long newValue)
+    {
+        _rawValue = newValue;
+        _textValue = FormatNumber(newValue.ToString());
+        UpdateText();
+    }
+
     void UpdateText()
     {
         if (textMesh != null)

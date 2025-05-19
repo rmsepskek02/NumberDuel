@@ -70,6 +70,25 @@ namespace Manager
             expressionCards[0].SetValue(cardText.TextValue);
             expressionCards[0].SetSprite(sprite);
             expressionCards[0].SetTextColor(Global.GetColorByName(sprite.name));
+            expressionCards[0].SetTextVisible(true);
+        }
+
+        /// <summary>
+        /// 수식존 첫 번째 카드 (플레이어 카드 영역)를 초기화합니다.
+        /// - 중립 스프라이트 사용
+        /// - 텍스트 숨김
+        /// </summary>
+        public void ClearMyCard()
+        {
+            var card = expressionCards[0];
+            var neutralSprite = ResourcesManager.Instance.GetSprite(Global.Card, Global.SpriteColorBlack);
+
+            if (card != null)
+            {
+                card.SetSprite(neutralSprite);
+                card.SetValue("");
+                card.SetTextVisible(false);
+            }
         }
 
         /// <summary>
@@ -86,6 +105,7 @@ namespace Manager
             expressionCards[2].SetValue(cardText.TextValue);
             expressionCards[2].SetSprite(sprite);
             expressionCards[2].SetTextColor(Global.GetColorByName(sprite.name));
+            expressionCards[2].SetTextVisible(true); // 텍스트 다시 보이도록
         }
 
         /// <summary>
@@ -107,6 +127,7 @@ namespace Manager
         /// <summary>
         /// 다섯 번째 카드(4번 슬롯)에 연산 결과를 표시한다.
         /// 결과값의 부호에 따라 Sprite와 텍스트 색상을 설정한다.
+        /// 결과가 0이면 중립 스프라이트 및 흰색 텍스트 사용.
         /// </summary>
         public void DisplayResult(Card myCard, Card opponentCard)
         {
@@ -121,13 +142,27 @@ namespace Manager
             long result = myValue - opponentValue;
             string display = Mathf.Abs(result).ToString();
 
-            var sprite = result >= 0
+            // 결과가 0인 경우: 중립 스프라이트 + 흰색 텍스트
+            if (result == 0)
+            {
+                Sprite neutralSprite = ResourcesManager.Instance.GetSprite(Global.Card, Global.SpriteColorBlack);
+
+                expressionCards[4].SetValue(display);
+                expressionCards[4].SetSprite(neutralSprite);
+                expressionCards[4].SetTextColor(Color.white);
+                expressionCards[4].SetTextVisible(true); // 누락된 텍스트 표시
+                return;
+            }
+
+            // 양수/음수일 경우: 플레이어 or 상대 스프라이트
+            var sprite = result > 0
                 ? ResourcesManager.Instance.GetPlayerSprite()
                 : ResourcesManager.Instance.GetOpponentSprite();
 
             expressionCards[4].SetValue(display);
             expressionCards[4].SetSprite(sprite);
             expressionCards[4].SetTextColor(Global.GetColorByName(sprite.name));
+            expressionCards[4].SetTextVisible(true); // 누락된 텍스트 표시
         }
 
         /// <summary>
@@ -140,5 +175,28 @@ namespace Manager
             SetOpponentCard(opponentCard);
             DisplayResult(myCard, opponentCard);
         }
+
+        /// <summary>
+        /// 수식존의 상대 카드(3번 슬롯)와 결과 카드(5번 슬롯)를 초기화한다.
+        /// - 중립 스프라이트로 설정
+        /// - 텍스트는 비우고 숨긴다
+        /// </summary>
+        public void ClearOpponentAndResult()
+        {
+            // 3번 슬롯: 상대 카드
+            var opponentCard = expressionCards[2];
+            var neutralSprite = ResourcesManager.Instance.GetSprite(Global.Card, Global.SpriteColorBlack);
+
+            opponentCard.SetSprite(neutralSprite);
+            opponentCard.SetValue("");
+            opponentCard.SetTextVisible(false);
+
+            // 5번 슬롯: 결과 카드
+            var resultCard = expressionCards[4];
+            resultCard.SetSprite(neutralSprite);
+            resultCard.SetValue("");
+            resultCard.SetTextVisible(false);
+        }
+
     }
 }

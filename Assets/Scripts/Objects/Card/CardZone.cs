@@ -1,8 +1,5 @@
-using Photon.Realtime;
 using System.Collections.Generic;
 using UnityEngine;
-using Manager;
-using UnityEngine.AdaptivePerformance.VisualScripting;
 
 namespace Objects
 {
