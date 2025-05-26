@@ -10,9 +10,14 @@ namespace Objects
     /// - ICard 구현을 통해 Zone에서 인터랙션 설정을 받을 수 있음
     /// - ObjectMouseEvent로부터 클릭 이벤트를 수신함
     /// </summary>
+
+    public enum CardType { Number, Operator, Joker }
+    public enum OperatorType { Plus, Minus, Multiply, Divide }
+
     public class Card : MonoBehaviour, ICard
     {
-        private TextMeshPro cardText;
+        private TextMeshPro cardTMP;
+        private CardText cardText;
         private SpriteRenderer spriteRenderer;
 
         public static event Action<Card> onClicked; // 외부에서 구독 가능한 카드 클릭 이벤트
@@ -20,6 +25,8 @@ namespace Objects
 
         public CardZone.ZoneType CurrentZoneType { get; private set; }
         public CardZone.OwnerType CurrentOwnerType { get; private set; }
+        public CardType CardType { get; private set; } = CardType.Number;
+        public OperatorType OperatorType { get; private set; }
         public bool IsSecret { get; private set; }
         public bool CanAttack { get; private set; } = false;
         public bool WasModifiedThisTurn { get; private set; } = false;
@@ -30,8 +37,10 @@ namespace Objects
         private void Awake()
         {
             mouseEvent = GetComponentInChildren<ObjectMouseEvent>();
-            cardText = GetComponentInChildren<TextMeshPro>();
+            cardTMP = GetComponentInChildren<TextMeshPro>();
             spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+            if (cardText == null)
+                cardText = GetComponentInChildren<CardText>();
         }
 
         private void OnEnable()
@@ -62,6 +71,21 @@ namespace Objects
             mouseEvent.OnEndDrag -= HandleEndDrag;
         }
 
+        // 카드 초기화 함수: 숫자 카드
+        public void InitializeAsNumber(long value)
+        {
+            CardType = CardType.Number;
+            cardText.SetRawValue(value);
+        }
+
+        // 카드 초기화 함수: 연산자 카드
+        public void InitializeAsOperator(OperatorType opType)
+        {
+            CardType = CardType.Operator;
+            OperatorType = opType;
+            cardText.SetOperatorText(opType);
+        }
+
         /// <summary>
         /// 카드를 비밀 상태로 설정하거나 해제합니다.
         /// </summary>
@@ -69,8 +93,8 @@ namespace Objects
         {
             IsSecret = isSecret;
 
-            if (cardText != null)
-                cardText.gameObject.SetActive(!isSecret);
+            if (cardTMP != null)
+                cardTMP.gameObject.SetActive(!isSecret);
 
             if (spriteRenderer != null)
             {
@@ -90,23 +114,32 @@ namespace Objects
             }
         }
 
-        public void SetCanAttack(bool canAttack)
+        /// <summary>
+        /// 카드의 공격 가능 상태와 GLOW 색상을 지정하는 일반화된 함수
+        /// </summary>
+        /// <param name="isAttackable">공격 가능 여부 (내 턴에 클릭 가능)</param>
+        /// <param name="glowColor">GLOW 색상 (null이면 자동 지정)</param>
+        public void SetCardState(bool isAttackable, Color? glowColor = null)
         {
-            CanAttack = canAttack;
+            CanAttack = isAttackable;
 
             var effect = GetComponentInChildren<CardEffect>();
             if (effect != null)
             {
-                effect.SetGlow(canAttack); // Glow 켜기/끄기
+                // GLOW 토글
+                effect.SetGlow(isAttackable);
 
-                // 색상 설정 (기본: 내 카드 = 연두색)
-                if (canAttack)
+                // GLOW 색상 지정
+                if (isAttackable)
                 {
-                    Color glowColor = CurrentOwnerType == CardZone.OwnerType.Player
-                        ? Global.GlowGreen
-                        : Global.GlowRed;
+                    // 전달된 색상이 없으면 자동 분기
+                    Color colorToUse = glowColor ?? (
+                        CurrentOwnerType == CardZone.OwnerType.Player
+                            ? Global.GlowGreen
+                            : Global.GlowRed
+                    );
 
-                    effect.LerpGlowColor(glowColor, 0.2f); // 부드럽게 색 변경
+                    effect.LerpGlowColor(colorToUse, 0.2f);
                 }
             }
         }
@@ -114,7 +147,7 @@ namespace Objects
         public void SetWasModifiedThisTurn(bool modified)
         {
             WasModifiedThisTurn = modified;
-            if (modified) SetCanAttack(false);
+            if (modified) SetCardState(false);
         }
 
         public bool IsAttackableThisTurn()
@@ -128,6 +161,16 @@ namespace Objects
         private void HandleClick()
         {
             Debug.Log($"[Card] Clicked: {gameObject.name}");
+
+            // 연산자 카드일 경우: 일반 클릭 이벤트 대신 OperatorManager 호출
+            if (CardType == CardType.Operator &&
+                CurrentZoneType == CardZone.ZoneType.Hand &&
+                CurrentOwnerType == CardZone.OwnerType.Player)
+            {
+                OperatorManager.Instance.EnterOperatorMode(this);
+                return; // 기본 onClicked 이벤트 방지
+            }
+
             onClicked?.Invoke(this);
         }
 
@@ -164,6 +207,22 @@ namespace Objects
         /// </summary>
         private void HandleEndDrag()
         {
+            // 연산 중이면 드롭 처리 무시
+            if (OperatorManager.Instance.IsInOperatorMode)
+            {
+                Debug.Log("[Card] 연산 중이므로 드래그 무시");
+                return;
+            }
+
+            // 연산자 카드일 경우: 드롭 시 OperatorManager 호출
+            if (CardType == CardType.Operator &&
+                CurrentZoneType == CardZone.ZoneType.Hand &&
+                CurrentOwnerType == CardZone.OwnerType.Player)
+            {
+                OperatorManager.Instance.EnterOperatorMode(this);
+                return;
+            }
+
             OnCardDropped?.Invoke(transform); // Detector가 이걸 받아 처리
         }
 

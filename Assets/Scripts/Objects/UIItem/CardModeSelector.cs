@@ -142,7 +142,7 @@ public class CardModeSelector : MonoBehaviour
 
             if (isField && isPlayerCard)
             {
-                cardComponent.SetCanAttack(isOpen);
+                cardComponent.SetCardState(isOpen);
             }
         }
 

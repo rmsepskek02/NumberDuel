@@ -1,3 +1,4 @@
+using Manager;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -42,6 +43,15 @@ namespace Objects
         {
             if (cards.Contains(card)) return;
 
+            Card cardComponent = card.GetComponent<Card>();
+
+            // 연산자 카드는 Field Zone에 추가 금지
+            if (zoneType == ZoneType.Field && cardComponent != null && cardComponent.CardType == CardType.Operator)
+            {
+                Debug.Log($"[CardZone] 연산자 카드는 필드에 배치할 수 없습니다: {card.name}");
+                return;
+            }
+
             cards.Add(card);
             card.SetParent(transform);
 
@@ -71,6 +81,9 @@ namespace Objects
                 var glow = card.GetComponentInChildren<CardEffect>();
                 if (glow != null)
                     glow.enabled = true;
+
+                if (cardComponent != null)
+                    InGameManager.Instance.RegisterFieldCard(cardComponent);
             }
 
             UpdateLayout();
@@ -93,6 +106,10 @@ namespace Objects
         public void RemoveCard(Transform card)
         {
             if (!cards.Contains(card)) return;
+
+            Card cardComponent = card.GetComponent<Card>();
+            if (cardComponent != null)
+                InGameManager.Instance.UnregisterFieldCard(cardComponent);
             cards.Remove(card);
             UpdateLayout();
         }

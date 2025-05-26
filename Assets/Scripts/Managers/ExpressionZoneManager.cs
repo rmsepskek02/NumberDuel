@@ -2,6 +2,7 @@ using UnityEngine;
 using Objects;
 using System.Linq;
 using Expression;
+using Utills;
 
 namespace Manager
 {
@@ -12,191 +13,164 @@ namespace Manager
     /// - 결과값 계산 및 표시
     /// - 스프라이트에 따라 텍스트 색상 동기화
     /// </summary>
-    public class ExpressionZoneManager : MonoBehaviour
+    public class ExpressionZoneManager : Singleton<ExpressionZoneManager>
     {
         [Header("카드 정렬 대상 Zone")]
         [SerializeField] private CardZone expressionZone;
 
-        // ExpressionCard: 연산식에 사용되는 5개의 카드 (순서 중요: 0~4)
         private ExpressionCard[] expressionCards;
+        private Sprite neutralSprite;
 
+        /// <summary>
+        /// 시작 시 표현식 카드 정렬 및 초기화 수행
+        /// </summary>
         private void Start()
         {
-            // ExpressionZone이 할당되지 않은 경우, 부모에서 자동 검색
             if (expressionZone == null)
-            {
                 expressionZone = GetComponentInParent<CardZone>();
-            }
 
-            // 자식 오브젝트 중 ExpressionCard가 붙은 오브젝트를 이름순으로 정렬하여 수집
+            // 슬롯들을 이름 기준으로 정렬
             expressionCards = GetComponentsInChildren<ExpressionCard>(includeInactive: true)
                 .OrderBy(card => card.name)
                 .ToArray();
 
-            // 수집된 카드를 expressionZone에 등록하여 배치 정렬 수행
-            if (expressionZone != null)
+            // Zone에 정렬 등록
+            foreach (var card in expressionCards)
             {
-                foreach (var card in expressionCards)
-                {
-                    if (card != null)
-                    {
-                        expressionZone.AddCard(card.transform);
-                    }
-                }
-
-                expressionZone.UpdateLayout(); // 카드 정렬 실행
-            }
-            else
-            {
-                Debug.LogWarning("[ExpressionZoneManager] ExpressionZone이 연결되지 않았습니다.");
+                expressionZone.AddCard(card.transform);
             }
 
-            // 고정된 기호 카드 설정
-            SetOperator("-");
+            expressionZone.UpdateLayout();
+
+            // 중립 스프라이트 로드
+            neutralSprite = ResourcesManager.Instance.GetSprite(Global.Card, Global.SpriteColorBlack);
+
+            // 수식존 초기화 (연산자 제외)
+            ConfigureSlot(0, "", null, false); // 내 카드
+            ConfigureSlot(2, "", null, false); // 상대 카드
+            ConfigureSlot(4, "", null, false); // 결과
             SetEqualSymbol();
         }
 
         /// <summary>
-        /// 첫 번째 카드(0번 슬롯)에 플레이어 카드의 값을 표시한다.
-        /// Sprite와 텍스트 색상도 함께 설정된다.
+        /// 지정한 슬롯에 텍스트/스프라이트/텍스트 활성 여부를 일괄 설정합니다.
         /// </summary>
-        public void SetMyCard(Card card)
+        /// <param name="index">슬롯 인덱스 (0~4)</param>
+        /// <param name="symbolText">표시할 텍스트나 기호</param>
+        /// <param name="sprite">표시할 카드 Sprite (null이면 중립 사용)</param>
+        /// <param name="showText">텍스트 표시 여부</param>
+        public void ConfigureSlot(int index, string symbolText, Sprite sprite = null, bool showText = true)
         {
-            var cardText = card.GetComponentInChildren<CardText>();
-            if (cardText == null) return;
-
-            var sprite = ResourcesManager.Instance.GetPlayerSprite();
-
-            expressionCards[0].SetValue(cardText.TextValue);
-            expressionCards[0].SetSprite(sprite);
-            expressionCards[0].SetTextColor(Global.GetColorByName(sprite.name));
-            expressionCards[0].SetTextVisible(true);
-        }
-
-        /// <summary>
-        /// 수식존 첫 번째 카드 (플레이어 카드 영역)를 초기화합니다.
-        /// - 중립 스프라이트 사용
-        /// - 텍스트 숨김
-        /// </summary>
-        public void ClearMyCard()
-        {
-            var card = expressionCards[0];
-            var neutralSprite = ResourcesManager.Instance.GetSprite(Global.Card, Global.SpriteColorBlack);
-
-            if (card != null)
+            if (index < 0 || index >= expressionCards.Length)
             {
-                card.SetSprite(neutralSprite);
-                card.SetValue("");
-                card.SetTextVisible(false);
-            }
-        }
-
-        /// <summary>
-        /// 세 번째 카드(2번 슬롯)에 상대 카드의 값을 표시한다.
-        /// Sprite와 텍스트 색상도 함께 설정된다.
-        /// </summary>
-        public void SetOpponentCard(Card card)
-        {
-            var cardText = card.GetComponentInChildren<CardText>();
-            if (cardText == null) return;
-
-            var sprite = ResourcesManager.Instance.GetOpponentSprite();
-
-            expressionCards[2].SetValue(cardText.TextValue);
-            expressionCards[2].SetSprite(sprite);
-            expressionCards[2].SetTextColor(Global.GetColorByName(sprite.name));
-            expressionCards[2].SetTextVisible(true); // 텍스트 다시 보이도록
-        }
-
-        /// <summary>
-        /// 두 번째 카드(1번 슬롯)에 연산 기호(기본은 "-")를 표시한다.
-        /// </summary>
-        public void SetOperator(string symbol)
-        {
-            expressionCards[1].SetSymbol(symbol);
-        }
-
-        /// <summary>
-        /// 네 번째 카드(3번 슬롯)에 "=" 기호를 고정으로 표시한다.
-        /// </summary>
-        public void SetEqualSymbol()
-        {
-            expressionCards[3].SetSymbol("=");
-        }
-
-        /// <summary>
-        /// 다섯 번째 카드(4번 슬롯)에 연산 결과를 표시한다.
-        /// 결과값의 부호에 따라 Sprite와 텍스트 색상을 설정한다.
-        /// 결과가 0이면 중립 스프라이트 및 흰색 텍스트 사용.
-        /// </summary>
-        public void DisplayResult(Card myCard, Card opponentCard)
-        {
-            var myText = myCard.GetComponentInChildren<CardText>();
-            var oppText = opponentCard.GetComponentInChildren<CardText>();
-
-            if (myText == null || oppText == null) return;
-
-            long myValue = myText.RawValue;
-            long opponentValue = oppText.RawValue;
-
-            long result = myValue - opponentValue;
-            string display = Mathf.Abs(result).ToString();
-
-            // 결과가 0인 경우: 중립 스프라이트 + 흰색 텍스트
-            if (result == 0)
-            {
-                Sprite neutralSprite = ResourcesManager.Instance.GetSprite(Global.Card, Global.SpriteColorBlack);
-
-                expressionCards[4].SetValue(display);
-                expressionCards[4].SetSprite(neutralSprite);
-                expressionCards[4].SetTextColor(Color.white);
-                expressionCards[4].SetTextVisible(true); // 누락된 텍스트 표시
+                Debug.LogWarning($"[ExpressionZoneManager] 잘못된 슬롯 인덱스: {index}");
                 return;
             }
 
-            // 양수/음수일 경우: 플레이어 or 상대 스프라이트
-            var sprite = result > 0
-                ? ResourcesManager.Instance.GetPlayerSprite()
-                : ResourcesManager.Instance.GetOpponentSprite();
+            var slot = expressionCards[index];
+            slot.SetValue(symbolText);
+            slot.SetSprite(sprite ?? neutralSprite);
+            slot.SetTextVisible(showText);
 
-            expressionCards[4].SetValue(display);
-            expressionCards[4].SetSprite(sprite);
-            expressionCards[4].SetTextColor(Global.GetColorByName(sprite.name));
-            expressionCards[4].SetTextVisible(true); // 누락된 텍스트 표시
+            // 텍스트 색상 설정 (Sprite가 있을 경우 색상 반영)
+            if (sprite != null)
+                slot.SetTextColor(Global.GetColorByName(sprite.name));
+            else
+                slot.SetTextColor(Color.white);
         }
 
         /// <summary>
-        /// 전체 수식을 한 번에 구성하고 표시할 때 사용.
-        /// 내부적으로 SetMyCard, SetOpponentCard, DisplayResult를 호출한다.
+        /// 내 카드의 값과 Sprite를 0번 슬롯에 표시합니다.
         /// </summary>
-        public void DisplayFullExpression(Card myCard, Card opponentCard)
+        public void SetMyCard(Card card)
         {
-            SetMyCard(myCard);
-            SetOpponentCard(opponentCard);
-            DisplayResult(myCard, opponentCard);
+            var text = card.GetComponentInChildren<CardText>()?.TextValue;
+            var sprite = card.GetComponentInChildren<SpriteRenderer>()?.sprite;
+            if (text == null || sprite == null) return;
+
+            ConfigureSlot(0, text, sprite, true);
         }
 
         /// <summary>
-        /// 수식존의 상대 카드(3번 슬롯)와 결과 카드(5번 슬롯)를 초기화한다.
-        /// - 중립 스프라이트로 설정
-        /// - 텍스트는 비우고 숨긴다
+        /// 상대 카드의 값과 Sprite를 2번 슬롯에 표시합니다.
         /// </summary>
-        public void ClearOpponentAndResult()
+        public void SetOpponentCard(Card card)
         {
-            // 3번 슬롯: 상대 카드
-            var opponentCard = expressionCards[2];
-            var neutralSprite = ResourcesManager.Instance.GetSprite(Global.Card, Global.SpriteColorBlack);
+            var text = card.GetComponentInChildren<CardText>()?.TextValue;
+            var sprite = card.GetComponentInChildren<SpriteRenderer>()?.sprite;
+            if (text == null || sprite == null) return;
 
-            opponentCard.SetSprite(neutralSprite);
-            opponentCard.SetValue("");
-            opponentCard.SetTextVisible(false);
-
-            // 5번 슬롯: 결과 카드
-            var resultCard = expressionCards[4];
-            resultCard.SetSprite(neutralSprite);
-            resultCard.SetValue("");
-            resultCard.SetTextVisible(false);
+            ConfigureSlot(2, text, sprite, true);
         }
 
+        /// <summary>
+        /// 연산자 카드(OperatorType)에 해당하는 기호와 스프라이트를 1번 슬롯에 표시합니다.
+        /// </summary>
+        public void SetOperatorCard(Card operatorCard)
+        {
+            if (operatorCard == null || operatorCard.CardType != CardType.Operator)
+            {
+                Debug.LogWarning("[ExpressionZoneManager] 잘못된 연산자 카드가 전달됨.");
+                return;
+            }
+
+            string symbol = operatorCard.OperatorType switch
+            {
+                OperatorType.Plus => "+",
+                OperatorType.Minus => "-",
+                OperatorType.Multiply => "×",
+                OperatorType.Divide => "÷",
+                _ => "?"
+            };
+
+            var sprite = operatorCard.GetComponentInChildren<SpriteRenderer>()?.sprite;
+            ConfigureSlot(1, symbol, sprite, true);
+            SetEqualSymbol();
+        }
+
+        /// <summary>
+        /// 연산자 없이 수동으로 기호만 1번 슬롯에 표시합니다. (공격 프로세스용)
+        /// </summary>
+        public void SetOperatorSymbol(string symbol)
+        {
+            ConfigureSlot(1, symbol, null, true);
+        }
+
+        /// <summary>
+        /// 수식 표현용 '=' 기호를 3번 슬롯에 고정 표시합니다.
+        /// </summary>
+        public void SetEqualSymbol()
+        {
+            ConfigureSlot(3, "=", null, true);
+        }
+
+        /// <summary>
+        /// 연산 또는 공격 결과를 4번 슬롯에 표시합니다.
+        /// - type이 null이면 공격 처리 방식 (절댓값, 색상 분기)
+        /// - type이 있으면 연산자 처리 방식 (결과 그대로 출력)
+        /// </summary>
+        public void DisplayResult(long a, long b, OperatorType? type = null, Sprite forceSprite = null)
+        {
+            long result = type switch
+            {
+                OperatorType.Plus => a + b,
+                OperatorType.Minus => a - b,
+                OperatorType.Multiply => a * b,
+                OperatorType.Divide => b != 0 ? a / b : 0,
+                _ => a - b // type == null이면 기본 공격 연산
+            };
+
+            // 텍스트 포맷: 연산자는 부호 포함, 공격은 절댓값
+            string text = type == null ? Mathf.Abs(result).ToString() : result.ToString();
+
+            // 스프라이트 처리
+            Sprite sprite = forceSprite ?? (
+                result == 0 ? neutralSprite :
+                result > 0 ? ResourcesManager.Instance.GetPlayerSprite() :
+                             ResourcesManager.Instance.GetOpponentSprite()
+            );
+
+            ConfigureSlot(4, text, sprite, true);
+        }
     }
 }

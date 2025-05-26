@@ -1,3 +1,4 @@
+using Objects;
 using TMPro;
 using UnityEngine;
 
@@ -38,7 +39,7 @@ public class CardText : MonoBehaviour
             textMesh = GetComponent<TextMeshPro>();
         }
         //_textValue = Global.Divide;
-        TextValue = GenerateRandomNumberString();
+        //TextValue = GenerateRandomNumberString();
 
         UpdateText(); // 초기 텍스트 표시
     }
@@ -51,6 +52,28 @@ public class CardText : MonoBehaviour
     {
         _rawValue = newValue;
         _textValue = FormatNumber(newValue.ToString());
+        UpdateText();
+    }
+
+    public void SetOperatorText(OperatorType type)
+    {
+        switch (type)
+        {
+            case OperatorType.Plus:
+                _textValue = "+";
+                break;
+            case OperatorType.Minus:
+                _textValue = "-";
+                break;
+            case OperatorType.Multiply:
+                _textValue = "×";
+                break;
+            case OperatorType.Divide:
+                _textValue = "÷";
+                break;
+        }
+
+        _rawValue = 0; // 연산자 카드는 수치 연산에 직접 관여하지 않음
         UpdateText();
     }
 

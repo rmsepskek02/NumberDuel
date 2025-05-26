@@ -2,6 +2,7 @@ using UnityEngine;
 using Photon.Pun.UtilityScripts;
 using System.Collections.Generic;
 using Utills;
+using Objects;
 
 namespace Manager
 {
@@ -40,6 +41,12 @@ namespace Manager
         public bool isMinus;
         public bool isMultiple;
         public bool isDivision;
+
+
+
+        // =========================
+        private readonly List<Card> fieldCards = new List<Card>();
+
         #endregion
         private void Start()
         {
@@ -164,5 +171,32 @@ namespace Manager
         //        Destroy(child.gameObject);
         //    }
         //}
+
+        /// <summary>
+        /// 필드에 들어간 카드를 등록합니다.
+        /// </summary>
+        public void RegisterFieldCard(Card card)
+        {
+            if (!fieldCards.Contains(card))
+                fieldCards.Add(card);
+        }
+
+        /// <summary>
+        /// 필드에서 제거된 카드를 해제합니다.
+        /// </summary>
+        public void UnregisterFieldCard(Card card)
+        {
+            if (fieldCards.Contains(card))
+                fieldCards.Remove(card);
+        }
+
+        /// <summary>
+        /// 현재 필드에 존재하는 모든 카드를 반환합니다.
+        /// - 복사본 반환
+        /// </summary>
+        public List<Card> GetAllFieldCards()
+        {
+            return new List<Card>(fieldCards);
+        }
     }
 }
