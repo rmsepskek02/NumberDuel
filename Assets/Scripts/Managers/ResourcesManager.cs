@@ -1,5 +1,6 @@
+using NUnit.Framework;
+using System;
 using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
 using Utills;
 
@@ -41,6 +42,7 @@ namespace Manager
             base.Awake();
             LoadAllPrefabs(Global.Card);   // Resources/Prefabs/Card 하위 프리팹들 자동 로드
             LoadAllSprites(Global.Card);        // Resources/Image/Card 하위 스프라이트 자동 로드
+            LoadAllSprites(Global.Joker);
             PrepareCardTemplates();
         }
 
@@ -100,7 +102,7 @@ namespace Manager
         /// <summary>
         /// Sprite 이름에 따라 색상을 결정
         /// </summary>
-        private Color MatchColorFromSprite(string spriteName)
+        public Color MatchColorFromSprite(string spriteName)
         {
             string lowerName = spriteName.ToLower();
 
@@ -114,16 +116,24 @@ namespace Manager
 
         private void SelectPlayerAndOpponentSprites()
         {
-            var sprites = GetAllCardSpritesExceptBlack();
+            List<Sprite> list = new List<Sprite>();
+            foreach (var kvp in spriteCache)
+            {
+                if (!kvp.Key.ToLower().Contains("color_back")
+                    && kvp.Key.ToLower().Contains("empty")) // 이름 기준 필터링
+                    list.Add(kvp.Value);
+            }
+            var sprites = list;
+
             if (sprites.Count < 2)
             {
                 Debug.LogError("[ResourcesManager] 사용할 수 있는 Sprite가 2개 이상 필요합니다.");
                 return;
             }
 
-            int index1 = Random.Range(0, sprites.Count);
+            int index1 = UnityEngine.Random.Range(0, sprites.Count);
             int index2;
-            do { index2 = Random.Range(0, sprites.Count); } while (index2 == index1);
+            do { index2 = UnityEngine.Random.Range(0, sprites.Count); } while (index2 == index1);
 
             playerSprite = sprites[index1];
             opponentSprite = sprites[index2];
@@ -235,21 +245,7 @@ namespace Manager
             }
             return spriteCache[spriteName];
         }
-
-        /// <summary>
-        /// 특정 폴더 내 모든 Sprite를 한 번에 로드
-        /// </summary>
-        public List<Sprite> GetAllCardSpritesExceptBlack()
-        {
-            List<Sprite> list = new List<Sprite>();
-            foreach (var kvp in spriteCache)
-            {
-                if (!kvp.Key.ToLower().Contains("color_back")) // 이름 기준 필터링
-                    list.Add(kvp.Value);
-            }
-            return list;
-        }
-
+      
         #endregion
 
         #region Material 관련 (미사용 중, 필요 시 확장 가능)

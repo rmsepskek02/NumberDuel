@@ -1,15 +1,15 @@
-using Objects;
+ï»¿using Objects;
 using TMPro;
 using UnityEngine;
 
 public class CardText : MonoBehaviour
 {
-    public TextMeshPro textMesh; // TextMeshPro ÂüÁ¶
-    private string _textValue = "1";  // ±âº»°ª (ÃÊ±â ¼ıÀÚ)
-    private long _rawValue = 1; // ¿ø·¡ ¼ıÀÚ °ªµµ º¸°ü
-    public long RawValue => _rawValue; // ¿ÜºÎ¿¡¼­ ¿øº» Á¢±Ù °¡´É
+    public TextMeshPro textMesh; // TextMeshPro ì°¸ì¡°
+    private string _textValue = "1";  // ê¸°ë³¸ê°’ (ì´ˆê¸° ìˆ«ì)
+    private long _rawValue = 1; // ì›ë˜ ìˆ«ì ê°’ë„ ë³´ê´€
+    public long RawValue => _rawValue; // ì™¸ë¶€ì—ì„œ ì›ë³¸ ì ‘ê·¼ ê°€ëŠ¥
 
-    // ÇÁ·ÎÆÛÆ¼ (¼ıÀÚ ¶Ç´Â ±âÈ£¸¦ ÀúÀå)
+    // í”„ë¡œí¼í‹° (ìˆ«ì ë˜ëŠ” ê¸°í˜¸ë¥¼ ì €ì¥)
     public string TextValue
     {
         get { return _textValue; }
@@ -19,12 +19,12 @@ public class CardText : MonoBehaviour
             {
                 if (long.TryParse(value, out var parsed))
                 {
-                    _rawValue = parsed; // ¿øº» ÀúÀå
-                    _textValue = FormatNumber(value); // Ç¥½Ã¿ë ÀúÀå
+                    _rawValue = parsed; // ì›ë³¸ ì €ì¥
+                    _textValue = FormatNumber(value); // í‘œì‹œìš© ì €ì¥
                 }
                 else
                 {
-                    _textValue = value; // ±âÈ£ÀÏ °æ¿ì
+                    _textValue = value; // ê¸°í˜¸ì¼ ê²½ìš°
                 }
 
                 UpdateText();
@@ -32,7 +32,7 @@ public class CardText : MonoBehaviour
         }
     }
 
-    void Start()
+    void Awake()
     {
         if (textMesh == null)
         {
@@ -41,12 +41,12 @@ public class CardText : MonoBehaviour
         //_textValue = Global.Divide;
         //TextValue = GenerateRandomNumberString();
 
-        UpdateText(); // ÃÊ±â ÅØ½ºÆ® Ç¥½Ã
+        UpdateText(); // ì´ˆê¸° í…ìŠ¤íŠ¸ í‘œì‹œ
     }
 
     /// <summary>
-    /// RawValue¸¦ ¿ÜºÎ¿¡¼­ º¯°æÇÒ ¼ö ÀÖµµ·Ï ÇÏ´Â ¸Ş¼­µå.
-    /// ³»ºÎÀûÀ¸·Î Ç¥½Ã¿ë ÅØ½ºÆ®µµ ÀÚµ¿À¸·Î °»½ÅµË´Ï´Ù.
+    /// RawValueë¥¼ ì™¸ë¶€ì—ì„œ ë³€ê²½í•  ìˆ˜ ìˆë„ë¡ í•˜ëŠ” ë©”ì„œë“œ.
+    /// ë‚´ë¶€ì ìœ¼ë¡œ í‘œì‹œìš© í…ìŠ¤íŠ¸ë„ ìë™ìœ¼ë¡œ ê°±ì‹ ë©ë‹ˆë‹¤.
     /// </summary>
     public void SetRawValue(long newValue)
     {
@@ -66,14 +66,27 @@ public class CardText : MonoBehaviour
                 _textValue = "-";
                 break;
             case OperatorType.Multiply:
-                _textValue = "¡¿";
+                _textValue = "Ã—";
                 break;
             case OperatorType.Divide:
-                _textValue = "¡À";
+                _textValue = "Ã·";
                 break;
         }
 
-        _rawValue = 0; // ¿¬»êÀÚ Ä«µå´Â ¼öÄ¡ ¿¬»ê¿¡ Á÷Á¢ °ü¿©ÇÏÁö ¾ÊÀ½
+        _rawValue = 0; // ì—°ì‚°ì ì¹´ë“œëŠ” ìˆ˜ì¹˜ ì—°ì‚°ì— ì§ì ‘ ê´€ì—¬í•˜ì§€ ì•ŠìŒ
+        UpdateText();
+    }
+
+    public void SetJokerText()
+    {
+        _textValue = "Joker";
+        _rawValue = 0; // ì¡°ì»¤ëŠ” ìˆ˜ì¹˜ ì—°ì‚°ì— ê´€ì—¬í•˜ì§€ ì•ŠìŒ (ê¸°ë³¸ 0 ì²˜ë¦¬)
+        
+        if (textMesh != null)
+        {
+            textMesh.fontSize = 16; // í°íŠ¸ ì‚¬ì´ì¦ˆ ì¤„ì´ê¸°
+        }
+
         UpdateText();
     }
 
@@ -81,43 +94,43 @@ public class CardText : MonoBehaviour
     {
         if (textMesh != null)
         {
-            textMesh.text = _textValue; // TextMeshPro¿¡ Àû¿ë
+            textMesh.text = _textValue; // TextMeshProì— ì ìš©
         }
     }
 
-    // ¼ıÀÚ ÀÔ·Â °ËÁõ: ±âÈ£¸¦ Çã¿ëÇÏ°í, ¼ıÀÚ´Â º¯È¯ ÈÄ Àû¿ë
+    // ìˆ«ì ì…ë ¥ ê²€ì¦: ê¸°í˜¸ë¥¼ í—ˆìš©í•˜ê³ , ìˆ«ìëŠ” ë³€í™˜ í›„ ì ìš©
     private bool IsValidInput(string value)
     {
-        // ±âÈ£ÀÎÁö È®ÀÎ
+        // ê¸°í˜¸ì¸ì§€ í™•ì¸
         if (System.Array.Exists(Global.AllowedSymbols, symbol => symbol == value))
         {
             return true;
         }
 
-        // ¼ıÀÚÀÏ °æ¿ì¸¸ º¯È¯ Çã¿ë (ÃÖ´ë°ª Á¦ÇÑÀº FormatNumber¿¡¼­ Ã³¸®)
+        // ìˆ«ìì¼ ê²½ìš°ë§Œ ë³€í™˜ í—ˆìš© (ìµœëŒ€ê°’ ì œí•œì€ FormatNumberì—ì„œ ì²˜ë¦¬)
         return long.TryParse(value, out _);
     }
 
-    // ¼ıÀÚ¸¦ º¯È¯ (1000 ÀÌ»óÀÌ¸é '1.2k' Çü½Ä Àû¿ë, ÃÖ´ë 999k)
+    // ìˆ«ìë¥¼ ë³€í™˜ (1000 ì´ìƒì´ë©´ '1.2k' í˜•ì‹ ì ìš©, ìµœëŒ€ 999k)
     private string FormatNumber(string value)
     {
         if (long.TryParse(value, out long number))
         {
             if (number >= 1_000_000)
-                return "999k"; // ÃÖ´ë°ª Á¦ÇÑ
+                return "999k"; // ìµœëŒ€ê°’ ì œí•œ
             if (number >= 10_000)
-                return (number / 1000).ToString() + "k"; // Á¤¼ö k Çü½Ä (¼Ò¼öÁ¡ ¾øÀ½)
+                return (number / 1000).ToString() + "k"; // ì •ìˆ˜ k í˜•ì‹ (ì†Œìˆ˜ì  ì—†ìŒ)
             if (number >= 1000)
-                return (number / 1000f).ToString("0.0") + "k"; // 1.2k Çü½Ä (¼Ò¼öÁ¡ 1ÀÚ¸®)
+                return (number / 1000f).ToString("0.0") + "k"; // 1.2k í˜•ì‹ (ì†Œìˆ˜ì  1ìë¦¬)
         }
-        return value; // ¼ıÀÚ°¡ ¾Æ´Ï¸é ¿øº» ±×´ë·Î
+        return value; // ìˆ«ìê°€ ì•„ë‹ˆë©´ ì›ë³¸ ê·¸ëŒ€ë¡œ
     }
 
-    // TODO :: TEST ÇÔ¼ö
+    // TODO :: TEST í•¨ìˆ˜
     public string GenerateRandomNumberString()
     {
-        //int randomNumber = Random.Range(1, 1_000_003); // ÃÖ´ë°ªÀº 1_000_000_000 Æ÷ÇÔµÇ°Ô
-        int randomNumber = Random.Range(1, 6); // ÃÖ´ë°ªÀº 1_000_000_000 Æ÷ÇÔµÇ°Ô
+        //int randomNumber = Random.Range(1, 1_000_003); // ìµœëŒ€ê°’ì€ 1_000_000_000 í¬í•¨ë˜ê²Œ
+        int randomNumber = Random.Range(1, 6); // ìµœëŒ€ê°’ì€ 1_000_000_000 í¬í•¨ë˜ê²Œ
         return randomNumber.ToString();
     }
 }

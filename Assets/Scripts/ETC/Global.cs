@@ -60,6 +60,7 @@ public static class Global
 
     #region Path
     public static readonly string Card = "Card";
+    public static readonly string Joker = "Joker";
     #endregion
 
     #region Resources - Material Names

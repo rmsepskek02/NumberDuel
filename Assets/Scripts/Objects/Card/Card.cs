@@ -86,6 +86,24 @@ namespace Objects
             cardText.SetOperatorText(opType);
         }
 
+        // 카드 초기화 함수: 조커 카드
+        public void InitializeAsJoker()
+        {
+            CardType = CardType.Joker;
+
+            if (cardText == null)
+                cardText = GetComponentInChildren<CardText>();
+
+            cardText.SetJokerText();
+
+            // 외형적인 요소도 특별하게 설정 가능
+            //var jokerSprite = ResourcesManager.Instance.GetSprite(Global.Card, Global.SpriteColorJoker); // 예시
+            //if (jokerSprite != null)
+            //{
+            //    GetComponentInChildren<SpriteRenderer>().sprite = jokerSprite;
+            //}
+        }
+
         /// <summary>
         /// 카드를 비밀 상태로 설정하거나 해제합니다.
         /// </summary>
@@ -161,6 +179,30 @@ namespace Objects
         private void HandleClick()
         {
             Debug.Log($"[Card] Clicked: {gameObject.name}");
+
+            // 조커 대상 선택 모드인 경우
+            if (JokerTargetSelector.Instance != null && JokerTargetSelector.Instance.IsSelecting())
+            {
+                // JokerTargetSelector가 처리하도록 이벤트 전달
+                onClicked?.Invoke(this);
+                return;
+            }
+
+            // 조커 카드일 경우: JokerModeSelector 호출
+            if (CardType == CardType.Joker &&
+                CurrentZoneType == CardZone.ZoneType.Hand &&
+                CurrentOwnerType == CardZone.OwnerType.Player)
+            {
+                if (JokerModeSelector.Instance != null)
+                {
+                    JokerModeSelector.Instance.Show(this);
+                }
+                else
+                {
+                    Debug.LogError("[Card] JokerModeSelector를 찾을 수 없습니다.");
+                }
+                return; // 기본 onClicked 이벤트 방지
+            }
 
             // 연산자 카드일 경우: 일반 클릭 이벤트 대신 OperatorManager 호출
             if (CardType == CardType.Operator &&

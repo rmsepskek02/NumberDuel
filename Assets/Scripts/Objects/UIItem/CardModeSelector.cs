@@ -22,7 +22,10 @@ public class CardModeSelector : MonoBehaviour
     private Transform pendingCard;
     private CardZone targetZone;
     private ObjectMouseEvent bgClick;
+
+    [Header("애니메이션 설정")]
     [SerializeField] private float maxScale = 30f;
+    [SerializeField] private float animDuration = 0.2f;
 
     private void Start()
     {
@@ -86,15 +89,15 @@ public class CardModeSelector : MonoBehaviour
         }
 
         // DOTween 애니메이션 실행
-        float duration = 0.2f;
+        
         Ease easeType = Ease.OutBack;
 
         openOption.transform
-            .DOScale(Vector3.one * maxScale, duration)
+            .DOScale(Vector3.one * maxScale, animDuration)
             .SetEase(easeType);
 
         secretOption.transform
-            .DOScale(Vector3.one * maxScale, duration)
+            .DOScale(Vector3.one * maxScale, animDuration)
             .SetEase(easeType);
     }
 
