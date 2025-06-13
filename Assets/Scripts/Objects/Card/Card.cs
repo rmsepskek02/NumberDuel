@@ -11,9 +11,6 @@ namespace Objects
     /// - ObjectMouseEvent로부터 클릭 이벤트를 수신함
     /// </summary>
 
-    public enum CardType { Number, Operator, Joker }
-    public enum OperatorType { Plus, Minus, Multiply, Divide }
-
     public class Card : MonoBehaviour, ICard
     {
         private TextMeshPro cardTMP;

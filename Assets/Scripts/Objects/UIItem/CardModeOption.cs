@@ -47,13 +47,4 @@ namespace Objects
             selector?.OnCardModeSelected(modeType);
         }
     }
-
-    /// <summary>
-    /// 카드 제출 방식: 앞면(Open) 또는 뒷면(Secret)
-    /// </summary>
-    public enum CardModeType
-    {
-        Open,
-        Secret
-    }
 }

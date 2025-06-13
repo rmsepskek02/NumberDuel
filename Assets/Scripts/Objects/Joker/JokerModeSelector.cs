@@ -4,6 +4,8 @@ using Manager;
 using TMPro;
 using DG.Tweening;
 using System.Collections.Generic;
+using System.Collections;
+using System.Linq;
 
 /// <summary>
 /// 조커 카드 클릭 시 효과를 선택하는 UI를 제어한다.
@@ -35,8 +37,9 @@ public class JokerModeSelector : MonoBehaviour
     [SerializeField] private TextMeshPro swapText;
 
     [Header("애니메이션 설정")]
-    [SerializeField] private float maxScale = 0f;
-    [SerializeField] private float animDuration = 0.2f;
+    [SerializeField] private float maxScale = 30f;
+    [SerializeField] private float animDurationUI = 0.2f;
+    [SerializeField] private float animDuration = 1.0f;
 
     private Card selectedJokerCard;
     private ObjectMouseEvent bgClick;
@@ -99,16 +102,16 @@ public class JokerModeSelector : MonoBehaviour
         Ease easeType = Ease.OutBack;
 
         drawOption.transform
-            .DOScale(Vector3.one * maxScale, animDuration)
+            .DOScale(Vector3.one * maxScale, animDurationUI)
             .SetEase(easeType);
 
         deleteOption.transform
-            .DOScale(Vector3.one * maxScale, animDuration)
+            .DOScale(Vector3.one * maxScale, animDurationUI)
             .SetEase(easeType)
             .SetDelay(0.05f);
 
         swapOption.transform
-            .DOScale(Vector3.one * maxScale, animDuration)
+            .DOScale(Vector3.one * maxScale, animDurationUI)
             .SetEase(easeType)
             .SetDelay(0.1f);
     }
@@ -128,6 +131,10 @@ public class JokerModeSelector : MonoBehaviour
     private string GetJokerSpriteName(string color, JokerEffectType effect)
     {
         string[] colorStrArr = color.ToString().Split("_");
+        if (colorStrArr.Length < 2)
+        {
+            return "green";
+        }
         string colorStr = colorStrArr[1];
         string effectStr = effect.ToString().ToLower();
         return $"color_{colorStr}_{effectStr}";
@@ -331,21 +338,71 @@ public class JokerModeSelector : MonoBehaviour
     }
 
     /// <summary>
-    /// 사용한 조커 카드 제거
+    /// 사용한 조커 카드 제거 (개선된 버전)
     /// </summary>
     private void RemoveUsedJokerCard()
     {
         if (selectedJokerCard == null) return;
 
-        // Zone에서 제거
-        CardZone zone = FindZoneOfCard(selectedJokerCard.transform);
-        if (zone != null)
+        // 1. 조커 카드를 시각적으로 먼저 페이드 아웃
+        StartCoroutine(RemoveJokerCardWithAnimation(selectedJokerCard));
+    }
+
+    /// <summary>
+    /// 조커 카드를 애니메이션과 함께 제거
+    /// </summary>
+    private IEnumerator RemoveJokerCardWithAnimation(Card jokerCard)
+    {
+        // 카드가 속한 Zone 미리 찾아두기
+        CardZone zone = FindZoneOfCard(jokerCard.transform);
+
+        // 1. 카드 상호작용 비활성화 (클릭/드래그 방지)
+        ObjectMouseEvent mouseEvent = jokerCard.GetComponentInChildren<ObjectMouseEvent>();
+        if (mouseEvent != null)
         {
-            zone.RemoveCard(selectedJokerCard.transform);
+            mouseEvent.isClickable = false;
+            mouseEvent.isDraggable = false;
         }
 
-        // 오브젝트 파괴
-        Destroy(selectedJokerCard.gameObject, 0.5f);
+        // 모든 시각적 요소 찾기
+        List<SpriteRenderer> spritesToFade = new List<SpriteRenderer>();
+        List<TextMeshPro> textsToFade = new List<TextMeshPro>();
+
+        // SpriteRenderer 찾기
+        foreach (Transform child in jokerCard.transform.GetComponentsInChildren<Transform>())
+        {
+            SpriteRenderer sr = child.GetComponent<SpriteRenderer>();
+            if (sr != null && sr.sprite != null)
+            {
+                spritesToFade.Add(sr);
+            }
+        }
+
+        // 페이드 애니메이션
+        foreach (var sr in spritesToFade)
+        {
+            sr.DOFade(0f, animDuration);
+        }
+
+        foreach (var text in textsToFade)
+        {
+            text.DOFade(0f, animDuration);
+        }
+
+        // 스케일 + 이동 애니메이션
+        jokerCard.transform.DOScale(Vector3.one * 0.8f, animDuration).SetEase(Ease.InQuad);
+        jokerCard.transform.DOLocalMoveY(jokerCard.transform.localPosition.y + 30f, animDuration).SetEase(Ease.OutQuad);
+
+        yield return new WaitForSeconds(animDuration / 3);
+
+        if (zone != null)
+        {
+            zone.RemoveCard(jokerCard.transform);
+        }
+
+        jokerCard.gameObject.SetActive(false);
+        yield return new WaitForSeconds(1.0f);
+        Destroy(jokerCard.gameObject);
     }
 
     /// <summary>

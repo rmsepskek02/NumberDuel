@@ -618,7 +618,8 @@ MonoBehaviour:
   deleteText: {fileID: 882251515}
   swapText: {fileID: 2116212348}
   maxScale: 30
-  animDuration: 0.2
+  animDurationUI: 0.2
+  animDuration: 1
 --- !u!4 &69944040
 Transform:
   m_ObjectHideFlags: 0
