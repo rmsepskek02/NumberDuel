@@ -10,6 +10,7 @@ namespace Objects
     /// - 클릭 및 토글 동작
     /// - 드래그 시작/종료 감지 및 연동
     /// - 드래그 중 회전 제한
+    /// - 물리적 인터랙션은 항상 허용, 프로세스 차단은 Card.cs에서 처리
     /// CardMotion 등에서 이벤트 구독하여 시각적 연출 처리
     /// </summary>
     public class ObjectMouseEvent : MonoBehaviour
@@ -71,9 +72,10 @@ namespace Objects
         {
             Vector2 inputPos = GetInputPosition();
 
-            // Hover 감지는 interactionBlocked 여부와 관계없이 항상 처리
+            // Hover 감지는 항상 처리
             HandleHoverRaycast(inputPos);
 
+            // 외부 차단 시에만 입력 처리 중단 (프로세스 차단은 Card.cs에서 처리)
             if (interactionBlocked) return;
 
             HandleInputPress(inputPos, GetInputPressed());

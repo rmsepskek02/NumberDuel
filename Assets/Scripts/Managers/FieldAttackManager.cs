@@ -33,9 +33,17 @@ namespace Manager
 
         /// <summary>
         /// 카드 클릭 시 공격 흐름을 제어합니다.
+        /// 다른 프로세스 진행 중이면 공격 처리를 차단합니다.
         /// </summary>
         private void HandleCardClicked(Card clickedCard)
         {
+            // 다른 프로세스가 진행 중이면 공격 차단
+            if (InGameManager.Instance.IsProcessing)
+            {
+                Debug.Log($"[FieldAttackManager] {InGameManager.Instance.CurrentProcess} 진행 중이므로 공격 차단");
+                return;
+            }
+
             // 연산자 모드가 활성화된 경우 공격 차단
             if (OperatorManager.Instance.IsInOperatorMode)
             {

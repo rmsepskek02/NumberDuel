@@ -1,7 +1,10 @@
 using Manager;
 using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
+using DG.Tweening;
+using System.Collections.Generic;
 
 namespace Objects
 {
@@ -10,7 +13,6 @@ namespace Objects
     /// - ICard 구현을 통해 Zone에서 인터랙션 설정을 받을 수 있음
     /// - ObjectMouseEvent로부터 클릭 이벤트를 수신함
     /// </summary>
-
     public class Card : MonoBehaviour, ICard
     {
         private TextMeshPro cardTMP;
@@ -92,13 +94,6 @@ namespace Objects
                 cardText = GetComponentInChildren<CardText>();
 
             cardText.SetJokerText();
-
-            // 외형적인 요소도 특별하게 설정 가능
-            //var jokerSprite = ResourcesManager.Instance.GetSprite(Global.Card, Global.SpriteColorJoker); // 예시
-            //if (jokerSprite != null)
-            //{
-            //    GetComponentInChildren<SpriteRenderer>().sprite = jokerSprite;
-            //}
         }
 
         /// <summary>
@@ -171,49 +166,6 @@ namespace Objects
         }
 
         /// <summary>
-        /// 클릭 시 실행되는 내부 로직
-        /// </summary>
-        private void HandleClick()
-        {
-            Debug.Log($"[Card] Clicked: {gameObject.name}");
-
-            // 조커 대상 선택 모드인 경우
-            if (JokerTargetSelector.Instance != null && JokerTargetSelector.Instance.IsSelecting())
-            {
-                // JokerTargetSelector가 처리하도록 이벤트 전달
-                onClicked?.Invoke(this);
-                return;
-            }
-
-            // 조커 카드일 경우: JokerModeSelector 호출
-            if (CardType == CardType.Joker &&
-                CurrentZoneType == CardZone.ZoneType.Hand &&
-                CurrentOwnerType == CardZone.OwnerType.Player)
-            {
-                if (JokerModeSelector.Instance != null)
-                {
-                    JokerModeSelector.Instance.Show(this);
-                }
-                else
-                {
-                    Debug.LogError("[Card] JokerModeSelector를 찾을 수 없습니다.");
-                }
-                return; // 기본 onClicked 이벤트 방지
-            }
-
-            // 연산자 카드일 경우: 일반 클릭 이벤트 대신 OperatorManager 호출
-            if (CardType == CardType.Operator &&
-                CurrentZoneType == CardZone.ZoneType.Hand &&
-                CurrentOwnerType == CardZone.OwnerType.Player)
-            {
-                OperatorManager.Instance.EnterOperatorMode(this);
-                return; // 기본 onClicked 이벤트 방지
-            }
-
-            onClicked?.Invoke(this);
-        }
-
-        /// <summary>
         /// Zone 정보에 따라 카드 상호작용 권한 설정
         /// </summary>
         public void SetInteraction(CardZone.ZoneType zoneType, CardZone.OwnerType ownerType)
@@ -242,18 +194,114 @@ namespace Objects
         }
 
         /// <summary>
-        /// 카드가 Drag가 끝난 시점에 호출
+        /// 클릭 시 실행되는 내부 로직 (최종 수정 버전)
+        /// 프로세스 상태를 우선 체크하고 UI 표시를 차단
         /// </summary>
-        private void HandleEndDrag()
+        private void HandleClick()
         {
-            // 연산 중이면 드롭 처리 무시
-            if (OperatorManager.Instance.IsInOperatorMode)
+            Debug.Log($"[Card] Clicked: {gameObject.name}");
+
+            // 디버깅: 프로세스 상태 출력
+            Debug.Log($"[Card] IsProcessing: {InGameManager.Instance.IsProcessing}, CurrentProcess: {InGameManager.Instance.CurrentProcess}");
+            Debug.Log($"[Card] IsInOperatorMode: {OperatorManager.Instance.IsInOperatorMode}");
+            Debug.Log($"[Card] CurrentZoneType: {CurrentZoneType}, CardType: {CardType}");
+
+            // 1. 조커 대상 선택 모드인 경우 항상 허용
+            if (JokerTargetSelector.Instance != null && JokerTargetSelector.Instance.IsSelecting())
             {
-                Debug.Log("[Card] 연산 중이므로 드래그 무시");
+                Debug.Log("[Card] 조커 대상 선택 모드 - 이벤트 허용");
+                onClicked?.Invoke(this);
                 return;
             }
 
-            // 연산자 카드일 경우: 드롭 시 OperatorManager 호출
+            // 2. 연산자 모드 중인 경우 - 필드 카드만 허용 (프로세스 상태와 무관하게 체크)
+            if (OperatorManager.Instance.IsInOperatorMode)
+            {
+                Debug.Log("[Card] 연산자 모드 감지");
+
+                // 손패의 카드는 연산 대상이 아니므로 클릭 이벤트 차단
+                if (CurrentZoneType == CardZone.ZoneType.Hand)
+                {
+                    Debug.Log($"[Card] 연산자 모드 중 손패 카드 클릭 이벤트 차단: {gameObject.name}");
+                    return; // UI 표시 완전 차단
+                }
+
+                // 필드 카드는 연산 대상이므로 허용
+                Debug.Log("[Card] 연산자 모드 중 필드 카드 - 이벤트 허용");
+                onClicked?.Invoke(this);
+                return;
+            }
+
+            // 3. 기타 프로세스 진행 중이면 모든 새 프로세스 시작 차단
+            if (InGameManager.Instance.IsProcessing)
+            {
+                Debug.Log($"[Card] 현재 {InGameManager.Instance.CurrentProcess} 진행 중이므로 모든 새 프로세스 차단");
+                return;
+            }
+
+            // 4. 프로세스가 진행 중이지 않을 때만 새 프로세스 시작 허용
+
+            // 조커 카드일 경우: JokerModeSelector 호출
+            if (CardType == CardType.Joker &&
+                CurrentZoneType == CardZone.ZoneType.Hand &&
+                CurrentOwnerType == CardZone.OwnerType.Player)
+            {
+                if (JokerModeSelector.Instance != null)
+                {
+                    JokerModeSelector.Instance.Show(this);
+                }
+                else
+                {
+                    Debug.LogError("[Card] JokerModeSelector를 찾을 수 없습니다.");
+                }
+                return; // 기본 onClicked 이벤트 방지
+            }
+
+            // 연산자 카드일 경우: OperatorManager 호출
+            if (CardType == CardType.Operator &&
+                CurrentZoneType == CardZone.ZoneType.Hand &&
+                CurrentOwnerType == CardZone.OwnerType.Player)
+            {
+                OperatorManager.Instance.EnterOperatorMode(this);
+                return; // 기본 onClicked 이벤트 방지
+            }
+
+            // 일반 카드 클릭 이벤트
+            onClicked?.Invoke(this);
+        }
+
+        /// <summary>
+        /// 카드가 Drag가 끝난 시점에 호출 (개선 버전)
+        /// 물리적 드래그는 항상 허용, 프로세스 시작만 차단
+        /// </summary>
+        private void HandleEndDrag()
+        {
+            Debug.Log($"[Card] EndDrag: {gameObject.name}");
+
+            // 1. 프로세스 진행 중일 때는 새로운 프로세스 시작 차단
+            if (InGameManager.Instance.IsProcessing)
+            {
+                return; // 완전히 차단, 이벤트 발행 안 함
+            }
+
+            // 2. 연산자 프로세스 중인 경우
+            if (OperatorManager.Instance.IsInOperatorMode)
+            {
+                return; // 완전히 차단
+            }
+
+            // 3. 프로세스가 진행 중이지 않을 때만 새 프로세스 시작 허용
+
+            // 조커 카드일 경우: 드롭 시 카드 배치 프로세스 시작
+            if (CardType == CardType.Joker &&
+                CurrentZoneType == CardZone.ZoneType.Hand &&
+                CurrentOwnerType == CardZone.OwnerType.Player)
+            {
+                OnCardDropped?.Invoke(transform);
+                return;
+            }
+
+            // 연산자 카드일 경우: 드롭 시 연산자 모드 진입
             if (CardType == CardType.Operator &&
                 CurrentZoneType == CardZone.ZoneType.Hand &&
                 CurrentOwnerType == CardZone.OwnerType.Player)
@@ -262,7 +310,99 @@ namespace Objects
                 return;
             }
 
-            OnCardDropped?.Invoke(transform); // Detector가 이걸 받아 처리
+            // 일반 카드 드롭 이벤트
+            OnCardDropped?.Invoke(transform);
+        }
+
+        /// <summary>
+        /// 카드 삭제 애니메이션 (모든 카드 삭제 시 사용)
+        /// </summary>
+        /// <param name="onComplete">애니메이션 완료 후 실행할 콜백</param>
+        /// <param name="delay">애니메이션 시작 전 대기 시간</param>
+        public IEnumerator AnimateRemoval(System.Action onComplete = null, float delay = 0f)
+        {
+            // 대기 시간
+            if (delay > 0f)
+                yield return new WaitForSeconds(delay);
+
+            float animDuration = 1.0f; // Global에 정의되어 있다면 사용
+
+            // 1. 상호작용 비활성화
+            if (mouseEvent != null)
+            {
+                mouseEvent.isClickable = false;
+                mouseEvent.isDraggable = false;
+            }
+
+            // 2. Glow 효과 제거
+            var cardEffect = GetComponentInChildren<CardEffect>();
+            if (cardEffect != null)
+            {
+                cardEffect.SetGlow(false);
+            }
+
+            // 3. 모든 트윈 저장을 위한 리스트
+            List<Tween> activeTweens = new List<Tween>();
+
+            // 4. 모든 시각적 요소 찾기
+            SpriteRenderer[] allSprites = GetComponentsInChildren<SpriteRenderer>();
+            TextMeshPro[] allTexts = GetComponentsInChildren<TextMeshPro>();
+
+            // 5. 페이드 애니메이션
+            foreach (var sr in allSprites)
+            {
+                if (sr != null)
+                {
+                    Tween fadeTween = sr.DOFade(0f, animDuration)
+                        .SetTarget(sr)
+                        .OnKill(() => { });
+                    activeTweens.Add(fadeTween);
+                }
+            }
+
+            foreach (var text in allTexts)
+            {
+                if (text != null)
+                {
+                    Tween textTween = text.DOFade(0f, animDuration)
+                        .SetTarget(text)
+                        .OnKill(() => { });
+                    activeTweens.Add(textTween);
+                }
+            }
+
+            // 6. 스케일 + 이동 애니메이션
+            if (transform != null)
+            {
+                Tween scaleTween = transform.DOScale(Vector3.one * 0.8f, animDuration)
+                    .SetEase(Ease.InQuad)
+                    .SetTarget(transform)
+                    .OnKill(() => { });
+
+                Tween moveTween = transform.DOLocalMoveY(
+                    transform.localPosition.y + 30f, animDuration)
+                    .SetEase(Ease.OutQuad)
+                    .SetTarget(transform)
+                    .OnKill(() => { });
+
+                activeTweens.Add(scaleTween);
+                activeTweens.Add(moveTween);
+            }
+
+            // 7. 애니메이션 완료 대기
+            yield return new WaitForSeconds(animDuration);
+
+            // 8. 트윈 정리
+            foreach (var tween in activeTweens)
+            {
+                if (tween != null && tween.IsActive())
+                {
+                    tween.Kill(false);
+                }
+            }
+
+            // 9. 콜백 실행
+            onComplete?.Invoke();
         }
 
         /// <summary>

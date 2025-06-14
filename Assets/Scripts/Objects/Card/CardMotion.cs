@@ -1,5 +1,6 @@
 using UnityEngine;
 using DG.Tweening;
+using Manager;
 
 namespace Objects
 {
@@ -195,13 +196,20 @@ namespace Objects
         }
 
         /// <summary>
-        /// 드래그가 끝났을 때 카드가 원래 위치/크기/회전으로 복귀
-        /// 도중에는 HoverExit을 무시하여 애니메이션 충돌 방지
-        /// 복귀 완료 후 마우스가 올라가 있다면 다시 Hover 효과 적용
+        /// 드래그가 끝났을 때 카드가 원래 위치/크기/회전으로 복귀 (안전한 수정 버전)
+        /// 프로세스 중에도 물리적 복귀는 허용하되, 외부 잠금은 존중
         /// </summary>
         private void AnimateReturnToOriginal()
         {
-            if (isLockedExternally) return;
+            // DELETE 프로세스 등 특정 상황에서는 잠금 무시하고 복귀
+            bool shouldForceReturn = InGameManager.Instance != null &&
+                                   InGameManager.Instance.CurrentProcess != GameProcessState.Idle;
+
+            if (isLockedExternally && !shouldForceReturn)
+            {
+                Debug.Log("[CardMotion] 외부 잠금으로 인해 드래그 복귀 차단");
+                return;
+            }
 
             isReturning = true;
             objectMouseEvent?.SetInteractionBlocked(true);

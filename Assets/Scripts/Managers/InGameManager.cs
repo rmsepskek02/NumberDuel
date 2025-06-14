@@ -48,6 +48,64 @@ namespace Manager
         private readonly List<Card> fieldCards = new List<Card>();
 
         #endregion
+
+        #region Process Management
+
+        /// <summary>
+        /// 현재 진행 중인 프로세스
+        /// </summary>
+        private GameProcessState currentProcess = GameProcessState.Idle;
+
+        /// <summary>
+        /// 현재 프로세스 상태 (읽기 전용)
+        /// </summary>
+        public GameProcessState CurrentProcess => currentProcess;
+
+        /// <summary>
+        /// 프로세스가 진행 중인지 여부
+        /// </summary>
+        public bool IsProcessing => currentProcess != GameProcessState.Idle;
+
+        /// <summary>
+        /// 프로세스 시작
+        /// </summary>
+        public bool StartProcess(GameProcessState process)
+        {
+            if (IsProcessing)
+            {
+                Debug.LogWarning($"[InGameManager] 이미 {currentProcess} 프로세스가 진행 중입니다. {process} 시작 실패.");
+                return false;
+            }
+
+            currentProcess = process;
+            Debug.Log($"[InGameManager] {process} 프로세스 시작");
+
+            // UI 업데이트나 이벤트 발생 필요시 여기에 추가
+
+            return true;
+        }
+
+        /// <summary>
+        /// 프로세스 종료
+        /// </summary>
+        public void EndProcess()
+        {
+            Debug.Log($"[InGameManager] {currentProcess} 프로세스 종료");
+            currentProcess = GameProcessState.Idle;
+
+            // UI 업데이트나 이벤트 발생 필요시 여기에 추가
+        }
+
+        /// <summary>
+        /// 특정 프로세스가 진행 중인지 확인
+        /// </summary>
+        public bool IsProcessActive(GameProcessState process)
+        {
+            return currentProcess == process;
+        }
+
+        #endregion
+
         private void Start()
         {
             turnManager = FindAnyObjectByType<PunTurnManager>();

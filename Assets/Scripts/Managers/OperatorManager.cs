@@ -45,11 +45,19 @@ namespace Manager
 
         /// <summary>
         /// 연산자 카드 사용 시 연산 모드에 진입합니다.
+        /// InGameManager 프로세스도 함께 설정합니다.
         /// </summary>
         public void EnterOperatorMode(Card operatorCard)
         {
             if (currentState != OperatorState.Idle) return;
             if (operatorCard.CardType != CardType.Operator) return;
+
+            // 프로세스 시작
+            if (!InGameManager.Instance.StartProcess(GameProcessState.OperatorCalculation))
+            {
+                Debug.LogWarning("[OperatorManager] 다른 프로세스가 진행 중이므로 연산 모드 진입 실패");
+                return;
+            }
 
             selectedOperatorCard = operatorCard;
             currentOperatorType = operatorCard.OperatorType;
@@ -102,9 +110,31 @@ namespace Manager
 
         /// <summary>
         /// 카드 클릭 시 연산 흐름을 처리합니다.
+        /// 다른 프로세스 진행 중이면 처리하지 않습니다.
         /// </summary>
         public void OnCardClicked(Card card)
         {
+            // 다른 프로세스가 진행 중이면 연산 처리 차단
+            if (InGameManager.Instance.IsProcessing &&
+                InGameManager.Instance.CurrentProcess != GameProcessState.OperatorCalculation)
+            {
+                Debug.Log($"[OperatorManager] {InGameManager.Instance.CurrentProcess} 진행 중이므로 연산 처리 차단");
+                return;
+            }
+
+            // 연산 모드가 아니면 처리하지 않음
+            if (!IsInOperatorMode)
+            {
+                return;
+            }
+
+            // 손패 카드는 연산 대상이 아님
+            if (card.CurrentZoneType == CardZone.ZoneType.Hand)
+            {
+                Debug.Log("[OperatorManager] 손패 카드는 연산 대상이 아닙니다.");
+                return;
+            }
+
             switch (currentState)
             {
                 case OperatorState.OperatorSelected:
@@ -288,7 +318,8 @@ namespace Manager
         }
 
         /// <summary>
-        /// 내부 상태 초기화
+        /// 내부 상태 초기화 (개선 버전)
+        /// InGameManager 프로세스도 함께 종료
         /// </summary>
         private void ResetState()
         {
@@ -296,6 +327,10 @@ namespace Manager
             selectedOperatorCard = null;
             firstTargetCard = null;
             secondTargetCard = null;
+
+            // 프로세스 종료
+            InGameManager.Instance.EndProcess();
+            Debug.Log("[OperatorManager] 연산 프로세스 종료");
         }
     }
 }
