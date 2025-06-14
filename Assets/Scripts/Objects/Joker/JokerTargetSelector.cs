@@ -97,7 +97,7 @@ namespace Objects
         /// </summary>
         private void HandleDeleteTarget(Card target)
         {
-            // 상대 필드에 있는 카드만 삭제 가능 (수정)
+            // 상대 필드에 있는 카드만 삭제 가능
             if (target.CurrentZoneType != CardZone.ZoneType.Field ||
                 target.CurrentOwnerType != CardZone.OwnerType.Opponent)
             {
@@ -115,12 +115,13 @@ namespace Objects
 
             Debug.Log($"[JokerTargetSelector] 삭제 대상 선택됨: {target.name}");
 
+            // 콜백 실행 후 모드 종료
             currentCallback?.Invoke(target);
             EndTargetSelection();
         }
 
         /// <summary>
-        /// 교환 첫 번째 대상 처리
+        /// 교환 첫 번째 대상 처리 (내 필드 카드)
         /// </summary>
         private void HandleSwapFirstTarget(Card target)
         {
@@ -140,20 +141,24 @@ namespace Objects
                 return;
             }
 
+            // 숫자 카드만 교환 가능 (연산자는 제외)
+            if (target.CardType != CardType.Number)
+            {
+                Debug.Log("[JokerTargetSelector] 숫자 카드만 교환할 수 있습니다.");
+                return;
+            }
+
             firstSelectedCard = target;
             Debug.Log($"[JokerTargetSelector] 교환 첫 번째 대상 선택됨: {target.name}");
 
-            // 첫 번째 카드 시각적 표시 (선택됨 표시)
-            target.SetCardState(true, Color.cyan);
-
-            // 콜백 실행 (다음 선택을 위해)
+            // 콜백 실행 (JokerModeSelector에서 두 번째 선택 준비)
             currentCallback?.Invoke(target);
 
-            // 모드 변경하지 않음 (JokerModeSelector에서 변경할 것)
+            // 모드는 변경하지 않음 (JokerModeSelector에서 SwapSecond로 변경할 것)
         }
 
         /// <summary>
-        /// 교환 두 번째 대상 처리
+        /// 교환 두 번째 대상 처리 (상대 필드 카드)
         /// </summary>
         private void HandleSwapSecondTarget(Card target)
         {
@@ -170,6 +175,20 @@ namespace Objects
             if (effect == null || !effect.IsGlowing())
             {
                 Debug.Log("[JokerTargetSelector] 선택할 수 없는 카드입니다.");
+                return;
+            }
+
+            // 숫자 카드만 교환 가능 (연산자는 제외)
+            if (target.CardType != CardType.Number)
+            {
+                Debug.Log("[JokerTargetSelector] 숫자 카드만 교환할 수 있습니다.");
+                return;
+            }
+
+            // 첫 번째 카드와 같은 카드는 선택 불가 (안전장치)
+            if (target == firstSelectedCard)
+            {
+                Debug.Log("[JokerTargetSelector] 같은 카드는 선택할 수 없습니다.");
                 return;
             }
 
@@ -194,6 +213,14 @@ namespace Objects
         public JokerTargetMode GetCurrentMode()
         {
             return currentMode;
+        }
+
+        /// <summary>
+        /// 첫 번째 선택된 카드 가져오기 (디버깅용)
+        /// </summary>
+        public Card GetFirstSelectedCard()
+        {
+            return firstSelectedCard;
         }
     }
 }

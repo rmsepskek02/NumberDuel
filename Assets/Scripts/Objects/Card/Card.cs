@@ -319,13 +319,13 @@ namespace Objects
         /// </summary>
         /// <param name="onComplete">애니메이션 완료 후 실행할 콜백</param>
         /// <param name="delay">애니메이션 시작 전 대기 시간</param>
-        public IEnumerator AnimateRemoval(System.Action onComplete = null, float delay = 0f)
+        public IEnumerator AnimateRemoval(Action onComplete = null, float delay = 0f)
         {
             // 대기 시간
             if (delay > 0f)
                 yield return new WaitForSeconds(delay);
 
-            float animDuration = 1.0f; // Global에 정의되어 있다면 사용
+            float animDuration = 0.5f; // Global에 정의되어 있다면 사용
 
             // 1. 상호작용 비활성화
             if (mouseEvent != null)
