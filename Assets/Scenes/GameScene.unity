@@ -175,7 +175,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 15016875}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a6c49ccbc755fd94d9e9c909ebf800bf, type: 3}
   m_Name: 
@@ -198,6 +198,67 @@ MonoBehaviour:
   fanAngle: 60
   spacing: 2
   maxFieldCards: 5
+--- !u!1 &28174658
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 28174659}
+  - component: {fileID: 28174660}
+  - component: {fileID: 28174661}
+  m_Layer: 0
+  m_Name: DeckManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &28174659
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 28174658}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1855200358}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &28174660
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 28174658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3647d682f2fce234ca432eb8221a462e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enableLogging: 1
+--- !u!114 &28174661
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 28174658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eaf09fb1c941b7743a1af342a6a292e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerHandZone: {fileID: 15016878}
+  opponentHandZone: {fileID: 1158633535}
+  inputActions: {fileID: 0}
 --- !u!1 &33556458
 GameObject:
   m_ObjectHideFlags: 0
@@ -231,6 +292,9 @@ MonoBehaviour:
   yOffset: 0.02
   deckRoot: {fileID: 33556460}
   isMyDeck: 0
+  removeAnimationDuration: 0.3
+  removeDirection: {x: 1, y: 0, z: 0}
+  removeDistance: 2
 --- !u!4 &33556460
 Transform:
   m_ObjectHideFlags: 0
@@ -619,7 +683,6 @@ MonoBehaviour:
   swapText: {fileID: 2116212348}
   maxScale: 30
   animDurationUI: 0.2
-  animDuration: 1
 --- !u!4 &69944040
 Transform:
   m_ObjectHideFlags: 0
@@ -4680,7 +4743,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1158633532}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a6c49ccbc755fd94d9e9c909ebf800bf, type: 3}
   m_Name: 
@@ -7420,6 +7483,7 @@ Transform:
   - {fileID: 1061525648}
   - {fileID: 539923749}
   - {fileID: 2094594582}
+  - {fileID: 28174659}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1885810488
@@ -7455,6 +7519,9 @@ MonoBehaviour:
   yOffset: 0.02
   deckRoot: {fileID: 1885810490}
   isMyDeck: 1
+  removeAnimationDuration: 0.3
+  removeDirection: {x: 1, y: 0, z: 0}
+  removeDistance: -2
 --- !u!4 &1885810490
 Transform:
   m_ObjectHideFlags: 0

@@ -37,10 +37,59 @@ namespace Objects
         }
 
         /// <summary>
-        /// 카드 추가 후 배치 갱신
+        /// 현재 Zone에 있는 카드 개수 반환
         /// </summary>
+        public int GetCardCount()
+        {
+            return cards.Count;
+        }
+
+        /// <summary>
+        /// Zone이 가득 찬 상태인지 확인 (손패용)
+        /// </summary>
+        public bool IsHandFull()
+        {
+            return zoneType == ZoneType.Hand && cards.Count >= 10;
+        }
+
+        /// <summary>
+        /// 카드 추가 가능 여부 확인
+        /// </summary>
+        public bool CanAddCard()
+        {
+            if (zoneType == ZoneType.Hand)
+                return cards.Count < 10;
+            else if (zoneType == ZoneType.Field)
+                return cards.Count < 5;  // 필드 5장 제한 추가
+
+            return true;
+        }
+
+        /// <summary>
+        /// 필드가 가득 찬 상태인지 확인
+        /// </summary>
+        public bool IsFieldFull()
+        {
+            return zoneType == ZoneType.Field && cards.Count >= 5;
+        }
+
+        // AddCard 메서드 수정 (필드 제한 추가)
         public void AddCard(Transform card)
         {
+            // 손패 제한 체크
+            if (zoneType == ZoneType.Hand && cards.Count >= 10)
+            {
+                Debug.LogWarning($"[CardZone] {ownerType} 손패가 가득차서 카드를 추가할 수 없습니다.");
+                return;
+            }
+
+            // 필드 제한 체크 추가
+            if (zoneType == ZoneType.Field && cards.Count >= 5)
+            {
+                Debug.LogWarning($"[CardZone] {ownerType} 필드가 가득차서 카드를 추가할 수 없습니다.");
+                return;
+            }
+
             if (cards.Contains(card)) return;
 
             Card cardComponent = card.GetComponent<Card>();

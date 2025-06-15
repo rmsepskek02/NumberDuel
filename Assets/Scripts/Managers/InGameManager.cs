@@ -3,6 +3,7 @@ using Photon.Pun.UtilityScripts;
 using System.Collections.Generic;
 using Utills;
 using Objects;
+using System.Linq;
 
 namespace Manager
 {
@@ -255,6 +256,129 @@ namespace Manager
         public List<Card> GetAllFieldCards()
         {
             return new List<Card>(fieldCards);
+        }
+
+        // InGameManager.cs에 추가할 메서드들
+
+        /// <summary>
+        /// 게임 시작 시 덱 초기화 및 초기 핸드 드로우
+        /// </summary>
+        public void StartGame()
+        {
+            // 덱 초기화
+            DeckManager.Instance.InitializeDecks();
+
+            // 초기 핸드 드로우 (각자 5장)
+            DrawCardsToHand(5, CardZone.OwnerType.Player);
+            DrawCardsToHand(5, CardZone.OwnerType.Opponent);
+
+            Debug.Log("[InGameManager] 게임 시작 - 덱 초기화 및 초기 핸드 드로우 완료");
+        }
+
+        /// <summary>
+        /// 지정된 플레이어의 손패로 카드 드로우 (손패 제한 적용)
+        /// </summary>
+        /// <param name="count">드로우할 카드 수</param>
+        /// <param name="owner">카드 소유자</param>
+        public void DrawCardsToHand(int count, CardZone.OwnerType owner)
+        {
+            // 손패 Zone 찾기
+            CardZone handZone = FindHandZone(owner);
+            if (handZone == null)
+            {
+                Debug.LogError($"[InGameManager] {owner} 손패 Zone을 찾을 수 없습니다.");
+                return;
+            }
+
+            int drawnCount = 0;
+            int destroyedCount = 0;
+
+            for (int i = 0; i < count; i++)
+            {
+                // 현재 손패 개수 확인
+                int currentHandCount = GetHandCardCount(handZone);
+
+                // 덱에서 카드 데이터 드로우
+                var cardData = owner == CardZone.OwnerType.Player
+                    ? DeckManager.Instance.DrawPlayerCard()
+                    : DeckManager.Instance.DrawOpponentCard();
+
+                if (!cardData.HasValue)
+                {
+                    Debug.LogWarning($"[InGameManager] {owner} 덱이 비어있어 더 이상 드로우할 수 없습니다.");
+                    break;
+                }
+
+                // 손패 제한 체크 (10장)
+                if (currentHandCount >= 10)
+                {
+                    // 카드 데이터는 이미 덱에서 제거되었으므로 그냥 파괴
+                    destroyedCount++;
+                    Debug.Log($"[InGameManager] {owner} 손패가 가득참 (10장). 드로우한 카드 파괴: {GetCardDescription(cardData.Value)}");
+                    continue;
+                }
+
+                // 실제 카드 오브젝트 생성 및 손패에 배치
+                GameObject cardObject = DeckManager.Instance.CreateCardObject(cardData.Value, owner, handZone);
+                if (cardObject != null)
+                {
+                    drawnCount++;
+                }
+            }
+
+            // 결과 로그
+            if (drawnCount > 0)
+                Debug.Log($"[InGameManager] {owner} {drawnCount}장 드로우 완료");
+
+            if (destroyedCount > 0)
+                Debug.Log($"[InGameManager] {owner} {destroyedCount}장 손패 제한으로 파괴됨");
+        }
+
+        /// <summary>
+        /// 손패의 현재 카드 개수 반환
+        /// </summary>
+        private int GetHandCardCount(CardZone handZone)
+        {
+            if (handZone == null) return 0;
+
+            // Transform의 자식 개수로 카드 수 확인
+            return handZone.transform.childCount;
+        }
+
+        /// <summary>
+        /// 카드 정보 문자열 생성
+        /// </summary>
+        private string GetCardDescription(Manager.CardData cardData)
+        {
+            return cardData.cardType switch
+            {
+                CardType.Number => $"숫자({cardData.numberValue})",
+                CardType.Operator => $"연산자({cardData.operatorType})",
+                CardType.Joker => "조커",
+                _ => "알 수 없음"
+            };
+        }
+
+        /// <summary>
+        /// 손패 Zone 찾기
+        /// </summary>
+        private CardZone FindHandZone(CardZone.OwnerType owner)
+        {
+            if (CardZone.AllZonesRoot == null) return null;
+
+            var zones = CardZone.AllZonesRoot.GetComponentsInChildren<CardZone>();
+            return zones.FirstOrDefault(z =>
+                z.Owner == owner &&
+                z.Zone == CardZone.ZoneType.Hand);
+        }
+
+        /// <summary>
+        /// 턴 시작 시 카드 1장 드로우
+        /// </summary>
+        public void StartTurn(CardZone.OwnerType currentPlayer)
+        {
+            DrawCardsToHand(1, currentPlayer);
+            Debug.Log($"[InGameManager] {currentPlayer} 턴 시작 - 카드 1장 드로우");
         }
     }
 }

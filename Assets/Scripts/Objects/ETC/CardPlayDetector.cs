@@ -153,22 +153,36 @@ namespace Objects
         }
 
         /// <summary>
-        /// 숫자 카드 처리 (기존 Open/Secret 선택)
+        /// 숫자 카드 처리 (필드 제한 체크 추가)
         /// </summary>
         private void HandleNumberCard(Transform card)
         {
-            Debug.Log("[CardPlayDetector] 숫자 카드 드래그 감지 - CardModeSelector 표시");
+            Debug.Log("[CardPlayDetector] 숫자 카드 드래그 감지");
 
-            // 카드 모드 선택 요청 이벤트 발행
+            // targetZone이 필드인지 확인
+            if (targetZone != null && targetZone.Zone == CardZone.ZoneType.Field)
+            {
+                // 필드 가득 찬 상태 체크
+                if (!targetZone.CanAddCard())
+                {
+                    Debug.LogWarning("[CardPlayDetector] 필드가 가득차서 카드를 낼 수 없습니다.");
+
+                    // 카드를 손패로 되돌리기
+                    ReturnCardToHand(card);
+                    return;
+                }
+            }
+
+            // 필드에 자리가 있으면 카드 모드 선택 진행
+            Debug.Log("[CardPlayDetector] 필드에 자리 있음 - CardModeSelector 표시");
             OnCardPlayRequested?.Invoke(card, targetZone);
         }
 
         /// <summary>
-        /// 카드를 손패로 되돌리기
+        /// 카드를 손패로 되돌리기 (개선된 버전)
         /// </summary>
         private void ReturnCardToHand(Transform card)
         {
-            // 카드의 현재 Zone 찾기
             Card cardComponent = card.GetComponent<Card>();
             if (cardComponent == null) return;
 
@@ -176,8 +190,11 @@ namespace Objects
             CardZone handZone = FindHandZone(cardComponent.CurrentOwnerType);
             if (handZone != null)
             {
-                // 레이아웃 업데이트 (카드가 원위치로 돌아감)
+                // 부드러운 애니메이션으로 원위치 복귀
                 handZone.UpdateLayout();
+
+                // 애니메이션 추가 (선택사항)
+                //AnimateReturnToHand(card, handZone);
             }
         }
 
