@@ -17,7 +17,7 @@ namespace Manager
 
         private void Awake()
         {
-            expressionManager = FindAnyObjectByType<ExpressionZoneManager>();
+            //expressionManager = FindAnyObjectByType<ExpressionZoneManager>();
         }
 
         private void OnEnable()
@@ -89,36 +89,42 @@ namespace Manager
         {
             currentAttacker = attacker;
 
-            // 수식 표현 설정
-            expressionManager.ConfigureSlot(0, attacker.GetComponentInChildren<CardText>().TextValue,
-                attacker.GetComponentInChildren<SpriteRenderer>().sprite, true);
+            // 1. ExpressionZone에 실제 공격자 정보 설정
+            var expressionManager = FindAnyObjectByType<ExpressionZoneManager>();
+            if (expressionManager != null)
+            {
+                expressionManager.ConfigureSlot(0, attacker.GetComponentInChildren<CardText>().TextValue,
+                    attacker.GetComponentInChildren<SpriteRenderer>().sprite, true);
 
-            expressionManager.ConfigureSlot(1, "-", null, true); // 연산자
-            expressionManager.ConfigureSlot(2, "", null, false); // 상대 카드 초기화
-            expressionManager.ConfigureSlot(4, "", null, false); // 결과 초기화
-            expressionManager.SetEqualSymbol();
+                expressionManager.ConfigureSlot(1, "-", null, true);
+                expressionManager.ConfigureSlot(2, "", null, false);
+                expressionManager.ConfigureSlot(4, "", null, false);
+                expressionManager.SetEqualSymbol();
 
-            // 모든 내 필드카드의 GLOW 끄기 (공격자 포함)
+                // 2. ExpressionZone 취소 기능 활성화
+                expressionManager.StartAttackProcess();
+            }
+
+            // 3. GLOW 상태 설정 (Unity 6 호환)
             foreach (var card in FindObjectsByType<Card>(FindObjectsSortMode.None))
             {
                 if (card.CurrentOwnerType == CardZone.OwnerType.Player &&
                     card.CurrentZoneType == CardZone.ZoneType.Field)
                 {
-                    card.SetCardState(false); // 모든 내 필드카드 GLOW OFF
+                    card.SetCardState(false);
                 }
             }
 
-            // 상대 필드카드만 빨간색 GLOW ON
             foreach (var card in FindObjectsByType<Card>(FindObjectsSortMode.None))
             {
                 if (card.CurrentOwnerType == CardZone.OwnerType.Opponent &&
                     card.CurrentZoneType == CardZone.ZoneType.Field)
                 {
-                    card.SetCardState(true, Global.GlowRed); // 빨간색 GLOW
+                    card.SetCardState(true, Global.GlowRed);
                 }
             }
 
-            Debug.Log($"[FieldAttackManager] 공격자 선택: {attacker.name}. 상대 필드카드만 선택 가능");
+            Debug.Log($"[FieldAttackManager] 공격자 선택: {attacker.name}");
         }
 
         /// <summary>
@@ -127,16 +133,20 @@ namespace Manager
         private void CancelAttack()
         {
             Debug.Log("[FieldAttackManager] 공격 취소");
-
             currentAttacker = null;
 
-            // 수식존 초기화
-            expressionManager.ConfigureSlot(0, "", null, false); // 내 카드 초기화
-            expressionManager.ConfigureSlot(1, "", null, false); // 연산자 초기화
-            expressionManager.ConfigureSlot(2, "", null, false); // 상대 카드 초기화
-            expressionManager.ConfigureSlot(4, "", null, false); // 결과 초기화
+            if (InGameManager.Instance.IsProcessing &&
+                InGameManager.Instance.CurrentProcess == GameProcessState.CardAttackProcess)
+            {
+                InGameManager.Instance.EndProcess();
+            }
 
-            // 모든 카드 GLOW 상태 초기화
+            var expressionManager = FindAnyObjectByType<ExpressionZoneManager>();
+            if (expressionManager != null)
+            {
+                expressionManager.ResetExpressionZone();
+            }
+
             RefreshAllCardGlowStates();
         }
 
@@ -147,10 +157,11 @@ namespace Manager
         {
             Debug.Log($"[FieldAttackManager] 공격 실행: {attacker.name} -> {defender.name}");
 
-            // 수식존 2번 슬롯: 수비자 카드 시각화
-            expressionManager.SetOpponentCard(defender);
-
-            // 2초 대기 (시각적 연출)
+            var expressionManager = FindAnyObjectByType<ExpressionZoneManager>();
+            if (expressionManager != null)
+            {
+                expressionManager.SetOpponentCard(defender);
+            }
             yield return new WaitForSeconds(2f);
 
             var myText = attacker.GetComponentInChildren<CardText>();
@@ -160,9 +171,10 @@ namespace Manager
             long oppValue = oppText?.RawValue ?? 0;
             long result = myValue - oppValue;
 
-            // 결과 표시
-            expressionManager.DisplayResult(myValue, oppValue);
-
+            if (expressionManager != null)
+            {
+                expressionManager.DisplayResult(myValue, oppValue);
+            }
             yield return new WaitForSeconds(1f);
 
             var attackerZone = attacker.GetComponentInParent<CardZone>();

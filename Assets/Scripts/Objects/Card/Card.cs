@@ -194,8 +194,8 @@ namespace Objects
         }
 
         /// <summary>
-        /// 클릭 시 실행되는 내부 로직 (최종 수정 버전)
-        /// 프로세스 상태를 우선 체크하고 UI 표시를 차단
+        /// 클릭 시 실행되는 내부 로직 (버그 수정 버전)
+        /// 공격 프로세스 중 연산/조커 카드 사용 차단
         /// </summary>
         private void HandleClick()
         {
@@ -232,14 +232,44 @@ namespace Objects
                 return;
             }
 
-            // 3. 기타 프로세스 진행 중이면 모든 새 프로세스 시작 차단
+            // 3. 공격 프로세스 중인지 확인 (새로 추가)
+            var attackManager = FindAnyObjectByType<FieldAttackManager>();
+            bool hasAttackerSelected = attackManager != null && attackManager.HasAttackerSelected();
+
+            if (hasAttackerSelected)
+            {
+                Debug.Log("[Card] 공격 프로세스 진행 중 감지");
+
+                // 공격 프로세스 중에는 손패의 조커/연산자 카드 사용 차단
+                if (CurrentZoneType == CardZone.ZoneType.Hand &&
+                    CurrentOwnerType == CardZone.OwnerType.Player &&
+                    (CardType == CardType.Joker || CardType == CardType.Operator))
+                {
+                    Debug.Log($"[Card] 공격 프로세스 중 {CardType} 카드 사용 차단: {gameObject.name}");
+                    return;
+                }
+
+                // 상대 필드 카드 공격은 허용
+                if (CurrentOwnerType == CardZone.OwnerType.Opponent && CurrentZoneType == CardZone.ZoneType.Field)
+                {
+                    Debug.Log("[Card] 공격 대상 선택 허용");
+                    onClicked?.Invoke(this);
+                    return;
+                }
+
+                // 기타 경우는 차단
+                Debug.Log($"[Card] 공격 프로세스 중 기타 카드 클릭 차단: {gameObject.name}");
+                return;
+            }
+
+            // 4. 기타 프로세스 진행 중이면 모든 새 프로세스 시작 차단
             if (InGameManager.Instance.IsProcessing)
             {
                 Debug.Log($"[Card] 현재 {InGameManager.Instance.CurrentProcess} 진행 중이므로 모든 새 프로세스 차단");
                 return;
             }
 
-            // 4. 프로세스가 진행 중이지 않을 때만 새 프로세스 시작 허용
+            // 5. 프로세스가 진행 중이지 않을 때만 새 프로세스 시작 허용
 
             // 조커 카드일 경우: JokerModeSelector 호출
             if (CardType == CardType.Joker &&
@@ -271,26 +301,46 @@ namespace Objects
         }
 
         /// <summary>
-        /// 카드가 Drag가 끝난 시점에 호출 (개선 버전)
-        /// 물리적 드래그는 항상 허용, 프로세스 시작만 차단
+        /// 카드가 Drag가 끝난 시점에 호출 (버그 수정 버전)
+        /// 공격 프로세스 중 연산/조커 카드 드래그 차단
         /// </summary>
         private void HandleEndDrag()
         {
             Debug.Log($"[Card] EndDrag: {gameObject.name}");
 
-            // 1. 프로세스 진행 중일 때는 새로운 프로세스 시작 차단
-            if (InGameManager.Instance.IsProcessing)
-            {
-                return; // 완전히 차단, 이벤트 발행 안 함
-            }
-
-            // 2. 연산자 프로세스 중인 경우
+            // 1. 연산자 프로세스 중인 경우
             if (OperatorManager.Instance.IsInOperatorMode)
             {
+                Debug.Log("[Card] 연산자 모드 중 드래그 차단");
                 return; // 완전히 차단
             }
 
-            // 3. 프로세스가 진행 중이지 않을 때만 새 프로세스 시작 허용
+            // 2. 공격 프로세스 중인지 확인 (새로 추가)
+            var attackManager = FindAnyObjectByType<FieldAttackManager>();
+            bool hasAttackerSelected = attackManager != null && attackManager.HasAttackerSelected();
+
+            if (hasAttackerSelected)
+            {
+                Debug.Log("[Card] 공격 프로세스 진행 중 - 드래그 차단");
+
+                // 공격 프로세스 중에는 손패의 조커/연산자 카드 드래그 차단
+                if (CurrentZoneType == CardZone.ZoneType.Hand &&
+                    CurrentOwnerType == CardZone.OwnerType.Player &&
+                    (CardType == CardType.Joker || CardType == CardType.Operator))
+                {
+                    Debug.Log($"[Card] 공격 프로세스 중 {CardType} 카드 드래그 차단: {gameObject.name}");
+                    return;
+                }
+            }
+
+            // 3. 프로세스 진행 중일 때는 새로운 프로세스 시작 차단
+            if (InGameManager.Instance.IsProcessing)
+            {
+                Debug.Log("[Card] 프로세스 진행 중 드래그 차단");
+                return; // 완전히 차단, 이벤트 발행 안 함
+            }
+
+            // 4. 프로세스가 진행 중이지 않을 때만 새 프로세스 시작 허용
 
             // 조커 카드일 경우: 드롭 시 카드 배치 프로세스 시작
             if (CardType == CardType.Joker &&

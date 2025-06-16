@@ -63,6 +63,10 @@ namespace Manager
 
             InitializeOperatorMode(operatorCard);
             InitializeExpressionZone();
+
+            // ExpressionZoneManager 취소 기능 활성화 추가
+            ExpressionZoneManager.Instance.StartOperatorProcess();
+
             SetupFirstSelectableCards();
         }
         #endregion
@@ -99,6 +103,10 @@ namespace Manager
             currentState = OperatorState.FirstCardSelected;
 
             ExpressionZoneManager.Instance.SetMyCard(card);
+
+            // ExpressionZone 취소 상태 업데이트 추가
+            ExpressionZoneManager.Instance.UpdateOperatorFirstCardSelected();
+
             UpdateGlowForSecondSelection();
         }
 
@@ -119,6 +127,9 @@ namespace Manager
         /// </summary>
         private IEnumerator ExecuteOperationSequence()
         {
+            // 연산 실행 중에는 취소 불가능하게 설정
+            ExpressionZoneManager.Instance.ClearAllCancelable();
+
             SetupExpressionVisualization();
             yield return new WaitForSeconds(2f);
 
@@ -127,6 +138,9 @@ namespace Manager
 
             RestoreGlowStates();
             ResetOperatorState();
+
+            // 수식존 초기화
+            ExpressionZoneManager.Instance.ResetExpressionZone();
         }
 
         /// <summary>
@@ -555,6 +569,59 @@ namespace Manager
 
             InGameManager.Instance.EndProcess();
         }
+        #endregion
+
+        // OperatorManager.cs에 추가할 취소 관련 메서드들
+
+        #region Cancellation Methods (ExpressionZoneManager에서 호출용)
+
+        /// <summary>
+        /// 첫 번째 카드 선택을 취소하고 다시 선택할 수 있게 합니다.
+        /// </summary>
+        public void ResetFirstCardSelection()
+        {
+            if (currentState != OperatorState.FirstCardSelected)
+            {
+                Debug.LogWarning("[OperatorManager] 첫 번째 카드가 선택되지 않은 상태에서 재선택 시도");
+                return;
+            }
+
+            Debug.Log("[OperatorManager] 첫 번째 카드 선택 취소 - 다시 선택 가능");
+
+            // 상태를 연산자 선택 상태로 되돌림
+            currentState = OperatorState.OperatorSelected;
+            firstTargetCard = null;
+
+            // 수식존에서 첫 번째 카드 제거 (연산자는 유지)
+            ExpressionZoneManager.Instance.ConfigureSlot(0, "", null, false);
+
+            // GLOW 상태를 첫 번째 카드 선택 상태로 되돌림
+            SetupFirstSelectableCards();
+        }
+
+        /// <summary>
+        /// 연산 모드를 완전히 취소합니다.
+        /// </summary>
+        public void CancelOperatorMode()
+        {
+            Debug.Log("[OperatorManager] 연산 모드 완전 취소");
+
+            // GLOW 상태 복원
+            RestoreGlowStates();
+
+            // 수식존 초기화
+            ExpressionZoneManager.Instance.ConfigureSlot(0, "", null, false);
+            ExpressionZoneManager.Instance.ConfigureSlot(1, "", null, false);
+            ExpressionZoneManager.Instance.ConfigureSlot(2, "", null, false);
+            ExpressionZoneManager.Instance.ConfigureSlot(4, "", null, false);
+            ExpressionZoneManager.Instance.SetEqualSymbol();
+
+            // 상태 초기화
+            ResetOperatorState();
+
+            Debug.Log("[OperatorManager] 연산 모드 취소 완료");
+        }
+
         #endregion
     }
 }

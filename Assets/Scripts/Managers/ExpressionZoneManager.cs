@@ -12,6 +12,7 @@ namespace Manager
     /// - 연산자 및 숫자 표시
     /// - 결과값 계산 및 표시
     /// - 스프라이트에 따라 텍스트 색상 동기화
+    /// - 취소 기능 처리
     /// </summary>
     public class ExpressionZoneManager : Singleton<ExpressionZoneManager>
     {
@@ -21,10 +22,24 @@ namespace Manager
         private ExpressionCard[] expressionCards;
         private Sprite neutralSprite;
 
+        #region Unity Lifecycle
         /// <summary>
         /// 시작 시 표현식 카드 정렬 및 초기화 수행
         /// </summary>
         private void Start()
+        {
+            InitializeExpressionZone();
+            SubscribeToEvents();
+        }
+
+        private void OnDestroy()
+        {
+            UnsubscribeFromEvents();
+        }
+        #endregion
+
+        #region Initialization
+        private void InitializeExpressionZone()
         {
             if (expressionZone == null)
                 expressionZone = GetComponentInParent<CardZone>();
@@ -33,6 +48,8 @@ namespace Manager
             expressionCards = GetComponentsInChildren<ExpressionCard>(includeInactive: true)
                 .OrderBy(card => card.name)
                 .ToArray();
+
+            Debug.Log($"[ExpressionZoneManager] ExpressionCard 개수: {expressionCards.Length}");
 
             // Zone에 정렬 등록
             foreach (var card in expressionCards)
@@ -52,6 +69,20 @@ namespace Manager
             SetEqualSymbol();
         }
 
+        private void SubscribeToEvents()
+        {
+            ExpressionCard.onClicked -= HandleExpressionCardClicked;
+            ExpressionCard.onClicked += HandleExpressionCardClicked;
+            Debug.Log("[ExpressionZoneManager] ExpressionCard 이벤트 구독 완료");
+        }
+
+        private void UnsubscribeFromEvents()
+        {
+            ExpressionCard.onClicked -= HandleExpressionCardClicked;
+        }
+        #endregion
+
+        #region Slot Configuration
         /// <summary>
         /// 지정한 슬롯에 텍스트/스프라이트/텍스트 활성 여부를 일괄 설정합니다.
         /// </summary>
@@ -68,6 +99,10 @@ namespace Manager
             }
 
             var slot = expressionCards[index];
+
+            // 슬롯 구성 전에 GLOW 상태 초기화 (버그 수정)
+            slot.ClearGlow();
+
             slot.SetValue(symbolText);
             slot.SetSprite(sprite ?? neutralSprite);
             slot.SetTextVisible(showText);
@@ -172,5 +207,170 @@ namespace Manager
 
             ConfigureSlot(4, text, sprite, true);
         }
+        #endregion
+
+        #region Cancellation Management
+        /// <summary>
+        /// 특정 슬롯들을 취소 가능하게 설정
+        /// </summary>
+        public void SetCancelableSlots(params int[] slotIndices)
+        {
+            Debug.Log($"[ExpressionZoneManager] SetCancelableSlots: [{string.Join(", ", slotIndices)}]");
+
+            // 모든 슬롯 취소 불가능으로 초기화
+            ClearAllCancelable();
+
+            // 지정된 슬롯들만 취소 가능하게 설정
+            foreach (int index in slotIndices)
+            {
+                if (index >= 0 && index < expressionCards.Length)
+                {
+                    var slot = expressionCards[index];
+                    if (slot.IsActive)
+                    {
+                        slot.SetCancelable(true);
+                        Debug.Log($"[ExpressionZoneManager] 슬롯 {index} 취소 가능 설정됨");
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 모든 슬롯의 취소 가능 상태 해제
+        /// </summary>
+        public void ClearAllCancelable()
+        {
+            foreach (var card in expressionCards)
+            {
+                card.ClearGlow();
+            }
+        }
+
+        /// <summary>
+        /// ExpressionCard 클릭 이벤트 처리
+        /// </summary>
+        private void HandleExpressionCardClicked(ExpressionCard clickedCard)
+        {
+            Debug.Log($"[ExpressionZoneManager] ExpressionCard 클릭! - {clickedCard.name}, 슬롯: {clickedCard.SlotIndex}");
+
+            int slotIndex = clickedCard.SlotIndex;
+
+            // Unity 6 호환: FindAnyObjectByType 사용
+            var attackManager = FindAnyObjectByType<FieldAttackManager>();
+            bool hasAttackerSelected = attackManager != null && attackManager.HasAttackerSelected();
+
+            // 현재 진행중인 프로세스에 따라 취소 처리 분기
+            if (hasAttackerSelected)
+            {
+                HandleAttackCancellation(slotIndex);
+            }
+            else if (InGameManager.Instance.CurrentProcess == GameProcessState.OperatorCalculation)
+            {
+                HandleOperatorCancellation(slotIndex);
+            }
+            else
+            {
+                Debug.LogWarning("[ExpressionZoneManager] 처리할 수 없는 상태에서 ExpressionCard 클릭됨");
+            }
+        }
+        #endregion
+
+        #region Attack Cancellation
+        private void HandleAttackCancellation(int slotIndex)
+        {
+            if (slotIndex == 0) // 0번 슬롯(공격자) 클릭시 공격 취소
+            {
+                Debug.Log("[ExpressionZoneManager] 공격 취소 처리");
+                CancelAttackProcess();
+            }
+            else
+            {
+                Debug.Log($"[ExpressionZoneManager] 슬롯 {slotIndex}는 공격 취소 불가");
+            }
+        }
+
+        public void CancelAttackProcess()
+        {
+            var attackManager = FindAnyObjectByType<FieldAttackManager>();
+            if (attackManager != null)
+            {
+                attackManager.ForceResetAttackState();
+                Debug.Log("[ExpressionZoneManager] 공격 프로세스 취소 완료");
+            }
+
+            ResetExpressionZone();
+        }
+        #endregion
+
+        #region Operator Cancellation
+        private void HandleOperatorCancellation(int slotIndex)
+        {
+            switch (slotIndex)
+            {
+                case 0: // 0번 슬롯: 첫 번째 카드 재선택
+                    Debug.Log("[ExpressionZoneManager] 연산 첫 번째 카드 재선택");
+                    CancelOperatorFirstCard();
+                    break;
+                case 1: // 1번 슬롯: 연산 완전 취소
+                    Debug.Log("[ExpressionZoneManager] 연산 프로세스 완전 취소");
+                    CancelOperatorProcess();
+                    break;
+                default:
+                    Debug.LogWarning($"[ExpressionZoneManager] 연산 중 취소 불가 슬롯: {slotIndex}");
+                    break;
+            }
+        }
+
+        public void CancelOperatorFirstCard()
+        {
+            var operatorManager = OperatorManager.Instance;
+            if (operatorManager != null && operatorManager.IsInOperatorMode)
+            {
+                operatorManager.ResetFirstCardSelection();
+                SetCancelableSlots(1); // 연산자 슬롯만 취소 가능하게
+            }
+        }
+
+        public void CancelOperatorProcess()
+        {
+            var operatorManager = OperatorManager.Instance;
+            if (operatorManager != null && operatorManager.IsInOperatorMode)
+            {
+                operatorManager.CancelOperatorMode();
+            }
+        }
+        #endregion
+
+        #region Process State Management
+        public void StartAttackProcess()
+        {
+            Debug.Log("[ExpressionZoneManager] StartAttackProcess - 0번 슬롯 취소 가능");
+            SetCancelableSlots(0);
+        }
+
+        public void StartOperatorProcess()
+        {
+            Debug.Log("[ExpressionZoneManager] StartOperatorProcess - 1번 슬롯 취소 가능");
+            SetCancelableSlots(1);
+        }
+
+        public void UpdateOperatorFirstCardSelected()
+        {
+            Debug.Log("[ExpressionZoneManager] 연산 첫 번째 카드 선택됨 - 0,1번 슬롯 취소 가능");
+            SetCancelableSlots(0, 1);
+        }
+
+        public void ResetExpressionZone()
+        {
+            Debug.Log("[ExpressionZoneManager] ResetExpressionZone");
+
+            ClearAllCancelable();
+            ConfigureSlot(0, "", null, false);
+            ConfigureSlot(1, "", null, false);
+            ConfigureSlot(2, "", null, false);
+            ConfigureSlot(4, "", null, false);
+            SetEqualSymbol();
+        }
+        #endregion
     }
 }
