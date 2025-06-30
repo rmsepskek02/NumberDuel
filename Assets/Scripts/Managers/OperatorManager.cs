@@ -220,7 +220,7 @@ namespace Manager
                 OperatorType.Plus => first + second,
                 OperatorType.Minus => first - second,
                 OperatorType.Multiply => first * second,
-                OperatorType.Divide => second != 0 ? first / second : 0,
+                OperatorType.Divide => second != 0 ? Mathf.Floor(first / second) : 0, // 몫만 반환
                 _ => 0
             };
         }
@@ -273,11 +273,14 @@ namespace Manager
             if (template == null) return;
 
             var newCard = Instantiate(template);
-            newCard.name = $"RemainderCard_{value}";
+
+            // float 나머지를 정수로 변환
+            int intValue = Mathf.FloorToInt(value);
+            newCard.name = $"RemainderCard_{intValue}";
             newCard.SetActive(true);
 
             var cardComponent = newCard.GetComponent<Card>();
-            cardComponent?.InitializeAsNumber(value);
+            cardComponent?.InitializeAsNumber(intValue); // 정수 값으로 초기화
             cardComponent?.SetWasModifiedThisTurn(true);
 
             playerField.AddCard(newCard.transform);

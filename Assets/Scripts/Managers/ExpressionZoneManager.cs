@@ -378,7 +378,7 @@ namespace Manager
                 OperatorType.Plus => a + b,
                 OperatorType.Minus => a - b,
                 OperatorType.Multiply => a * b,
-                OperatorType.Divide => b != 0 ? a / b : 0,
+                OperatorType.Divide => b != 0 ? Mathf.Floor(a / b) : 0, // 몫만 반환
                 _ => a - b // 공격 (기본 빼기)
             };
         }
@@ -390,9 +390,9 @@ namespace Manager
         {
             return operatorType switch
             {
-                null => Mathf.Abs(result).ToString(), // 공격은 절댓값
-                OperatorType.Minus => result.ToString(), // 빼기는 음수 포함
-                _ => result.ToString() // 나머지는 그대로
+                null => Mathf.Abs(Mathf.FloorToInt(result)).ToString(), // 공격은 절댓값의 정수 부분
+                OperatorType.Minus => Mathf.FloorToInt(result).ToString(), // 빼기는 정수 부분 (음수 포함)
+                _ => Mathf.FloorToInt(result).ToString() // 나머지는 정수 부분
             };
         }
 

@@ -294,8 +294,12 @@ namespace Manager
         private void DestroyCard(Card card)
         {
             var zone = card.GetComponentInParent<CardZone>();
-            zone?.RemoveCard(card.transform);
-            StartCoroutine(card.AnimateRemoval(() => Destroy(card.gameObject)));
+
+            // 애니메이션 완료 후 Zone에서 제거하도록 수정
+            StartCoroutine(card.AnimateRemoval(() => {
+                zone?.RemoveCard(card.transform); // 애니메이션 후 정렬 발생
+                Destroy(card.gameObject);
+            }));
         }
 
         /// <summary>
