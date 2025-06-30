@@ -284,8 +284,8 @@ namespace Objects
 
             if (firstCardText != null && secondCardText != null)
             {
-                long firstValue = firstCardText.RawValue;
-                long secondValue = secondCardText.RawValue;
+                float firstValue = firstCardText.RawValue;
+                float secondValue = secondCardText.RawValue;
 
                 firstCardText.SetRawValue(secondValue);
                 secondCardText.SetRawValue(firstValue);

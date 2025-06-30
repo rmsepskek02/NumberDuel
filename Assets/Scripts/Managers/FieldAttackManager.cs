@@ -5,134 +5,174 @@ using Objects;
 namespace Manager
 {
     /// <summary>
-    /// 필드에서의 공격 흐름을 처리하는 매니저 클래스 (수정 버전)
-    /// - 공격자 선택 후 내 필드카드 선택 차단
-    /// - 상대 필드카드만 빨간색 GLOW 효과
-    /// - 내 필드카드들 GLOW 완전 제거
+    /// 필드 카드 간 공격 시스템을 관리하는 매니저
+    /// 공격자 선택 → 수비자 선택 → 공격 실행 → 결과 처리 흐름을 담당
     /// </summary>
     public class FieldAttackManager : MonoBehaviour
     {
+        [SerializeField] private bool enableDebugLog = false;
+
         private Card currentAttacker;
-        private ExpressionZoneManager expressionManager;
 
-        private void Awake()
-        {
-            //expressionManager = FindAnyObjectByType<ExpressionZoneManager>();
-        }
+        // 성능 최적화용 캐시
+        private readonly System.Collections.Generic.List<Card> fieldCardsCache = new System.Collections.Generic.List<Card>();
 
+        #region Unity Lifecycle
         private void OnEnable()
         {
-            Card.onClicked += HandleCardClicked;
+            Card.onClicked += HandleCardClick;
         }
 
         private void OnDisable()
         {
-            Card.onClicked -= HandleCardClicked;
+            Card.onClicked -= HandleCardClick;
         }
+        #endregion
+
+        #region Public Interface
+        /// <summary>
+        /// 현재 공격자가 선택된 상태인지 확인
+        /// </summary>
+        public bool HasAttackerSelected() => currentAttacker != null;
 
         /// <summary>
-        /// 카드 클릭 시 공격 흐름을 제어합니다.
-        /// 공격자 선택 후에는 내 필드카드 선택을 차단합니다.
+        /// 현재 공격자 반환
         /// </summary>
-        private void HandleCardClicked(Card clickedCard)
+        public Card GetCurrentAttacker() => currentAttacker;
+
+        /// <summary>
+        /// 공격 상태 강제 초기화 (턴 종료, 다른 프로세스 시작 시 등)
+        /// </summary>
+        public void ForceResetAttackState()
         {
-            // 다른 프로세스가 진행 중이면 공격 차단
-            if (InGameManager.Instance.IsProcessing)
+            if (currentAttacker != null)
             {
-                Debug.Log($"[FieldAttackManager] {InGameManager.Instance.CurrentProcess} 진행 중이므로 공격 차단");
-                return;
+                ResetAttackState();
+                if (enableDebugLog)
+                    Debug.Log("[FieldAttackManager] 공격 상태 강제 초기화");
             }
+        }
+        #endregion
 
-            // 연산자 모드가 활성화된 경우 공격 차단
-            if (OperatorManager.Instance.IsInOperatorMode)
+        #region Attack Flow
+        /// <summary>
+        /// 카드 클릭 이벤트 처리
+        /// </summary>
+        private void HandleCardClick(Card clickedCard)
+        {
+            if (!CanProcessAttack()) return;
+
+            // 공격자 선택 (내 필드 카드)
+            if (IsValidAttacker(clickedCard))
             {
-                Debug.Log("[FieldAttackManager] 연산 중이므로 공격 차단");
-                return;
-            }
-
-            // 내 필드 카드 클릭 처리
-            if (clickedCard.CurrentOwnerType == CardZone.OwnerType.Player &&
-                clickedCard.CurrentZoneType == CardZone.ZoneType.Field &&
-                clickedCard.CanAttack)
-            {
-                // 이미 공격자가 선택된 상태라면 내 필드카드 선택 차단
-                if (currentAttacker != null)
-                {
-                    Debug.Log("[FieldAttackManager] 공격자가 이미 선택됨. 내 필드카드 선택 차단");
-                    return;
-                }
-
-                // 같은 카드 클릭 시 공격 취소
-                if (currentAttacker == clickedCard)
-                {
-                    CancelAttack();
-                    return;
-                }
-
-                // 새로운 공격자 선택
+                if (currentAttacker != null) return; // 이미 공격자 선택됨
                 SelectAttacker(clickedCard);
             }
-            // 상대 필드 카드 클릭 (공격 실행)
-            else if (clickedCard.CurrentOwnerType == CardZone.OwnerType.Opponent &&
-                     clickedCard.CurrentZoneType == CardZone.ZoneType.Field &&
-                     currentAttacker != null)
+            // 공격 실행 (상대 필드 카드)
+            else if (IsValidTarget(clickedCard))
             {
-                StartCoroutine(ResolveAttack(currentAttacker, clickedCard));
+                if (currentAttacker == null) return; // 공격자 미선택
+                StartCoroutine(ExecuteAttack(currentAttacker, clickedCard));
             }
         }
 
         /// <summary>
-        /// 공격자 카드를 선택하고 수식존 시각화 및 GLOW 상태를 업데이트합니다.
-        /// 공격자 선택 후에는 내 필드카드들의 GLOW를 모두 끕니다.
+        /// 공격자 선택 처리
         /// </summary>
         private void SelectAttacker(Card attacker)
         {
             currentAttacker = attacker;
 
-            // 1. ExpressionZone에 실제 공격자 정보 설정
-            var expressionManager = FindAnyObjectByType<ExpressionZoneManager>();
-            if (expressionManager != null)
-            {
-                expressionManager.ConfigureSlot(0, attacker.GetComponentInChildren<CardText>().TextValue,
-                    attacker.GetComponentInChildren<SpriteRenderer>().sprite, true);
+            SetupExpressionZone(attacker);
+            UpdateGlowStatesForTargetSelection();
 
-                expressionManager.ConfigureSlot(1, "-", null, true);
-                expressionManager.ConfigureSlot(2, "", null, false);
-                expressionManager.ConfigureSlot(4, "", null, false);
-                expressionManager.SetEqualSymbol();
-
-                // 2. ExpressionZone 취소 기능 활성화
-                expressionManager.StartAttackProcess();
-            }
-
-            // 3. GLOW 상태 설정 (Unity 6 호환)
-            foreach (var card in FindObjectsByType<Card>(FindObjectsSortMode.None))
-            {
-                if (card.CurrentOwnerType == CardZone.OwnerType.Player &&
-                    card.CurrentZoneType == CardZone.ZoneType.Field)
-                {
-                    card.SetCardState(false);
-                }
-            }
-
-            foreach (var card in FindObjectsByType<Card>(FindObjectsSortMode.None))
-            {
-                if (card.CurrentOwnerType == CardZone.OwnerType.Opponent &&
-                    card.CurrentZoneType == CardZone.ZoneType.Field)
-                {
-                    card.SetCardState(true, Global.GlowRed);
-                }
-            }
-
-            Debug.Log($"[FieldAttackManager] 공격자 선택: {attacker.name}");
+            if (enableDebugLog)
+                Debug.Log($"[FieldAttackManager] 공격자 선택: {attacker.name}");
         }
 
         /// <summary>
-        /// 공격 취소 시 모든 GLOW 상태 및 수식존 상태 초기화
+        /// 공격 실행 및 결과 처리
         /// </summary>
-        private void CancelAttack()
+        private IEnumerator ExecuteAttack(Card attacker, Card defender)
         {
-            Debug.Log("[FieldAttackManager] 공격 취소");
+            if (enableDebugLog)
+                Debug.Log($"[FieldAttackManager] 공격 실행: {attacker.name} → {defender.name}");
+
+            // 수식존에 수비자 설정
+            var ezManager = ExpressionZoneManager.Instance;
+            ezManager.SetDefenderCard(defender);
+
+            yield return new WaitForSeconds(1.5f);
+
+            // 공격 결과 계산 및 표시
+            var (attackerValue, defenderValue) = GetCardValues(attacker, defender);
+            ezManager.ShowResult(attackerValue, defenderValue);
+
+            yield return new WaitForSeconds(1f);
+
+            // 결과 적용
+            ApplyBattleResult(attacker, defender, attackerValue - defenderValue);
+
+            // 상태 초기화
+            currentAttacker = null;
+            yield return new WaitForSeconds(0.8f);
+
+            RestoreDefaultGlowStates();
+        }
+
+        /// <summary>
+        /// 전투 결과 적용
+        /// </summary>
+        private void ApplyBattleResult(Card attacker, Card defender, float result)
+        {
+            var attackerText = attacker.GetComponentInChildren<CardText>();
+            var defenderText = defender.GetComponentInChildren<CardText>();
+
+            if (result > 0) // 공격자 승리
+            {
+                attackerText.SetRawValue(result);
+                attacker.SetWasModifiedThisTurn(true);
+                DestroyCard(defender);
+
+                if (enableDebugLog)
+                    Debug.Log($"[FieldAttackManager] 공격 성공 - {attacker.name} 생존 (값: {result})");
+            }
+            else if (result < 0) // 수비자 승리
+            {
+                defenderText.SetRawValue(Mathf.Abs(result));
+                DestroyCard(attacker);
+
+                if (enableDebugLog)
+                    Debug.Log($"[FieldAttackManager] 공격 실패 - {defender.name} 생존 (값: {Mathf.Abs(result)})");
+            }
+            else // 무승부
+            {
+                DestroyCard(attacker);
+                StartCoroutine(DelayedDestroy(defender, 0.2f));
+
+                if (enableDebugLog)
+                    Debug.Log("[FieldAttackManager] 상호 파괴");
+            }
+        }
+        #endregion
+
+        #region Expression Zone Management
+        /// <summary>
+        /// 공격용 수식존 설정
+        /// </summary>
+        private void SetupExpressionZone(Card attacker)
+        {
+            var ezManager = ExpressionZoneManager.Instance;
+            ezManager.InitForAttack();
+            ezManager.SetAttackerCard(attacker);
+            ezManager.StartAttackMode();
+        }
+
+        /// <summary>
+        /// 공격 상태 초기화
+        /// </summary>
+        private void ResetAttackState()
+        {
             currentAttacker = null;
 
             if (InGameManager.Instance.IsProcessing &&
@@ -141,141 +181,136 @@ namespace Manager
                 InGameManager.Instance.EndProcess();
             }
 
-            var expressionManager = FindAnyObjectByType<ExpressionZoneManager>();
-            if (expressionManager != null)
-            {
-                expressionManager.ResetExpressionZone();
-            }
-
-            RefreshAllCardGlowStates();
+            ExpressionZoneManager.Instance.ResetAllSlots();
+            RestoreDefaultGlowStates();
         }
+        #endregion
 
+        #region GLOW Management
         /// <summary>
-        /// 공격 실행 후 결과를 수식존과 카드에 반영합니다.
+        /// 공격 대상 선택을 위한 GLOW 상태 설정
         /// </summary>
-        private IEnumerator ResolveAttack(Card attacker, Card defender)
+        private void UpdateGlowStatesForTargetSelection()
         {
-            Debug.Log($"[FieldAttackManager] 공격 실행: {attacker.name} -> {defender.name}");
+            UpdateFieldCache();
 
-            var expressionManager = FindAnyObjectByType<ExpressionZoneManager>();
-            if (expressionManager != null)
+            foreach (var card in fieldCardsCache)
             {
-                expressionManager.SetOpponentCard(defender);
-            }
-            yield return new WaitForSeconds(2f);
-
-            var myText = attacker.GetComponentInChildren<CardText>();
-            var oppText = defender.GetComponentInChildren<CardText>();
-
-            long myValue = myText?.RawValue ?? 0;
-            long oppValue = oppText?.RawValue ?? 0;
-            long result = myValue - oppValue;
-
-            if (expressionManager != null)
-            {
-                expressionManager.DisplayResult(myValue, oppValue);
-            }
-            yield return new WaitForSeconds(1f);
-
-            var attackerZone = attacker.GetComponentInParent<CardZone>();
-            var defenderZone = defender.GetComponentInParent<CardZone>();
-
-            // 공격 결과 처리
-            if (result > 0)
-            {
-                // 내 카드 생존, 상대 카드 파괴
-                defenderZone?.RemoveCard(defender.transform);
-                StartCoroutine(defender.AnimateRemoval(() => Destroy(defender.gameObject)));
-
-                myText.SetRawValue(result);
-                Debug.Log($"[FieldAttackManager] 공격 성공: {attacker.name} 생존 (수치: {result})");
-            }
-            else if (result < 0)
-            {
-                // 상대 카드 생존, 내 카드 파괴
-                attackerZone?.RemoveCard(attacker.transform);
-                StartCoroutine(attacker.AnimateRemoval(() => Destroy(attacker.gameObject)));
-
-                oppText.SetRawValue(Mathf.Abs((int)result));
-                Debug.Log($"[FieldAttackManager] 공격 실패: {defender.name} 생존 (수치: {Mathf.Abs(result)})");
-            }
-            else // result == 0
-            {
-                // 둘 다 파괴
-                attackerZone?.RemoveCard(attacker.transform);
-                defenderZone?.RemoveCard(defender.transform);
-
-                StartCoroutine(attacker.AnimateRemoval(() => Destroy(attacker.gameObject)));
-                StartCoroutine(defender.AnimateRemoval(() => Destroy(defender.gameObject), 0.2f));
-
-                Debug.Log("[FieldAttackManager] 상호 파괴");
-            }
-
-            // 공격자가 생존했다면 이 턴엔 다시 공격할 수 없음
-            if (result > 0)
-            {
-                attacker.SetWasModifiedThisTurn(true);
-            }
-
-            currentAttacker = null;
-
-            // 1초 후 모든 카드 GLOW 상태 갱신
-            yield return new WaitForSeconds(1f);
-            RefreshAllCardGlowStates();
-        }
-
-        /// <summary>
-        /// 모든 카드의 GLOW 상태를 기본 상태로 초기화
-        /// </summary>
-        private void RefreshAllCardGlowStates()
-        {
-            foreach (var card in FindObjectsByType<Card>(FindObjectsSortMode.None))
-            {
-                if (card.CurrentZoneType != CardZone.ZoneType.Field)
-                    continue;
-
                 if (card.CurrentOwnerType == CardZone.OwnerType.Player)
                 {
-                    // 내 필드카드: 공격 가능하면 초록색 GLOW
+                    // 내 필드카드는 GLOW 끄기
+                    card.SetCardState(false);
+                }
+                else if (card.CurrentOwnerType == CardZone.OwnerType.Opponent)
+                {
+                    // 상대 필드카드는 빨간색 GLOW
+                    card.SetCardState(true, Global.GlowRed);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 기본 GLOW 상태로 복원
+        /// </summary>
+        private void RestoreDefaultGlowStates()
+        {
+            UpdateFieldCache();
+
+            foreach (var card in fieldCardsCache)
+            {
+                if (card.CurrentOwnerType == CardZone.OwnerType.Player)
+                {
+                    // 내 카드: 공격 가능하면 초록색 GLOW
                     bool canAttack = card.IsAttackableThisTurn();
                     card.SetCardState(canAttack, canAttack ? Global.GlowGreen : null);
                 }
                 else
                 {
-                    // 상대 필드카드: GLOW 끄기
+                    // 상대 카드: GLOW 끄기
                     card.SetCardState(false);
                 }
             }
-
-            Debug.Log("[FieldAttackManager] 모든 카드 GLOW 상태 초기화 완료");
         }
 
         /// <summary>
-        /// 현재 공격자가 선택된 상태인지 확인
+        /// 필드 카드 캐시 업데이트 (성능 최적화)
         /// </summary>
-        public bool HasAttackerSelected()
+        private void UpdateFieldCache()
         {
-            return currentAttacker != null;
+            fieldCardsCache.Clear();
+            fieldCardsCache.AddRange(InGameManager.Instance.GetAllFieldCards());
+        }
+        #endregion
+
+        #region Validation
+        /// <summary>
+        /// 공격 처리 가능 여부 확인
+        /// </summary>
+        private bool CanProcessAttack()
+        {
+            // 다른 프로세스 진행 중이면 공격 차단
+            if (InGameManager.Instance.IsProcessing) return false;
+
+            // 연산자 모드 중이면 공격 차단
+            if (OperatorManager.Instance.IsInOperatorMode) return false;
+
+            return true;
         }
 
         /// <summary>
-        /// 현재 공격자 정보 반환 (디버깅용)
+        /// 유효한 공격자인지 확인
         /// </summary>
-        public Card GetCurrentAttacker()
+        private bool IsValidAttacker(Card card)
         {
-            return currentAttacker;
+            return card.CurrentOwnerType == CardZone.OwnerType.Player &&
+                   card.CurrentZoneType == CardZone.ZoneType.Field &&
+                   card.CanAttack;
         }
 
         /// <summary>
-        /// 강제로 공격 상태 초기화 (턴 종료 시 등)
+        /// 유효한 공격 대상인지 확인
         /// </summary>
-        public void ForceResetAttackState()
+        private bool IsValidTarget(Card card)
         {
-            if (currentAttacker != null)
-            {
-                CancelAttack();
-                Debug.Log("[FieldAttackManager] 공격 상태 강제 초기화");
-            }
+            return card.CurrentOwnerType == CardZone.OwnerType.Opponent &&
+                   card.CurrentZoneType == CardZone.ZoneType.Field;
         }
+        #endregion
+
+        #region Utility
+        /// <summary>
+        /// 두 카드의 값 반환
+        /// </summary>
+        private (float attacker, float defender) GetCardValues(Card attacker, Card defender)
+        {
+            float attackerValue = attacker.GetComponentInChildren<CardText>()?.RawValue ?? 0;
+            float defenderValue = defender.GetComponentInChildren<CardText>()?.RawValue ?? 0;
+            return (attackerValue, defenderValue);
+        }
+
+        /// <summary>
+        /// 카드 파괴 (애니메이션 포함)
+        /// </summary>
+        private void DestroyCard(Card card)
+        {
+            var zone = card.GetComponentInParent<CardZone>();
+            zone?.RemoveCard(card.transform);
+            StartCoroutine(card.AnimateRemoval(() => Destroy(card.gameObject)));
+        }
+
+        /// <summary>
+        /// 지연된 카드 파괴
+        /// </summary>
+        private IEnumerator DelayedDestroy(Card card, float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            DestroyCard(card);
+        }
+
+        /// <summary>
+        /// 디버그 로그 활성화/비활성화
+        /// </summary>
+        public void SetDebugMode(bool enable) => enableDebugLog = enable;
+        #endregion
     }
 }

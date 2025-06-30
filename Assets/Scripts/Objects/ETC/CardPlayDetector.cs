@@ -139,9 +139,9 @@ namespace Objects
             Debug.Log("[CardPlayDetector] 연산자 카드 드래그 감지 - OperatorManager 호출");
 
             // 연산자 매니저 호출
-            if (Manager.OperatorManager.Instance != null)
+            if (OperatorManager.Instance != null)
             {
-                Manager.OperatorManager.Instance.EnterOperatorMode(operatorCard);
+                OperatorManager.Instance.StartOperation(operatorCard);
             }
             else
             {

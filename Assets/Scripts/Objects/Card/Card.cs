@@ -71,7 +71,7 @@ namespace Objects
         }
 
         // 카드 초기화 함수: 숫자 카드
-        public void InitializeAsNumber(long value)
+        public void InitializeAsNumber(float value)
         {
             CardType = CardType.Number;
             cardText.SetRawValue(value);
@@ -292,7 +292,7 @@ namespace Objects
                 CurrentZoneType == CardZone.ZoneType.Hand &&
                 CurrentOwnerType == CardZone.OwnerType.Player)
             {
-                OperatorManager.Instance.EnterOperatorMode(this);
+                OperatorManager.Instance.StartOperation(this);
                 return; // 기본 onClicked 이벤트 방지
             }
 
@@ -356,7 +356,7 @@ namespace Objects
                 CurrentZoneType == CardZone.ZoneType.Hand &&
                 CurrentOwnerType == CardZone.OwnerType.Player)
             {
-                OperatorManager.Instance.EnterOperatorMode(this);
+                OperatorManager.Instance.StartOperation(this);
                 return;
             }
 

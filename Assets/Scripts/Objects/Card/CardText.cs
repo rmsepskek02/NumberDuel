@@ -6,8 +6,8 @@ public class CardText : MonoBehaviour
 {
     public TextMeshPro textMesh; // TextMeshPro 참조
     private string _textValue = "1";  // 기본값 (초기 숫자)
-    private long _rawValue = 1; // 원래 숫자 값도 보관
-    public long RawValue => _rawValue; // 외부에서 원본 접근 가능
+    private float _rawValue = 1; // 원래 숫자 값도 보관
+    public float RawValue => _rawValue; // 외부에서 원본 접근 가능
 
     // 프로퍼티 (숫자 또는 기호를 저장)
     public string TextValue
@@ -17,7 +17,7 @@ public class CardText : MonoBehaviour
         {
             if (IsValidInput(value))
             {
-                if (long.TryParse(value, out var parsed))
+                if (float.TryParse(value, out var parsed))
                 {
                     _rawValue = parsed; // 원본 저장
                     _textValue = FormatNumber(value); // 표시용 저장
@@ -48,7 +48,7 @@ public class CardText : MonoBehaviour
     /// RawValue를 외부에서 변경할 수 있도록 하는 메서드.
     /// 내부적으로 표시용 텍스트도 자동으로 갱신됩니다.
     /// </summary>
-    public void SetRawValue(long newValue)
+    public void SetRawValue(float newValue)
     {
         _rawValue = newValue;
         _textValue = FormatNumber(newValue.ToString());
@@ -108,13 +108,13 @@ public class CardText : MonoBehaviour
         }
 
         // 숫자일 경우만 변환 허용 (최대값 제한은 FormatNumber에서 처리)
-        return long.TryParse(value, out _);
+        return float.TryParse(value, out _);
     }
 
     // 숫자를 변환 (1000 이상이면 '1.2k' 형식 적용, 최대 999k)
     private string FormatNumber(string value)
     {
-        if (long.TryParse(value, out long number))
+        if (float.TryParse(value, out float number))
         {
             if (number >= 1_000_000)
                 return "999k"; // 최대값 제한

@@ -3,95 +3,121 @@ using System.Collections;
 using System.Linq;
 using Objects;
 using Utills;
+using System.Collections.Generic;
 
 namespace Manager
 {
     /// <summary>
-    /// 연산자 카드 사용 시 두 장의 카드를 선택하여 연산을 수행하는 매니저
-    /// - 연산자별 첫 번째 카드 선택 제한 (더하기/곱하기: 내 필드, 빼기/나누기: 상대 필드)
-    /// - 연산 결과를 수식존에 시각화 및 카드에 수치 반영
-    /// - 나누기 연산 시 나머지 카드 생성 및 연산자 카드 삭제 처리
+    /// 연산자 카드를 사용한 두 카드 간 연산 처리 매니저
+    /// 연산자별 첫 카드 선택 제한, 연산 실행, 결과 적용을 담당
     /// </summary>
     public class OperatorManager : Singleton<OperatorManager>
     {
-        #region Enums
-        private enum OperatorState
+        #region States
+        private enum State
         {
             Idle,
             OperatorSelected,
             FirstCardSelected,
-            SecondCardSelected
+            Processing
         }
         #endregion
 
-        #region Private Fields
-        private OperatorState currentState = OperatorState.Idle;
-        private OperatorType currentOperatorType;
+        #region Fields
+        [SerializeField] private bool enableDebugLog = false;
 
-        private Card selectedOperatorCard;
-        private Card firstTargetCard;
-        private Card secondTargetCard;
+        private State currentState = State.Idle;
+        private OperatorType currentOperator;
+        private Card operatorCard;
+        private Card firstCard;
+        private Card secondCard;
+
+        // 성능 최적화용 캐시
+        private readonly List<Card> fieldCardsCache = new List<Card>();
         #endregion
 
         #region Properties
-        /// <summary>
-        /// 현재 연산 프로세스 중인지 여부
-        /// </summary>
-        public bool IsInOperatorMode => currentState != OperatorState.Idle;
+        public bool IsInOperatorMode => currentState != State.Idle;
         #endregion
 
         #region Unity Lifecycle
         protected override void Awake()
         {
             base.Awake();
-            Card.onClicked += OnCardClicked;
+            Card.onClicked += HandleCardClick;
         }
 
         private void OnDestroy()
         {
-            Card.onClicked -= OnCardClicked;
+            Card.onClicked -= HandleCardClick;
         }
         #endregion
 
         #region Public Interface
         /// <summary>
-        /// 연산자 카드 사용 시 연산 모드에 진입
+        /// 연산자 카드로 연산 모드 시작
         /// </summary>
-        public void EnterOperatorMode(Card operatorCard)
+        public void StartOperation(Card operatorCard)
         {
-            if (!ValidateOperatorEntry(operatorCard)) return;
+            if (!CanStartOperation(operatorCard)) return;
 
-            InitializeOperatorMode(operatorCard);
-            InitializeExpressionZone();
+            InitializeOperation(operatorCard);
+            SetupFirstCardSelection();
 
-            // ExpressionZoneManager 취소 기능 활성화 추가
-            ExpressionZoneManager.Instance.StartOperatorProcess();
+            if (enableDebugLog)
+                Debug.Log($"[OperatorManager] 연산 시작: {currentOperator}");
+        }
 
-            SetupFirstSelectableCards();
+        /// <summary>
+        /// 첫 번째 카드 선택을 취소하고 재선택 가능하게 설정
+        /// </summary>
+        public void ResetFirstCardSelection()
+        {
+            if (currentState != State.FirstCardSelected) return;
+
+            currentState = State.OperatorSelected;
+            firstCard = null;
+
+            ExpressionZoneManager.Instance.ResetFirstSelection();
+            SetupFirstCardSelection();
+
+            if (enableDebugLog)
+                Debug.Log("[OperatorManager] 첫 번째 카드 선택 취소");
+        }
+
+        /// <summary>
+        /// 연산 모드 완전 취소
+        /// </summary>
+        public void CancelOperatorMode()
+        {
+            RestoreDefaultGlowStates();
+            ExpressionZoneManager.Instance.ResetAllSlots();
+            ResetOperationState();
+
+            if (enableDebugLog)
+                Debug.Log("[OperatorManager] 연산 모드 취소");
         }
         #endregion
 
-        #region Card Click Handling
+        #region Card Selection Flow
         /// <summary>
-        /// 카드 클릭 시 연산 흐름 처리
+        /// 카드 클릭 이벤트 처리
         /// </summary>
-        public void OnCardClicked(Card card)
+        private void HandleCardClick(Card card)
         {
-            if (!CanProcessCardClick(card)) return;
+            if (!CanProcessClick(card)) return;
 
             switch (currentState)
             {
-                case OperatorState.OperatorSelected:
+                case State.OperatorSelected:
                     HandleFirstCardSelection(card);
                     break;
-                case OperatorState.FirstCardSelected:
+                case State.FirstCardSelected:
                     HandleSecondCardSelection(card);
                     break;
             }
         }
-        #endregion
 
-        #region Card Selection Logic
         /// <summary>
         /// 첫 번째 카드 선택 처리
         /// </summary>
@@ -99,220 +125,162 @@ namespace Manager
         {
             if (!IsValidFirstCard(card)) return;
 
-            firstTargetCard = card;
-            currentState = OperatorState.FirstCardSelected;
+            firstCard = card;
+            currentState = State.FirstCardSelected;
 
-            ExpressionZoneManager.Instance.SetMyCard(card);
+            ExpressionZoneManager.Instance.SetFirstOperand(card);
+            ExpressionZoneManager.Instance.UpdateOperationFirstSelected();
 
-            // ExpressionZone 취소 상태 업데이트 추가
-            ExpressionZoneManager.Instance.UpdateOperatorFirstCardSelected();
-
-            UpdateGlowForSecondSelection();
+            SetupSecondCardSelection();
         }
 
         /// <summary>
-        /// 두 번째 카드 선택 시 연산 실행
+        /// 두 번째 카드 선택 후 연산 실행
         /// </summary>
         private void HandleSecondCardSelection(Card card)
         {
-            secondTargetCard = card;
-            currentState = OperatorState.SecondCardSelected;
-            StartCoroutine(ExecuteOperationSequence());
+            secondCard = card;
+            currentState = State.Processing;
+            StartCoroutine(ExecuteOperation());
         }
         #endregion
 
         #region Operation Execution
         /// <summary>
-        /// 전체 연산 시퀀스 실행
+        /// 연산 실행 시퀀스
         /// </summary>
-        private IEnumerator ExecuteOperationSequence()
+        private IEnumerator ExecuteOperation()
         {
-            // 연산 실행 중에는 취소 불가능하게 설정
             ExpressionZoneManager.Instance.ClearAllCancelable();
 
-            SetupExpressionVisualization();
-            yield return new WaitForSeconds(2f);
+            // 수식 시각화
+            var ezManager = ExpressionZoneManager.Instance;
+            ezManager.SetFirstOperand(firstCard);
+            ezManager.SetOperator(operatorCard);
+            ezManager.SetSecondOperand(secondCard);
 
-            yield return StartCoroutine(PerformCalculation());
+            yield return new WaitForSeconds(1.2f);
+
+            // 연산 실행
+            var (first, second) = GetCardValues();
+            ezManager.ShowResult(first, second, currentOperator);
+
+            yield return new WaitForSeconds(0.6f);
+
+            // 결과 적용
+            ApplyOperationResult(first, second);
+
+            // 연산자 카드 제거
             yield return StartCoroutine(RemoveOperatorCard());
 
-            RestoreGlowStates();
-            ResetOperatorState();
-
-            // 수식존 초기화
-            ExpressionZoneManager.Instance.ResetExpressionZone();
+            // 상태 복원
+            RestoreDefaultGlowStates();
+            ResetOperationState();
         }
 
         /// <summary>
-        /// 실제 연산 계산 및 결과 적용
+        /// 연산 결과 적용
         /// </summary>
-        private IEnumerator PerformCalculation()
+        private void ApplyOperationResult(float first, float second)
         {
-            var (first, second) = GetCardValues();
-            var firstSprite = GetCardSprite(firstTargetCard);
+            float result = CalculateResult(first, second);
 
-            yield return StartCoroutine(ExecuteOperationByType(first, second, firstSprite));
-        }
-
-        /// <summary>
-        /// 연산자 타입에 따른 연산 실행
-        /// </summary>
-        private IEnumerator ExecuteOperationByType(long first, long second, Sprite firstSprite)
-        {
-            var ez = ExpressionZoneManager.Instance;
-
-            switch (currentOperatorType)
+            switch (currentOperator)
             {
                 case OperatorType.Plus:
-                    yield return StartCoroutine(HandleAddition(first, second, firstSprite, ez));
-                    break;
                 case OperatorType.Multiply:
-                    yield return StartCoroutine(HandleMultiplication(first, second, firstSprite, ez));
+                    UpdateCardValue(firstCard, result);
                     break;
+
                 case OperatorType.Minus:
-                    yield return StartCoroutine(HandleSubtraction(first, second, firstSprite, ez));
+                    if (result > 0) UpdateCardValue(firstCard, result);
+                    else DestroyCard(firstCard);
                     break;
+
                 case OperatorType.Divide:
-                    yield return StartCoroutine(HandleDivision(first, second, firstSprite, ez));
+                    if (result > 0) UpdateCardValue(firstCard, result);
+                    else DestroyCard(firstCard);
+
+                    float remainder = first % second;
+                    if (remainder > 0) CreateRemainderCard(remainder);
                     break;
             }
-        }
-        #endregion
 
-        #region Operation Types
-        private IEnumerator HandleAddition(long first, long second, Sprite sprite, ExpressionZoneManager ez)
-        {
-            long result = first + second;
-            ez.ConfigureSlot(4, result.ToString(), sprite, true);
-            yield return new WaitForSeconds(1f);
-
-            ApplyResultToCard(firstTargetCard, result);
+            if (enableDebugLog)
+                Debug.Log($"[OperatorManager] 연산 완료: {first} {GetOperatorSymbol()} {second} = {result}");
         }
 
-        private IEnumerator HandleMultiplication(long first, long second, Sprite sprite, ExpressionZoneManager ez)
+        /// <summary>
+        /// 연산 결과 계산
+        /// </summary>
+        private float CalculateResult(float first, float second)
         {
-            long result = first * second;
-            ez.ConfigureSlot(4, result.ToString(), sprite, true);
-            yield return new WaitForSeconds(1f);
-
-            ApplyResultToCard(firstTargetCard, result);
-        }
-
-        private IEnumerator HandleSubtraction(long first, long second, Sprite sprite, ExpressionZoneManager ez)
-        {
-            long result = first - second;
-            ez.ConfigureSlot(4, result.ToString(), sprite, true);
-            yield return new WaitForSeconds(1f);
-
-            if (result > 0)
+            return currentOperator switch
             {
-                ApplyResultToCard(firstTargetCard, result);
-            }
-            else
-            {
-                RemoveCard(firstTargetCard);
-            }
-        }
-
-        private IEnumerator HandleDivision(long first, long second, Sprite sprite, ExpressionZoneManager ez)
-        {
-            if (second == 0)
-            {
-                Debug.LogWarning("[OperatorManager] 0으로 나눌 수 없습니다.");
-                yield break;
-            }
-
-            long result = first / second;
-            long remainder = first % second;
-
-            ez.ConfigureSlot(4, result.ToString(), sprite, true);
-            yield return new WaitForSeconds(1f);
-
-            if (result > 0)
-            {
-                ApplyResultToCard(firstTargetCard, result);
-            }
-            else
-            {
-                RemoveCard(firstTargetCard);
-            }
-
-            // 나머지 처리: 몫이 0이어도 나머지가 있으면 카드 생성
-            if (remainder > 0)
-            {
-                CreateRemainderCard(remainder);
-            }
+                OperatorType.Plus => first + second,
+                OperatorType.Minus => first - second,
+                OperatorType.Multiply => first * second,
+                OperatorType.Divide => second != 0 ? first / second : 0,
+                _ => 0
+            };
         }
         #endregion
 
         #region Card Management
         /// <summary>
-        /// 연산자 카드를 애니메이션과 함께 제거
+        /// 연산자 카드 제거
         /// </summary>
         private IEnumerator RemoveOperatorCard()
         {
-            if (selectedOperatorCard == null) yield break;
+            if (operatorCard == null) yield break;
 
-            CardZone zone = FindZoneOfCard(selectedOperatorCard.transform);
-            yield return StartCoroutine(selectedOperatorCard.AnimateRemoval(() =>
+            var zone = operatorCard.GetComponentInParent<CardZone>();
+            yield return StartCoroutine(operatorCard.AnimateRemoval(() =>
             {
-                zone?.RemoveCard(selectedOperatorCard.transform);
-                Destroy(selectedOperatorCard.gameObject);
+                zone?.RemoveCard(operatorCard.transform);
+                Destroy(operatorCard.gameObject);
             }));
         }
 
         /// <summary>
-        /// 나머지 값으로 내 필드에 숫자 카드 생성
+        /// 카드 값 업데이트
         /// </summary>
-        private void CreateRemainderCard(long remainderValue)
+        private void UpdateCardValue(Card card, float newValue)
         {
-            CardZone playerFieldZone = FindPlayerFieldZone();
-            if (playerFieldZone == null)
-            {
-                Debug.LogError("[OperatorManager] 플레이어 필드 Zone을 찾을 수 없습니다.");
-                return;
-            }
-
-            GameObject template = ResourcesManager.Instance.GetPlayerCardTemplate();
-            if (template == null)
-            {
-                Debug.LogError("[OperatorManager] 플레이어 카드 템플릿을 가져올 수 없습니다.");
-                return;
-            }
-
-            GameObject card = Instantiate(template);
-            card.name = $"RemainderCard_{remainderValue}";
-            card.SetActive(true);
-            card.transform.localPosition = Vector3.zero;
-            card.transform.localRotation = Quaternion.identity;
-
-            var cardComponent = card.GetComponent<Card>();
-            if (cardComponent != null)
-            {
-                cardComponent.InitializeAsNumber(remainderValue);
-                cardComponent.SetWasModifiedThisTurn(true); // 해당 턴 공격 불가
-            }
-
-            playerFieldZone.AddCard(card.transform);
-        }
-
-        /// <summary>
-        /// 카드에 연산 결과 적용
-        /// </summary>
-        private void ApplyResultToCard(Card card, long value)
-        {
-            card.GetComponentInChildren<CardText>().SetRawValue(value);
+            card.GetComponentInChildren<CardText>().SetRawValue(newValue);
             card.SetWasModifiedThisTurn(true);
         }
 
         /// <summary>
-        /// 카드 제거
+        /// 카드 파괴
         /// </summary>
-        private void RemoveCard(Card card)
+        private void DestroyCard(Card card)
         {
             var zone = card.GetComponentInParent<CardZone>();
             zone?.RemoveCard(card.transform);
             Destroy(card.gameObject);
+        }
+
+        /// <summary>
+        /// 나머지 값으로 새 카드 생성
+        /// </summary>
+        private void CreateRemainderCard(float value)
+        {
+            var playerField = FindPlayerFieldZone();
+            if (playerField == null) return;
+
+            var template = ResourcesManager.Instance.GetPlayerCardTemplate();
+            if (template == null) return;
+
+            var newCard = Instantiate(template);
+            newCard.name = $"RemainderCard_{value}";
+            newCard.SetActive(true);
+
+            var cardComponent = newCard.GetComponent<Card>();
+            cardComponent?.InitializeAsNumber(value);
+            cardComponent?.SetWasModifiedThisTurn(true);
+
+            playerField.AddCard(newCard.transform);
         }
         #endregion
 
@@ -320,63 +288,37 @@ namespace Manager
         /// <summary>
         /// 첫 번째 카드 선택을 위한 GLOW 설정
         /// </summary>
-        private void SetupFirstSelectableCards()
+        private void SetupFirstCardSelection()
         {
-            var fieldCards = InGameManager.Instance.GetAllFieldCards();
+            UpdateFieldCache();
 
-            foreach (var card in fieldCards)
+            foreach (var card in fieldCardsCache)
             {
-                bool isFirstSelectable = currentOperatorType switch
-                {
-                    OperatorType.Plus or OperatorType.Multiply => card.CurrentOwnerType == CardZone.OwnerType.Player,
-                    OperatorType.Minus or OperatorType.Divide => card.CurrentOwnerType == CardZone.OwnerType.Opponent,
-                    _ => false
-                };
-
-                card.SetCardState(isFirstSelectable, Global.GlowGreen);
+                bool canSelect = IsValidFirstCard(card);
+                card.SetCardState(canSelect, Global.GlowGreen);
             }
         }
 
         /// <summary>
-        /// 두 번째 카드 선택을 위한 GLOW 업데이트
+        /// 두 번째 카드 선택을 위한 GLOW 설정
         /// </summary>
-        private void UpdateGlowForSecondSelection()
+        private void SetupSecondCardSelection()
         {
-            var fieldCards = InGameManager.Instance.GetAllFieldCards();
-
-            foreach (var card in fieldCards)
+            foreach (var card in fieldCardsCache)
             {
-                bool isSecondSelectable = (card != firstTargetCard);
-                card.SetCardState(isSecondSelectable, Global.GlowGreen);
+                bool canSelect = card != firstCard;
+                card.SetCardState(canSelect, Global.GlowGreen);
             }
         }
 
         /// <summary>
-        /// GLOW 상태 복원
+        /// 기본 GLOW 상태로 복원 (공격 가능한 카드들)
         /// </summary>
-        private void RestoreGlowStates()
+        private void RestoreDefaultGlowStates()
         {
-            ClearAllGlow();
-            ApplyGlowToAttackableCards();
-        }
+            UpdateFieldCache();
 
-        /// <summary>
-        /// 모든 카드의 GLOW 제거
-        /// </summary>
-        private void ClearAllGlow()
-        {
-            var cards = InGameManager.Instance.GetAllFieldCards();
-            foreach (var card in cards)
-                card.SetCardState(false);
-        }
-
-        /// <summary>
-        /// 공격 가능한 카드에 GLOW 설정
-        /// </summary>
-        private void ApplyGlowToAttackableCards()
-        {
-            var cards = InGameManager.Instance.GetAllFieldCards();
-            foreach (var card in cards)
+            foreach (var card in fieldCardsCache)
             {
                 bool canGlow = card.CurrentOwnerType == CardZone.OwnerType.Player &&
                                card.CurrentZoneType == CardZone.ZoneType.Field &&
@@ -385,113 +327,112 @@ namespace Manager
                 card.SetCardState(canGlow);
             }
         }
+
+        /// <summary>
+        /// 필드 카드 캐시 업데이트
+        /// </summary>
+        private void UpdateFieldCache()
+        {
+            fieldCardsCache.Clear();
+            fieldCardsCache.AddRange(InGameManager.Instance.GetAllFieldCards());
+        }
         #endregion
 
-        #region Validation & Utility
+        #region Validation
         /// <summary>
-        /// 연산자 모드 진입 유효성 검증
+        /// 연산 시작 가능 여부 확인
         /// </summary>
-        private bool ValidateOperatorEntry(Card operatorCard)
+        private bool CanStartOperation(Card card)
         {
-            if (currentState != OperatorState.Idle) return false;
-            if (operatorCard.CardType != CardType.Operator) return false;
-
-            if (!ValidateOperatorConditions(operatorCard.OperatorType))
-            {
-                ShowOperatorConditionWarning(operatorCard.OperatorType);
-                return false;
-            }
+            if (currentState != State.Idle) return false;
+            if (card?.CardType != CardType.Operator) return false;
+            if (!HasValidOperationConditions(card.OperatorType)) return false;
 
             return InGameManager.Instance.StartProcess(GameProcessState.OperatorCalculation);
         }
 
         /// <summary>
-        /// 연산자별 사용 조건 검증
+        /// 연산자별 사용 조건 확인
         /// </summary>
-        private bool ValidateOperatorConditions(OperatorType operatorType)
+        private bool HasValidOperationConditions(OperatorType operatorType)
         {
-            var fieldCards = InGameManager.Instance.GetAllFieldCards();
-            var myFieldCards = fieldCards.FindAll(card => card.CurrentOwnerType == CardZone.OwnerType.Player);
-            var opponentFieldCards = fieldCards.FindAll(card => card.CurrentOwnerType == CardZone.OwnerType.Opponent);
+            UpdateFieldCache();
+            if (fieldCardsCache.Count < 2) return false;
 
-            if (fieldCards.Count < 2) return false;
+            var myCards = fieldCardsCache.Count(c => c.CurrentOwnerType == CardZone.OwnerType.Player);
+            var opponentCards = fieldCardsCache.Count(c => c.CurrentOwnerType == CardZone.OwnerType.Opponent);
 
             return operatorType switch
             {
-                OperatorType.Plus or OperatorType.Multiply => myFieldCards.Count > 0,
-                OperatorType.Minus or OperatorType.Divide => opponentFieldCards.Count > 0,
+                OperatorType.Plus or OperatorType.Multiply => myCards > 0,
+                OperatorType.Minus or OperatorType.Divide => opponentCards > 0,
                 _ => false
             };
         }
 
         /// <summary>
-        /// 연산자 사용 조건 경고 메시지 표시
-        /// </summary>
-        private void ShowOperatorConditionWarning(OperatorType operatorType)
-        {
-            string operatorName = operatorType switch
-            {
-                OperatorType.Plus => "더하기(+)",
-                OperatorType.Minus => "빼기(-)",
-                OperatorType.Multiply => "곱하기(×)",
-                OperatorType.Divide => "나누기(÷)",
-                _ => "연산자"
-            };
-
-            string condition = operatorType switch
-            {
-                OperatorType.Plus or OperatorType.Multiply => "내 필드에 카드가 있고 전체 필드에 최소 2장의 카드가 필요합니다.",
-                OperatorType.Minus or OperatorType.Divide => "상대 필드에 카드가 있고 전체 필드에 최소 2장의 카드가 필요합니다.",
-                _ => "사용 조건을 만족해야 합니다."
-            };
-
-            Debug.LogWarning($"[OperatorManager] {operatorName} 카드를 사용하려면 {condition}");
-        }
-
-        /// <summary>
         /// 카드 클릭 처리 가능 여부 확인
         /// </summary>
-        private bool CanProcessCardClick(Card card)
+        private bool CanProcessClick(Card card)
         {
-            if (InGameManager.Instance.IsProcessing &&
-                InGameManager.Instance.CurrentProcess != GameProcessState.OperatorCalculation)
-                return false;
-
             if (!IsInOperatorMode) return false;
-            if (card.CurrentZoneType == CardZone.ZoneType.Hand) return false;
+            if (card.CurrentZoneType != CardZone.ZoneType.Field) return false;
+            if (InGameManager.Instance.IsProcessing &&
+                InGameManager.Instance.CurrentProcess != GameProcessState.OperatorCalculation) return false;
 
             return true;
         }
 
         /// <summary>
-        /// 첫 번째 카드 선택 유효성 검증
+        /// 첫 번째 카드로 유효한지 확인
         /// </summary>
         private bool IsValidFirstCard(Card card)
         {
-            return currentOperatorType switch
+            return currentOperator switch
             {
                 OperatorType.Plus or OperatorType.Multiply => card.CurrentOwnerType == CardZone.OwnerType.Player,
                 OperatorType.Minus or OperatorType.Divide => card.CurrentOwnerType == CardZone.OwnerType.Opponent,
                 _ => false
             };
         }
+        #endregion
+
+        #region Utility
+        /// <summary>
+        /// 연산 모드 초기화
+        /// </summary>
+        private void InitializeOperation(Card card)
+        {
+            operatorCard = card;
+            currentOperator = card.OperatorType;
+            currentState = State.OperatorSelected;
+
+            var ezManager = ExpressionZoneManager.Instance;
+            ezManager.InitForOperation();
+            ezManager.SetOperator(card);
+            ezManager.StartOperationMode();
+        }
+
+        /// <summary>
+        /// 연산 상태 초기화
+        /// </summary>
+        private void ResetOperationState()
+        {
+            currentState = State.Idle;
+            operatorCard = null;
+            firstCard = null;
+            secondCard = null;
+            InGameManager.Instance.EndProcess();
+        }
 
         /// <summary>
         /// 카드 값들 반환
         /// </summary>
-        private (long first, long second) GetCardValues()
+        private (float first, float second) GetCardValues()
         {
-            long first = firstTargetCard.GetComponentInChildren<CardText>().RawValue;
-            long second = secondTargetCard.GetComponentInChildren<CardText>().RawValue;
+            float first = firstCard.GetComponentInChildren<CardText>().RawValue;
+            float second = secondCard.GetComponentInChildren<CardText>().RawValue;
             return (first, second);
-        }
-
-        /// <summary>
-        /// 카드 스프라이트 반환
-        /// </summary>
-        private Sprite GetCardSprite(Card card)
-        {
-            return card.GetComponentInChildren<SpriteRenderer>()?.sprite;
         }
 
         /// <summary>
@@ -501,127 +442,29 @@ namespace Manager
         {
             if (CardZone.AllZonesRoot == null) return null;
 
-            var zones = CardZone.AllZonesRoot.GetComponentsInChildren<CardZone>();
-            return zones.FirstOrDefault(z =>
-                z.Owner == CardZone.OwnerType.Player &&
-                z.Zone == CardZone.ZoneType.Field);
+            return CardZone.AllZonesRoot.GetComponentsInChildren<CardZone>()
+                .FirstOrDefault(z => z.Owner == CardZone.OwnerType.Player && z.Zone == CardZone.ZoneType.Field);
         }
 
         /// <summary>
-        /// 카드가 속한 Zone 찾기
+        /// 연산자 기호 반환
         /// </summary>
-        private CardZone FindZoneOfCard(Transform card)
+        private string GetOperatorSymbol()
         {
-            if (CardZone.AllZonesRoot == null || card == null) return null;
-
-            foreach (var zone in CardZone.AllZonesRoot.GetComponentsInChildren<CardZone>())
+            return currentOperator switch
             {
-                if (zone.Contains(card))
-                    return zone;
-            }
-            return null;
-        }
-        #endregion
-
-        #region Initialization & Cleanup
-        /// <summary>
-        /// 연산자 모드 초기화
-        /// </summary>
-        private void InitializeOperatorMode(Card operatorCard)
-        {
-            selectedOperatorCard = operatorCard;
-            currentOperatorType = operatorCard.OperatorType;
-            currentState = OperatorState.OperatorSelected;
+                OperatorType.Plus => "+",
+                OperatorType.Minus => "-",
+                OperatorType.Multiply => "×",
+                OperatorType.Divide => "÷",
+                _ => "?"
+            };
         }
 
         /// <summary>
-        /// 수식존 초기화
+        /// 디버그 로그 활성화/비활성화
         /// </summary>
-        private void InitializeExpressionZone()
-        {
-            var ez = ExpressionZoneManager.Instance;
-            ez.ConfigureSlot(0, "", null, false);
-            ez.ConfigureSlot(2, "", null, false);
-            ez.ConfigureSlot(4, "", null, false);
-            ez.SetOperatorCard(selectedOperatorCard);
-        }
-
-        /// <summary>
-        /// 수식 시각화 설정
-        /// </summary>
-        private void SetupExpressionVisualization()
-        {
-            var ez = ExpressionZoneManager.Instance;
-            ez.SetMyCard(firstTargetCard);
-            ez.SetOperatorCard(selectedOperatorCard);
-            ez.SetOpponentCard(secondTargetCard);
-        }
-
-        /// <summary>
-        /// 연산자 상태 초기화
-        /// </summary>
-        private void ResetOperatorState()
-        {
-            currentState = OperatorState.Idle;
-            selectedOperatorCard = null;
-            firstTargetCard = null;
-            secondTargetCard = null;
-
-            InGameManager.Instance.EndProcess();
-        }
-        #endregion
-
-        // OperatorManager.cs에 추가할 취소 관련 메서드들
-
-        #region Cancellation Methods (ExpressionZoneManager에서 호출용)
-
-        /// <summary>
-        /// 첫 번째 카드 선택을 취소하고 다시 선택할 수 있게 합니다.
-        /// </summary>
-        public void ResetFirstCardSelection()
-        {
-            if (currentState != OperatorState.FirstCardSelected)
-            {
-                Debug.LogWarning("[OperatorManager] 첫 번째 카드가 선택되지 않은 상태에서 재선택 시도");
-                return;
-            }
-
-            Debug.Log("[OperatorManager] 첫 번째 카드 선택 취소 - 다시 선택 가능");
-
-            // 상태를 연산자 선택 상태로 되돌림
-            currentState = OperatorState.OperatorSelected;
-            firstTargetCard = null;
-
-            // 수식존에서 첫 번째 카드 제거 (연산자는 유지)
-            ExpressionZoneManager.Instance.ConfigureSlot(0, "", null, false);
-
-            // GLOW 상태를 첫 번째 카드 선택 상태로 되돌림
-            SetupFirstSelectableCards();
-        }
-
-        /// <summary>
-        /// 연산 모드를 완전히 취소합니다.
-        /// </summary>
-        public void CancelOperatorMode()
-        {
-            Debug.Log("[OperatorManager] 연산 모드 완전 취소");
-
-            // GLOW 상태 복원
-            RestoreGlowStates();
-
-            // 수식존 초기화
-            ExpressionZoneManager.Instance.ConfigureSlot(0, "", null, false);
-            ExpressionZoneManager.Instance.ConfigureSlot(1, "", null, false);
-            ExpressionZoneManager.Instance.ConfigureSlot(2, "", null, false);
-            ExpressionZoneManager.Instance.ConfigureSlot(4, "", null, false);
-            ExpressionZoneManager.Instance.SetEqualSymbol();
-
-            // 상태 초기화
-            ResetOperatorState();
-
-            Debug.Log("[OperatorManager] 연산 모드 취소 완료");
-        }
-
+        public void SetDebugMode(bool enable) => enableDebugLog = enable;
         #endregion
     }
 }
