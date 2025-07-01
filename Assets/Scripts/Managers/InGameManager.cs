@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Utills;
 using Objects;
 using System.Linq;
+using System;
 
 namespace Manager
 {
@@ -380,5 +381,193 @@ namespace Manager
             DrawCardsToHand(1, currentPlayer);
             Debug.Log($"[InGameManager] {currentPlayer} 턴 시작 - 카드 1장 드로우");
         }
+
+        #region Game End Management
+
+        /// <summary>
+        /// 게임 종료 상태
+        /// </summary>
+        public bool IsGameEnded { get; private set; } = false;
+
+        /// <summary>
+        /// 승리한 플레이어
+        /// </summary>
+        public CardZone.OwnerType? GameWinner { get; private set; } = null;
+
+        /// <summary>
+        /// 게임 종료 이벤트
+        /// </summary>
+        public static event Action<CardZone.OwnerType> OnGameEnded;
+
+        /// <summary>
+        /// 게임 종료 처리 (HealthUI에서 호출)
+        /// </summary>
+        /// <param name="defeatedPlayer">패배한 플레이어</param>
+        public void OnGameEnd(CardZone.OwnerType defeatedPlayer)
+        {
+            if (IsGameEnded)
+            {
+                Debug.LogWarning("[InGameManager] 게임이 이미 종료되었습니다.");
+                return;
+            }
+
+            IsGameEnded = true;
+            GameWinner = defeatedPlayer == CardZone.OwnerType.Player
+                ? CardZone.OwnerType.Opponent
+                : CardZone.OwnerType.Player;
+
+            Debug.Log($"[InGameManager] 게임 종료! 승자: {GameWinner}, 패자: {defeatedPlayer}");
+
+            // 모든 프로세스 강제 종료
+            ForceEndAllProcesses();
+
+            // 게임 종료 이벤트 발생
+            OnGameEnded?.Invoke(GameWinner.Value);
+
+            // 게임 종료 UI 표시 (추후 구현)
+            ShowGameEndUI(GameWinner.Value, defeatedPlayer);
+        }
+
+        /// <summary>
+        /// 모든 진행 중인 프로세스 강제 종료
+        /// </summary>
+        private void ForceEndAllProcesses()
+        {
+            Debug.Log("[InGameManager] 모든 프로세스 강제 종료");
+
+            // 현재 프로세스 종료
+            if (IsProcessing)
+            {
+                EndProcess();
+            }
+
+            // 공격 상태 초기화
+            var attackManager = FindAnyObjectByType<FieldAttackManager>();
+            if (attackManager != null)
+            {
+                attackManager.ForceResetAttackState();
+            }
+
+            // 연산자 모드 취소
+            if (OperatorManager.Instance != null && OperatorManager.Instance.IsInOperatorMode)
+            {
+                OperatorManager.Instance.CancelOperatorMode();
+            }
+
+            // 조커 UI 숨기기
+            if (JokerModeSelector.Instance != null)
+            {
+                JokerModeSelector.Instance.Hide();
+            }
+
+            // ExpressionZone 초기화
+            if (ExpressionZoneManager.Instance != null)
+            {
+                ExpressionZoneManager.Instance.ResetAllSlots();
+            }
+        }
+
+        /// <summary>
+        /// 게임 종료 UI 표시
+        /// </summary>
+        /// <param name="winner">승리한 플레이어</param>
+        /// <param name="loser">패배한 플레이어</param>
+        private void ShowGameEndUI(CardZone.OwnerType winner, CardZone.OwnerType loser)
+        {
+            // TODO: 게임 종료 UI 패널 표시
+            // 승리/패배 메시지, 재시작 버튼 등
+
+            string winnerText = winner == CardZone.OwnerType.Player ? "플레이어 승리!" : "상대 승리!";
+            Debug.Log($"[InGameManager] {winnerText}");
+
+            // 임시: 3초 후 재시작 옵션 표시
+            StartCoroutine(ShowRestartOption());
+        }
+
+        /// <summary>
+        /// 재시작 옵션 표시 (임시)
+        /// </summary>
+        private System.Collections.IEnumerator ShowRestartOption()
+        {
+            yield return new WaitForSeconds(3f);
+
+            Debug.Log("[InGameManager] 게임을 재시작하시겠습니까? (R키를 눌러 재시작)");
+
+            // 간단한 키 입력 대기 (임시)
+            while (!Input.GetKeyDown(KeyCode.R))
+            {
+                yield return null;
+            }
+
+            RestartGame();
+        }
+
+        /// <summary>
+        /// 게임 재시작
+        /// </summary>
+        public void RestartGame()
+        {
+            Debug.Log("[InGameManager] 게임 재시작");
+
+            // 게임 상태 초기화
+            IsGameEnded = false;
+            GameWinner = null;
+
+            // 체력 초기화
+            if (HealthManager.Instance != null)
+            {
+                HealthManager.Instance.InitializeHealth();
+            }
+
+            // 덱 초기화
+            if (DeckManager.Instance != null)
+            {
+                DeckManager.Instance.InitializeDecks();
+            }
+
+            // 필드 모든 카드 제거
+            ClearAllFieldCards();
+
+            // 초기 핸드 드로우
+            DrawCardsToHand(5, CardZone.OwnerType.Player);
+            DrawCardsToHand(5, CardZone.OwnerType.Opponent);
+
+            Debug.Log("[InGameManager] 게임 재시작 완료");
+        }
+
+        /// <summary>
+        /// 모든 필드 카드 제거
+        /// </summary>
+        private void ClearAllFieldCards()
+        {
+            var allFieldCards = GetAllFieldCards();
+
+            foreach (var card in allFieldCards.ToArray()) // ToArray()로 복사본 생성
+            {
+                if (card != null && card.gameObject != null)
+                {
+                    var zone = card.GetComponentInParent<CardZone>();
+                    if (zone != null)
+                    {
+                        zone.RemoveCard(card.transform);
+                    }
+
+                    Destroy(card.gameObject);
+                }
+            }
+
+            // 필드 카드 리스트 정리
+            fieldCards.Clear();
+        }
+
+        /// <summary>
+        /// 현재 게임이 플레이 가능한 상태인지 확인
+        /// </summary>
+        public bool CanPlayGame()
+        {
+            return !IsGameEnded && HealthManager.Instance != null && !HealthManager.Instance.IsGameOver();
+        }
+
+        #endregion
     }
 }

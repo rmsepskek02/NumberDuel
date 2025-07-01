@@ -82,21 +82,149 @@ namespace Manager
         private void SelectAttacker(Card attacker)
         {
             currentAttacker = attacker;
-
             SetupExpressionZone(attacker);
-            UpdateGlowStatesForTargetSelection();
 
             if (enableDebugLog)
                 Debug.Log($"[FieldAttackManager] 공격자 선택: {attacker.name}");
+
+            // 상대 필드가 비어있는지 체크
+            if (IsOpponentFieldEmpty())
+            {
+                if (enableDebugLog)
+                    Debug.Log("[FieldAttackManager] 상대 필드가 비어있음 - 즉시 빈 필드 공격 실행");
+
+                // 즉시 빈 필드 공격 실행
+                StartCoroutine(ExecuteEmptyFieldAttack(attacker));
+            }
+            else
+            {
+                if (enableDebugLog)
+                    Debug.Log("[FieldAttackManager] 상대 필드에 카드 존재 - 대상 선택 대기");
+
+                // 기존 로직: 대상 선택 대기
+                UpdateGlowStatesForTargetSelection();
+            }
         }
 
         /// <summary>
-        /// 공격 실행 및 결과 처리
+        /// 빈 필드 공격 실행 (원본 값 사용하도록 수정)
+        /// </summary>
+        private IEnumerator ExecuteEmptyFieldAttack(Card attacker)
+        {
+            // 게임이 종료되었다면 공격 중단
+            if (InGameManager.Instance.IsGameEnded)
+            {
+                yield break;
+            }
+
+            if (enableDebugLog)
+                Debug.Log($"[FieldAttackManager] 빈 필드 공격 시작: {attacker.name}");
+
+            // 원본 공격자 값 미리 저장
+            float originalAttackerValue = GetCardValue(attacker);
+
+            if (enableDebugLog)
+                Debug.Log($"[FieldAttackManager] 원본 공격자 값: {originalAttackerValue}");
+
+            // ExpressionZone에 가상 방어자 설정 (상대방 색상의 "0")
+            var ezManager = ExpressionZoneManager.Instance;
+            ezManager.SetEmptyFieldDefender(CardZone.OwnerType.Opponent);
+
+            yield return new WaitForSeconds(1.5f);
+
+            // 게임 종료 재체크
+            if (InGameManager.Instance.IsGameEnded)
+            {
+                yield break;
+            }
+
+            // 공격 결과 계산 및 표시
+            ezManager.ShowEmptyFieldResult(originalAttackerValue);
+
+            yield return new WaitForSeconds(1f);
+
+            // 게임 종료 재체크
+            if (InGameManager.Instance.IsGameEnded)
+            {
+                yield break;
+            }
+
+            // 빈 필드 공격 결과 적용 (원본 값 사용)
+            ApplyEmptyFieldResult(attacker, originalAttackerValue);
+
+            // 상태 초기화
+            currentAttacker = null;
+            yield return new WaitForSeconds(0.8f);
+
+            // 게임이 종료되지 않았다면 GLOW 상태 복원
+            if (!InGameManager.Instance.IsGameEnded)
+            {
+                RestoreDefaultGlowStates();
+            }
+
+            if (enableDebugLog)
+                Debug.Log("[FieldAttackManager] 빈 필드 공격 완료");
+        }
+
+        /// <summary>
+        /// 빈 필드 공격 결과 적용 (수정된 버전)
+        /// </summary>
+        /// <param name="attacker">공격한 카드</param>
+        /// <param name="damage">상대에게 가할 데미지</param>
+        private void ApplyEmptyFieldResult(Card attacker, float damage)
+        {
+            if (enableDebugLog)
+                Debug.Log($"[FieldAttackManager] 빈 필드 공격 결과 적용 - 데미지: {damage}");
+
+            // DamageCalculator를 통해 최종 데미지 계산
+            int finalDamage = Utills.DamageCalculator.CalculateEmptyFieldDamage(damage);
+
+            // HealthManager를 통해 실제 데미지 적용
+            if (HealthManager.Instance != null)
+            {
+                int actualDamage = HealthManager.Instance.ApplyDamage(finalDamage, CardZone.OwnerType.Opponent);
+
+                if (enableDebugLog)
+                    Debug.Log($"[FieldAttackManager] 상대에게 {actualDamage} 데미지 적용 완료");
+            }
+            else
+            {
+                Debug.LogError("[FieldAttackManager] HealthManager를 찾을 수 없습니다!");
+            }
+
+            // 공격자 카드는 수정됨 표시 (재공격 방지)
+            attacker.SetWasModifiedThisTurn(true);
+        }
+
+        /// <summary>
+        /// 단일 카드의 값 반환
+        /// </summary>
+        /// <param name="card">값을 가져올 카드</param>
+        /// <returns>카드의 숫자 값</returns>
+        private float GetCardValue(Card card)
+        {
+            return card.GetComponentInChildren<CardText>()?.RawValue ?? 0;
+        }
+
+        /// <summary>
+        /// 공격 실행 및 결과 처리 (수정된 버전)
         /// </summary>
         private IEnumerator ExecuteAttack(Card attacker, Card defender)
         {
+            // 게임이 종료되었다면 공격 중단
+            if (InGameManager.Instance.IsGameEnded)
+            {
+                yield break;
+            }
+
             if (enableDebugLog)
                 Debug.Log($"[FieldAttackManager] 공격 실행: {attacker.name} → {defender.name}");
+
+            // 원본 카드 값 미리 저장 (카드 변경 전)
+            var (originalAttackerValue, originalDefenderValue) = GetCardValues(attacker, defender);
+
+            if (enableDebugLog)
+                Debug.Log($"[FieldAttackManager] 원본 값 저장: 공격자={originalAttackerValue}, 방어자={originalDefenderValue}");
 
             // 수식존에 수비자 설정
             var ezManager = ExpressionZoneManager.Instance;
@@ -104,49 +232,90 @@ namespace Manager
 
             yield return new WaitForSeconds(1.5f);
 
+            // 게임 종료 재체크
+            if (InGameManager.Instance.IsGameEnded)
+            {
+                yield break;
+            }
+
             // 공격 결과 계산 및 표시
-            var (attackerValue, defenderValue) = GetCardValues(attacker, defender);
-            ezManager.ShowResult(attackerValue, defenderValue);
+            ezManager.ShowResult(originalAttackerValue, originalDefenderValue);
 
             yield return new WaitForSeconds(1f);
 
-            // 결과 적용
-            ApplyBattleResult(attacker, defender, attackerValue - defenderValue);
+            // 게임 종료 재체크
+            if (InGameManager.Instance.IsGameEnded)
+            {
+                yield break;
+            }
+
+            // 결과 적용 (원본 값 전달)
+            ApplyBattleResult(attacker, defender, originalAttackerValue, originalDefenderValue);
 
             // 상태 초기화
             currentAttacker = null;
             yield return new WaitForSeconds(0.8f);
 
-            RestoreDefaultGlowStates();
+            // 게임이 종료되지 않았다면 GLOW 상태 복원
+            if (!InGameManager.Instance.IsGameEnded)
+            {
+                RestoreDefaultGlowStates();
+            }
         }
 
         /// <summary>
-        /// 전투 결과 적용
+        /// 전투 결과 적용 (수정된 버전 - 원본 값 사용)
         /// </summary>
-        private void ApplyBattleResult(Card attacker, Card defender, float result)
+        private void ApplyBattleResult(Card attacker, Card defender, float originalAttackerValue, float originalDefenderValue)
         {
             var attackerText = attacker.GetComponentInChildren<CardText>();
             var defenderText = defender.GetComponentInChildren<CardText>();
 
+            float result = originalAttackerValue - originalDefenderValue;
+
+            if (enableDebugLog)
+                Debug.Log($"[FieldAttackManager] 전투 결과 계산: {originalAttackerValue} - {originalDefenderValue} = {result}");
+
             if (result > 0) // 공격자 승리
             {
+                // 실제 데미지 계산 (카드 변경 전 원본 값 사용)
+                if (HealthManager.Instance != null)
+                {
+                    int damage = Utills.DamageCalculator.CalculateAttackDamage(originalAttackerValue, originalDefenderValue);
+                    int actualDamage = HealthManager.Instance.ApplyDamage(damage, CardZone.OwnerType.Opponent);
+
+                    if (enableDebugLog)
+                        Debug.Log($"[FieldAttackManager] 공격 성공 - 상대에게 {actualDamage} 데미지");
+                }
+
+                // 카드 전투 처리 (데미지 적용 후)
                 attackerText.SetRawValue(result);
                 attacker.SetWasModifiedThisTurn(true);
                 DestroyCard(defender);
 
                 if (enableDebugLog)
-                    Debug.Log($"[FieldAttackManager] 공격 성공 - {attacker.name} 생존 (값: {result})");
+                    Debug.Log($"[FieldAttackManager] {attacker.name} 승리 (새 값: {result})");
             }
             else if (result < 0) // 수비자 승리
             {
+                // 수비자 승리 시에는 플레이어에게 데미지 없음 (설계 요구사항)
+                if (enableDebugLog)
+                    Debug.Log("[FieldAttackManager] 수비자 승리 - 플레이어 데미지 없음");
+
+                // 카드 전투 처리
                 defenderText.SetRawValue(Mathf.Abs(result));
                 DestroyCard(attacker);
 
                 if (enableDebugLog)
-                    Debug.Log($"[FieldAttackManager] 공격 실패 - {defender.name} 생존 (값: {Mathf.Abs(result)})");
+                    Debug.Log($"[FieldAttackManager] {defender.name} 승리 (새 값: {Mathf.Abs(result)})");
             }
             else // 무승부
             {
+                // 무승부 시에도 데미지 없음
+                if (enableDebugLog)
+                    Debug.Log("[FieldAttackManager] 무승부 - 데미지 없음");
+
+                // 카드 전투 처리
                 DestroyCard(attacker);
                 StartCoroutine(DelayedDestroy(defender, 0.2f));
 
@@ -154,6 +323,7 @@ namespace Manager
                     Debug.Log("[FieldAttackManager] 상호 파괴");
             }
         }
+        
         #endregion
 
         #region Expression Zone Management
@@ -276,6 +446,34 @@ namespace Manager
                    card.CurrentZoneType == CardZone.ZoneType.Field;
         }
         #endregion
+
+        /// <summary>
+        /// 상대 필드가 비어있는지 확인
+        /// </summary>
+        /// <returns>상대 필드에 카드가 없으면 true</returns>
+        private bool IsOpponentFieldEmpty()
+        {
+            // CardZone.AllZonesRoot에서 상대 필드 Zone 찾기
+            if (CardZone.AllZonesRoot == null) return false;
+
+            var zones = CardZone.AllZonesRoot.GetComponentsInChildren<CardZone>();
+            var opponentFieldZone = System.Linq.Enumerable.FirstOrDefault(zones, z =>
+                z.Zone == CardZone.ZoneType.Field &&
+                z.Owner == CardZone.OwnerType.Opponent);
+
+            if (opponentFieldZone == null)
+            {
+                Debug.LogWarning("[FieldAttackManager] 상대 필드 Zone을 찾을 수 없습니다.");
+                return false;
+            }
+
+            bool isEmpty = opponentFieldZone.GetCardCount() == 0;
+
+            if (enableDebugLog)
+                Debug.Log($"[FieldAttackManager] 상대 필드 카드 수: {opponentFieldZone.GetCardCount()}, 비어있음: {isEmpty}");
+
+            return isEmpty;
+        }
 
         #region Utility
         /// <summary>

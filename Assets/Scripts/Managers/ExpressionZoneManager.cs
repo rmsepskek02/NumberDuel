@@ -350,6 +350,63 @@ namespace Manager
         public void UpdateOperationFirstSelected() => EnableCancellation(0, 1);
         #endregion
 
+        /// <summary>
+        /// 빈 필드 공격용 - slot 2번에 상대방 색상의 "0" 표시
+        /// 실제 카드가 아닌 가상의 방어값을 시각적으로 표현
+        /// </summary>
+        /// <param name="opponentType">상대방 타입 (Player 또는 Opponent)</param>
+        public void SetEmptyFieldDefender(CardZone.OwnerType opponentType)
+        {
+            // 상대방 색상 스프라이트 가져오기
+            Sprite opponentSprite = GetSpriteByOwnerType(opponentType);
+
+            if (opponentSprite == null)
+            {
+                Debug.LogWarning("[ExpressionZoneManager] 상대방 스프라이트를 찾을 수 없습니다. 기본 스프라이트 사용");
+                opponentSprite = neutralSprite;
+            }
+
+            // slot 2번에 "0" 텍스트와 상대방 색상으로 설정
+            UpdateSlot(2, "0", opponentSprite, true);
+
+            if (enableDebugLog)
+                Debug.Log($"[ExpressionZoneManager] 빈 필드 방어자 설정: {opponentType} 색상으로 '0' 표시");
+        }
+
+        /// <summary>
+        /// 소유자 타입에 따른 스프라이트 반환
+        /// </summary>
+        /// <param name="ownerType">카드 소유자 타입</param>
+        /// <returns>해당 소유자의 스프라이트</returns>
+        private Sprite GetSpriteByOwnerType(CardZone.OwnerType ownerType)
+        {
+            return ownerType switch
+            {
+                CardZone.OwnerType.Player => ResourcesManager.Instance.GetPlayerSprite(),
+                CardZone.OwnerType.Opponent => ResourcesManager.Instance.GetOpponentSprite(),
+                _ => neutralSprite
+            };
+        }
+
+        /// <summary>
+        /// 빈 필드 공격 결과 표시 (공격자 값이 그대로 데미지가 됨)
+        /// </summary>
+        /// <param name="attackerValue">공격자 카드 값</param>
+        public void ShowEmptyFieldResult(float attackerValue)
+        {
+            // 빈 필드 공격: 공격자 값 - 0 = 공격자 값
+            float result = attackerValue;
+            string resultText = Mathf.FloorToInt(result).ToString();
+
+            // 결과는 공격자 색상으로 표시 (양수이므로)
+            Sprite resultSprite = slots[0].GetComponentInChildren<SpriteRenderer>().sprite;
+
+            UpdateSlot(4, resultText, resultSprite, true);
+
+            if (enableDebugLog)
+                Debug.Log($"[ExpressionZoneManager] 빈 필드 공격 결과: {attackerValue} - 0 = {result}");
+        }
+
         #region Utility Methods
         /// <summary>
         /// 카드 정보를 슬롯에 설정하는 공통 메소드
