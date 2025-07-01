@@ -179,7 +179,8 @@ namespace Objects
         {
             InGameManager.Instance.StartProcess(GameProcessState.JokerDrawProcess);
 
-            // TODO: CardManager에서 드로우 기능 구현 후 연결
+            CardZone.OwnerType cardOwner = selectedJokerCard.CurrentOwnerType;
+            InGameManager.Instance.DrawCardsToHand(2, cardOwner);
 
             InGameManager.Instance.EndProcess();
             EndJokerProcess();
