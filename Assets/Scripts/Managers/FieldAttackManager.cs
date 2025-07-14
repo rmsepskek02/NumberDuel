@@ -152,6 +152,15 @@ namespace Manager
             // 빈 필드 공격 결과 적용 (원본 값 사용)
             ApplyEmptyFieldResult(attacker, originalAttackerValue);
 
+            // 공격 완료 표시 (새로 추가)
+            attacker.SetHasAttackedThisTurn(true);
+
+            // 네트워크 동기화 - 빈 필드 공격 결과 전송 (defender는 null)
+            if (NetworkGameManager.Instance != null)
+            {
+                NetworkGameManager.Instance.SyncAttackResult(attacker, null, originalAttackerValue, 0);
+            }
+
             // 상태 초기화
             currentAttacker = null;
             yield return new WaitForSeconds(0.8f);
@@ -191,9 +200,6 @@ namespace Manager
             {
                 Debug.LogError("[FieldAttackManager] HealthManager를 찾을 수 없습니다!");
             }
-
-            // 공격자 카드는 수정됨 표시 (재공격 방지)
-            attacker.SetWasModifiedThisTurn(true);
         }
 
         /// <summary>
@@ -252,6 +258,15 @@ namespace Manager
             // 결과 적용 (원본 값 전달)
             ApplyBattleResult(attacker, defender, originalAttackerValue, originalDefenderValue);
 
+            // 공격 완료 표시 (새로 추가)
+            attacker.SetHasAttackedThisTurn(true);
+
+            // 네트워크 동기화 - 공격 결과 전송
+            if (NetworkGameManager.Instance != null)
+            {
+                NetworkGameManager.Instance.SyncAttackResult(attacker, defender, originalAttackerValue, originalDefenderValue);
+            }
+
             // 상태 초기화
             currentAttacker = null;
             yield return new WaitForSeconds(0.8f);
@@ -290,7 +305,6 @@ namespace Manager
 
                 // 카드 전투 처리 (데미지 적용 후)
                 attackerText.SetRawValue(result);
-                attacker.SetWasModifiedThisTurn(true);
                 DestroyCard(defender);
 
                 if (enableDebugLog)
@@ -368,13 +382,11 @@ namespace Manager
             {
                 if (card.CurrentOwnerType == CardZone.OwnerType.Player)
                 {
-                    // 내 필드카드는 GLOW 끄기
-                    card.SetCardState(false);
+                    card.SetGlowOverride(false); // ← 수정!
                 }
                 else if (card.CurrentOwnerType == CardZone.OwnerType.Opponent)
                 {
-                    // 상대 필드카드는 빨간색 GLOW
-                    card.SetCardState(true, Global.GlowRed);
+                    card.SetGlowOverride(true, Global.GlowRed); // ← 수정!
                 }
             }
         }
@@ -388,17 +400,8 @@ namespace Manager
 
             foreach (var card in fieldCardsCache)
             {
-                if (card.CurrentOwnerType == CardZone.OwnerType.Player)
-                {
-                    // 내 카드: 공격 가능하면 초록색 GLOW
-                    bool canAttack = card.IsAttackableThisTurn();
-                    card.SetCardState(canAttack, canAttack ? Global.GlowGreen : null);
-                }
-                else
-                {
-                    // 상대 카드: GLOW 끄기
-                    card.SetCardState(false);
-                }
+                // 강제 설정 해제 후 자동 계산하도록 변경
+                card.ClearGlowOverride();
             }
         }
 
@@ -423,6 +426,13 @@ namespace Manager
 
             // 연산자 모드 중이면 공격 차단
             if (OperatorManager.Instance.IsInOperatorMode) return false;
+
+            // 첫 라운드에서는 공격 차단 (이 부분이 있는지 확인!)
+            if (TurnManager.Instance.IsFirstRound)
+            {
+                Debug.Log("[FieldAttackManager] 첫 라운드에서는 공격이 불가능합니다.");
+                return false;
+            }
 
             return true;
         }

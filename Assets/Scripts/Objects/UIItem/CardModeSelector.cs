@@ -17,8 +17,6 @@ public class CardModeSelector : MonoBehaviour
     [SerializeField] private CardModeOption secretOption;
     [SerializeField] private TextMeshPro openValueText;
 
-    //[SerializeField] private ObjectMouseEvent cancelButtonEvent;
-
     private Transform pendingCard;
     private CardZone targetZone;
     private ObjectMouseEvent bgClick;
@@ -42,9 +40,6 @@ public class CardModeSelector : MonoBehaviour
         if (sr != null)
             sr.sprite = ResourcesManager.Instance.GetPlayerSprite();
 
-        //if (cancelButtonEvent != null)
-        //    cancelButtonEvent.OnClickReleased += OnCancelPressed;
-
         SetUIActive(false);
     }
 
@@ -56,7 +51,7 @@ public class CardModeSelector : MonoBehaviour
     private void OnDisable()
     {
         CardPlayDetector.OnCardPlayRequested -= HandleCardPlayRequested;
-        
+
         if (bgClick != null)
             bgClick.OnClickReleased -= OnCancelPressed;
     }
@@ -89,7 +84,6 @@ public class CardModeSelector : MonoBehaviour
         }
 
         // DOTween 애니메이션 실행
-        
         Ease easeType = Ease.OutBack;
 
         openOption.transform
@@ -116,7 +110,7 @@ public class CardModeSelector : MonoBehaviour
     }
 
     /// <summary>
-    /// 사용자가 Open 또는 Secret 중 하나를 선택했을 때 호출됨
+    /// 사용자가 Open 또는 Secret 중 하나를 선택했을 때 호출됨 (완전 수정됨)
     /// 선택된 카드가 지정된 Zone에 추가된다.
     /// </summary>
     public void OnCardModeSelected(CardModeType mode)
@@ -124,73 +118,67 @@ public class CardModeSelector : MonoBehaviour
         if (pendingCard == null || targetZone == null)
             return;
 
-        // 기존 Zone에서 제거 (Card.CurrentZoneType 활용)
         Card cardComponent = pendingCard.GetComponentInChildren<Card>();
-        if (cardComponent != null)
+        if (cardComponent == null)
         {
-            foreach (var zone in CardZone.AllZonesRoot.GetComponentsInChildren<CardZone>())
-            {
-                if (zone.Zone == cardComponent.CurrentZoneType 
-                    && zone.Owner == cardComponent.CurrentOwnerType)
-                {
-                    zone.RemoveCard(pendingCard);
-                    break;
-                }
-            }
-
-            // Open으로 낸 카드만, 필드에 있을 때, 이번 턴에 수정된 적이 없어야 공격 가능
-            bool isField = targetZone.Zone == CardZone.ZoneType.Field;
-            bool isPlayerCard = targetZone.Owner == CardZone.OwnerType.Player;
-            bool isOpen = mode == CardModeType.Open;
-
-            if (isField && isPlayerCard)
-            {
-                cardComponent.SetCardState(isOpen);
-            }
+            Debug.LogError("[CardModeSelector] Card 컴포넌트를 찾을 수 없습니다.");
+            return;
         }
 
-        // Secret 모드일 경우 시각 효과 적용
+        // 기존 Zone에서 제거
+        RemoveCardFromCurrentZone(cardComponent);
+
+        // Open/Secret 상태 설정 (GLOW 관련 코드 제거!)
         if (mode == CardModeType.Secret)
         {
             cardComponent.SetSecret(true);
         }
-        else if(mode == CardModeType.Open)
+        else if (mode == CardModeType.Open)
         {
             cardComponent.SetSecret(false);
         }
 
-        // 이 시점에서 CardMotion/DragHandler 제거
-        DragHandler drag = pendingCard.GetComponent<DragHandler>();
-        if (drag != null) Destroy(drag);
+        // 드래그 관련 컴포넌트 제거
+        RemoveDragComponents();
 
-        CardMotion motion = pendingCard.GetComponentInChildren<CardMotion>();
-        if (motion != null) Destroy(motion);
-
-        // Zone에 카드 추가
+        // Zone에 카드 추가 (Card.cs가 알아서 GLOW 관리)
         targetZone.AddCard(pendingCard);
 
         Hide();
     }
 
     /// <summary>
-    /// 카드가 현재 속해있는 CardZone 부모 오브젝트 찾는 함수
+    /// 카드를 현재 Zone에서 제거 (수정됨)
     /// </summary>
-    //private CardZone FindZoneOfCard(Transform card)
-    //{
-    //    if (AllZonesRoot == null || card == null) return null;
+    private void RemoveCardFromCurrentZone(Card cardComponent)
+    {
+        if (CardZone.AllZonesRoot == null) return;
 
-    //    foreach (var zone in AllZonesRoot.GetComponentsInChildren<CardZone>())
-    //    {
-    //        if (zone.Contains(card))
-    //            return zone;
-    //    }
+        foreach (var zone in CardZone.AllZonesRoot.GetComponentsInChildren<CardZone>())
+        {
+            if (zone.Zone == cardComponent.CurrentZoneType
+                && zone.Owner == cardComponent.CurrentOwnerType)
+            {
+                zone.RemoveCard(pendingCard);
+                break;
+            }
+        }
+    }
 
-    //    return null;
-    //}
+    /// <summary>
+    /// 드래그 관련 컴포넌트 제거 (분리됨)
+    /// </summary>
+    private void RemoveDragComponents()
+    {
+        DragHandler drag = pendingCard.GetComponent<DragHandler>();
+        if (drag != null) Destroy(drag);
+
+        CardMotion motion = pendingCard.GetComponentInChildren<CardMotion>();
+        if (motion != null) Destroy(motion);
+    }
 
     /// <summary>
     /// 취소 버튼 클릭 시 호출됨.
-    /// 현재는 UI만 닫고 카드 복귀는 미구현 상태.
     /// </summary>
     public void OnCancelPressed()
     {
@@ -199,7 +187,6 @@ public class CardModeSelector : MonoBehaviour
 
     /// <summary>
     /// 하위 UI 오브젝트들을 일괄로 켜거나 끈다.
-    /// 루트 오브젝트는 항상 활성 상태로 유지됨.
     /// </summary>
     private void SetUIActive(bool active)
     {

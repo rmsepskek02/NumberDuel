@@ -173,6 +173,13 @@ namespace Manager
             // 연산자 카드 제거
             yield return StartCoroutine(RemoveOperatorCard());
 
+            // 네트워크 동기화 - 연산 결과 전송
+            if (NetworkGameManager.Instance != null)
+            {
+                float result = CalculateResult(first, second);
+                NetworkGameManager.Instance.SyncOperationResult(operatorCard, firstCard, secondCard, result, currentOperator);
+            }
+
             // 상태 복원
             RestoreDefaultGlowStates();
             ResetOperationState();
@@ -287,9 +294,9 @@ namespace Manager
         }
         #endregion
 
-        #region GLOW Management
+        #region GLOW Management (수정됨)
         /// <summary>
-        /// 첫 번째 카드 선택을 위한 GLOW 설정
+        /// 첫 번째 카드 선택을 위한 GLOW 설정 (수정됨)
         /// </summary>
         private void SetupFirstCardSelection()
         {
@@ -298,24 +305,26 @@ namespace Manager
             foreach (var card in fieldCardsCache)
             {
                 bool canSelect = IsValidFirstCard(card);
-                card.SetCardState(canSelect, Global.GlowGreen);
+                // 연산 프로세스 중이므로 GLOW 강제 설정
+                card.SetGlowOverride(canSelect, canSelect ? Global.GlowGreen : null);
             }
         }
 
         /// <summary>
-        /// 두 번째 카드 선택을 위한 GLOW 설정
+        /// 두 번째 카드 선택을 위한 GLOW 설정 (수정됨)
         /// </summary>
         private void SetupSecondCardSelection()
         {
             foreach (var card in fieldCardsCache)
             {
                 bool canSelect = card != firstCard;
-                card.SetCardState(canSelect, Global.GlowGreen);
+                // 연산 프로세스 중이므로 GLOW 강제 설정
+                card.SetGlowOverride(canSelect, canSelect ? Global.GlowGreen : null);
             }
         }
 
         /// <summary>
-        /// 기본 GLOW 상태로 복원 (공격 가능한 카드들)
+        /// 기본 GLOW 상태로 복원 (수정됨)
         /// </summary>
         private void RestoreDefaultGlowStates()
         {
@@ -323,11 +332,8 @@ namespace Manager
 
             foreach (var card in fieldCardsCache)
             {
-                bool canGlow = card.CurrentOwnerType == CardZone.OwnerType.Player &&
-                               card.CurrentZoneType == CardZone.ZoneType.Field &&
-                               card.IsAttackableThisTurn();
-
-                card.SetCardState(canGlow);
+                // 연산 프로세스 종료 - GLOW 강제 설정 해제
+                card.ClearGlowOverride();
             }
         }
 

@@ -185,6 +185,11 @@ namespace Objects
             InGameManager.Instance.EndProcess();
             EndJokerProcess();
             RemoveUsedJokerCard();
+            // 네트워크 동기화 - Draw 조커 결과 전송
+            if (NetworkGameManager.Instance != null)
+            {
+                NetworkGameManager.Instance.SyncJokerResult(selectedJokerCard, JokerEffectType.Draw);
+            }
             Hide();
         }
 
@@ -267,6 +272,13 @@ namespace Objects
 
             yield return new WaitForSeconds(0.2f);
 
+            // 네트워크 동기화 - Delete 조커 결과 전송 (조커 카드 삭제 전에!)
+            if (NetworkGameManager.Instance != null)
+            {
+                var targetCards = new System.Collections.Generic.List<Card> { targetCard };
+                NetworkGameManager.Instance.SyncJokerResult(selectedJokerCard, JokerEffectType.Delete, targetCards);
+            }
+
             // 조커 카드 삭제
             RemoveUsedJokerCard();
 
@@ -290,6 +302,13 @@ namespace Objects
 
                 firstCardText.SetRawValue(secondValue);
                 secondCardText.SetRawValue(firstValue);
+
+                // 네트워크 동기화 - Swap 조커 결과 전송
+                if (NetworkGameManager.Instance != null)
+                {
+                    var targetCards = new System.Collections.Generic.List<Card> { firstTarget, secondTarget };
+                    NetworkGameManager.Instance.SyncJokerResult(selectedJokerCard, JokerEffectType.Swap, targetCards);
+                }
             }
         }
         #endregion

@@ -344,6 +344,7 @@ GameObject:
   - component: {fileID: 3450813533439364206}
   - component: {fileID: 1676067187599447597}
   - component: {fileID: 3812885885470925320}
+  - component: {fileID: -5136019433379471218}
   m_Layer: 0
   m_Name: Opponent_Card
   m_TagString: Untagged
@@ -392,3 +393,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mainCamera: {fileID: 0}
+--- !u!114 &-5136019433379471218
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5580272945877059124}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e58bc3266e573c4fb997c14f711aea5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uniqueId: 
+  currentOwner: 0
+  currentZone: 0
+  currentIndex: 0

@@ -12,6 +12,7 @@ namespace Objects
     /// 개별 카드 오브젝트의 상태 및 클릭 반응을 관리하는 컴포넌트
     /// - ICard 구현을 통해 Zone에서 인터랙션 설정을 받을 수 있음
     /// - ObjectMouseEvent로부터 클릭 이벤트를 수신함
+    /// - 완전 재정립된 공격 시스템 및 GLOW 관리
     /// </summary>
     public class Card : MonoBehaviour, ICard
     {
@@ -28,11 +29,22 @@ namespace Objects
         public OperatorType OperatorType { get; private set; }
         public bool IsSecret { get; private set; }
         public bool CanAttack { get; private set; } = false;
-        public bool WasModifiedThisTurn { get; private set; } = false;
+
+        // 턴별 상태 관리 (재정립)
+        public bool WasModifiedThisTurn { get; private set; } = false;    // 연산으로 수정됨
+        public bool WasPlayedThisTurn { get; private set; } = false;      // 이번 턴에 필드 배치됨
+        public bool HasAttackedThisTurn { get; private set; } = false;    // 이번 턴에 공격함
+
+        // GLOW 제어 관리
+        private bool isGlowOverridden = false;  // 외부에서 GLOW 강제 설정 중인지
+        private bool overrideGlowState = false; // 강제 설정된 GLOW 상태
+        private Color? overrideGlowColor = null; // 강제 설정된 GLOW 색상
+
         public bool IsOpen => !IsSecret;
 
         private ObjectMouseEvent mouseEvent;
 
+        #region Unity Lifecycle
         private void Awake()
         {
             mouseEvent = GetComponentInChildren<ObjectMouseEvent>();
@@ -69,7 +81,9 @@ namespace Objects
             mouseEvent.OnClickReleased -= HandleClick;
             mouseEvent.OnEndDrag -= HandleEndDrag;
         }
+        #endregion
 
+        #region Card Initialization
         // 카드 초기화 함수: 숫자 카드
         public void InitializeAsNumber(float value)
         {
@@ -95,7 +109,216 @@ namespace Objects
 
             cardText.SetJokerText();
         }
+        #endregion
 
+        #region Turn State Management (완전 재정립)
+        /// <summary>
+        /// 이번 턴에 필드에 배치되었음을 표시
+        /// </summary>
+        public void SetWasPlayedThisTurn(bool played)
+        {
+            WasPlayedThisTurn = played;
+            UpdateGlowState(); // GLOW 상태 즉시 업데이트
+
+            Debug.Log($"[Card] {name} WasPlayedThisTurn: {played}");
+        }
+
+        /// <summary>
+        /// 이번 턴에 공격했음을 표시
+        /// </summary>
+        public void SetHasAttackedThisTurn(bool attacked)
+        {
+            HasAttackedThisTurn = attacked;
+            UpdateGlowState(); // GLOW 상태 즉시 업데이트
+
+            Debug.Log($"[Card] {name} HasAttackedThisTurn: {attacked}");
+        }
+
+        /// <summary>
+        /// 연산으로 수정되었음을 표시
+        /// </summary>
+        public void SetWasModifiedThisTurn(bool modified)
+        {
+            WasModifiedThisTurn = modified;
+            UpdateGlowState(); // GLOW 상태 즉시 업데이트
+
+            Debug.Log($"[Card] {name} WasModifiedThisTurn: {modified}");
+        }
+
+        /// <summary>
+        /// 턴 시작 시 상태 초기화 (WasModified는 유지)
+        /// </summary>
+        public void ResetTurnState()
+        {
+            WasPlayedThisTurn = false;
+            HasAttackedThisTurn = false;
+            // WasModifiedThisTurn은 그대로 유지 (다음 턴까지 공격 불가)
+            UpdateGlowState();
+
+            Debug.Log($"[Card] {name} 턴 상태 초기화 (WasModified 유지)");
+        }
+
+        /// <summary>
+        /// 새 턴 시작 시 완전 초기화
+        /// </summary>
+        public void ResetForNewTurn()
+        {
+            WasPlayedThisTurn = false;
+            HasAttackedThisTurn = false;
+            WasModifiedThisTurn = false;
+            UpdateGlowState();
+
+            Debug.Log($"[Card] {name} 완전 초기화");
+        }
+        #endregion
+
+        #region Attack Logic (완전 재정립)
+        /// <summary>
+        /// 공격 가능 여부 체크 (모든 조건 통합)
+        /// </summary>
+        public bool IsAttackableThisTurn()
+        {
+            // 기본 조건: 오픈되어 있어야 함
+            if (!IsOpen)
+            {
+                return false;
+            }
+
+            // 1. 첫라운드 공격불가
+            if (TurnManager.Instance != null && TurnManager.Instance.IsFirstRound)
+            {
+                return false;
+            }
+
+            // 2. 카드를 낸 턴에 공격 불가
+            if (WasPlayedThisTurn)
+            {
+                return false;
+            }
+
+            // 3. 연산으로 수치가 바뀐 경우 공격 불가
+            if (WasModifiedThisTurn)
+            {
+                return false;
+            }
+
+            // 4. 이미 공격한 경우 공격 불가
+            if (HasAttackedThisTurn)
+            {
+                return false;
+            }
+
+            // 5. 상대 턴에 공격 불가
+            if (TurnManager.Instance != null && !TurnManager.Instance.IsLocalPlayerTurn)
+            {
+                return false;
+            }
+
+            // 6. 내 카드가 아니면 공격 불가
+            if (CurrentOwnerType != CardZone.OwnerType.Player)
+            {
+                return false;
+            }
+
+            // 7. 필드에 있지 않으면 공격 불가
+            if (CurrentZoneType != CardZone.ZoneType.Field)
+            {
+                return false;
+            }
+
+            // 1. 첫라운드 공격불가
+            if (TurnManager.Instance != null && TurnManager.Instance.IsFirstRound)
+            {
+                return false;
+            }
+            return true;
+        }
+        #endregion
+
+        #region GLOW Management (완전 재정립)
+        /// <summary>
+        /// GLOW 상태 강제 설정 (연산카드 프로세스 등에서 사용)
+        /// </summary>
+        /// <param name="forceGlow">강제로 설정할 GLOW 상태</param>
+        /// <param name="glowColor">GLOW 색상 (null이면 기본 색상)</param>
+        public void SetGlowOverride(bool forceGlow, Color? glowColor = null)
+        {
+            isGlowOverridden = true;
+            overrideGlowState = forceGlow;
+            overrideGlowColor = glowColor;
+
+            // 즉시 GLOW 적용
+            ApplyGlowState(forceGlow, glowColor);
+
+            Debug.Log($"[Card] {name} GLOW 강제 설정: {forceGlow}, 색상: {glowColor}");
+        }
+
+        /// <summary>
+        /// GLOW 강제 설정 해제 (일반 모드로 복귀)
+        /// </summary>
+        public void ClearGlowOverride()
+        {
+            isGlowOverridden = false;
+            overrideGlowState = false;
+            overrideGlowColor = null;
+
+            // 일반 GLOW 상태로 복원
+            UpdateGlowState();
+
+            Debug.Log($"[Card] {name} GLOW 강제 설정 해제");
+        }
+
+        /// <summary>
+        /// GLOW 상태 업데이트 (통합 관리)
+        /// </summary>
+        private void UpdateGlowState()
+        {
+            // 강제 설정 중이면 무시
+            if (isGlowOverridden) return;
+
+            bool canAttack = IsAttackableThisTurn();
+            ApplyGlowState(canAttack, canAttack ? Global.GlowGreen : null);
+        }
+
+        /// <summary>
+        /// 실제 GLOW 적용
+        /// </summary>
+        private void ApplyGlowState(bool isGlowing, Color? glowColor = null)
+        {
+            CanAttack = isGlowing;
+
+            var effect = GetComponentInChildren<CardEffect>();
+            if (effect != null)
+            {
+                // GLOW 토글
+                effect.SetGlow(isGlowing);
+
+                // GLOW 색상 지정
+                if (isGlowing)
+                {
+                    // 전달된 색상이 없으면 자동 분기
+                    Color colorToUse = glowColor ?? (
+                        CurrentOwnerType == CardZone.OwnerType.Player
+                            ? Global.GlowGreen
+                            : Global.GlowRed
+                    );
+
+                    effect.LerpGlowColor(colorToUse, 0.2f);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 기존 SetCardState 메서드 (호환성 유지)
+        /// </summary>
+        public void SetCardState(bool isAttackable, Color? glowColor = null)
+        {
+            // 강제 설정 모드로 전환
+            SetGlowOverride(isAttackable, glowColor);
+        }
+        #endregion
+
+        #region Secret Management
         /// <summary>
         /// 카드를 비밀 상태로 설정하거나 해제합니다.
         /// </summary>
@@ -123,48 +346,9 @@ namespace Objects
                 }
             }
         }
+        #endregion
 
-        /// <summary>
-        /// 카드의 공격 가능 상태와 GLOW 색상을 지정하는 일반화된 함수
-        /// </summary>
-        /// <param name="isAttackable">공격 가능 여부 (내 턴에 클릭 가능)</param>
-        /// <param name="glowColor">GLOW 색상 (null이면 자동 지정)</param>
-        public void SetCardState(bool isAttackable, Color? glowColor = null)
-        {
-            CanAttack = isAttackable;
-
-            var effect = GetComponentInChildren<CardEffect>();
-            if (effect != null)
-            {
-                // GLOW 토글
-                effect.SetGlow(isAttackable);
-
-                // GLOW 색상 지정
-                if (isAttackable)
-                {
-                    // 전달된 색상이 없으면 자동 분기
-                    Color colorToUse = glowColor ?? (
-                        CurrentOwnerType == CardZone.OwnerType.Player
-                            ? Global.GlowGreen
-                            : Global.GlowRed
-                    );
-
-                    effect.LerpGlowColor(colorToUse, 0.2f);
-                }
-            }
-        }
-
-        public void SetWasModifiedThisTurn(bool modified)
-        {
-            WasModifiedThisTurn = modified;
-            if (modified) SetCardState(false);
-        }
-
-        public bool IsAttackableThisTurn()
-        {
-            return IsOpen && !WasModifiedThisTurn;
-        }
-
+        #region Zone Interaction
         /// <summary>
         /// Zone 정보에 따라 카드 상호작용 권한 설정
         /// </summary>
@@ -179,6 +363,9 @@ namespace Objects
                 ApplyInteraction(CardInteractionType.ClickOnly);
             else
                 ApplyInteraction(CardInteractionType.None);
+
+            // Zone 변경 시 GLOW 상태 재계산
+            UpdateGlowState();
         }
 
         /// <summary>
@@ -192,19 +379,15 @@ namespace Objects
             mouseEvent.isClickable = (type == CardInteractionType.ClickOnly || type == CardInteractionType.DragAndClick);
             mouseEvent.isDraggable = (type == CardInteractionType.DragAndClick);
         }
+        #endregion
 
+        #region Input Handling
         /// <summary>
-        /// 클릭 시 실행되는 내부 로직 (버그 수정 버전)
-        /// 공격 프로세스 중 연산/조커 카드 사용 차단
+        /// 클릭 시 실행되는 내부 로직 (기존 유지)
         /// </summary>
         private void HandleClick()
         {
             Debug.Log($"[Card] Clicked: {gameObject.name}");
-
-            // 디버깅: 프로세스 상태 출력
-            Debug.Log($"[Card] IsProcessing: {InGameManager.Instance.IsProcessing}, CurrentProcess: {InGameManager.Instance.CurrentProcess}");
-            Debug.Log($"[Card] IsInOperatorMode: {OperatorManager.Instance.IsInOperatorMode}");
-            Debug.Log($"[Card] CurrentZoneType: {CurrentZoneType}, CardType: {CardType}");
 
             // 1. 조커 대상 선택 모드인 경우 항상 허용
             if (JokerTargetSelector.Instance != null && JokerTargetSelector.Instance.IsSelecting())
@@ -214,25 +397,23 @@ namespace Objects
                 return;
             }
 
-            // 2. 연산자 모드 중인 경우 - 필드 카드만 허용 (프로세스 상태와 무관하게 체크)
+            // 2. 연산자 모드 중인 경우 - 필드 카드만 허용
             if (OperatorManager.Instance.IsInOperatorMode)
             {
                 Debug.Log("[Card] 연산자 모드 감지");
 
-                // 손패의 카드는 연산 대상이 아니므로 클릭 이벤트 차단
                 if (CurrentZoneType == CardZone.ZoneType.Hand)
                 {
                     Debug.Log($"[Card] 연산자 모드 중 손패 카드 클릭 이벤트 차단: {gameObject.name}");
-                    return; // UI 표시 완전 차단
+                    return;
                 }
 
-                // 필드 카드는 연산 대상이므로 허용
                 Debug.Log("[Card] 연산자 모드 중 필드 카드 - 이벤트 허용");
                 onClicked?.Invoke(this);
                 return;
             }
 
-            // 3. 공격 프로세스 중인지 확인 (새로 추가)
+            // 3. 공격 프로세스 중인지 확인
             var attackManager = FindAnyObjectByType<FieldAttackManager>();
             bool hasAttackerSelected = attackManager != null && attackManager.HasAttackerSelected();
 
@@ -240,7 +421,6 @@ namespace Objects
             {
                 Debug.Log("[Card] 공격 프로세스 진행 중 감지");
 
-                // 공격 프로세스 중에는 손패의 조커/연산자 카드 사용 차단
                 if (CurrentZoneType == CardZone.ZoneType.Hand &&
                     CurrentOwnerType == CardZone.OwnerType.Player &&
                     (CardType == CardType.Joker || CardType == CardType.Operator))
@@ -249,7 +429,6 @@ namespace Objects
                     return;
                 }
 
-                // 상대 필드 카드 공격은 허용
                 if (CurrentOwnerType == CardZone.OwnerType.Opponent && CurrentZoneType == CardZone.ZoneType.Field)
                 {
                     Debug.Log("[Card] 공격 대상 선택 허용");
@@ -257,7 +436,6 @@ namespace Objects
                     return;
                 }
 
-                // 기타 경우는 차단
                 Debug.Log($"[Card] 공격 프로세스 중 기타 카드 클릭 차단: {gameObject.name}");
                 return;
             }
@@ -284,7 +462,7 @@ namespace Objects
                 {
                     Debug.LogError("[Card] JokerModeSelector를 찾을 수 없습니다.");
                 }
-                return; // 기본 onClicked 이벤트 방지
+                return;
             }
 
             // 연산자 카드일 경우: OperatorManager 호출
@@ -293,7 +471,7 @@ namespace Objects
                 CurrentOwnerType == CardZone.OwnerType.Player)
             {
                 OperatorManager.Instance.StartOperation(this);
-                return; // 기본 onClicked 이벤트 방지
+                return;
             }
 
             // 일반 카드 클릭 이벤트
@@ -301,8 +479,7 @@ namespace Objects
         }
 
         /// <summary>
-        /// 카드가 Drag가 끝난 시점에 호출 (버그 수정 버전)
-        /// 공격 프로세스 중 연산/조커 카드 드래그 차단
+        /// 카드가 Drag가 끝난 시점에 호출 (기존 유지)
         /// </summary>
         private void HandleEndDrag()
         {
@@ -312,10 +489,10 @@ namespace Objects
             if (OperatorManager.Instance.IsInOperatorMode)
             {
                 Debug.Log("[Card] 연산자 모드 중 드래그 차단");
-                return; // 완전히 차단
+                return;
             }
 
-            // 2. 공격 프로세스 중인지 확인 (새로 추가)
+            // 2. 공격 프로세스 중인지 확인
             var attackManager = FindAnyObjectByType<FieldAttackManager>();
             bool hasAttackerSelected = attackManager != null && attackManager.HasAttackerSelected();
 
@@ -323,7 +500,6 @@ namespace Objects
             {
                 Debug.Log("[Card] 공격 프로세스 진행 중 - 드래그 차단");
 
-                // 공격 프로세스 중에는 손패의 조커/연산자 카드 드래그 차단
                 if (CurrentZoneType == CardZone.ZoneType.Hand &&
                     CurrentOwnerType == CardZone.OwnerType.Player &&
                     (CardType == CardType.Joker || CardType == CardType.Operator))
@@ -337,7 +513,7 @@ namespace Objects
             if (InGameManager.Instance.IsProcessing)
             {
                 Debug.Log("[Card] 프로세스 진행 중 드래그 차단");
-                return; // 완전히 차단, 이벤트 발행 안 함
+                return;
             }
 
             // 4. 프로세스가 진행 중이지 않을 때만 새 프로세스 시작 허용
@@ -363,19 +539,18 @@ namespace Objects
             // 일반 카드 드롭 이벤트
             OnCardDropped?.Invoke(transform);
         }
+        #endregion
 
+        #region Animation
         /// <summary>
-        /// 카드 삭제 애니메이션 (모든 카드 삭제 시 사용)
+        /// 카드 삭제 애니메이션 (기존 유지)
         /// </summary>
-        /// <param name="onComplete">애니메이션 완료 후 실행할 콜백</param>
-        /// <param name="delay">애니메이션 시작 전 대기 시간</param>
         public IEnumerator AnimateRemoval(Action onComplete = null, float delay = 0f)
         {
-            // 대기 시간
             if (delay > 0f)
                 yield return new WaitForSeconds(delay);
 
-            float animDuration = 0.5f; // Global에 정의되어 있다면 사용
+            float animDuration = 0.5f;
 
             // 1. 상호작용 비활성화
             if (mouseEvent != null)
@@ -454,7 +629,9 @@ namespace Objects
             // 9. 콜백 실행
             onComplete?.Invoke();
         }
+        #endregion
 
+        #region Enums
         /// <summary>
         /// 카드 상호작용 종류를 정의하는 내부 열거형
         /// </summary>
@@ -464,5 +641,6 @@ namespace Objects
             ClickOnly,
             DragAndClick
         }
+        #endregion
     }
 }

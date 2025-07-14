@@ -76,64 +76,45 @@ namespace Objects
         // AddCard 메서드 수정 (필드 제한 추가)
         public void AddCard(Transform card)
         {
-            // 손패 제한 체크
-            if (zoneType == ZoneType.Hand && cards.Count >= 10)
-            {
-                Debug.LogWarning($"[CardZone] {ownerType} 손패가 가득차서 카드를 추가할 수 없습니다.");
-                return;
-            }
-
-            // 필드 제한 체크 추가
-            if (zoneType == ZoneType.Field && cards.Count >= 5)
-            {
-                Debug.LogWarning($"[CardZone] {ownerType} 필드가 가득차서 카드를 추가할 수 없습니다.");
-                return;
-            }
-
+            // 제한 체크들...
+            if (zoneType == ZoneType.Hand && cards.Count >= 10) return;
+            if (zoneType == ZoneType.Field && cards.Count >= 5) return;
             if (cards.Contains(card)) return;
 
             Card cardComponent = card.GetComponent<Card>();
-
-            // 연산자 카드는 Field Zone에 추가 금지
-            if (zoneType == ZoneType.Field && cardComponent != null && cardComponent.CardType == CardType.Operator)
-            {
-                Debug.Log($"[CardZone] 연산자 카드는 필드에 배치할 수 없습니다: {card.name}");
-                return;
-            }
+            if (zoneType == ZoneType.Field && cardComponent?.CardType == CardType.Operator) return;
 
             cards.Add(card);
             card.SetParent(transform);
 
-            // 카드 인터랙션 권한 설정
-            ICard cardInterface = card.GetComponentInChildren<ICard>();
-            cardInterface?.SetInteraction(zoneType, ownerType);
-
-            // Opponent 손패일 경우 텍스트 비활성화
+            // Opponent 손패 텍스트 비활성화
             if (ownerType == OwnerType.Opponent && zoneType == ZoneType.Hand)
             {
                 var tmp = card.GetComponentInChildren<TMPro.TextMeshPro>();
-                if (tmp != null)
-                    tmp.gameObject.SetActive(false);
+                if (tmp != null) tmp.gameObject.SetActive(false);
             }
 
+            // GLOW 설정
             if (zoneType == ZoneType.Hand)
             {
-                // Glow 효과 비활성화
                 var glow = card.GetComponentInChildren<CardEffect>();
-                if (glow != null)
-                    glow.enabled = false;
+                if (glow != null) glow.enabled = false;
             }
 
-            if (zoneType == ZoneType.Field)
+            // 필드 카드 등록 및 상태 설정 (SetInteraction 보다 먼저!)
+            if (zoneType == ZoneType.Field && cardComponent != null)
             {
-                // Glow 효과 활성화
-                var glow = card.GetComponentInChildren<CardEffect>();
-                if (glow != null)
-                    glow.enabled = true;
+                InGameManager.Instance.RegisterFieldCard(cardComponent);
 
-                if (cardComponent != null)
-                    InGameManager.Instance.RegisterFieldCard(cardComponent);
+                if (ownerType == OwnerType.Player)
+                {
+                    cardComponent.SetWasPlayedThisTurn(true); // ← 먼저 설정!
+                }
             }
+
+            // 카드 인터랙션 권한 설정 (나중에!)
+            ICard cardInterface = card.GetComponentInChildren<ICard>();
+            cardInterface?.SetInteraction(zoneType, ownerType);
 
             UpdateLayout();
 
