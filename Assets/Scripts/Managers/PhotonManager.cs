@@ -31,6 +31,39 @@ namespace Manager
 
             // InGameUIManager에서 이벤트 등록
             InGameUIManager.Instance.RegisterPhotonManager(this);
+
+            // 방장인 경우 색상 결정 및 저장
+            if (PhotonNetwork.IsMasterClient && PhotonNetwork.InRoom)
+            {
+                SetupRoomColors();
+            }
+        }
+
+        /// <summary>
+        /// 방장이 방 생성 시 색상 결정 및 방 속성에 저장
+        /// </summary>
+        private void SetupRoomColors()
+        {
+            if (ResourcesManager.Instance != null)
+            {
+                var (playerSpriteName, opponentSpriteName) = ResourcesManager.Instance.SelectRandomColors();
+
+                if (!string.IsNullOrEmpty(playerSpriteName) && !string.IsNullOrEmpty(opponentSpriteName))
+                {
+                    // 방 속성에 색상 저장
+                    var roomProperties = new ExitGames.Client.Photon.Hashtable
+                    {
+                        { "masterPlayerColor", playerSpriteName },
+                        { "guestPlayerColor", opponentSpriteName }
+                    };
+                    PhotonNetwork.CurrentRoom.SetCustomProperties(roomProperties);
+
+                    // 방장 자신의 색상 적용
+                    ResourcesManager.Instance.SetPlayerColors(playerSpriteName, opponentSpriteName);
+
+                    Debug.Log($"[PhotonManager] 방 색상 설정 완료: Master={playerSpriteName}, Guest={opponentSpriteName}");
+                }
+            }
         }
 
         public void OnTurnBegins(int turn)
@@ -73,7 +106,83 @@ namespace Manager
         {
             Debug.Log("New Player Entered Room: " + newPlayer.NickName);
             UpdateRoomPlayerCount();
+
+            // 방장이고 2명이 되었을 때 저장된 색상으로 동기화
+            if (PhotonNetwork.IsMasterClient && PhotonNetwork.CurrentRoom.PlayerCount == 2)
+            {
+                SyncStoredColors();
+            }
+
             EnterPlayer?.Invoke(); // 플레이어 입장 이벤트 실행
+        }
+
+        /// <summary>
+        /// 방 속성에 저장된 색상으로 동기화 전송 (완전히 새로운 버전)
+        /// </summary>
+        private void SyncStoredColors()
+        {
+            var roomProperties = PhotonNetwork.CurrentRoom.CustomProperties;
+
+            if (roomProperties.TryGetValue("masterPlayerColor", out object masterColor) &&
+                roomProperties.TryGetValue("guestPlayerColor", out object guestColor))
+            {
+                string color1 = masterColor.ToString();
+                string color2 = guestColor.ToString();
+
+                // 현재 내가 사용 중인 색상 확인
+                string myCurrentColor = GetMyCurrentColor();
+
+                // 새로 들어온 플레이어에게 줄 색상 결정
+                string newPlayerColor;
+                string myColor;
+
+                if (myCurrentColor == color1)
+                {
+                    myColor = color1;
+                    newPlayerColor = color2;
+                }
+                else if (myCurrentColor == color2)
+                {
+                    myColor = color2;
+                    newPlayerColor = color1;
+                }
+                else
+                {
+                    // 현재 색상을 찾을 수 없는 경우 기본값 사용
+                    Debug.LogWarning($"[PhotonManager] 현재 색상 {myCurrentColor}이 방 색상과 일치하지 않음");
+                    myColor = color1;
+                    newPlayerColor = color2;
+                }
+
+                if (NetworkGameManager.Instance != null)
+                {
+                    Debug.Log($"[PhotonManager] 올바른 색상 동기화: 내색상={myColor}, 새플레이어색상={newPlayerColor}");
+                    NetworkGameManager.Instance.SyncStoredColors(myColor, newPlayerColor); // ← 간소화!
+                }
+            }
+            else
+            {
+                Debug.LogError("[PhotonManager] 방 속성에서 색상 정보를 찾을 수 없습니다.");
+            }
+        }
+
+        /// <summary>
+        /// 현재 내가 사용 중인 색상 이름 반환 (새로 추가)
+        /// </summary>
+        private string GetMyCurrentColor()
+        {
+            if (ResourcesManager.Instance != null)
+            {
+                var playerSprite = ResourcesManager.Instance.GetPlayerSprite();
+                if (playerSprite != null)
+                {
+                    Debug.Log($"[PhotonManager] 현재 내 색상: {playerSprite.name}");
+                    return playerSprite.name;
+                }
+            }
+
+            Debug.LogError("[PhotonManager] 현재 사용 중인 색상을 확인할 수 없습니다.");
+            return "";
         }
 
         public override void OnPlayerLeftRoom(Player otherPlayer)

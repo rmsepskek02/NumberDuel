@@ -33,7 +33,6 @@ namespace Manager
             if (instance == null)
             {
                 instance = this;
-                // DontDestroyOnLoad(gameObject); ← 제거됨
             }
             else if (instance != this)
             {
@@ -238,31 +237,37 @@ namespace Manager
 
         #region Game Sequence
         /// <summary>
-        /// 게임 시작 시퀀스 (예외 처리 간소화)
+        /// 게임 시작 시퀀스 (색상 동기화 및 초기 드로우 포함)
+        /// 올바른 순서: 색상 동기화 -> 덱 초기화 -> 초기 드로우 -> 첫 턴 시작
+        /// </summary>
+        /// <summary>
+        /// 게임 시작 시퀀스 (간소화된 버전)
+        /// 올바른 순서: 첫 플레이어 결정 -> 게임 시작 알림 -> 덱 초기화 -> 초기 드로우 -> 첫 턴 시작
         /// </summary>
         private IEnumerator StartGameSequence()
         {
-            if (enableDebugLog)
-                Debug.Log("[TurnManager] 게임 시작 시퀀스 시작");
+            Debug.Log("[TurnManager] 게임 시작 시퀀스 시작");
 
             // 1단계: 첫 턴 플레이어 랜덤 결정
             int randomFirstPlayer = DetermineFirstPlayer();
 
-            // 2단계: 모든 클라이언트에 게임 시작 알림
-            photonView.RPC("RPC_StartGame", RpcTarget.All, randomFirstPlayer);
+            // 2단계: 모든 클라이언트에 게임 시작 알림 (색상은 이미 설정됨)
+            if (PhotonNetwork.IsMasterClient)
+            {
+                photonView.RPC("RPC_StartGame", RpcTarget.All, randomFirstPlayer);
+            }
 
             // 3단계: 덱 초기화 대기
             yield return new WaitForSeconds(0.5f);
 
-            // 4단계: 차등 드로우 실행
+            // 4단계: 차등 드로우 실행 (선공 4장, 후공 5장)
             ExecuteInitialDraw();
 
             // 5단계: 첫 턴 시작
             yield return new WaitForSeconds(1f);
             BeginFirstTurn();
 
-            if (enableDebugLog)
-                Debug.Log("[TurnManager] 게임 시작 완료");
+            Debug.Log("[TurnManager] 게임 시작 시퀀스 완료");
         }
 
         /// <summary>
@@ -271,9 +276,6 @@ namespace Manager
         private IEnumerator EndTurnSequence()
         {
             isProcessingTurn = true;
-
-            if (enableDebugLog)
-                Debug.Log($"[TurnManager] 턴 {currentTurn} 종료");
 
             // 1단계: 턴 종료 처리
             yield return StartCoroutine(ProcessTurnEnd());
@@ -297,8 +299,7 @@ namespace Manager
         /// </summary>
         private IEnumerator RestartGameSequence()
         {
-            if (enableDebugLog)
-                Debug.Log("[TurnManager] 게임 재시작 시퀀스 시작");
+            Debug.Log("[TurnManager] 게임 재시작 시퀀스 시작");
 
             // 1단계: 게임 상태 리셋
             photonView.RPC("RPC_ResetGame", RpcTarget.All);
@@ -322,16 +323,25 @@ namespace Manager
         }
 
         /// <summary>
-        /// 초기 드로우 실행 (차등)
+        /// 초기 드로우 실행 (차등 드로우: 선공 4장, 후공 5장)
+        /// 모든 플레이어가 Player 역할로 드로우하여 양방향 동기화 보장
         /// </summary>
         private void ExecuteInitialDraw()
         {
-            int drawCount = isLocalPlayerFirst ? 4 : 5; // 선공 4장, 후공 5장
+            if (InGameManager.Instance == null)
+            {
+                Debug.LogError("[TurnManager] InGameManager 인스턴스를 찾을 수 없습니다!");
+                return;
+            }
 
-            if (enableDebugLog)
-                Debug.Log($"[TurnManager] 초기 드로우: {drawCount}장 ({(isLocalPlayerFirst ? "선공" : "후공")})");
+            // 선공은 4장, 후공은 5장 드로우
+            int drawCount = isLocalPlayerFirst ? 4 : 5;
+            string role = isLocalPlayerFirst ? "선공" : "후공";
 
-            InGameManager.Instance.DrawCardsToHand(drawCount, LocalPlayerRole);
+            Debug.Log($"[TurnManager] 초기 드로우: {drawCount}장 ({role})");
+
+            // 수정: 모든 플레이어가 Player 역할로 드로우 (각자 관점에서 자신의 카드)
+            InGameManager.Instance.DrawCardsToHand(drawCount, CardZone.OwnerType.Player);
         }
 
         /// <summary>
@@ -347,11 +357,11 @@ namespace Manager
         }
 
         /// <summary>
-        /// 턴 시작 처리 (수정됨)
+        /// 턴 시작 처리 (기존 메서드에 드로우 동기화 개선)
         /// </summary>
         private void OnTurnStart()
         {
-            // 모든 필드 카드의 턴 상태 초기화 (새로 추가)
+            // 모든 필드 카드의 턴 상태 초기화
             ResetAllCardsForNewTurn();
 
             if (IsLocalPlayerTurn)
@@ -359,16 +369,9 @@ namespace Manager
                 // 내 턴: 카드 1장 드로우 (첫 턴 제외)
                 if (currentTurn > 1)
                 {
-                    InGameManager.Instance.StartTurn(LocalPlayerRole);
+                    // 수정: Player 역할로 통일
+                    InGameManager.Instance.StartTurn(CardZone.OwnerType.Player);
                 }
-
-                if (enableDebugLog)
-                    Debug.Log($"[TurnManager] 내 턴 시작 (턴 {currentTurn})");
-            }
-            else
-            {
-                if (enableDebugLog)
-                    Debug.Log($"[TurnManager] 상대 턴 시작 (턴 {currentTurn})");
             }
 
             // UI 업데이트 이벤트 발생
@@ -415,9 +418,6 @@ namespace Manager
             {
                 // 새로운 Card.cs API 사용
                 card.ResetTurnState(); // WasPlayedThisTurn, HasAttackedThisTurn 초기화
-
-                if (enableDebugLog)
-                    Debug.Log($"[TurnManager] {card.name} 턴 상태 초기화 - 공격 가능: {card.IsAttackableThisTurn()}");
             }
         }
 
@@ -434,14 +434,15 @@ namespace Manager
             {
                 // 새로운 Card.cs API 사용: 강제 GLOW 해제하여 일반 모드로 복귀
                 card.ClearGlowOverride();
-
-                if (enableDebugLog)
-                    Debug.Log($"[TurnManager] {card.name} GLOW 오버라이드 해제 - 공격 가능: {card.IsAttackableThisTurn()}");
             }
         }
         #endregion
 
         #region RPC Methods (정적 RPC 사용)
+        /// <summary>
+        /// 게임 시작 RPC 수신 처리 (수정됨)
+        /// 색상 동기화 완료 후 호출되므로 안전하게 덱 초기화 가능
+        /// </summary>
         [PunRPC]
         private void RPC_StartGame(int firstPlayerActorNumber)
         {
@@ -451,17 +452,19 @@ namespace Manager
             isFirstRound = true;
             currentTurn = 0;
 
-            // 덱 초기화
+            // 덱 초기화 (색상 동기화 완료 후 실행)
             if (DeckManager.Instance != null)
             {
                 DeckManager.Instance.InitializeDecks();
+                Debug.Log("[TurnManager] 덱 초기화 완료 (색상 동기화 후)");
+            }
+            else
+            {
+                Debug.LogError("[TurnManager] DeckManager 인스턴스를 찾을 수 없습니다!");
             }
 
-            if (enableDebugLog)
-            {
-                string role = isLocalPlayerFirst ? "선공" : "후공";
-                Debug.Log($"[TurnManager] 게임 시작 - 역할: {role}, 첫 플레이어: {firstPlayerActorNumber}");
-            }
+            string role = isLocalPlayerFirst ? "선공" : "후공";
+            Debug.Log($"[TurnManager] 게임 시작 - 역할: {role}");
         }
 
         [PunRPC]
@@ -472,9 +475,6 @@ namespace Manager
 
             // 턴 시작 처리
             OnTurnStart();
-
-            if (enableDebugLog)
-                Debug.Log($"[TurnManager] 턴 진행: {currentTurn}");
         }
 
         [PunRPC]
@@ -485,17 +485,13 @@ namespace Manager
             // 첫 라운드 종료 시 모든 카드의 GLOW 오버라이드 해제 (수정됨)
             ClearAllCardGlowOverrides();
 
-            if (enableDebugLog)
-                Debug.Log("[TurnManager] 첫 라운드 종료 - 공격 가능, GLOW 오버라이드 해제");
+            Debug.Log("[TurnManager] 첫 라운드 종료 - 공격 활성화");
         }
 
         [PunRPC]
         private void RPC_ResetGame()
         {
             ResetGameState();
-
-            if (enableDebugLog)
-                Debug.Log("[TurnManager] 게임 상태 리셋");
         }
         #endregion
 
@@ -522,8 +518,7 @@ namespace Manager
             isGameStarted = false;
             isProcessingTurn = false;
 
-            if (enableDebugLog)
-                Debug.Log($"[TurnManager] 게임 종료 - 승자: {winner}");
+            Debug.Log($"[TurnManager] 게임 종료 - 승자: {winner}");
 
             // UI에 재시작 버튼 활성화 알림
             NotifyGameEnded();

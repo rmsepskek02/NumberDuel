@@ -110,11 +110,7 @@ namespace Manager
             ShuffleDeck(playerDeck);
             ShuffleDeck(opponentDeck);
 
-            if (enableLogging)
-            {
-                Debug.Log($"[DeckManager] 덱 초기화 완료 - 플레이어: {playerDeck.Count}장, 상대: {opponentDeck.Count}장");
-                LogDeckComposition(playerDeck, "플레이어");
-            }
+            Debug.Log($"[DeckManager] 덱 초기화 완료 - 플레이어: {playerDeck.Count}장, 상대: {opponentDeck.Count}장");
         }
 
         /// <summary>
@@ -185,7 +181,12 @@ namespace Manager
 
         /// <summary>
         /// CardData를 실제 GameObject로 생성하여 지정된 Zone에 배치
+        /// NetworkCard 컴포넌트 자동 추가 및 초기화 포함
         /// </summary>
+        /// <param name="cardData">생성할 카드 데이터</param>
+        /// <param name="owner">카드 소유자</param>
+        /// <param name="targetZone">배치할 Zone (null이면 배치하지 않음)</param>
+        /// <returns>생성된 카드 GameObject 또는 null (실패시)</returns>
         public GameObject CreateCardObject(CardData cardData, CardZone.OwnerType owner, CardZone targetZone = null)
         {
             // 카드 템플릿 가져오기
@@ -199,24 +200,47 @@ namespace Manager
                 return null;
             }
 
-            // 카드 생성
+            // 카드 오브젝트 생성
             GameObject cardObject = Instantiate(template);
+            if (cardObject == null)
+            {
+                Debug.LogError("[DeckManager] 카드 오브젝트 생성에 실패했습니다.");
+                return null;
+            }
+
+            // 기본 설정
             cardObject.SetActive(true);
             cardObject.transform.localPosition = Vector3.zero;
             cardObject.transform.localRotation = Quaternion.identity;
 
-            // 카드 초기화
+            // Card 컴포넌트 초기화
             var cardComponent = cardObject.GetComponent<Card>();
             if (cardComponent != null)
             {
                 InitializeCardComponent(cardComponent, cardData);
                 SetCardName(cardObject, cardData);
             }
+            else
+            {
+                Debug.LogError("[DeckManager] Card 컴포넌트를 찾을 수 없습니다.");
+                Destroy(cardObject);
+                return null;
+            }
+
+            // NetworkCard 컴포넌트 추가 및 초기화
+            var networkCard = cardObject.GetComponent<NetworkCard>();
+            if (networkCard == null)
+            {
+                networkCard = cardObject.AddComponent<NetworkCard>();
+            }
 
             // Zone에 추가 (옵션)
             if (targetZone != null)
             {
                 targetZone.AddCard(cardObject.transform);
+
+                // Zone 추가 후 NetworkCard 위치 정보 업데이트
+                networkCard.UpdateLocationInfo();
             }
 
             return cardObject;
@@ -236,8 +260,7 @@ namespace Manager
             if (opponentDeckStacker != null)
                 opponentDeckStacker.ResetDeck();
 
-            if (enableLogging)
-                Debug.Log("[DeckManager] 덱 리셋 완료");
+            Debug.Log("[DeckManager] 덱 리셋 완료");
         }
         #endregion
 
@@ -254,14 +277,10 @@ namespace Manager
                 if (stacker.IsMyDeck)
                 {
                     playerDeckStacker = stacker;
-                    if (enableLogging)
-                        Debug.Log("[DeckManager] 플레이어 DeckStacker 연결됨");
                 }
                 else
                 {
                     opponentDeckStacker = stacker;
-                    if (enableLogging)
-                        Debug.Log("[DeckManager] 상대 DeckStacker 연결됨");
                 }
             }
         }
@@ -275,9 +294,6 @@ namespace Manager
                 playerDeckStacker = stacker;
             else
                 opponentDeckStacker = stacker;
-
-            if (enableLogging)
-                Debug.Log($"[DeckManager] {(isPlayer ? "플레이어" : "상대")} DeckStacker 등록됨");
         }
         #endregion
 
@@ -358,16 +374,12 @@ namespace Manager
         {
             if (deck.Count == 0)
             {
-                if (enableLogging)
-                    Debug.LogWarning($"[DeckManager] {playerName} 덱이 비어있어 드로우할 수 없습니다.");
+                Debug.LogWarning($"[DeckManager] {playerName} 덱이 비어있어 드로우할 수 없습니다.");
                 return null;
             }
 
             CardData drawnCard = deck[0];
             deck.RemoveAt(0);
-
-            if (enableLogging)
-                Debug.Log($"[DeckManager] {playerName} 카드 드로우: {GetCardDescription(drawnCard)} (덱 남은 수: {deck.Count})");
 
             return drawnCard;
         }

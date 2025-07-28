@@ -15,8 +15,6 @@ namespace Manager
     {
         #region Variables
         PunTurnManager turnManager;
-        //public GameObject myDeck;
-        //public GameObject yourDeck;
         public List<int> playerList = new List<int>();
         public List<string> playerADeck;
         public List<string> playerBDeck;
@@ -44,11 +42,7 @@ namespace Manager
         public bool isMultiple;
         public bool isDivision;
 
-
-
-        // =========================
         private readonly List<Card> fieldCards = new List<Card>();
-
         #endregion
 
         #region Process Management
@@ -80,10 +74,6 @@ namespace Manager
             }
 
             currentProcess = process;
-            Debug.Log($"[InGameManager] {process} 프로세스 시작");
-
-            // UI 업데이트나 이벤트 발생 필요시 여기에 추가
-
             return true;
         }
 
@@ -92,10 +82,7 @@ namespace Manager
         /// </summary>
         public void EndProcess()
         {
-            Debug.Log($"[InGameManager] {currentProcess} 프로세스 종료");
             currentProcess = GameProcessState.Idle;
-
-            // UI 업데이트나 이벤트 발생 필요시 여기에 추가
         }
 
         /// <summary>
@@ -112,125 +99,23 @@ namespace Manager
         {
             turnManager = FindAnyObjectByType<PunTurnManager>();
             SetCardColor();
-            //choice.SetActive(false);
-            //joker.SetActive(false);
-            //InitRoom();
         }
 
         // TODO :: 방장이 빨강 손님이 파랑
         private void SetCardColor()
         {
         }
-        //public string RemoveCardForDeck(int playerNumber)
-        //{
-        //    string drawCard = "";
-        //    if (playerNumber == playerList[0])
-        //    {
-        //        if (playerAHand.Count >= 8) return drawCard;
-        //        int randomIndex = Random.Range(0, playerADeck.Count); // 0부터 playerBDeck.Count-1까지의 랜덤 인덱스
-        //        drawCard = playerADeck[randomIndex]; // 해당 인덱스의 카드 선택
-        //        playerAHand.Add(drawCard);
-        //        playerADeck.RemoveAt(randomIndex); // 리스트에서 카드 제거
-        //        return drawCard;
-        //    }
-        //    else if (playerNumber == playerList[1])
-        //    {
-        //        if (playerBHand.Count >= 8) return drawCard;
-        //        int randomIndex = Random.Range(0, playerBDeck.Count); // 0부터 playerBDeck.Count-1까지의 랜덤 인덱스
-        //        drawCard = playerBDeck[randomIndex]; // 해당 인덱스의 카드 선택
-        //        playerBHand.Add(drawCard);
-        //        playerBDeck.RemoveAt(randomIndex); // 리스트에서 카드 제거
-        //        return drawCard;
-        //    }
-        //    else
-        //    {
-        //        return drawCard;
-        //    }
-        //}
+
         // 게임을 시작하는 버튼의 클릭 이벤트
         public void OnClickStart()
         {
             isStart = true;
-            Debug.Log("isStart = " + isStart);
-            //StartTurn();
         }
         public void OnClickEnd()
         {
             turnManager.SendMove(null, true);
-            //ResetYourFieldCardColor();
-            //ResetMyFieldCardColor();
-            Debug.Log("onClick End");
             turnManager.BeginTurn();
         }
-        // 카드 선택 초기화
-        //public void InitClickedCard()
-        //{
-        //    clickedMyCardIdx = 0;
-        //    clickedMyCardNumber = "";
-        //    clickedYourCardIdx = 0;
-        //    clickedYourCardNumber = "";
-        //}
-        // 내 필드카드 색상 초기화
-        //public void ResetMyFieldCardColor()
-        //{
-        //    foreach (Transform child in myFieldCardList.transform)
-        //    {
-        //        Color childColor = child.GetComponent<Image>().color;
-        //        Color openColor = Global.Colors.ChangeColor(Global.Colors.OpenColor);
-        //        Color secretColor = Global.Colors.ChangeColor(Global.Colors.SecretColor);
-        //        if (childColor != openColor && childColor != secretColor)
-        //        {
-        //            child.GetComponent<Image>().color = child.GetComponent<CardController>().originColor;
-        //            child.GetComponent<CardController>().isAttack = false;
-        //        }
-        //    }
-        //}
-        // 상대 필드카드 색상 초기화
-        //public void ResetYourFieldCardColor()
-        //{
-        //    foreach (Transform child in yourFieldCardList.transform)
-        //    {
-        //        if (child.GetChild(0).gameObject.activeSelf)
-        //            child.GetComponent<Image>().color = Global.Colors.ChangeColor(Global.Colors.WhiteColor);
-        //        else
-        //            child.GetComponent<Image>().color = Global.Colors.ChangeColor(Global.Colors.SecretColor);
-        //    }
-        //}
-        // 방 초기화
-        //void InitRoom()
-        //{
-        //    // TODO 게임 포톤초기화
-        //    isStart = false;
-        //    dc.enableDraw = false;
-        //    endButton.interactable = false;
-        //    playerADeck = new List<string> {
-        //    "1", "2", "3", "4", "5",
-        //    "1", "2", "3", "4", "5", 
-        //    //"1", "2", "3", "4", "5", 
-        //    //"1", "2", "3", "4", "5", 
-        //    "+", "+", "-", "-", "X", "X", "%", "%", 
-        //    //"Joker", "Joker", 
-        //};
-        //    playerBDeck = new List<string> {
-        //    "1", "2", "3", "4", "5", "" +
-        //    "1", "2", "3", "4", "5", 
-        //    //"1", "2", "3", "4", "5", 
-        //    //"1", "2", "3", "4", "5",
-        //    "+", "+", "-", "-", "X", "X", "%", "%",
-        //    //"Joker", "Joker", 
-        //};
-        //    DestroyChild(myHandCardList);
-        //    DestroyChild(myFieldCardList);
-        //    DestroyChild(yourHandCardList);
-        //    DestroyChild(yourFieldCardList);
-        //}
-        //void DestroyChild(GameObject go)
-        //{
-        //    foreach (Transform child in go.transform)
-        //    {
-        //        Destroy(child.gameObject);
-        //    }
-        //}
 
         /// <summary>
         /// 필드에 들어간 카드를 등록합니다.
@@ -259,8 +144,6 @@ namespace Manager
             return new List<Card>(fieldCards);
         }
 
-        // InGameManager.cs에 추가할 메서드들
-
         /// <summary>
         /// 게임 시작 시 덱 초기화 및 초기 핸드 드로우
         /// </summary>
@@ -277,13 +160,15 @@ namespace Manager
         }
 
         /// <summary>
-        /// 지정된 플레이어의 손패로 카드 드로우 (손패 제한 적용)
+        /// 지정된 플레이어의 손패로 카드 드로우
+        /// NetworkGameManager를 통한 네트워크 동기화 포함
+        /// NetworkCard 기반의 고유 ID 시스템 사용
         /// </summary>
         /// <param name="count">드로우할 카드 수</param>
-        /// <param name="owner">카드 소유자</param>
+        /// <param name="owner">카드 소유자 (Player 또는 Opponent)</param>
         public void DrawCardsToHand(int count, CardZone.OwnerType owner)
         {
-            // 손패 Zone 찾기
+            // 손패 Zone 찾기 및 검증
             CardZone handZone = FindHandZone(owner);
             if (handZone == null)
             {
@@ -294,28 +179,29 @@ namespace Manager
             int drawnCount = 0;
             int destroyedCount = 0;
 
+            // 요청된 수만큼 카드 드로우 시도
             for (int i = 0; i < count; i++)
             {
-                // 현재 손패 개수 확인
+                // 현재 손패 개수 확인 (10장 제한)
                 int currentHandCount = GetHandCardCount(handZone);
 
-                // 덱에서 카드 데이터 드로우
+                // 덱에서 카드 데이터 드로우 (로컬 실행)
                 var cardData = owner == CardZone.OwnerType.Player
                     ? DeckManager.Instance.DrawPlayerCard()
                     : DeckManager.Instance.DrawOpponentCard();
 
+                // 덱이 비어있는지 확인
                 if (!cardData.HasValue)
                 {
                     Debug.LogWarning($"[InGameManager] {owner} 덱이 비어있어 더 이상 드로우할 수 없습니다.");
                     break;
                 }
 
-                // 손패 제한 체크 (10장)
+                // 손패 제한 체크 (최대 10장)
                 if (currentHandCount >= 10)
                 {
-                    // 카드 데이터는 이미 덱에서 제거되었으므로 그냥 파괴
+                    // 카드 데이터는 이미 덱에서 제거되었으므로 파괴 처리
                     destroyedCount++;
-                    Debug.Log($"[InGameManager] {owner} 손패가 가득참 (10장). 드로우한 카드 파괴: {GetCardDescription(cardData.Value)}");
                     continue;
                 }
 
@@ -323,11 +209,40 @@ namespace Manager
                 GameObject cardObject = DeckManager.Instance.CreateCardObject(cardData.Value, owner, handZone);
                 if (cardObject != null)
                 {
+                    // NetworkCard 컴포넌트 추가 (네트워크 동기화를 위한 고유 ID 설정)
+                    var networkCard = cardObject.GetComponent<NetworkCard>();
+                    if (networkCard == null)
+                    {
+                        networkCard = cardObject.AddComponent<NetworkCard>();
+                    }
+
+                    // 위치 정보 업데이트 (NetworkCard 시스템)
+                    networkCard.UpdateLocationInfo();
+
                     drawnCount++;
+                }
+                else
+                {
+                    Debug.LogError($"[InGameManager] {owner} 카드 오브젝트 생성 실패");
                 }
             }
 
-            // 결과 로그
+            // 네트워크 동기화 전송 (실제로 드로우된 카드가 있을 때만)
+            if (drawnCount > 0)
+            {
+                if (NetworkGameManager.Instance != null)
+                {
+                    Debug.Log($"[InGameManager] {owner} {drawnCount}장 네트워크 동기화 시작");
+                    NetworkGameManager.Instance.SyncCardDraw(owner, drawnCount);
+                    Debug.Log($"[InGameManager] {owner} {drawnCount}장 네트워크 동기화 완료");
+                }
+                else
+                {
+                    Debug.LogWarning("[InGameManager] NetworkGameManager 인스턴스를 찾을 수 없어 네트워크 동기화를 건너뜁니다.");
+                }
+            }
+
+            // 결과 로그 출력
             if (drawnCount > 0)
                 Debug.Log($"[InGameManager] {owner} {drawnCount}장 드로우 완료");
 
@@ -379,7 +294,6 @@ namespace Manager
         public void StartTurn(CardZone.OwnerType currentPlayer)
         {
             DrawCardsToHand(1, currentPlayer);
-            Debug.Log($"[InGameManager] {currentPlayer} 턴 시작 - 카드 1장 드로우");
         }
 
         #region Game End Management

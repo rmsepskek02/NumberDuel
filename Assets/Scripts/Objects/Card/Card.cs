@@ -119,8 +119,6 @@ namespace Objects
         {
             WasPlayedThisTurn = played;
             UpdateGlowState(); // GLOW 상태 즉시 업데이트
-
-            Debug.Log($"[Card] {name} WasPlayedThisTurn: {played}");
         }
 
         /// <summary>
@@ -130,8 +128,6 @@ namespace Objects
         {
             HasAttackedThisTurn = attacked;
             UpdateGlowState(); // GLOW 상태 즉시 업데이트
-
-            Debug.Log($"[Card] {name} HasAttackedThisTurn: {attacked}");
         }
 
         /// <summary>
@@ -141,8 +137,6 @@ namespace Objects
         {
             WasModifiedThisTurn = modified;
             UpdateGlowState(); // GLOW 상태 즉시 업데이트
-
-            Debug.Log($"[Card] {name} WasModifiedThisTurn: {modified}");
         }
 
         /// <summary>
@@ -154,8 +148,6 @@ namespace Objects
             HasAttackedThisTurn = false;
             // WasModifiedThisTurn은 그대로 유지 (다음 턴까지 공격 불가)
             UpdateGlowState();
-
-            Debug.Log($"[Card] {name} 턴 상태 초기화 (WasModified 유지)");
         }
 
         /// <summary>
@@ -167,8 +159,6 @@ namespace Objects
             HasAttackedThisTurn = false;
             WasModifiedThisTurn = false;
             UpdateGlowState();
-
-            Debug.Log($"[Card] {name} 완전 초기화");
         }
         #endregion
 
@@ -226,11 +216,6 @@ namespace Objects
                 return false;
             }
 
-            // 1. 첫라운드 공격불가
-            if (TurnManager.Instance != null && TurnManager.Instance.IsFirstRound)
-            {
-                return false;
-            }
             return true;
         }
         #endregion
@@ -250,7 +235,7 @@ namespace Objects
             // 즉시 GLOW 적용
             ApplyGlowState(forceGlow, glowColor);
 
-            Debug.Log($"[Card] {name} GLOW 강제 설정: {forceGlow}, 색상: {glowColor}");
+            Debug.Log($"[Card] {name} GLOW 강제 설정: {forceGlow}");
         }
 
         /// <summary>
@@ -387,12 +372,9 @@ namespace Objects
         /// </summary>
         private void HandleClick()
         {
-            Debug.Log($"[Card] Clicked: {gameObject.name}");
-
             // 1. 조커 대상 선택 모드인 경우 항상 허용
             if (JokerTargetSelector.Instance != null && JokerTargetSelector.Instance.IsSelecting())
             {
-                Debug.Log("[Card] 조커 대상 선택 모드 - 이벤트 허용");
                 onClicked?.Invoke(this);
                 return;
             }
@@ -400,15 +382,11 @@ namespace Objects
             // 2. 연산자 모드 중인 경우 - 필드 카드만 허용
             if (OperatorManager.Instance.IsInOperatorMode)
             {
-                Debug.Log("[Card] 연산자 모드 감지");
-
                 if (CurrentZoneType == CardZone.ZoneType.Hand)
                 {
-                    Debug.Log($"[Card] 연산자 모드 중 손패 카드 클릭 이벤트 차단: {gameObject.name}");
                     return;
                 }
 
-                Debug.Log("[Card] 연산자 모드 중 필드 카드 - 이벤트 허용");
                 onClicked?.Invoke(this);
                 return;
             }
@@ -419,31 +397,25 @@ namespace Objects
 
             if (hasAttackerSelected)
             {
-                Debug.Log("[Card] 공격 프로세스 진행 중 감지");
-
                 if (CurrentZoneType == CardZone.ZoneType.Hand &&
                     CurrentOwnerType == CardZone.OwnerType.Player &&
                     (CardType == CardType.Joker || CardType == CardType.Operator))
                 {
-                    Debug.Log($"[Card] 공격 프로세스 중 {CardType} 카드 사용 차단: {gameObject.name}");
                     return;
                 }
 
                 if (CurrentOwnerType == CardZone.OwnerType.Opponent && CurrentZoneType == CardZone.ZoneType.Field)
                 {
-                    Debug.Log("[Card] 공격 대상 선택 허용");
                     onClicked?.Invoke(this);
                     return;
                 }
 
-                Debug.Log($"[Card] 공격 프로세스 중 기타 카드 클릭 차단: {gameObject.name}");
                 return;
             }
 
             // 4. 기타 프로세스 진행 중이면 모든 새 프로세스 시작 차단
             if (InGameManager.Instance.IsProcessing)
             {
-                Debug.Log($"[Card] 현재 {InGameManager.Instance.CurrentProcess} 진행 중이므로 모든 새 프로세스 차단");
                 return;
             }
 
@@ -483,12 +455,9 @@ namespace Objects
         /// </summary>
         private void HandleEndDrag()
         {
-            Debug.Log($"[Card] EndDrag: {gameObject.name}");
-
             // 1. 연산자 프로세스 중인 경우
             if (OperatorManager.Instance.IsInOperatorMode)
             {
-                Debug.Log("[Card] 연산자 모드 중 드래그 차단");
                 return;
             }
 
@@ -498,13 +467,10 @@ namespace Objects
 
             if (hasAttackerSelected)
             {
-                Debug.Log("[Card] 공격 프로세스 진행 중 - 드래그 차단");
-
                 if (CurrentZoneType == CardZone.ZoneType.Hand &&
                     CurrentOwnerType == CardZone.OwnerType.Player &&
                     (CardType == CardType.Joker || CardType == CardType.Operator))
                 {
-                    Debug.Log($"[Card] 공격 프로세스 중 {CardType} 카드 드래그 차단: {gameObject.name}");
                     return;
                 }
             }
@@ -512,7 +478,6 @@ namespace Objects
             // 3. 프로세스 진행 중일 때는 새로운 프로세스 시작 차단
             if (InGameManager.Instance.IsProcessing)
             {
-                Debug.Log("[Card] 프로세스 진행 중 드래그 차단");
                 return;
             }
 

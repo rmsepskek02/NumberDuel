@@ -151,16 +151,36 @@ namespace Objects
         }
 
         /// <summary>
-        /// 숫자 카드 처리 (필드 제한 체크 추가)
+        /// 숫자 카드 처리 로직
+        /// 필드 제한 체크 및 CardModeSelector 표시
+        /// 실제 네트워크 동기화는 CardModeSelector에서 카드 배치 확정 시 수행
         /// </summary>
+        /// <param name="card">처리할 카드 Transform</param>
         private void HandleNumberCard(Transform card)
         {
             Debug.Log("[CardPlayDetector] 숫자 카드 드래그 감지");
 
+            // 카드 컴포넌트 검증
+            Card cardComponent = card.GetComponent<Card>();
+            if (cardComponent == null)
+            {
+                Debug.LogError("[CardPlayDetector] Card 컴포넌트를 찾을 수 없습니다.");
+                return;
+            }
+
+            // NetworkCard 컴포넌트 검증 (네트워크 동기화를 위해 필요)
+            NetworkCard networkCard = card.GetComponent<NetworkCard>();
+            if (networkCard == null)
+            {
+                Debug.LogWarning("[CardPlayDetector] NetworkCard 컴포넌트가 없습니다. 자동 추가합니다.");
+                networkCard = card.gameObject.AddComponent<NetworkCard>();
+                networkCard.UpdateLocationInfo();
+            }
+
             // targetZone이 필드인지 확인
             if (targetZone != null && targetZone.Zone == CardZone.ZoneType.Field)
             {
-                // 필드 가득 찬 상태 체크
+                // 필드 가득 찬 상태 체크 (최대 5장 제한)
                 if (!targetZone.CanAddCard())
                 {
                     Debug.LogWarning("[CardPlayDetector] 필드가 가득차서 카드를 낼 수 없습니다.");
@@ -169,11 +189,102 @@ namespace Objects
                     ReturnCardToHand(card);
                     return;
                 }
+
+                // NetworkCard 액션 가능성 검증
+                if (!networkCard.CanPerformAction(NetworkActionType.PlaceToField))
+                {
+                    Debug.LogWarning($"[CardPlayDetector] 카드 배치 액션을 수행할 수 없습니다: {networkCard.UniqueId}");
+                    ReturnCardToHand(card);
+                    return;
+                }
             }
 
-            // 필드에 자리가 있으면 카드 모드 선택 진행
+            // 모든 검증 통과 시 CardModeSelector 표시
             Debug.Log("[CardPlayDetector] 필드에 자리 있음 - CardModeSelector 표시");
+
+            // 기존 이벤트 발생 (CardModeSelector가 구독하고 있을 것)
+            // 실제 네트워크 동기화는 CardModeSelector에서 모드 선택 후 수행됨
             OnCardPlayRequested?.Invoke(card, targetZone);
+        }
+
+        /// <summary>
+        /// 카드 배치 완료 시 네트워크 동기화 알림
+        /// CardModeSelector에서 모드 선택 완료 후 호출하는 정적 메서드
+        /// NetworkCard 시스템을 활용한 안전한 네트워크 동기화
+        /// </summary>
+        /// <param name="card">배치된 카드</param>
+        /// <param name="targetZone">배치된 Zone</param>
+        /// <param name="isSecret">Secret 모드 여부</param>
+        public static void NotifyCardPlaced(Card card, CardZone targetZone, bool isSecret)
+        {
+            // NetworkGameManager 인스턴스 확인
+            if (NetworkGameManager.Instance == null)
+            {
+                Debug.LogError("[CardPlayDetector] NetworkGameManager 인스턴스를 찾을 수 없습니다.");
+                return;
+            }
+
+            // NetworkCard 컴포넌트 확인
+            NetworkCard networkCard = card.GetComponent<NetworkCard>();
+            if (networkCard == null)
+            {
+                Debug.LogError($"[CardPlayDetector] NetworkCard 컴포넌트가 없습니다: {card.name}");
+                return;
+            }
+
+            // 카드 상태 검증
+            if (!networkCard.ValidateCurrentState())
+            {
+                Debug.LogError($"[CardPlayDetector] 카드 상태 검증 실패: {networkCard.UniqueId}");
+                return;
+            }
+
+            // 카드 데이터 추출
+            Manager.CardData cardData = ExtractCardData(card);
+
+            // 위치 정보 업데이트 (배치 후 정확한 위치 반영)
+            networkCard.UpdateLocationInfo();
+
+            // 네트워크 동기화 전송
+            NetworkGameManager.Instance.SyncCardPlacement(
+                cardData,
+                targetZone.Owner,
+                targetZone.Zone,
+                isSecret
+            );
+
+            Debug.Log($"[CardPlayDetector] 카드 배치 네트워크 동기화 전송 완료: {card.CardType} to {targetZone.Owner} {targetZone.Zone} (ID: {networkCard.UniqueId})");
+        }
+
+        /// <summary>
+        /// Card 컴포넌트에서 Manager.CardData 추출
+        /// 카드 타입에 따라 적절한 CardData 구조체 생성
+        /// </summary>
+        /// <param name="card">데이터를 추출할 카드</param>
+        /// <returns>추출된 CardData</returns>
+        private static Manager.CardData ExtractCardData(Card card)
+        {
+            switch (card.CardType)
+            {
+                case CardType.Number:
+                    // 숫자 카드: CardText에서 현재 값 추출
+                    var cardText = card.GetComponentInChildren<CardText>();
+                    long value = cardText != null ? (long)cardText.RawValue : 1;
+                    return new Manager.CardData(value);
+
+                case CardType.Operator:
+                    // 연산자 카드: OperatorType 사용
+                    return new Manager.CardData(card.OperatorType);
+
+                case CardType.Joker:
+                    // 조커 카드: 정적 생성 메서드 사용
+                    return Manager.CardData.CreateJoker();
+
+                default:
+                    // 알 수 없는 타입: 기본값 1로 설정
+                    Debug.LogWarning($"[CardPlayDetector] 알 수 없는 카드 타입: {card.CardType}");
+                    return new Manager.CardData(1);
+            }
         }
 
         /// <summary>

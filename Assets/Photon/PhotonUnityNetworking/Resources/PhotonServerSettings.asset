@@ -19,7 +19,7 @@ MonoBehaviour:
     AppIdVoice: 
     AppVersion: 
     UseNameServer: 1
-    FixedRegion: 
+    FixedRegion: kr
     Server: 
     Port: 0
     ProxyServer: 
@@ -44,6 +44,13 @@ MonoBehaviour:
   - RPC_EndFirstRound
   - RPC_ResetGame
   - RPC_StartGame
+  - RPC_ApplyGameActionResult
+  - RPC_SyncCardDraw
+  - RPC_SyncCardPlacement
+  - RPC_SyncDeckState
+  - RPC_SyncCardColors
+  - RPC_AssignPlayerColor
+  - RPC_SyncAllPlayersColors
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1
