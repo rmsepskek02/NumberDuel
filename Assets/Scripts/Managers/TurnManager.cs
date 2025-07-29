@@ -237,21 +237,15 @@ namespace Manager
 
         #region Game Sequence
         /// <summary>
-        /// 게임 시작 시퀀스 (색상 동기화 및 초기 드로우 포함)
-        /// 올바른 순서: 색상 동기화 -> 덱 초기화 -> 초기 드로우 -> 첫 턴 시작
-        /// </summary>
-        /// <summary>
-        /// 게임 시작 시퀀스 (간소화된 버전)
-        /// 올바른 순서: 첫 플레이어 결정 -> 게임 시작 알림 -> 덱 초기화 -> 초기 드로우 -> 첫 턴 시작
+        /// 게임 시작 시퀀스 수정
+        /// ExecuteInitialDraw() 호출을 RPC_StartGame으로 이동
         /// </summary>
         private IEnumerator StartGameSequence()
         {
-            Debug.Log("[TurnManager] 게임 시작 시퀀스 시작");
-
             // 1단계: 첫 턴 플레이어 랜덤 결정
             int randomFirstPlayer = DetermineFirstPlayer();
 
-            // 2단계: 모든 클라이언트에 게임 시작 알림 (색상은 이미 설정됨)
+            // 2단계: 모든 클라이언트에 게임 시작 알림 (초기 드로우 포함)
             if (PhotonNetwork.IsMasterClient)
             {
                 photonView.RPC("RPC_StartGame", RpcTarget.All, randomFirstPlayer);
@@ -260,14 +254,11 @@ namespace Manager
             // 3단계: 덱 초기화 대기
             yield return new WaitForSeconds(0.5f);
 
-            // 4단계: 차등 드로우 실행 (선공 4장, 후공 5장)
-            ExecuteInitialDraw();
+            // 4단계: ExecuteInitialDraw()는 RPC_StartGame에서 실행됨 (제거)
 
             // 5단계: 첫 턴 시작
             yield return new WaitForSeconds(1f);
             BeginFirstTurn();
-
-            Debug.Log("[TurnManager] 게임 시작 시퀀스 완료");
         }
 
         /// <summary>
@@ -440,8 +431,8 @@ namespace Manager
 
         #region RPC Methods (정적 RPC 사용)
         /// <summary>
-        /// 게임 시작 RPC 수신 처리 (수정됨)
-        /// 색상 동기화 완료 후 호출되므로 안전하게 덱 초기화 가능
+        /// 게임 시작 RPC 수신 처리
+        /// 모든 클라이언트에서 실행되어 각자 초기 드로우 수행
         /// </summary>
         [PunRPC]
         private void RPC_StartGame(int firstPlayerActorNumber)
@@ -456,7 +447,6 @@ namespace Manager
             if (DeckManager.Instance != null)
             {
                 DeckManager.Instance.InitializeDecks();
-                Debug.Log("[TurnManager] 덱 초기화 완료 (색상 동기화 후)");
             }
             else
             {
@@ -464,7 +454,9 @@ namespace Manager
             }
 
             string role = isLocalPlayerFirst ? "선공" : "후공";
-            Debug.Log($"[TurnManager] 게임 시작 - 역할: {role}");
+
+            // 모든 클라이언트에서 각자 초기 드로우 실행
+            ExecuteInitialDraw();
         }
 
         [PunRPC]

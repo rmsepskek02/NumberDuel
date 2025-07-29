@@ -400,7 +400,7 @@ namespace Manager
 
         /// <summary>
         /// 손패에 뒷면 카드 생성
-        /// 원격 플레이어의 드로우를 시각적으로 표현하기 위한 더미 카드 생성
+        /// ResourcesManager가 이미 설정한 empty 스프라이트를 그대로 사용
         /// </summary>
         /// <param name="handZone">카드를 추가할 손패 Zone</param>
         /// <param name="owner">카드 소유자</param>
@@ -427,22 +427,45 @@ namespace Manager
             if (card != null)
             {
                 card.InitializeAsNumber(0); // 임시 값으로 초기화
-                card.SetSecret(true); // 뒷면으로 표시
             }
 
-            // NetworkCard 컴포넌트 추가 (원격 카드 표시용)
+            // 스프라이트는 이미 템플릿에서 올바르게 설정됨 (ResourcesManager가 empty 스프라이트로 설정해놨음)
+            // 별도 스프라이트 처리 불필요!
+
+            // CardText 오브젝트만 비활성화 (뒷면처럼 보이도록)
+            var cardText = backCard.GetComponentInChildren<CardText>();
+            if (cardText != null)
+            {
+                cardText.gameObject.SetActive(false);
+            }
+
+            // TMPro 텍스트도 비활성화
+            var tmpText = backCard.GetComponentInChildren<TMPro.TextMeshPro>();
+            if (tmpText != null)
+            {
+                tmpText.gameObject.SetActive(false);
+            }
+
+            // NetworkCard 컴포넌트 추가
             var networkCard = backCard.GetComponent<NetworkCard>();
             if (networkCard == null)
             {
                 networkCard = backCard.AddComponent<NetworkCard>();
             }
 
-            // 상호작용 완전 비활성화 (뒷면 카드는 클릭/드래그 불가)
+            // 상호작용 완전 비활성화
             var mouseEvent = backCard.GetComponentInChildren<ObjectMouseEvent>();
             if (mouseEvent != null)
             {
                 mouseEvent.isClickable = false;
                 mouseEvent.isDraggable = false;
+            }
+
+            // DragHandler 비활성화
+            var dragHandler = backCard.GetComponent<DragHandler>();
+            if (dragHandler != null)
+            {
+                dragHandler.enabled = false;
             }
 
             // 손패에 추가
