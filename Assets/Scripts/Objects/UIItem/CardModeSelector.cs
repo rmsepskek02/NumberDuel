@@ -25,6 +25,8 @@ public class CardModeSelector : MonoBehaviour
     [SerializeField] private float maxScale = 30f;
     [SerializeField] private float animDuration = 0.2f;
 
+    private bool isSpritesSet = false;
+
     private void Start()
     {
         openOption.SetSelector(this);
@@ -35,11 +37,7 @@ public class CardModeSelector : MonoBehaviour
         if (bgClick != null)
             bgClick.OnClickReleased += OnCancelPressed;
 
-        // Open 카드 Sprite 설정
-        SpriteRenderer sr = openOption.GetComponentInChildren<SpriteRenderer>();
-        if (sr != null)
-            sr.sprite = ResourcesManager.Instance.GetPlayerSprite();
-
+        // 스프라이트 설정은 Show() 시점에서 수행 (색상 동기화 완료 후)
         SetUIActive(false);
     }
 
@@ -69,6 +67,13 @@ public class CardModeSelector : MonoBehaviour
     {
         pendingCard = card;
         targetZone = zone;
+
+        // 첫 Show() 호출 시에만 스프라이트 설정
+        if (!isSpritesSet)
+        {
+            SetOpenOptionSprite();
+            isSpritesSet = true;
+        }
 
         SetUIActive(true);
 
@@ -107,6 +112,38 @@ public class CardModeSelector : MonoBehaviour
             openValueText.text = "";
 
         SetUIActive(false);
+    }
+
+    /// <summary>
+    /// Open 옵션에 현재 플레이어 색상의 empty 스프라이트 설정
+    /// 첫 Show() 호출 시에만 실행되며 이후 재사용
+    /// </summary>
+    private void SetOpenOptionSprite()
+    {
+        SpriteRenderer openSr = openOption.GetComponentInChildren<SpriteRenderer>();
+        if (openSr == null)
+        {
+            Debug.LogError("[CardModeSelector] Open 옵션의 SpriteRenderer를 찾을 수 없습니다.");
+            return;
+        }
+
+        // ResourcesManager에서 현재 플레이어 색상 스프라이트 가져오기
+        if (ResourcesManager.Instance != null)
+        {
+            Sprite playerSprite = ResourcesManager.Instance.GetPlayerSprite();
+            if (playerSprite != null)
+            {
+                openSr.sprite = playerSprite;
+            }
+            else
+            {
+                Debug.LogError("[CardModeSelector] 플레이어 스프라이트를 가져올 수 없습니다.");
+            }
+        }
+        else
+        {
+            Debug.LogError("[CardModeSelector] ResourcesManager 인스턴스가 없습니다.");
+        }
     }
 
     /// <summary>

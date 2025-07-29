@@ -10,10 +10,9 @@ namespace Objects
 {
     /// <summary>
     /// 조커 카드 클릭 시 효과를 선택하는 UI를 제어한다.
-    /// - 통합된 GLOW 상태 관리 시스템
-    /// - Draw/Delete/Swap 조커 효과 처리
-    /// - 사용 조건 검증 및 UI 활성화 관리
-    /// - ResourcesManager 안전장치 추가
+    /// 통합된 GLOW 상태 관리 시스템
+    /// Draw/Delete/Swap 조커 효과 처리
+    /// 사용 조건 검증 및 UI 활성화 관리
     /// </summary>
     public class JokerModeSelector : MonoBehaviour
     {
@@ -52,19 +51,20 @@ namespace Objects
         private Card selectedJokerCard;
         private ObjectMouseEvent bgClick;
         private JokerEffectType selectedEffect;
-        private string spriteColorName;
 
         /// <summary>초기화 완료 여부</summary>
         private bool isInitialized = false;
 
-        // GLOW 상태 저장용 (통합 관리)
+        /// <summary>스프라이트 설정 완료 여부 - 첫 Show() 시에만 설정</summary>
+        private bool isSpritesSet = false;
+
+        /// <summary>GLOW 상태 저장용 통합 관리</summary>
         private Dictionary<Card, bool> savedGlowStates = new Dictionary<Card, bool>();
         #endregion
 
         #region Unity Lifecycle
         private void Start()
         {
-            // 안전한 초기화 시작
             StartCoroutine(SafeInitialization());
         }
 
@@ -78,12 +78,10 @@ namespace Objects
         #region Safe Initialization
         /// <summary>
         /// 안전한 초기화 시퀀스
-        /// ResourcesManager 준비 완료까지 대기 후 초기화
+        /// ResourcesManager 기본 초기화 완료까지 대기 후 초기화
         /// </summary>
         private IEnumerator SafeInitialization()
         {
-            Debug.Log("[JokerModeSelector] 안전한 초기화 시작");
-
             // ResourcesManager 기본 초기화 완료 대기
             float timeout = 10f;
             float elapsed = 0f;
@@ -92,7 +90,6 @@ namespace Objects
             {
                 if (ResourcesManager.Instance != null && ResourcesManager.Instance.IsBasicInitialized)
                 {
-                    Debug.Log("[JokerModeSelector] ResourcesManager 준비 완료");
                     break;
                 }
 
@@ -106,60 +103,27 @@ namespace Objects
                 yield break;
             }
 
-            // 안전한 초기화 실행
+            // 기본 초기화 실행
             try
             {
                 InitializeOptions();
                 InitializeBackground();
                 InitializeTexts();
-                SafeInitializeSprites();
                 SetUIActive(false);
 
                 isInitialized = true;
-                Debug.Log("[JokerModeSelector] 초기화 완료");
             }
             catch (System.Exception ex)
             {
                 Debug.LogError($"[JokerModeSelector] 초기화 중 오류: {ex.Message}");
             }
         }
-
-        /// <summary>
-        /// 안전한 스프라이트 초기화
-        /// null 체크 및 예외 처리 포함
-        /// </summary>
-        private void SafeInitializeSprites()
-        {
-            try
-            {
-                // ResourcesManager 안전성 체크
-                if (ResourcesManager.Instance == null)
-                {
-                    Debug.LogError("[JokerModeSelector] ResourcesManager 인스턴스가 없습니다.");
-                    return;
-                }
-
-                // Player 스프라이트 안전하게 가져오기
-                var playerSprite = ResourcesManager.Instance.GetPlayerSprite();
-                if (playerSprite == null)
-                {
-                    Debug.LogError("[JokerModeSelector] Player 스프라이트를 가져올 수 없습니다.");
-                    return;
-                }
-
-                spriteColorName = playerSprite.name;
-                Debug.Log($"[JokerModeSelector] 스프라이트 색상 이름 설정: {spriteColorName}");
-
-                UpdateOptionSprites();
-            }
-            catch (System.Exception ex)
-            {
-                Debug.LogError($"[JokerModeSelector] 스프라이트 초기화 중 오류: {ex.Message}");
-            }
-        }
         #endregion
 
         #region Basic Initialization
+        /// <summary>
+        /// 조커 효과 옵션들 초기화
+        /// </summary>
         private void InitializeOptions()
         {
             if (drawOption != null) drawOption.SetSelector(this);
@@ -167,6 +131,9 @@ namespace Objects
             if (swapOption != null) swapOption.SetSelector(this);
         }
 
+        /// <summary>
+        /// 배경 클릭 이벤트 초기화
+        /// </summary>
         private void InitializeBackground()
         {
             if (dimBackground != null)
@@ -177,6 +144,9 @@ namespace Objects
             }
         }
 
+        /// <summary>
+        /// 효과 설명 텍스트 초기화
+        /// </summary>
         private void InitializeTexts()
         {
             if (drawText != null) drawText.text = "Draw\n2 Card";
@@ -188,10 +158,10 @@ namespace Objects
         #region Public Interface
         /// <summary>
         /// 조커 카드 효과 선택 UI를 표시
+        /// 첫 호출 시에만 현재 플레이어 색상으로 스프라이트 설정
         /// </summary>
         public void Show(Card jokerCard)
         {
-            // 초기화 완료 체크
             if (!isInitialized)
             {
                 Debug.LogWarning("[JokerModeSelector] 아직 초기화가 완료되지 않았습니다.");
@@ -206,6 +176,14 @@ namespace Objects
             }
 
             selectedJokerCard = jokerCard;
+
+            // 첫 Show() 호출 시에만 스프라이트 설정
+            if (!isSpritesSet)
+            {
+                SetSpritesForCurrentColor();
+                isSpritesSet = true;
+            }
+
             UpdateAvailableEffects();
             SetUIActive(true);
             PlayShowAnimation();
@@ -228,7 +206,7 @@ namespace Objects
             if (selectedJokerCard == null) return;
 
             selectedEffect = effectType;
-            SetUIActive(false); // UI만 숨기기 (상태는 유지)
+            SetUIActive(false);
             ExecuteJokerEffect();
         }
 
@@ -238,6 +216,103 @@ namespace Objects
         public void OnCancelPressed()
         {
             Hide();
+        }
+        #endregion
+
+        #region Sprite Management
+        /// <summary>
+        /// 현재 플레이어 색상에 맞는 조커 스프라이트 설정
+        /// 첫 Show() 호출 시에만 실행되며 이후 재사용
+        /// </summary>
+        private void SetSpritesForCurrentColor()
+        {
+            try
+            {
+                if (ResourcesManager.Instance == null)
+                {
+                    Debug.LogError("[JokerModeSelector] ResourcesManager 인스턴스가 없습니다.");
+                    return;
+                }
+
+                // 현재 플레이어 스프라이트 가져오기
+                var playerSprite = ResourcesManager.Instance.GetPlayerSprite();
+                if (playerSprite == null)
+                {
+                    Debug.LogError("[JokerModeSelector] Player 스프라이트를 가져올 수 없습니다.");
+                    return;
+                }
+
+                // 색상 추출: "color_green_empty" -> "green"
+                string currentColor = ExtractColorFromSpriteName(playerSprite.name);
+
+                // 조커 스프라이트 이름 생성 및 설정
+                string drawSpriteName = $"color_{currentColor}_draw";
+                string deleteSpriteName = $"color_{currentColor}_delete";
+                string swapSpriteName = $"color_{currentColor}_swap";
+
+                // 각 옵션에 현재 색상의 스프라이트 적용
+                SetOptionSprite(drawOption, drawSpriteName);
+                SetOptionSprite(deleteOption, deleteSpriteName);
+                SetOptionSprite(swapOption, swapSpriteName);
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[JokerModeSelector] 스프라이트 설정 중 오류: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 스프라이트 이름에서 색상 추출
+        /// "color_green_empty" -> "green"
+        /// "color_purple_empty" -> "purple"
+        /// </summary>
+        private string ExtractColorFromSpriteName(string spriteName)
+        {
+            if (string.IsNullOrEmpty(spriteName))
+                return "green";
+
+            // "color_" 제거
+            if (spriteName.StartsWith("color_"))
+            {
+                string remaining = spriteName.Substring(6); // "green_empty"
+
+                // 첫 번째 "_" 위치 찾기
+                int underscoreIndex = remaining.IndexOf('_');
+                if (underscoreIndex > 0)
+                {
+                    return remaining.Substring(0, underscoreIndex); // "green"
+                }
+                else
+                {
+                    return remaining; // "_"가 없으면 전체가 색상
+                }
+            }
+
+            return "green"; // 파싱 실패 시 기본값
+        }
+
+        /// <summary>
+        /// 개별 옵션의 스프라이트 설정
+        /// ResourcesManager를 통한 조커 스프라이트 적용
+        /// </summary>
+        private void SetOptionSprite(JokerEffectOption option, string spriteName)
+        {
+            if (option == null) return;
+
+            var sr = option.GetComponentInChildren<SpriteRenderer>();
+            if (sr == null) return;
+
+            // ResourcesManager를 통해 조커 스프라이트 가져오기
+            Sprite sprite = ResourcesManager.Instance.GetSprite(Global.Joker, spriteName);
+
+            if (sprite != null)
+            {
+                sr.sprite = sprite;
+            }
+            else
+            {
+                Debug.LogWarning($"[JokerModeSelector] 스프라이트를 찾을 수 없습니다: {spriteName}");
+            }
         }
         #endregion
 
@@ -323,7 +398,7 @@ namespace Objects
 
             ClearAllGlow();
             ApplyGlowToOpponentCards();
-            firstTarget.SetCardState(true, Color.cyan); // 선택됨 표시
+            firstTarget.SetCardState(true, Color.cyan);
 
             JokerTargetSelector.Instance.StartTargetSelection(JokerTargetMode.SwapSecond,
                 (secondTarget) => OnSwapSecondTargetSelected(firstTarget, secondTarget));
@@ -362,7 +437,7 @@ namespace Objects
 
             yield return new WaitForSeconds(0.2f);
 
-            // 네트워크 동기화 - Delete 조커 결과 전송 (조커 카드 삭제 전에!)
+            // 네트워크 동기화 - Delete 조커 결과 전송
             if (NetworkGameManager.Instance != null)
             {
                 var targetCards = new System.Collections.Generic.List<Card> { targetCard };
@@ -447,7 +522,7 @@ namespace Objects
         {
             foreach (var kvp in savedGlowStates)
             {
-                if (kvp.Value) // 원래 GLOW가 있었다면
+                if (kvp.Value)
                     kvp.Key.SetCardState(true, Global.GlowGreen);
             }
         }
@@ -478,6 +553,9 @@ namespace Objects
             }
         }
 
+        /// <summary>
+        /// 상대방 카드들에 GLOW 적용
+        /// </summary>
         private void ApplyGlowToOpponentCards()
         {
             var fieldCards = InGameManager.Instance.GetAllFieldCards();
@@ -488,6 +566,9 @@ namespace Objects
             }
         }
 
+        /// <summary>
+        /// 플레이어 카드들에 GLOW 적용
+        /// </summary>
         private void ApplyGlowToPlayerCards()
         {
             var fieldCards = InGameManager.Instance.GetAllFieldCards();
@@ -556,7 +637,7 @@ namespace Objects
                     hasOpponentFieldCards = true;
             }
 
-            SetEffectAvailability(drawOption, true); // Draw는 항상 사용 가능
+            SetEffectAvailability(drawOption, true);
             SetEffectAvailability(deleteOption, hasOpponentFieldCards);
             SetEffectAvailability(swapOption, hasMyFieldCards && hasOpponentFieldCards);
         }
@@ -631,83 +712,6 @@ namespace Objects
             {
                 swapOption.transform.localScale = Vector3.zero;
                 swapOption.transform.DOScale(Vector3.one * maxScale, animDurationUI).SetEase(Ease.OutBack).SetDelay(0.1f);
-            }
-        }
-
-        /// <summary>
-        /// 각 옵션의 스프라이트 업데이트 (안전장치 추가)
-        /// </summary>
-        private void UpdateOptionSprites()
-        {
-            if (string.IsNullOrEmpty(spriteColorName))
-            {
-                Debug.LogWarning("[JokerModeSelector] spriteColorName이 설정되지 않았습니다.");
-                return;
-            }
-
-            SetOptionSprite(drawOption, GetJokerSpriteName(spriteColorName, JokerEffectType.Draw));
-            SetOptionSprite(deleteOption, GetJokerSpriteName(spriteColorName, JokerEffectType.Delete));
-            SetOptionSprite(swapOption, GetJokerSpriteName(spriteColorName, JokerEffectType.Swap));
-        }
-
-        /// <summary>
-        /// 색상과 효과에 맞는 스프라이트 이름 생성
-        /// </summary>
-        private string GetJokerSpriteName(string color, JokerEffectType effect)
-        {
-            if (string.IsNullOrEmpty(color))
-            {
-                Debug.LogWarning("[JokerModeSelector] color가 비어있어 기본 색상을 사용합니다.");
-                return $"color_green_{effect.ToString().ToLower()}";
-            }
-
-            string[] colorStrArr = color.Split('_');
-            if (colorStrArr.Length < 2)
-            {
-                Debug.LogWarning($"[JokerModeSelector] 색상 파싱 실패, 기본 색상 사용: {color}");
-                return $"color_green_{effect.ToString().ToLower()}";
-            }
-
-            string colorStr = colorStrArr[1];
-            string effectStr = effect.ToString().ToLower();
-            return $"color_{colorStr}_{effectStr}";
-        }
-
-        /// <summary>
-        /// 개별 옵션의 스프라이트 설정 (안전장치 추가)
-        /// </summary>
-        private void SetOptionSprite(JokerEffectOption option, string spriteName)
-        {
-            if (option == null)
-            {
-                Debug.LogWarning($"[JokerModeSelector] option이 null입니다: {spriteName}");
-                return;
-            }
-
-            var sr = option.GetComponentInChildren<SpriteRenderer>();
-            if (sr != null)
-            {
-                try
-                {
-                    Sprite sprite = ResourcesManager.Instance?.GetSprite(Global.Joker, spriteName);
-                    if (sprite != null)
-                    {
-                        sr.sprite = sprite;
-                        Debug.Log($"[JokerModeSelector] 스프라이트 설정 성공: {spriteName}");
-                    }
-                    else
-                    {
-                        Debug.LogWarning($"[JokerModeSelector] 스프라이트를 찾을 수 없습니다: {spriteName}");
-                    }
-                }
-                catch (System.Exception ex)
-                {
-                    Debug.LogError($"[JokerModeSelector] 스프라이트 설정 중 오류: {ex.Message}");
-                }
-            }
-            else
-            {
-                Debug.LogWarning($"[JokerModeSelector] SpriteRenderer를 찾을 수 없습니다: {option.name}");
             }
         }
         #endregion
