@@ -1,4 +1,4 @@
-using Photon.Pun.UtilityScripts;
+ï»¿using Photon.Pun.UtilityScripts;
 using Photon.Pun;
 using UnityEngine;
 using Photon.Realtime;
@@ -9,19 +9,19 @@ using static UnityEngine.Rendering.DebugUI;
 namespace Manager
 {
     /// <summary>
-    /// Photon °ü·Ã ±â´ÉÀ» °ü¸®ÇÏ´Â ¸Å´ÏÀú
+    /// Photon ê´€ë ¨ ê¸°ëŠ¥ì„ ê´€ë¦¬í•˜ëŠ” ë§¤ë‹ˆì €
     /// </summary>
     public class PhotonManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbacks
     {
         #region Variables
         PunTurnManager turnManager;
 
-        // UI °ü·Ã UnityAction (ÀÌº¥Æ®)
-        public UnityAction MyTurn;                          // ³» ÅÏ
-        public UnityAction YourTurn;                        // »ó´ë ÅÏ
-        public UnityAction EnterPlayer;                     // ´Ù¸¥ÇÃ·¹ÀÌ¾î ÀÔÀå
-        public UnityAction LeavePlayer;                     // ´Ù¸¥ÇÃ·¹ÀÌ¾î ¶°³²
-        public UnityAction<int> UpdatePlayerCount; // ÇöÀç ÀÎ¿ø ¼ö¸¦ Àü´ŞÇÏ´Â ÀÌº¥Æ®
+        // UI ê´€ë ¨ UnityAction (ì´ë²¤íŠ¸)
+        public UnityAction MyTurn;                          // ë‚´ í„´
+        public UnityAction YourTurn;                        // ìƒëŒ€ í„´
+        public UnityAction EnterPlayer;                     // ë‹¤ë¥¸í”Œë ˆì´ì–´ ì…ì¥
+        public UnityAction LeavePlayer;                     // ë‹¤ë¥¸í”Œë ˆì´ì–´ ë– ë‚¨
+        public UnityAction<int> UpdatePlayerCount; // í˜„ì¬ ì¸ì› ìˆ˜ë¥¼ ì „ë‹¬í•˜ëŠ” ì´ë²¤íŠ¸
         #endregion
 
         void Start()
@@ -29,10 +29,10 @@ namespace Manager
             turnManager = GetComponent<PunTurnManager>();
             turnManager.TurnManagerListener = this;
 
-            // InGameUIManager¿¡¼­ ÀÌº¥Æ® µî·Ï
+            // InGameUIManagerì—ì„œ ì´ë²¤íŠ¸ ë“±ë¡
             InGameUIManager.Instance.RegisterPhotonManager(this);
 
-            // ¹æÀåÀÎ °æ¿ì »ö»ó °áÁ¤ ¹× ÀúÀå
+            // ë°©ì¥ì¸ ê²½ìš° ìƒ‰ìƒ ê²°ì • ë° ì €ì¥
             if (PhotonNetwork.IsMasterClient && PhotonNetwork.InRoom)
             {
                 SetupRoomColors();
@@ -40,7 +40,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ¹æÀåÀÌ ¹æ »ı¼º ½Ã »ö»ó °áÁ¤ ¹× ¹æ ¼Ó¼º¿¡ ÀúÀå
+        /// ë°©ì¥ì´ ë°© ìƒì„± ì‹œ ìƒ‰ìƒ ê²°ì • ë° ë°© ì†ì„±ì— ì €ì¥
         /// </summary>
         private void SetupRoomColors()
         {
@@ -50,7 +50,7 @@ namespace Manager
 
                 if (!string.IsNullOrEmpty(playerSpriteName) && !string.IsNullOrEmpty(opponentSpriteName))
                 {
-                    // ¹æ ¼Ó¼º¿¡ »ö»ó ÀúÀå
+                    // ë°© ì†ì„±ì— ìƒ‰ìƒ ì €ì¥
                     var roomProperties = new ExitGames.Client.Photon.Hashtable
                     {
                         { "masterPlayerColor", playerSpriteName },
@@ -58,30 +58,61 @@ namespace Manager
                     };
                     PhotonNetwork.CurrentRoom.SetCustomProperties(roomProperties);
 
-                    // ¹æÀå ÀÚ½ÅÀÇ »ö»ó Àû¿ë
+                    // ë°©ì¥ ìì‹ ì˜ ìƒ‰ìƒ ì ìš©
                     ResourcesManager.Instance.SetPlayerColors(playerSpriteName, opponentSpriteName);
 
-                    Debug.Log($"[PhotonManager] ¹æ »ö»ó ¼³Á¤ ¿Ï·á: Master={playerSpriteName}, Guest={opponentSpriteName}");
+                    Debug.Log($"[PhotonManager] ë°© ìƒ‰ìƒ ì„¤ì • ì™„ë£Œ: Master={playerSpriteName}, Guest={opponentSpriteName}");
                 }
             }
         }
 
+        /// <summary>
+        /// í„´ ì‹œì‘ ì‹œ ì´ë²¤íŠ¸ í˜¸ì¶œ (ìˆ˜ì •ë¨ - TurnManager ê¸°ì¤€ìœ¼ë¡œ í†µí•©)
+        /// PhotonNetwork.IsMasterClient ëŒ€ì‹  TurnManager.IsLocalPlayerTurn ì‚¬ìš©
+        /// </summary>
+        /// <param name="turn">í˜„ì¬ í„´ ë²ˆí˜¸</param>
         public void OnTurnBegins(int turn)
         {
-            // ÅÏ ½ÃÀÛ ½Ã ÀÌº¥Æ® È£Ãâ
-            if (turn % 2 == 1)
+            Debug.Log($"[PhotonManager] OnTurnBegins í˜¸ì¶œë¨: Turn {turn}");
+
+            // ğŸ”§ í•µì‹¬ ìˆ˜ì •: TurnManager ê¸°ì¤€ìœ¼ë¡œ í„´ íŒë‹¨
+            if (TurnManager.Instance != null)
             {
-                if (PhotonNetwork.IsMasterClient)
-                    MyTurn?.Invoke(); // ¸¶½ºÅÍ ÅÏ
+                // TurnManagerì˜ í„´ íŒë‹¨ ë¡œì§ì„ ì‚¬ìš©
+                bool isMyTurn = TurnManager.Instance.IsLocalPlayerTurn;
+
+                Debug.Log($"[PhotonManager] TurnManager ê¸°ì¤€ í„´ íŒë‹¨: IsMyTurn={isMyTurn}");
+
+                if (isMyTurn)
+                {
+                    Debug.Log("[PhotonManager] ë‚´ í„´ - MyTurn ì´ë²¤íŠ¸ í˜¸ì¶œ");
+                    MyTurn?.Invoke(); // ë‚´ í„´
+                }
                 else
-                    YourTurn?.Invoke(); // »ó´ë ÅÏ
+                {
+                    Debug.Log("[PhotonManager] ìƒëŒ€ í„´ - YourTurn ì´ë²¤íŠ¸ í˜¸ì¶œ");
+                    YourTurn?.Invoke(); // ìƒëŒ€ í„´
+                }
             }
             else
             {
-                if (PhotonNetwork.IsMasterClient)
-                    YourTurn?.Invoke(); // »ó´ë ÅÏ
+                // TurnManagerê°€ ì—†ìœ¼ë©´ ê¸°ì¡´ ë¡œì§ ì‚¬ìš© (í´ë°±)
+                Debug.LogWarning("[PhotonManager] TurnManagerê°€ ì—†ì–´ì„œ ê¸°ì¡´ ë¡œì§ ì‚¬ìš©");
+
+                if (turn % 2 == 1)
+                {
+                    if (PhotonNetwork.IsMasterClient)
+                        MyTurn?.Invoke(); // ë§ˆìŠ¤í„° í„´
+                    else
+                        YourTurn?.Invoke(); // ê²ŒìŠ¤íŠ¸ í„´
+                }
                 else
-                    MyTurn?.Invoke(); // ³» ÅÏ
+                {
+                    if (PhotonNetwork.IsMasterClient)
+                        YourTurn?.Invoke(); // ê²ŒìŠ¤íŠ¸ í„´
+                    else
+                        MyTurn?.Invoke(); // ë§ˆìŠ¤í„° í„´
+                }
             }
         }
 
@@ -107,17 +138,17 @@ namespace Manager
             Debug.Log("New Player Entered Room: " + newPlayer.NickName);
             UpdateRoomPlayerCount();
 
-            // ¹æÀåÀÌ°í 2¸íÀÌ µÇ¾úÀ» ¶§ ÀúÀåµÈ »ö»óÀ¸·Î µ¿±âÈ­
+            // ë°©ì¥ì´ê³  2ëª…ì´ ë˜ì—ˆì„ ë•Œ ì €ì¥ëœ ìƒ‰ìƒìœ¼ë¡œ ë™ê¸°í™”
             if (PhotonNetwork.IsMasterClient && PhotonNetwork.CurrentRoom.PlayerCount == 2)
             {
                 SyncStoredColors();
             }
 
-            EnterPlayer?.Invoke(); // ÇÃ·¹ÀÌ¾î ÀÔÀå ÀÌº¥Æ® ½ÇÇà
+            EnterPlayer?.Invoke(); // í”Œë ˆì´ì–´ ì…ì¥ ì´ë²¤íŠ¸ ì‹¤í–‰
         }
 
         /// <summary>
-        /// ¹æ ¼Ó¼º¿¡ ÀúÀåµÈ »ö»óÀ¸·Î µ¿±âÈ­ Àü¼Û (¿ÏÀüÈ÷ »õ·Î¿î ¹öÀü)
+        /// ë°© ì†ì„±ì— ì €ì¥ëœ ìƒ‰ìƒìœ¼ë¡œ ë™ê¸°í™” ì „ì†¡ (ì™„ì „íˆ ìƒˆë¡œìš´ ë²„ì „)
         /// </summary>
         private void SyncStoredColors()
         {
@@ -129,10 +160,10 @@ namespace Manager
                 string color1 = masterColor.ToString();
                 string color2 = guestColor.ToString();
 
-                // ÇöÀç ³»°¡ »ç¿ë ÁßÀÎ »ö»ó È®ÀÎ
+                // í˜„ì¬ ë‚´ê°€ ì‚¬ìš© ì¤‘ì¸ ìƒ‰ìƒ í™•ì¸
                 string myCurrentColor = GetMyCurrentColor();
 
-                // »õ·Î µé¾î¿Â ÇÃ·¹ÀÌ¾î¿¡°Ô ÁÙ »ö»ó °áÁ¤
+                // ìƒˆë¡œ ë“¤ì–´ì˜¨ í”Œë ˆì´ì–´ì—ê²Œ ì¤„ ìƒ‰ìƒ ê²°ì •
                 string newPlayerColor;
                 string myColor;
 
@@ -148,26 +179,26 @@ namespace Manager
                 }
                 else
                 {
-                    // ÇöÀç »ö»óÀ» Ã£À» ¼ö ¾ø´Â °æ¿ì ±âº»°ª »ç¿ë
-                    Debug.LogWarning($"[PhotonManager] ÇöÀç »ö»ó {myCurrentColor}ÀÌ ¹æ »ö»ó°ú ÀÏÄ¡ÇÏÁö ¾ÊÀ½");
+                    // í˜„ì¬ ìƒ‰ìƒì„ ì°¾ì„ ìˆ˜ ì—†ëŠ” ê²½ìš° ê¸°ë³¸ê°’ ì‚¬ìš©
+                    Debug.LogWarning($"[PhotonManager] í˜„ì¬ ìƒ‰ìƒ {myCurrentColor}ì´ ë°© ìƒ‰ìƒê³¼ ì¼ì¹˜í•˜ì§€ ì•ŠìŒ");
                     myColor = color1;
                     newPlayerColor = color2;
                 }
 
                 if (NetworkGameManager.Instance != null)
                 {
-                    Debug.Log($"[PhotonManager] ¿Ã¹Ù¸¥ »ö»ó µ¿±âÈ­: ³»»ö»ó={myColor}, »õÇÃ·¹ÀÌ¾î»ö»ó={newPlayerColor}");
-                    NetworkGameManager.Instance.SyncStoredColors(myColor, newPlayerColor); // ¡ç °£¼ÒÈ­!
+                    Debug.Log($"[PhotonManager] ì˜¬ë°”ë¥¸ ìƒ‰ìƒ ë™ê¸°í™”: ë‚´ìƒ‰ìƒ={myColor}, ìƒˆí”Œë ˆì´ì–´ìƒ‰ìƒ={newPlayerColor}");
+                    NetworkGameManager.Instance.SyncStoredColors(myColor, newPlayerColor); // â† ê°„ì†Œí™”!
                 }
             }
             else
             {
-                Debug.LogError("[PhotonManager] ¹æ ¼Ó¼º¿¡¼­ »ö»ó Á¤º¸¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù.");
+                Debug.LogError("[PhotonManager] ë°© ì†ì„±ì—ì„œ ìƒ‰ìƒ ì •ë³´ë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
             }
         }
 
         /// <summary>
-        /// ÇöÀç ³»°¡ »ç¿ë ÁßÀÎ »ö»ó ÀÌ¸§ ¹İÈ¯ (»õ·Î Ãß°¡)
+        /// í˜„ì¬ ë‚´ê°€ ì‚¬ìš© ì¤‘ì¸ ìƒ‰ìƒ ì´ë¦„ ë°˜í™˜ (ìƒˆë¡œ ì¶”ê°€)
         /// </summary>
         private string GetMyCurrentColor()
         {
@@ -176,23 +207,23 @@ namespace Manager
                 var playerSprite = ResourcesManager.Instance.GetPlayerSprite();
                 if (playerSprite != null)
                 {
-                    Debug.Log($"[PhotonManager] ÇöÀç ³» »ö»ó: {playerSprite.name}");
+                    Debug.Log($"[PhotonManager] í˜„ì¬ ë‚´ ìƒ‰ìƒ: {playerSprite.name}");
                     return playerSprite.name;
                 }
             }
 
-            Debug.LogError("[PhotonManager] ÇöÀç »ç¿ë ÁßÀÎ »ö»óÀ» È®ÀÎÇÒ ¼ö ¾ø½À´Ï´Ù.");
+            Debug.LogError("[PhotonManager] í˜„ì¬ ì‚¬ìš© ì¤‘ì¸ ìƒ‰ìƒì„ í™•ì¸í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
             return "";
         }
 
         public override void OnPlayerLeftRoom(Player otherPlayer)
         {
             base.OnPlayerLeftRoom(otherPlayer);
-            Debug.Log("ÇÃ·¹ÀÌ¾î°¡ ¹æÀ» ³ª°¬½À´Ï´Ù: " + otherPlayer.NickName);
+            Debug.Log("í”Œë ˆì´ì–´ê°€ ë°©ì„ ë‚˜ê°”ìŠµë‹ˆë‹¤: " + otherPlayer.NickName);
             UpdateRoomPlayerCount();
-            LeavePlayer?.Invoke(); // ÇÃ·¹ÀÌ¾î ÅğÀå ÀÌº¥Æ® ½ÇÇà
+            LeavePlayer?.Invoke(); // í”Œë ˆì´ì–´ í‡´ì¥ ì´ë²¤íŠ¸ ì‹¤í–‰
 
-            // È¥ÀÚ ³²¾ÒÀ¸¸é ¹æ ÃÊ±âÈ­
+            // í˜¼ì ë‚¨ì•˜ìœ¼ë©´ ë°© ì´ˆê¸°í™”
             if (PhotonNetwork.CurrentRoom.PlayerCount == 1)
             {
                 ResetGame();
@@ -204,9 +235,9 @@ namespace Manager
             if (propertiesThatChanged.ContainsKey("currentPlayers"))
             {
                 int currentPlayers = (int)propertiesThatChanged["currentPlayers"];
-                Debug.Log($"[Room] ÇöÀç ÀÎ¿ø ¾÷µ¥ÀÌÆ® °¨Áö: {currentPlayers}");
+                Debug.Log($"[Room] í˜„ì¬ ì¸ì› ì—…ë°ì´íŠ¸ ê°ì§€: {currentPlayers}");
 
-                UpdatePlayerCount?.Invoke(currentPlayers); // ÇöÀç ÀÎ¿ø ¾÷µ¥ÀÌÆ® ÀÌº¥Æ® È£Ãâ
+                UpdatePlayerCount?.Invoke(currentPlayers); // í˜„ì¬ ì¸ì› ì—…ë°ì´íŠ¸ ì´ë²¤íŠ¸ í˜¸ì¶œ
             }
         }
 
@@ -222,7 +253,7 @@ namespace Manager
                 };
                 PhotonNetwork.CurrentRoom.SetCustomProperties(roomProperties);
 
-                Debug.Log($"[Room] ÇöÀç ÀÎ¿ø ¾÷µ¥ÀÌÆ®: {currentPlayers}");
+                Debug.Log($"[Room] í˜„ì¬ ì¸ì› ì—…ë°ì´íŠ¸: {currentPlayers}");
             }
         }
 
@@ -230,7 +261,7 @@ namespace Manager
         {
             if (PhotonNetwork.InRoom)
             {
-                PhotonNetwork.LeaveRoom(); // ¹æ ³ª°¡±â
+                PhotonNetwork.LeaveRoom(); // ë°© ë‚˜ê°€ê¸°
             }
         }
 
@@ -239,17 +270,17 @@ namespace Manager
             PhotonNetwork.LoadLevel("LobbyScene");
         }
 
-        // ¹æÀ» ÃÊ±â »óÅÂ·Î µÇµ¹¸®´Â ¸Ş¼­µå
+        // ë°©ì„ ì´ˆê¸° ìƒíƒœë¡œ ë˜ëŒë¦¬ëŠ” ë©”ì„œë“œ
         private void ResetGame()
         {
-            Debug.Log("¹æ¿¡ È¥ÀÚ ³²À½, ÃÊ±â »óÅÂ·Î ¸®¼Â");
+            Debug.Log("ë°©ì— í˜¼ì ë‚¨ìŒ, ì´ˆê¸° ìƒíƒœë¡œ ë¦¬ì…‹");
 
-            // ÃÊ±âÈ­ÇØ¾ß ÇÒ ³»¿ë Ãß°¡
+            // ì´ˆê¸°í™”í•´ì•¼ í•  ë‚´ìš© ì¶”ê°€
             PhotonNetwork.CurrentRoom.SetCustomProperties(new ExitGames.Client.Photon.Hashtable
     {
                 { "currentPlayers", 1 }
     });
-            // Turn 0À¸·Î ÃÊ±âÈ­
+            // Turn 0ìœ¼ë¡œ ì´ˆê¸°í™”
             PhotonNetwork.CurrentRoom.SetTurn(0, true);
             InGameUIManager.Instance.ResetUI();
         }

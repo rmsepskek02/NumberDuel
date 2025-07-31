@@ -7,9 +7,9 @@ using Utills;
 namespace Manager
 {
     /// <summary>
-    /// ÅëÇÕ RPC ½Ã½ºÅÛÀ» Á¦°øÇÏ´Â ³×Æ®¿öÅ© ¸Å´ÏÀú
-    /// ¸ğµç ³×Æ®¿öÅ© µ¿±âÈ­¸¦ Áß¾Ó ÁıÁß½ÄÀ¸·Î °ü¸®
-    /// NetworkCard ±â¹İÀÇ °­È­µÈ °ËÁõ ½Ã½ºÅÛ »ç¿ë
+    /// í†µí•© RPC ì‹œìŠ¤í…œì„ ì œê³µí•˜ëŠ” ë„¤íŠ¸ì›Œí¬ ë§¤ë‹ˆì €
+    /// ëª¨ë“  ë„¤íŠ¸ì›Œí¬ ë™ê¸°í™”ë¥¼ ì¤‘ì•™ ì§‘ì¤‘ì‹ìœ¼ë¡œ ê´€ë¦¬
+    /// NetworkCard ê¸°ë°˜ì˜ ê°•í™”ëœ ê²€ì¦ ì‹œìŠ¤í…œ ì‚¬ìš©
     /// </summary>
     public class NetworkGameManager : MonoBehaviourPun
     {
@@ -17,7 +17,7 @@ namespace Manager
         private static NetworkGameManager instance;
 
         /// <summary>
-        /// NetworkGameManager ½Ì±ÛÅæ ÀÎ½ºÅÏ½º
+        /// NetworkGameManager ì‹±ê¸€í†¤ ì¸ìŠ¤í„´ìŠ¤
         /// </summary>
         public static NetworkGameManager Instance
         {
@@ -45,23 +45,23 @@ namespace Manager
 
         #region Card Color Synchronization System
         /// <summary>
-        /// Ä«µå »ö»ó µ¿±âÈ­ µ¥ÀÌÅÍ
-        /// ¸ğµç Å¬¶óÀÌ¾ğÆ®°¡ µ¿ÀÏÇÑ Ä«µå »ö»óÀ» »ç¿ëÇÏµµ·Ï º¸Àå
+        /// ì¹´ë“œ ìƒ‰ìƒ ë™ê¸°í™” ë°ì´í„°
+        /// ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ê°€ ë™ì¼í•œ ì¹´ë“œ ìƒ‰ìƒì„ ì‚¬ìš©í•˜ë„ë¡ ë³´ì¥
         /// </summary>
         [System.Serializable]
         public class CardColorData
         {
-            /// <summary>ÇÃ·¹ÀÌ¾î Ä«µå ½ºÇÁ¶óÀÌÆ® ÀÌ¸§</summary>
+            /// <summary>í”Œë ˆì´ì–´ ì¹´ë“œ ìŠ¤í”„ë¼ì´íŠ¸ ì´ë¦„</summary>
             public string playerSpriteName;
 
-            /// <summary>»ó´ë¹æ Ä«µå ½ºÇÁ¶óÀÌÆ® ÀÌ¸§</summary>
+            /// <summary>ìƒëŒ€ë°© ì¹´ë“œ ìŠ¤í”„ë¼ì´íŠ¸ ì´ë¦„</summary>
             public string opponentSpriteName;
 
             /// <summary>
-            /// CardColorData »ı¼ºÀÚ
+            /// CardColorData ìƒì„±ì
             /// </summary>
-            /// <param name="playerSprite">ÇÃ·¹ÀÌ¾î ½ºÇÁ¶óÀÌÆ® ÀÌ¸§</param>
-            /// <param name="opponentSprite">»ó´ë¹æ ½ºÇÁ¶óÀÌÆ® ÀÌ¸§</param>
+            /// <param name="playerSprite">í”Œë ˆì´ì–´ ìŠ¤í”„ë¼ì´íŠ¸ ì´ë¦„</param>
+            /// <param name="opponentSprite">ìƒëŒ€ë°© ìŠ¤í”„ë¼ì´íŠ¸ ì´ë¦„</param>
             public CardColorData(string playerSprite, string opponentSprite)
             {
                 playerSpriteName = playerSprite;
@@ -70,116 +70,116 @@ namespace Manager
         }
 
         /// <summary>
-        /// Ä«µå »ö»óÀ» ¸ğµç Å¬¶óÀÌ¾ğÆ®¿¡ µ¿±âÈ­
-        /// ¹æÀåÀÌ »ö»óÀ» ¼±ÅÃÇÏ°í ´Ù¸¥ ÇÃ·¹ÀÌ¾îµé¿¡°Ô Àü¼Û
+        /// ì¹´ë“œ ìƒ‰ìƒì„ ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ì— ë™ê¸°í™”
+        /// ë°©ì¥ì´ ìƒ‰ìƒì„ ì„ íƒí•˜ê³  ë‹¤ë¥¸ í”Œë ˆì´ì–´ë“¤ì—ê²Œ ì „ì†¡
         /// </summary>
         public void SyncCardColors()
         {
             if (!PhotonNetwork.IsMasterClient)
             {
-                Debug.LogWarning("[NetworkGameManager] ¹æÀå¸¸ Ä«µå »ö»óÀ» ¼³Á¤ÇÒ ¼ö ÀÖ½À´Ï´Ù.");
+                Debug.LogWarning("[NetworkGameManager] ë°©ì¥ë§Œ ì¹´ë“œ ìƒ‰ìƒì„ ì„¤ì •í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.");
                 return;
             }
 
             if (ResourcesManager.Instance == null)
             {
-                Debug.LogError("[NetworkGameManager] ResourcesManager ÀÎ½ºÅÏ½º¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù.");
+                Debug.LogError("[NetworkGameManager] ResourcesManager ì¸ìŠ¤í„´ìŠ¤ë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
                 return;
             }
 
-            Debug.Log("[NetworkGameManager] Ä«µå »ö»ó µ¿±âÈ­ ½ÃÀÛ");
+            Debug.Log("[NetworkGameManager] ì¹´ë“œ ìƒ‰ìƒ ë™ê¸°í™” ì‹œì‘");
 
-            // ¹æÀåÀÌ ·£´ı »ö»ó ¼±ÅÃ
+            // ë°©ì¥ì´ ëœë¤ ìƒ‰ìƒ ì„ íƒ
             var (playerSpriteName, opponentSpriteName) = ResourcesManager.Instance.SelectRandomColors();
 
             if (string.IsNullOrEmpty(playerSpriteName) || string.IsNullOrEmpty(opponentSpriteName))
             {
-                Debug.LogError("[NetworkGameManager] Ä«µå »ö»ó ¼±ÅÃ¿¡ ½ÇÆĞÇß½À´Ï´Ù.");
+                Debug.LogError("[NetworkGameManager] ì¹´ë“œ ìƒ‰ìƒ ì„ íƒì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤.");
                 return;
             }
 
-            // ¹æÀå ÀÚ½Åµµ »ö»ó Àû¿ë
+            // ë°©ì¥ ìì‹ ë„ ìƒ‰ìƒ ì ìš©
             ResourcesManager.Instance.SetPlayerColors(playerSpriteName, opponentSpriteName);
 
-            // ´Ù¸¥ Å¬¶óÀÌ¾ğÆ®µé¿¡°Ô »ö»ó Á¤º¸ Àü¼Û
+            // ë‹¤ë¥¸ í´ë¼ì´ì–¸íŠ¸ë“¤ì—ê²Œ ìƒ‰ìƒ ì •ë³´ ì „ì†¡
             var colorData = new CardColorData(playerSpriteName, opponentSpriteName);
             string jsonData = JsonUtility.ToJson(colorData);
 
             photonView.RPC("RPC_SyncCardColors", RpcTarget.Others, jsonData);
 
-            Debug.Log("[NetworkGameManager] Ä«µå »ö»ó µ¿±âÈ­ RPC Àü¼Û ¿Ï·á");
+            Debug.Log("[NetworkGameManager] ì¹´ë“œ ìƒ‰ìƒ ë™ê¸°í™” RPC ì „ì†¡ ì™„ë£Œ");
         }
 
-        /// ÀúÀåµÈ »ö»óÀ¸·Î µ¿±âÈ­ (¼öÁ¤µÈ ¹öÀü)
+        /// ì €ì¥ëœ ìƒ‰ìƒìœ¼ë¡œ ë™ê¸°í™” (ìˆ˜ì •ëœ ë²„ì „)
         /// </summary>
-        /// <param name="senderColor">º¸³»´Â »ç¶÷(¹æ¿¡ ³²¾ÆÀÖ´ø »ç¶÷)ÀÇ »ö»ó</param>
-        /// <param name="receiverColor">¹Ş´Â »ç¶÷(»õ·Î µé¾î¿Â »ç¶÷)ÀÇ »ö»ó</param>
+        /// <param name="senderColor">ë³´ë‚´ëŠ” ì‚¬ëŒ(ë°©ì— ë‚¨ì•„ìˆë˜ ì‚¬ëŒ)ì˜ ìƒ‰ìƒ</param>
+        /// <param name="receiverColor">ë°›ëŠ” ì‚¬ëŒ(ìƒˆë¡œ ë“¤ì–´ì˜¨ ì‚¬ëŒ)ì˜ ìƒ‰ìƒ</param>
         public void SyncStoredColors(string senderColor, string receiverColor)
         {
             if (!PhotonNetwork.IsMasterClient)
             {
-                Debug.LogWarning("[NetworkGameManager] ¹æÀå¸¸ »ö»ó µ¿±âÈ­¸¦ ÇÒ ¼ö ÀÖ½À´Ï´Ù.");
+                Debug.LogWarning("[NetworkGameManager] ë°©ì¥ë§Œ ìƒ‰ìƒ ë™ê¸°í™”ë¥¼ í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.");
                 return;
             }
 
             if (string.IsNullOrEmpty(senderColor) || string.IsNullOrEmpty(receiverColor))
             {
-                Debug.LogError("[NetworkGameManager] »ö»ó Á¤º¸°¡ À¯È¿ÇÏÁö ¾Ê½À´Ï´Ù.");
+                Debug.LogError("[NetworkGameManager] ìƒ‰ìƒ ì •ë³´ê°€ ìœ íš¨í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤.");
                 return;
             }
 
-            Debug.Log($"[NetworkGameManager] »ö»ó µ¿±âÈ­ Àü¼Û: º¸³»´Â»ç¶÷={senderColor}, ¹Ş´Â»ç¶÷={receiverColor}");
+            Debug.Log($"[NetworkGameManager] ìƒ‰ìƒ ë™ê¸°í™” ì „ì†¡: ë³´ë‚´ëŠ”ì‚¬ëŒ={senderColor}, ë°›ëŠ”ì‚¬ëŒ={receiverColor}");
 
-            // RPC·Î »õ·Î µé¾î¿Â ÇÃ·¹ÀÌ¾î¿¡°Ô »ö»ó Á¤º¸ Àü¼Û
-            var colorData = new CardColorData(receiverColor, senderColor); // ¼ø¼­ ÁÖÀÇ!
+            // RPCë¡œ ìƒˆë¡œ ë“¤ì–´ì˜¨ í”Œë ˆì´ì–´ì—ê²Œ ìƒ‰ìƒ ì •ë³´ ì „ì†¡
+            var colorData = new CardColorData(receiverColor, senderColor); // ìˆœì„œ ì£¼ì˜!
             string jsonData = JsonUtility.ToJson(colorData);
 
             photonView.RPC("RPC_SyncCardColors", RpcTarget.Others, jsonData);
 
-            Debug.Log("[NetworkGameManager] »ö»ó µ¿±âÈ­ RPC Àü¼Û ¿Ï·á");
+            Debug.Log("[NetworkGameManager] ìƒ‰ìƒ ë™ê¸°í™” RPC ì „ì†¡ ì™„ë£Œ");
         }
 
         /// <summary>
-        /// Ä«µå »ö»ó µ¿±âÈ­ RPC ¼ö½Å Ã³¸® (±âÁ¸ ÄÚµå È®ÀÎ)
+        /// ì¹´ë“œ ìƒ‰ìƒ ë™ê¸°í™” RPC ìˆ˜ì‹  ì²˜ë¦¬ (ê¸°ì¡´ ì½”ë“œ í™•ì¸)
         /// </summary>
         [PunRPC]
         private void RPC_SyncCardColors(string jsonData)
         {
             var colorData = JsonUtility.FromJson<CardColorData>(jsonData);
 
-            // ¹ŞÀº »ö»ó Á¤º¸¸¦ ±×´ë·Î Àû¿ë (¼ø¼­ º¯°æ ¾øÀ½)
+            // ë°›ì€ ìƒ‰ìƒ ì •ë³´ë¥¼ ê·¸ëŒ€ë¡œ ì ìš© (ìˆœì„œ ë³€ê²½ ì—†ìŒ)
             ResourcesManager.Instance.SetPlayerColors(
-                colorData.playerSpriteName,    // ³» »ö»ó
-                colorData.opponentSpriteName   // »ó´ë¹æ »ö»ó
+                colorData.playerSpriteName,    // ë‚´ ìƒ‰ìƒ
+                colorData.opponentSpriteName   // ìƒëŒ€ë°© ìƒ‰ìƒ
             );
 
-            Debug.Log($"[NetworkGameManager] »ö»ó Àû¿ë ¿Ï·á: ³»»ö»ó={colorData.playerSpriteName}, »ó´ë»ö»ó={colorData.opponentSpriteName}");
+            Debug.Log($"[NetworkGameManager] ìƒ‰ìƒ ì ìš© ì™„ë£Œ: ë‚´ìƒ‰ìƒ={colorData.playerSpriteName}, ìƒëŒ€ìƒ‰ìƒ={colorData.opponentSpriteName}");
         }
         #endregion
 
         #region Network Data Structures
         /// <summary>
-        /// Ä«µå µå·Î¿ì ³×Æ®¿öÅ© µ¥ÀÌÅÍ
-        /// »ó´ë¹æ¿¡°Ô µå·Î¿ì ÇàÀ§¸¦ ¾Ë¸®±â À§ÇÑ ±¸Á¶Ã¼
+        /// ì¹´ë“œ ë“œë¡œìš° ë„¤íŠ¸ì›Œí¬ ë°ì´í„°
+        /// ìƒëŒ€ë°©ì—ê²Œ ë“œë¡œìš° í–‰ìœ„ë¥¼ ì•Œë¦¬ê¸° ìœ„í•œ êµ¬ì¡°ì²´
         /// </summary>
         [System.Serializable]
         public class CardDrawData
         {
-            /// <summary>Ä«µå ¼ÒÀ¯ÀÚ (0=Player, 1=Opponent)</summary>
+            /// <summary>ì¹´ë“œ ì†Œìœ ì (0=Player, 1=Opponent)</summary>
             public int ownerType;
 
-            /// <summary>µå·Î¿ìÇÒ Ä«µå ¼ö</summary>
+            /// <summary>ë“œë¡œìš°í•  ì¹´ë“œ ìˆ˜</summary>
             public int count;
 
-            /// <summary>µ¦¿¡¼­ Á¦°Å ¾Ö´Ï¸ŞÀÌ¼Ç Ç¥½Ã ¿©ºÎ</summary>
+            /// <summary>ë±ì—ì„œ ì œê±° ì• ë‹ˆë©”ì´ì…˜ í‘œì‹œ ì—¬ë¶€</summary>
             public bool showAnimation;
 
             /// <summary>
-            /// CardDrawData »ı¼ºÀÚ
+            /// CardDrawData ìƒì„±ì
             /// </summary>
-            /// <param name="owner">Ä«µå ¼ÒÀ¯ÀÚ</param>
-            /// <param name="drawCount">µå·Î¿ìÇÒ Ä«µå ¼ö</param>
-            /// <param name="animate">¾Ö´Ï¸ŞÀÌ¼Ç Ç¥½Ã ¿©ºÎ</param>
+            /// <param name="owner">ì¹´ë“œ ì†Œìœ ì</param>
+            /// <param name="drawCount">ë“œë¡œìš°í•  ì¹´ë“œ ìˆ˜</param>
+            /// <param name="animate">ì• ë‹ˆë©”ì´ì…˜ í‘œì‹œ ì—¬ë¶€</param>
             public CardDrawData(CardZone.OwnerType owner, int drawCount, bool animate = true)
             {
                 ownerType = (int)owner;
@@ -189,45 +189,45 @@ namespace Manager
         }
 
         /// <summary>
-        /// Ä«µå ¹èÄ¡ ³×Æ®¿öÅ© µ¥ÀÌÅÍ
-        /// »ó´ë¹æ È­¸é¿¡ Ä«µå ¹èÄ¡¸¦ µ¿±âÈ­ÇÏ±â À§ÇÑ ±¸Á¶Ã¼
+        /// ì¹´ë“œ ë°°ì¹˜ ë„¤íŠ¸ì›Œí¬ ë°ì´í„°
+        /// ìƒëŒ€ë°© í™”ë©´ì— ì¹´ë“œ ë°°ì¹˜ë¥¼ ë™ê¸°í™”í•˜ê¸° ìœ„í•œ êµ¬ì¡°ì²´
         /// </summary>
         [System.Serializable]
         public class CardPlacementData
         {
-            /// <summary>Ä«µå Å¸ÀÔ (Number, Operator, Joker)</summary>
+            /// <summary>ì¹´ë“œ íƒ€ì… (Number, Operator, Joker)</summary>
             public CardType cardType;
 
-            /// <summary>¼ıÀÚ Ä«µåÀÇ °ª</summary>
+            /// <summary>ìˆ«ì ì¹´ë“œì˜ ê°’</summary>
             public long numberValue;
 
-            /// <summary>¿¬»êÀÚ Ä«µåÀÇ Å¸ÀÔ</summary>
+            /// <summary>ì—°ì‚°ì ì¹´ë“œì˜ íƒ€ì…</summary>
             public OperatorType operatorType;
 
-            /// <summary>Ä«µå ¼ÒÀ¯ÀÚ (0=Player, 1=Opponent)</summary>
+            /// <summary>ì¹´ë“œ ì†Œìœ ì (0=Player, 1=Opponent)</summary>
             public int ownerType;
 
-            /// <summary>¹èÄ¡µÉ Zone Å¸ÀÔ (0=Hand, 1=Field)</summary>
+            /// <summary>ë°°ì¹˜ë  Zone íƒ€ì… (0=Hand, 1=Field)</summary>
             public int zoneType;
 
-            /// <summary>Secret ¸ğµå ¿©ºÎ</summary>
+            /// <summary>Secret ëª¨ë“œ ì—¬ë¶€</summary>
             public bool isSecret;
 
-            /// <summary>Ä«µå °íÀ¯ ID (NetworkCard ±â¹İ)</summary>
+            /// <summary>ì¹´ë“œ ê³ ìœ  ID (NetworkCard ê¸°ë°˜)</summary>
             public string uniqueId;
 
-            /// <summary>Zone ³»¿¡¼­ÀÇ ¹èÄ¡ ÀÎµ¦½º</summary>
+            /// <summary>Zone ë‚´ì—ì„œì˜ ë°°ì¹˜ ì¸ë±ìŠ¤</summary>
             public int targetIndex;
 
             /// <summary>
-            /// CardPlacementData »ı¼ºÀÚ
+            /// CardPlacementData ìƒì„±ì
             /// </summary>
-            /// <param name="cardData">¹èÄ¡ÇÒ Ä«µå µ¥ÀÌÅÍ</param>
-            /// <param name="owner">Ä«µå ¼ÒÀ¯ÀÚ</param>
-            /// <param name="zone">¹èÄ¡µÉ Zone</param>
-            /// <param name="secret">Secret ¸ğµå ¿©ºÎ</param>
-            /// <param name="id">°íÀ¯ ID</param>
-            /// <param name="index">¹èÄ¡ ÀÎµ¦½º</param>
+            /// <param name="cardData">ë°°ì¹˜í•  ì¹´ë“œ ë°ì´í„°</param>
+            /// <param name="owner">ì¹´ë“œ ì†Œìœ ì</param>
+            /// <param name="zone">ë°°ì¹˜ë  Zone</param>
+            /// <param name="secret">Secret ëª¨ë“œ ì—¬ë¶€</param>
+            /// <param name="id">ê³ ìœ  ID</param>
+            /// <param name="index">ë°°ì¹˜ ì¸ë±ìŠ¤</param>
             public CardPlacementData(Manager.CardData cardData, CardZone.OwnerType owner,
                                    CardZone.ZoneType zone, bool secret, string id, int index = -1)
             {
@@ -242,9 +242,9 @@ namespace Manager
             }
 
             /// <summary>
-            /// CardPlacementData¸¦ Manager.CardData·Î º¯È¯
+            /// CardPlacementDataë¥¼ Manager.CardDataë¡œ ë³€í™˜
             /// </summary>
-            /// <returns>º¯È¯µÈ CardData</returns>
+            /// <returns>ë³€í™˜ëœ CardData</returns>
             public Manager.CardData ToCardData()
             {
                 switch (cardType)
@@ -262,23 +262,23 @@ namespace Manager
         }
 
         /// <summary>
-        /// µ¦ »óÅÂ µ¿±âÈ­ µ¥ÀÌÅÍ
-        /// ¾çÂÊ µ¦ÀÇ ³²Àº Ä«µå ¼ö¸¦ µ¿±âÈ­ÇÏ±â À§ÇÑ ±¸Á¶Ã¼
+        /// ë± ìƒíƒœ ë™ê¸°í™” ë°ì´í„°
+        /// ì–‘ìª½ ë±ì˜ ë‚¨ì€ ì¹´ë“œ ìˆ˜ë¥¼ ë™ê¸°í™”í•˜ê¸° ìœ„í•œ êµ¬ì¡°ì²´
         /// </summary>
         [System.Serializable]
         public class DeckSyncData
         {
-            /// <summary>ÇÃ·¹ÀÌ¾î µ¦ ³²Àº Ä«µå ¼ö</summary>
+            /// <summary>í”Œë ˆì´ì–´ ë± ë‚¨ì€ ì¹´ë“œ ìˆ˜</summary>
             public int playerDeckCount;
 
-            /// <summary>»ó´ë¹æ µ¦ ³²Àº Ä«µå ¼ö</summary>
+            /// <summary>ìƒëŒ€ë°© ë± ë‚¨ì€ ì¹´ë“œ ìˆ˜</summary>
             public int opponentDeckCount;
 
             /// <summary>
-            /// DeckSyncData »ı¼ºÀÚ
+            /// DeckSyncData ìƒì„±ì
             /// </summary>
-            /// <param name="playerCount">ÇÃ·¹ÀÌ¾î µ¦ Ä«µå ¼ö</param>
-            /// <param name="opponentCount">»ó´ë¹æ µ¦ Ä«µå ¼ö</param>
+            /// <param name="playerCount">í”Œë ˆì´ì–´ ë± ì¹´ë“œ ìˆ˜</param>
+            /// <param name="opponentCount">ìƒëŒ€ë°© ë± ì¹´ë“œ ìˆ˜</param>
             public DeckSyncData(int playerCount, int opponentCount)
             {
                 playerDeckCount = playerCount;
@@ -289,60 +289,60 @@ namespace Manager
 
         #region Card Draw Synchronization System
         /// <summary>
-        /// ³×Æ®¿öÅ© ¾×¼Ç ¼öÇà °¡´É ¿©ºÎ È®ÀÎ (ÃÊ±â µå·Î¿ì Çã¿ë)
-        /// °ÔÀÓ »óÅÂ ¹× ³×Æ®¿öÅ© ¿¬°á »óÅÂ¸¦ Á¾ÇÕÀûÀ¸·Î °ËÁõ
+        /// ë„¤íŠ¸ì›Œí¬ ì•¡ì…˜ ìˆ˜í–‰ ê°€ëŠ¥ ì—¬ë¶€ í™•ì¸ (ì´ˆê¸° ë“œë¡œìš° í—ˆìš©)
+        /// ê²Œì„ ìƒíƒœ ë° ë„¤íŠ¸ì›Œí¬ ì—°ê²° ìƒíƒœë¥¼ ì¢…í•©ì ìœ¼ë¡œ ê²€ì¦
         /// </summary>
-        /// <returns>³×Æ®¿öÅ© ¾×¼Ç ¼öÇà °¡´É ¿©ºÎ</returns>
+        /// <returns>ë„¤íŠ¸ì›Œí¬ ì•¡ì…˜ ìˆ˜í–‰ ê°€ëŠ¥ ì—¬ë¶€</returns>
         private bool CanPerformNetworkAction()
         {
-            // ±âº» ³×Æ®¿öÅ© ¿¬°á È®ÀÎ
+            // ê¸°ë³¸ ë„¤íŠ¸ì›Œí¬ ì—°ê²° í™•ì¸
             if (!PhotonNetwork.InRoom)
             {
-                Debug.LogWarning("[NetworkGameManager] ¹æ¿¡ Á¢¼ÓµÇ¾î ÀÖÁö ¾Ê½À´Ï´Ù.");
+                Debug.LogWarning("[NetworkGameManager] ë°©ì— ì ‘ì†ë˜ì–´ ìˆì§€ ì•ŠìŠµë‹ˆë‹¤.");
                 return false;
             }
 
-            // TurnManager »óÅÂ È®ÀÎ
+            // TurnManager ìƒíƒœ í™•ì¸
             if (TurnManager.Instance == null)
             {
-                Debug.LogWarning("[NetworkGameManager] TurnManager ÀÎ½ºÅÏ½º¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù.");
+                Debug.LogWarning("[NetworkGameManager] TurnManager ì¸ìŠ¤í„´ìŠ¤ë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
                 return false;
             }
 
-            // ¼öÁ¤: ÃÊ±â µå·Î¿ì´Â °ÔÀÓ ½ÃÀÛ Àü¿¡µµ Çã¿ë (IsGameStarted Ã¼Å© Á¦°Å)
-            // ÇÃ·¹ÀÌ¾î°¡ 2¸íÀÌ¸é µå·Î¿ì µ¿±âÈ­ Çã¿ë
+            // ìˆ˜ì •: ì´ˆê¸° ë“œë¡œìš°ëŠ” ê²Œì„ ì‹œì‘ ì „ì—ë„ í—ˆìš© (IsGameStarted ì²´í¬ ì œê±°)
+            // í”Œë ˆì´ì–´ê°€ 2ëª…ì´ë©´ ë“œë¡œìš° ë™ê¸°í™” í—ˆìš©
             return PhotonNetwork.CurrentRoom.PlayerCount >= 2;
         }
 
         /// <summary>
-        /// Ä«µå µå·Î¿ì¸¦ ´Ù¸¥ ÇÃ·¹ÀÌ¾î¿¡°Ô µ¿±âÈ­
-        /// »ó´ë¹æ È­¸é¿¡¼­ µŞ¸é Ä«µå µå·Î¿ì Ç¥½Ã ¹× µ¦ ¾÷µ¥ÀÌÆ®
+        /// ì¹´ë“œ ë“œë¡œìš°ë¥¼ ë‹¤ë¥¸ í”Œë ˆì´ì–´ì—ê²Œ ë™ê¸°í™”
+        /// ìƒëŒ€ë°© í™”ë©´ì—ì„œ ë’·ë©´ ì¹´ë“œ ë“œë¡œìš° í‘œì‹œ ë° ë± ì—…ë°ì´íŠ¸
         /// </summary>
-        /// <param name="owner">Ä«µå¸¦ µå·Î¿ìÇÑ ÇÃ·¹ÀÌ¾î</param>
-        /// <param name="count">µå·Î¿ìÇÑ Ä«µå ¼ö</param>
+        /// <param name="owner">ì¹´ë“œë¥¼ ë“œë¡œìš°í•œ í”Œë ˆì´ì–´</param>
+        /// <param name="count">ë“œë¡œìš°í•œ ì¹´ë“œ ìˆ˜</param>
         public void SyncCardDraw(CardZone.OwnerType owner, int count)
         {
             if (!CanPerformNetworkAction())
             {
-                Debug.LogWarning("[NetworkGameManager] ³×Æ®¿öÅ© ¾×¼Ç ¼öÇàÀÌ ºÒ°¡´ÉÇÕ´Ï´Ù.");
+                Debug.LogWarning("[NetworkGameManager] ë„¤íŠ¸ì›Œí¬ ì•¡ì…˜ ìˆ˜í–‰ì´ ë¶ˆê°€ëŠ¥í•©ë‹ˆë‹¤.");
                 return;
             }
 
-            Debug.Log($"[NetworkGameManager] Ä«µå µå·Î¿ì µ¿±âÈ­ ½ÃÀÛ: {owner} {count}Àå");
+            Debug.Log($"[NetworkGameManager] ì¹´ë“œ ë“œë¡œìš° ë™ê¸°í™” ì‹œì‘: {owner} {count}ì¥");
 
             var drawData = new CardDrawData(owner, count);
             string jsonData = JsonUtility.ToJson(drawData);
 
             photonView.RPC("RPC_SyncCardDraw", RpcTarget.Others, jsonData);
 
-            Debug.Log($"[NetworkGameManager] Ä«µå µå·Î¿ì µ¿±âÈ­ RPC Àü¼Û ¿Ï·á: {owner} {count}Àå");
+            Debug.Log($"[NetworkGameManager] ì¹´ë“œ ë“œë¡œìš° ë™ê¸°í™” RPC ì „ì†¡ ì™„ë£Œ: {owner} {count}ì¥");
         }
 
         /// <summary>
-        /// Ä«µå µå·Î¿ì µ¿±âÈ­ RPC ¼ö½Å Ã³¸®
-        /// ¿ø°İ ÇÃ·¹ÀÌ¾îÀÇ µå·Î¿ì ÇàÀ§¸¦ ·ÎÄÃ È­¸é¿¡ ¹İ¿µ
+        /// ì¹´ë“œ ë“œë¡œìš° ë™ê¸°í™” RPC ìˆ˜ì‹  ì²˜ë¦¬
+        /// ì›ê²© í”Œë ˆì´ì–´ì˜ ë“œë¡œìš° í–‰ìœ„ë¥¼ ë¡œì»¬ í™”ë©´ì— ë°˜ì˜
         /// </summary>
-        /// <param name="jsonData">Á÷·ÄÈ­µÈ CardDrawData</param>
+        /// <param name="jsonData">ì§ë ¬í™”ëœ CardDrawData</param>
         [PunRPC]
         private void RPC_SyncCardDraw(string jsonData)
         {
@@ -353,28 +353,28 @@ namespace Manager
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"[NetworkGameManager] Ä«µå µå·Î¿ì µ¿±âÈ­ ¿À·ù: {ex.Message}");
+                Debug.LogError($"[NetworkGameManager] ì¹´ë“œ ë“œë¡œìš° ë™ê¸°í™” ì˜¤ë¥˜: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// ¿ø°İ Ä«µå µå·Î¿ì Àû¿ë
-        /// »ó´ë¹æ È­¸é¿¡¼­ ½ÇÁ¦ µå·Î¿ì È¿°ú¸¦ ±¸Çö
-        /// ÁÖÀÇ: »ó´ë¹æ °üÁ¡¿¡¼­ Ä«µå ¼ÒÀ¯ÀÚ°¡ ¹Ù²ñ (Player ¡ê Opponent)
+        /// ì›ê²© ì¹´ë“œ ë“œë¡œìš° ì ìš©
+        /// ìƒëŒ€ë°© í™”ë©´ì—ì„œ ì‹¤ì œ ë“œë¡œìš° íš¨ê³¼ë¥¼ êµ¬í˜„
+        /// ì£¼ì˜: ìƒëŒ€ë°© ê´€ì ì—ì„œ ì¹´ë“œ ì†Œìœ ìê°€ ë°”ë€œ (Player â†” Opponent)
         /// </summary>
-        /// <param name="drawData">µå·Î¿ì µ¥ÀÌÅÍ</param>
+        /// <param name="drawData">ë“œë¡œìš° ë°ì´í„°</param>
         private void ApplyRemoteCardDraw(CardDrawData drawData)
         {
             CardZone.OwnerType originalOwner = (CardZone.OwnerType)drawData.ownerType;
 
-            // »ó´ë¹æ °üÁ¡¿¡¼­ ¼ÒÀ¯ÀÚ º¯È¯
-            // ¿ø°İ¿¡¼­ Player°¡ µå·Î¿ì Çß´Ù¸é, ³» È­¸é¿¡¼­´Â Opponent ¼ÕÆĞ¿¡ Ç¥½Ã
-            // ¿ø°İ¿¡¼­ Opponent°¡ µå·Î¿ì Çß´Ù¸é, ³» È­¸é¿¡¼­´Â Player ¼ÕÆĞ¿¡ Ç¥½Ã
+            // ìƒëŒ€ë°© ê´€ì ì—ì„œ ì†Œìœ ì ë³€í™˜
+            // ì›ê²©ì—ì„œ Playerê°€ ë“œë¡œìš° í–ˆë‹¤ë©´, ë‚´ í™”ë©´ì—ì„œëŠ” Opponent ì†íŒ¨ì— í‘œì‹œ
+            // ì›ê²©ì—ì„œ Opponentê°€ ë“œë¡œìš° í–ˆë‹¤ë©´, ë‚´ í™”ë©´ì—ì„œëŠ” Player ì†íŒ¨ì— í‘œì‹œ
             CardZone.OwnerType displayOwner = originalOwner == CardZone.OwnerType.Player
                 ? CardZone.OwnerType.Opponent
                 : CardZone.OwnerType.Player;
 
-            // 1´Ü°è: ½Ã°¢Àû µ¦¿¡¼­ Ä«µå Á¦°Å ¹× ¾Ö´Ï¸ŞÀÌ¼Ç
+            // 1ë‹¨ê³„: ì‹œê°ì  ë±ì—ì„œ ì¹´ë“œ ì œê±° ë° ì• ë‹ˆë©”ì´ì…˜
             if (drawData.showAnimation)
             {
                 var deckStacker = FindDeckStacker(displayOwner);
@@ -387,7 +387,7 @@ namespace Manager
                 }
             }
 
-            // 2´Ü°è: ÇØ´ç ¼ÒÀ¯ÀÚÀÇ ¼ÕÆĞ¿¡ µŞ¸é Ä«µå Ãß°¡
+            // 2ë‹¨ê³„: í•´ë‹¹ ì†Œìœ ìì˜ ì†íŒ¨ì— ë’·ë©´ ì¹´ë“œ ì¶”ê°€
             var handZone = FindHandZone(displayOwner);
             if (handZone != null)
             {
@@ -399,61 +399,61 @@ namespace Manager
         }
 
         /// <summary>
-        /// ¼ÕÆĞ¿¡ µŞ¸é Ä«µå »ı¼º
-        /// ResourcesManager°¡ ÀÌ¹Ì ¼³Á¤ÇÑ empty ½ºÇÁ¶óÀÌÆ®¸¦ ±×´ë·Î »ç¿ë
+        /// ì†íŒ¨ì— ë’·ë©´ ì¹´ë“œ ìƒì„±
+        /// ResourcesManagerê°€ ì´ë¯¸ ì„¤ì •í•œ empty ìŠ¤í”„ë¼ì´íŠ¸ë¥¼ ê·¸ëŒ€ë¡œ ì‚¬ìš©
         /// </summary>
-        /// <param name="handZone">Ä«µå¸¦ Ãß°¡ÇÒ ¼ÕÆĞ Zone</param>
-        /// <param name="owner">Ä«µå ¼ÒÀ¯ÀÚ</param>
+        /// <param name="handZone">ì¹´ë“œë¥¼ ì¶”ê°€í•  ì†íŒ¨ Zone</param>
+        /// <param name="owner">ì¹´ë“œ ì†Œìœ ì</param>
         private void CreateBackCardInHand(CardZone handZone, CardZone.OwnerType owner)
         {
-            // Ä«µå ÅÛÇÃ¸´ °¡Á®¿À±â
+            // ì¹´ë“œ í…œí”Œë¦¿ ê°€ì ¸ì˜¤ê¸°
             GameObject template = owner == CardZone.OwnerType.Player
                 ? ResourcesManager.Instance.GetPlayerCardTemplate()
                 : ResourcesManager.Instance.GetOpponentCardTemplate();
 
             if (template == null)
             {
-                Debug.LogError($"[NetworkGameManager] {owner}ÀÇ Ä«µå ÅÛÇÃ¸´À» Ã£À» ¼ö ¾ø½À´Ï´Ù.");
+                Debug.LogError($"[NetworkGameManager] {owner}ì˜ ì¹´ë“œ í…œí”Œë¦¿ì„ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
                 return;
             }
 
-            // µŞ¸é Ä«µå ¿ÀºêÁ§Æ® »ı¼º
+            // ë’·ë©´ ì¹´ë“œ ì˜¤ë¸Œì íŠ¸ ìƒì„±
             GameObject backCard = Instantiate(template);
             backCard.SetActive(true);
             backCard.name = $"BackCard_Remote_{owner}";
 
-            // Ä«µå ÄÄÆ÷³ÍÆ® ¼³Á¤
+            // ì¹´ë“œ ì»´í¬ë„ŒíŠ¸ ì„¤ì •
             var card = backCard.GetComponent<Card>();
             if (card != null)
             {
-                card.InitializeAsNumber(0); // ÀÓ½Ã °ªÀ¸·Î ÃÊ±âÈ­
+                card.InitializeAsNumber(0); // ì„ì‹œ ê°’ìœ¼ë¡œ ì´ˆê¸°í™”
             }
 
-            // ½ºÇÁ¶óÀÌÆ®´Â ÀÌ¹Ì ÅÛÇÃ¸´¿¡¼­ ¿Ã¹Ù¸£°Ô ¼³Á¤µÊ (ResourcesManager°¡ empty ½ºÇÁ¶óÀÌÆ®·Î ¼³Á¤ÇØ³ùÀ½)
-            // º°µµ ½ºÇÁ¶óÀÌÆ® Ã³¸® ºÒÇÊ¿ä!
+            // ìŠ¤í”„ë¼ì´íŠ¸ëŠ” ì´ë¯¸ í…œí”Œë¦¿ì—ì„œ ì˜¬ë°”ë¥´ê²Œ ì„¤ì •ë¨ (ResourcesManagerê°€ empty ìŠ¤í”„ë¼ì´íŠ¸ë¡œ ì„¤ì •í•´ë†¨ìŒ)
+            // ë³„ë„ ìŠ¤í”„ë¼ì´íŠ¸ ì²˜ë¦¬ ë¶ˆí•„ìš”!
 
-            // CardText ¿ÀºêÁ§Æ®¸¸ ºñÈ°¼ºÈ­ (µŞ¸éÃ³·³ º¸ÀÌµµ·Ï)
+            // CardText ì˜¤ë¸Œì íŠ¸ë§Œ ë¹„í™œì„±í™” (ë’·ë©´ì²˜ëŸ¼ ë³´ì´ë„ë¡)
             var cardText = backCard.GetComponentInChildren<CardText>();
             if (cardText != null)
             {
                 cardText.gameObject.SetActive(false);
             }
 
-            // TMPro ÅØ½ºÆ®µµ ºñÈ°¼ºÈ­
+            // TMPro í…ìŠ¤íŠ¸ë„ ë¹„í™œì„±í™”
             var tmpText = backCard.GetComponentInChildren<TMPro.TextMeshPro>();
             if (tmpText != null)
             {
                 tmpText.gameObject.SetActive(false);
             }
 
-            // NetworkCard ÄÄÆ÷³ÍÆ® Ãß°¡
+            // NetworkCard ì»´í¬ë„ŒíŠ¸ ì¶”ê°€
             var networkCard = backCard.GetComponent<NetworkCard>();
             if (networkCard == null)
             {
                 networkCard = backCard.AddComponent<NetworkCard>();
             }
 
-            // »óÈ£ÀÛ¿ë ¿ÏÀü ºñÈ°¼ºÈ­
+            // ìƒí˜¸ì‘ìš© ì™„ì „ ë¹„í™œì„±í™”
             var mouseEvent = backCard.GetComponentInChildren<ObjectMouseEvent>();
             if (mouseEvent != null)
             {
@@ -461,125 +461,158 @@ namespace Manager
                 mouseEvent.isDraggable = false;
             }
 
-            // DragHandler ºñÈ°¼ºÈ­
+            // DragHandler ë¹„í™œì„±í™”
             var dragHandler = backCard.GetComponent<DragHandler>();
             if (dragHandler != null)
             {
                 dragHandler.enabled = false;
             }
 
-            // ¼ÕÆĞ¿¡ Ãß°¡
+            // ì†íŒ¨ì— ì¶”ê°€
             handZone.AddCard(backCard.transform);
         }
         #endregion
 
         #region Card Placement Synchronization System
         /// <summary>
-        /// Ä«µå ¹èÄ¡¸¦ ´Ù¸¥ ÇÃ·¹ÀÌ¾î¿¡°Ô µ¿±âÈ­
-        /// »ó´ë¹æ È­¸é¿¡ ½ÇÁ¦ Ä«µå ¹èÄ¡ ¹× ¼ÕÆĞ¿¡¼­ µŞ¸é Ä«µå Á¦°Å
+        /// ì¹´ë“œ ë°°ì¹˜ë¥¼ ë‹¤ë¥¸ í”Œë ˆì´ì–´ì—ê²Œ ë™ê¸°í™”
+        /// ìƒëŒ€ë°© í™”ë©´ì— ì‹¤ì œ ì¹´ë“œ ë°°ì¹˜ ë° ì†íŒ¨ì—ì„œ ë’·ë©´ ì¹´ë“œ ì œê±°
         /// </summary>
-        /// <param name="cardData">¹èÄ¡ÇÒ Ä«µå µ¥ÀÌÅÍ</param>
-        /// <param name="owner">Ä«µå ¼ÒÀ¯ÀÚ</param>
-        /// <param name="zoneType">¹èÄ¡µÉ Zone Å¸ÀÔ</param>
-        /// <param name="isSecret">Secret ¸ğµå ¿©ºÎ</param>
+        /// <param name="cardData">ë°°ì¹˜í•  ì¹´ë“œ ë°ì´í„°</param>
+        /// <param name="owner">ì¹´ë“œ ì†Œìœ ì</param>
+        /// <param name="zoneType">ë°°ì¹˜ë  Zone íƒ€ì…</param>
+        /// <param name="isSecret">Secret ëª¨ë“œ ì—¬ë¶€</param>
         public void SyncCardPlacement(Manager.CardData cardData, CardZone.OwnerType owner,
-                                    CardZone.ZoneType zoneType, bool isSecret)
+                                     CardZone.ZoneType zoneType, bool isSecret)
         {
+            Debug.Log($"[NetworkGameManager] SyncCardPlacement í˜¸ì¶œë¨: {cardData.cardType} to {owner} {zoneType}");
+            
             if (!CanPerformNetworkAction())
             {
+                Debug.LogWarning($"[NetworkGameManager] ë„¤íŠ¸ì›Œí¬ ì•¡ì…˜ ìˆ˜í–‰ ë¶ˆê°€ - ë™ê¸°í™” ì¤‘ë‹¨");
                 return;
             }
 
-            // °íÀ¯ ID »ı¼º (NetworkCard ±â¹İ)
+            // ê³ ìœ  ID ìƒì„± (NetworkCard ê¸°ë°˜)
             string uniqueId = GenerateNetworkCardId();
 
             var placementData = new CardPlacementData(cardData, owner, zoneType, isSecret, uniqueId);
             string jsonData = JsonUtility.ToJson(placementData);
 
+            Debug.Log($"[NetworkGameManager] RPC ì „ì†¡ ì‹œì‘: {jsonData}");
             photonView.RPC("RPC_SyncCardPlacement", RpcTarget.Others, jsonData);
+            Debug.Log($"[NetworkGameManager] RPC ì „ì†¡ ì™„ë£Œ");
         }
 
         /// <summary>
-        /// Ä«µå ¹èÄ¡ µ¿±âÈ­ RPC ¼ö½Å Ã³¸®
-        /// ¿ø°İ ÇÃ·¹ÀÌ¾îÀÇ Ä«µå ¹èÄ¡¸¦ ·ÎÄÃ È­¸é¿¡ ¹İ¿µ
+        /// ì¹´ë“œ ë°°ì¹˜ ë™ê¸°í™” RPC ìˆ˜ì‹  ì²˜ë¦¬
+        /// ì›ê²© í”Œë ˆì´ì–´ì˜ ì¹´ë“œ ë°°ì¹˜ë¥¼ ë¡œì»¬ í™”ë©´ì— ë°˜ì˜
         /// </summary>
-        /// <param name="jsonData">Á÷·ÄÈ­µÈ CardPlacementData</param>
+        /// <param name="jsonData">ì§ë ¬í™”ëœ CardPlacementData</param>
         [PunRPC]
         private void RPC_SyncCardPlacement(string jsonData)
         {
+            Debug.Log($"[NetworkGameManager] RPC_SyncCardPlacement ìˆ˜ì‹ ë¨: {jsonData}");
+            
             try
             {
                 var placementData = JsonUtility.FromJson<CardPlacementData>(jsonData);
+                Debug.Log($"[NetworkGameManager] ì¹´ë“œ ë°°ì¹˜ ë°ì´í„° íŒŒì‹± ì„±ê³µ: {placementData.cardType} to {(CardZone.OwnerType)placementData.ownerType} {(CardZone.ZoneType)placementData.zoneType}");
+                
                 ApplyRemoteCardPlacement(placementData);
+                Debug.Log($"[NetworkGameManager] ì›ê²© ì¹´ë“œ ë°°ì¹˜ ì ìš© ì™„ë£Œ");
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"[NetworkGameManager] Ä«µå ¹èÄ¡ µ¿±âÈ­ ¿À·ù: {ex.Message}");
+                Debug.LogError($"[NetworkGameManager] ì¹´ë“œ ë°°ì¹˜ ë™ê¸°í™” ì˜¤ë¥˜: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// ¿ø°İ Ä«µå ¹èÄ¡ Àû¿ë
-        /// »ó´ë¹æ È­¸é¿¡¼­ ½ÇÁ¦ Ä«µå ¹èÄ¡ È¿°ú¸¦ ±¸Çö
+        /// ì›ê²© ì¹´ë“œ ë°°ì¹˜ ì ìš© (ìˆ˜ì •ë¨ - ì†Œìœ ì ë³€í™˜ ë¡œì§ ì¶”ê°€)
+        /// ìƒëŒ€ë°© í™”ë©´ì—ì„œ ì‹¤ì œ ì¹´ë“œ ë°°ì¹˜ íš¨ê³¼ë¥¼ êµ¬í˜„
+        /// í•µì‹¬: ìƒëŒ€ë°© ê´€ì ì—ì„œ ì†Œìœ ìë¥¼ ì˜¬ë°”ë¥´ê²Œ ë³€í™˜
         /// </summary>
-        /// <param name="placementData">¹èÄ¡ µ¥ÀÌÅÍ</param>
+        /// <param name="placementData">ë°°ì¹˜ ë°ì´í„°</param>
         private void ApplyRemoteCardPlacement(CardPlacementData placementData)
         {
-            CardZone.OwnerType owner = (CardZone.OwnerType)placementData.ownerType;
+            CardZone.OwnerType originalOwner = (CardZone.OwnerType)placementData.ownerType;
             CardZone.ZoneType zoneType = (CardZone.ZoneType)placementData.zoneType;
 
-            // 1´Ü°è: ´ë»ó Zone Ã£±â ¹× °ËÁõ
-            var targetZone = FindZone(owner, zoneType);
+            Debug.Log($"[NetworkGameManager] ApplyRemoteCardPlacement ì‹œì‘: ì›ë³¸ ì†Œìœ ì={originalOwner} {zoneType}");
+
+            // ğŸ”§ í•µì‹¬ ìˆ˜ì •: ìƒëŒ€ë°© ê´€ì ì—ì„œ ì†Œìœ ì ë³€í™˜
+            // ì›ê²©ì—ì„œ Playerê°€ ë°°ì¹˜ í–ˆë‹¤ë©´, ë‚´ í™”ë©´ì—ì„œëŠ” Opponent í•„ë“œì— í‘œì‹œ
+            // ì›ê²©ì—ì„œ Opponentê°€ ë°°ì¹˜ í–ˆë‹¤ë©´, ë‚´ í™”ë©´ì—ì„œëŠ” Player í•„ë“œì— í‘œì‹œ
+            CardZone.OwnerType displayOwner = originalOwner == CardZone.OwnerType.Player
+                ? CardZone.OwnerType.Opponent
+                : CardZone.OwnerType.Player;
+
+            Debug.Log($"[NetworkGameManager] ì†Œìœ ì ë³€í™˜ ì™„ë£Œ: {originalOwner} â†’ {displayOwner}");
+
+            // 1ë‹¨ê³„: ëŒ€ìƒ Zone ì°¾ê¸° ë° ê²€ì¦ (ë³€í™˜ëœ ì†Œìœ ì ì‚¬ìš©)
+            var targetZone = FindZone(displayOwner, zoneType);
             if (targetZone == null)
             {
-                Debug.LogError($"[NetworkGameManager] ZoneÀ» Ã£À» ¼ö ¾øÀ½: {owner} {zoneType}");
+                Debug.LogError($"[NetworkGameManager] Zoneì„ ì°¾ì„ ìˆ˜ ì—†ìŒ: {displayOwner} {zoneType}");
                 return;
             }
+            Debug.Log($"[NetworkGameManager] 1ë‹¨ê³„ ì™„ë£Œ: ëŒ€ìƒ Zone ì°¾ê¸° ì„±ê³µ ({displayOwner} {zoneType})");
 
-            // 2´Ü°è: Zone ¿ë·® Ã¼Å©
+            // 2ë‹¨ê³„: Zone ìš©ëŸ‰ ì²´í¬
             if (!targetZone.CanAddCard())
             {
+                Debug.LogWarning($"[NetworkGameManager] Zoneì´ ê°€ë“ì°¸: {displayOwner} {zoneType}");
                 return;
             }
+            Debug.Log($"[NetworkGameManager] 2ë‹¨ê³„ ì™„ë£Œ: Zone ìš©ëŸ‰ ì²´í¬ í†µê³¼");
 
-            // 3´Ü°è: Ä«µå µ¥ÀÌÅÍ º¹¿ø
+            // 3ë‹¨ê³„: ì¹´ë“œ ë°ì´í„° ë³µì›
             var cardData = placementData.ToCardData();
+            Debug.Log($"[NetworkGameManager] 3ë‹¨ê³„ ì™„ë£Œ: ì¹´ë“œ ë°ì´í„° ë³µì› ({cardData.cardType})");
 
-            // 4´Ü°è: Ä«µå ¿ÀºêÁ§Æ® »ı¼º
-            GameObject cardObject = DeckManager.Instance.CreateCardObject(cardData, owner, targetZone);
+            // 4ë‹¨ê³„: ì¹´ë“œ ì˜¤ë¸Œì íŠ¸ ìƒì„± (ë³€í™˜ëœ ì†Œìœ ì ì‚¬ìš©)
+            GameObject cardObject = DeckManager.Instance.CreateCardObject(cardData, displayOwner, targetZone);
             if (cardObject == null)
             {
-                Debug.LogError("[NetworkGameManager] Ä«µå ¿ÀºêÁ§Æ® »ı¼º ½ÇÆĞ");
+                Debug.LogError("[NetworkGameManager] ì¹´ë“œ ì˜¤ë¸Œì íŠ¸ ìƒì„± ì‹¤íŒ¨");
                 return;
             }
+            Debug.Log($"[NetworkGameManager] 4ë‹¨ê³„ ì™„ë£Œ: ì¹´ë“œ ì˜¤ë¸Œì íŠ¸ ìƒì„± ì„±ê³µ ({cardObject.name})");
 
-            // 5´Ü°è: NetworkCard ¼³Á¤
+            // 5ë‹¨ê³„: NetworkCard ì„¤ì •
             var networkCard = cardObject.GetComponent<NetworkCard>();
             if (networkCard == null)
             {
                 networkCard = cardObject.AddComponent<NetworkCard>();
             }
             networkCard.SetUniqueId(placementData.uniqueId);
+            Debug.Log($"[NetworkGameManager] 5ë‹¨ê³„ ì™„ë£Œ: NetworkCard ì„¤ì • (ID: {placementData.uniqueId})");
 
-            // 6´Ü°è: Secret ¸ğµå ¼³Á¤
+            // 6ë‹¨ê³„: Secret ëª¨ë“œ ì„¤ì •
             var card = cardObject.GetComponent<Card>();
             if (card != null && placementData.isSecret)
             {
                 card.SetSecret(true);
             }
+            Debug.Log($"[NetworkGameManager] 6ë‹¨ê³„ ì™„ë£Œ: Secret ëª¨ë“œ ì„¤ì • (isSecret: {placementData.isSecret})");
 
-            // 7´Ü°è: ¼ÕÆĞ¿¡¼­ µŞ¸é Ä«µå Á¦°Å (ÇÊµå ¹èÄ¡ÀÎ °æ¿ì¸¸)
+            // 7ë‹¨ê³„: ì†íŒ¨ì—ì„œ ë’·ë©´ ì¹´ë“œ ì œê±° (í•„ë“œ ë°°ì¹˜ì¸ ê²½ìš°ë§Œ, ë³€í™˜ëœ ì†Œìœ ì ì‚¬ìš©)
             if (zoneType == CardZone.ZoneType.Field)
             {
-                RemoveBackCardFromHand(owner);
+                Debug.Log($"[NetworkGameManager] 7ë‹¨ê³„ ì‹œì‘: ì†íŒ¨ì—ì„œ ë’·ë©´ ì¹´ë“œ ì œê±° ({displayOwner})");
+                RemoveBackCardFromHand(displayOwner);
+                Debug.Log($"[NetworkGameManager] 7ë‹¨ê³„ ì™„ë£Œ: ë’·ë©´ ì¹´ë“œ ì œê±° ì™„ë£Œ");
             }
+
+            Debug.Log($"[NetworkGameManager] ApplyRemoteCardPlacement ì™„ë£Œ! {originalOwner} â†’ {displayOwner} {zoneType}");
         }
 
         /// <summary>
-        /// ¼ÕÆĞ¿¡¼­ µŞ¸é Ä«µå 1Àå Á¦°Å
-        /// »ó´ë¹æÀÌ Ä«µå¸¦ ³ÂÀ» ¶§ ÇØ´çÇÏ´Â µŞ¸é Ä«µå¸¦ Á¦°Å
+        /// ì†íŒ¨ì—ì„œ ë’·ë©´ ì¹´ë“œ 1ì¥ ì œê±°
+        /// ìƒëŒ€ë°©ì´ ì¹´ë“œë¥¼ ëƒˆì„ ë•Œ í•´ë‹¹í•˜ëŠ” ë’·ë©´ ì¹´ë“œë¥¼ ì œê±°
         /// </summary>
-        /// <param name="owner">Ä«µå ¼ÒÀ¯ÀÚ</param>
+        /// <param name="owner">ì¹´ë“œ ì†Œìœ ì</param>
         private void RemoveBackCardFromHand(CardZone.OwnerType owner)
         {
             var handZone = FindHandZone(owner);
@@ -588,7 +621,7 @@ namespace Manager
                 return;
             }
 
-            // Ã¹ ¹øÂ° µŞ¸é Ä«µå Ã£¾Æ¼­ Á¦°Å
+            // ì²« ë²ˆì§¸ ë’·ë©´ ì¹´ë“œ ì°¾ì•„ì„œ ì œê±°
             for (int i = 0; i < handZone.transform.childCount; i++)
             {
                 var child = handZone.transform.GetChild(i);
@@ -606,8 +639,8 @@ namespace Manager
 
         #region Deck State Synchronization System
         /// <summary>
-        /// µ¦ »óÅÂ¸¦ ´Ù¸¥ ÇÃ·¹ÀÌ¾î¿¡°Ô µ¿±âÈ­
-        /// ¾çÂÊ µ¦ÀÇ ³²Àº Ä«µå ¼ö¸¦ ½Ç½Ã°£ µ¿±âÈ­
+        /// ë± ìƒíƒœë¥¼ ë‹¤ë¥¸ í”Œë ˆì´ì–´ì—ê²Œ ë™ê¸°í™”
+        /// ì–‘ìª½ ë±ì˜ ë‚¨ì€ ì¹´ë“œ ìˆ˜ë¥¼ ì‹¤ì‹œê°„ ë™ê¸°í™”
         /// </summary>
         public void SyncDeckState()
         {
@@ -631,10 +664,10 @@ namespace Manager
         }
 
         /// <summary>
-        /// µ¦ »óÅÂ µ¿±âÈ­ RPC ¼ö½Å Ã³¸®
-        /// »ó´ë¹æÀÇ µ¦ »óÅÂ¸¦ ¹Ş¾Æ¼­ UI ¾÷µ¥ÀÌÆ®
+        /// ë± ìƒíƒœ ë™ê¸°í™” RPC ìˆ˜ì‹  ì²˜ë¦¬
+        /// ìƒëŒ€ë°©ì˜ ë± ìƒíƒœë¥¼ ë°›ì•„ì„œ UI ì—…ë°ì´íŠ¸
         /// </summary>
-        /// <param name="jsonData">Á÷·ÄÈ­µÈ DeckSyncData</param>
+        /// <param name="jsonData">ì§ë ¬í™”ëœ DeckSyncData</param>
         [PunRPC]
         private void RPC_SyncDeckState(string jsonData)
         {
@@ -645,34 +678,34 @@ namespace Manager
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"[NetworkGameManager] µ¦ µ¿±âÈ­ ¿À·ù: {ex.Message}");
+                Debug.LogError($"[NetworkGameManager] ë± ë™ê¸°í™” ì˜¤ë¥˜: {ex.Message}");
             }
         }
         #endregion
 
         #region Network Utility Methods
         /// <summary>
-        /// NetworkCard¿ë °íÀ¯ ID »ı¼º
-        /// NetworkCard Å¬·¡½ºÀÇ ID »ı¼º ¹æ½Ä°ú ÀÏÄ¡ÇÏ´Â 8ÀÚ¸® ¾ËÆÄ´º¸Ş¸¯ ID
+        /// NetworkCardìš© ê³ ìœ  ID ìƒì„±
+        /// NetworkCard í´ë˜ìŠ¤ì˜ ID ìƒì„± ë°©ì‹ê³¼ ì¼ì¹˜í•˜ëŠ” 8ìë¦¬ ì•ŒíŒŒë‰´ë©”ë¦­ ID
         /// </summary>
-        /// <returns>8ÀÚ¸® ¾ËÆÄ´º¸Ş¸¯ °íÀ¯ ID</returns>
+        /// <returns>8ìë¦¬ ì•ŒíŒŒë‰´ë©”ë¦­ ê³ ìœ  ID</returns>
         private string GenerateNetworkCardId()
         {
             return System.Guid.NewGuid().ToString("N")[..8].ToUpper();
         }
 
         /// <summary>
-        /// ÁöÁ¤µÈ ¼ÒÀ¯ÀÚÀÇ DeckStacker Ã£±â
-        /// ÇÃ·¹ÀÌ¾î °üÁ¡¿¡¼­ÀÇ µ¦ ¸ÅÄª (³» µ¦, »ó´ë µ¦)
+        /// ì§€ì •ëœ ì†Œìœ ìì˜ DeckStacker ì°¾ê¸°
+        /// í”Œë ˆì´ì–´ ê´€ì ì—ì„œì˜ ë± ë§¤ì¹­ (ë‚´ ë±, ìƒëŒ€ ë±)
         /// </summary>
-        /// <param name="owner">µ¦ ¼ÒÀ¯ÀÚ</param>
-        /// <returns>ÇØ´çÇÏ´Â DeckStacker ¶Ç´Â null</returns>
+        /// <param name="owner">ë± ì†Œìœ ì</param>
+        /// <returns>í•´ë‹¹í•˜ëŠ” DeckStacker ë˜ëŠ” null</returns>
         private DeckStacker FindDeckStacker(CardZone.OwnerType owner)
         {
             var stackers = FindObjectsByType<DeckStacker>(FindObjectsSortMode.None);
             foreach (var stacker in stackers)
             {
-                // ÇÃ·¹ÀÌ¾î °üÁ¡¿¡¼­ "³» µ¦"Àº Player, "»ó´ë µ¦"Àº Opponent
+                // í”Œë ˆì´ì–´ ê´€ì ì—ì„œ "ë‚´ ë±"ì€ Player, "ìƒëŒ€ ë±"ì€ Opponent
                 bool isMyDeck = stacker.IsMyDeck;
                 bool isTargetPlayer = (owner == CardZone.OwnerType.Player);
 
@@ -686,27 +719,27 @@ namespace Manager
         }
 
         /// <summary>
-        /// ÁöÁ¤µÈ ¼ÒÀ¯ÀÚÀÇ ¼ÕÆĞ Zone Ã£±â
+        /// ì§€ì •ëœ ì†Œìœ ìì˜ ì†íŒ¨ Zone ì°¾ê¸°
         /// </summary>
-        /// <param name="owner">Zone ¼ÒÀ¯ÀÚ</param>
-        /// <returns>ÇØ´çÇÏ´Â ¼ÕÆĞ Zone ¶Ç´Â null</returns>
+        /// <param name="owner">Zone ì†Œìœ ì</param>
+        /// <returns>í•´ë‹¹í•˜ëŠ” ì†íŒ¨ Zone ë˜ëŠ” null</returns>
         private CardZone FindHandZone(CardZone.OwnerType owner)
         {
             return FindZone(owner, CardZone.ZoneType.Hand);
         }
 
         /// <summary>
-        /// Æ¯Á¤ ¼ÒÀ¯ÀÚ¿Í Å¸ÀÔÀÇ Zone Ã£±â
-        /// °ÔÀÓ ³» ¸ğµç ZoneÀ» °Ë»öÇÏ¿© Á¶°Ç¿¡ ¸Â´Â Zone ¹İÈ¯
+        /// íŠ¹ì • ì†Œìœ ìì™€ íƒ€ì…ì˜ Zone ì°¾ê¸°
+        /// ê²Œì„ ë‚´ ëª¨ë“  Zoneì„ ê²€ìƒ‰í•˜ì—¬ ì¡°ê±´ì— ë§ëŠ” Zone ë°˜í™˜
         /// </summary>
-        /// <param name="owner">Zone ¼ÒÀ¯ÀÚ</param>
-        /// <param name="zoneType">Zone Å¸ÀÔ</param>
-        /// <returns>ÇØ´çÇÏ´Â Zone ¶Ç´Â null</returns>
+        /// <param name="owner">Zone ì†Œìœ ì</param>
+        /// <param name="zoneType">Zone íƒ€ì…</param>
+        /// <returns>í•´ë‹¹í•˜ëŠ” Zone ë˜ëŠ” null</returns>
         private CardZone FindZone(CardZone.OwnerType owner, CardZone.ZoneType zoneType)
         {
             if (CardZone.AllZonesRoot == null)
             {
-                Debug.LogError("[NetworkGameManager] CardZone.AllZonesRoot°¡ ¼³Á¤µÇÁö ¾Ê¾Ò½À´Ï´Ù.");
+                Debug.LogError("[NetworkGameManager] CardZone.AllZonesRootê°€ ì„¤ì •ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.");
                 return null;
             }
 
@@ -725,28 +758,28 @@ namespace Manager
 
         #region Legacy Game Action Result System
         /// <summary>
-        /// °ÔÀÓ ¾×¼Ç °á°ú µ¥ÀÌÅÍ (±âÁ¸ ½Ã½ºÅÛ À¯Áö)
-        /// ¿¬»ê, °ø°İ, Á¶Ä¿ È¿°ú µîÀÇ º¹ÇÕÀûÀÎ °ÔÀÓ °á°ú¸¦ µ¿±âÈ­
+        /// ê²Œì„ ì•¡ì…˜ ê²°ê³¼ ë°ì´í„° (ê¸°ì¡´ ì‹œìŠ¤í…œ ìœ ì§€)
+        /// ì—°ì‚°, ê³µê²©, ì¡°ì»¤ íš¨ê³¼ ë“±ì˜ ë³µí•©ì ì¸ ê²Œì„ ê²°ê³¼ë¥¼ ë™ê¸°í™”
         /// </summary>
         [System.Serializable]
         public class GameActionResult
         {
-            /// <summary>¾×¼Ç Å¸ÀÔ (OPERATION, ATTACK, JOKER µî)</summary>
+            /// <summary>ì•¡ì…˜ íƒ€ì… (OPERATION, ATTACK, JOKER ë“±)</summary>
             public string actionType;
 
-            /// <summary>Ä«µå »óÅÂ º¯°æ ¸ñ·Ï</summary>
+            /// <summary>ì¹´ë“œ ìƒíƒœ ë³€ê²½ ëª©ë¡</summary>
             public List<CardStateChange> cardChanges;
 
-            /// <summary>µ¥¹ÌÁö Á¤º¸ ¸ñ·Ï</summary>
+            /// <summary>ë°ë¯¸ì§€ ì •ë³´ ëª©ë¡</summary>
             public List<DamageInfo> damages;
 
-            /// <summary>Á¦°ÅµÉ Ä«µå ID ¸ñ·Ï</summary>
+            /// <summary>ì œê±°ë  ì¹´ë“œ ID ëª©ë¡</summary>
             public List<string> removedCards;
 
             /// <summary>
-            /// GameActionResult »ı¼ºÀÚ
+            /// GameActionResult ìƒì„±ì
             /// </summary>
-            /// <param name="type">¾×¼Ç Å¸ÀÔ</param>
+            /// <param name="type">ì•¡ì…˜ íƒ€ì…</param>
             public GameActionResult(string type)
             {
                 actionType = type;
@@ -757,31 +790,31 @@ namespace Manager
         }
 
         /// <summary>
-        /// Ä«µå »óÅÂ º¯°æ µ¥ÀÌÅÍ
-        /// °³º° Ä«µåÀÇ °ª º¯°æ, Zone ÀÌµ¿ µîÀ» Ç¥Çö
+        /// ì¹´ë“œ ìƒíƒœ ë³€ê²½ ë°ì´í„°
+        /// ê°œë³„ ì¹´ë“œì˜ ê°’ ë³€ê²½, Zone ì´ë™ ë“±ì„ í‘œí˜„
         /// </summary>
         [System.Serializable]
         public class CardStateChange
         {
-            /// <summary>º¯°æµÉ Ä«µåÀÇ °íÀ¯ ID</summary>
+            /// <summary>ë³€ê²½ë  ì¹´ë“œì˜ ê³ ìœ  ID</summary>
             public string cardId;
 
-            /// <summary>»õ·Î¿î °ª (¼ıÀÚ Ä«µåÀÇ °æ¿ì)</summary>
+            /// <summary>ìƒˆë¡œìš´ ê°’ (ìˆ«ì ì¹´ë“œì˜ ê²½ìš°)</summary>
             public string newValue;
 
-            /// <summary>ÀÌµ¿ÇÒ Zone (Zone º¯°æ½Ã)</summary>
+            /// <summary>ì´ë™í•  Zone (Zone ë³€ê²½ì‹œ)</summary>
             public string newZone;
 
-            /// <summary>¿¬»êÀ¸·Î ¼öÁ¤µÇ¾ú´ÂÁö ¿©ºÎ</summary>
+            /// <summary>ì—°ì‚°ìœ¼ë¡œ ìˆ˜ì •ë˜ì—ˆëŠ”ì§€ ì—¬ë¶€</summary>
             public bool wasModified;
 
             /// <summary>
-            /// CardStateChange »ı¼ºÀÚ
+            /// CardStateChange ìƒì„±ì
             /// </summary>
-            /// <param name="id">Ä«µå °íÀ¯ ID</param>
-            /// <param name="value">»õ·Î¿î °ª</param>
-            /// <param name="modified">¼öÁ¤ ¿©ºÎ</param>
-            /// <param name="zone">»õ·Î¿î Zone</param>
+            /// <param name="id">ì¹´ë“œ ê³ ìœ  ID</param>
+            /// <param name="value">ìƒˆë¡œìš´ ê°’</param>
+            /// <param name="modified">ìˆ˜ì • ì—¬ë¶€</param>
+            /// <param name="zone">ìƒˆë¡œìš´ Zone</param>
             public CardStateChange(string id, string value, bool modified = false, string zone = "")
             {
                 cardId = id;
@@ -792,23 +825,23 @@ namespace Manager
         }
 
         /// <summary>
-        /// µ¥¹ÌÁö Á¤º¸ µ¥ÀÌÅÍ
-        /// ÇÃ·¹ÀÌ¾î¿¡°Ô °¡ÇØÁö´Â µ¥¹ÌÁö¸¦ Ç¥Çö
+        /// ë°ë¯¸ì§€ ì •ë³´ ë°ì´í„°
+        /// í”Œë ˆì´ì–´ì—ê²Œ ê°€í•´ì§€ëŠ” ë°ë¯¸ì§€ë¥¼ í‘œí˜„
         /// </summary>
         [System.Serializable]
         public class DamageInfo
         {
-            /// <summary>µ¥¹ÌÁö ¾ç</summary>
+            /// <summary>ë°ë¯¸ì§€ ì–‘</summary>
             public int damage;
 
-            /// <summary>´ë»ó ÇÃ·¹ÀÌ¾î (0=Player, 1=Opponent)</summary>
+            /// <summary>ëŒ€ìƒ í”Œë ˆì´ì–´ (0=Player, 1=Opponent)</summary>
             public int targetPlayer;
 
             /// <summary>
-            /// DamageInfo »ı¼ºÀÚ
+            /// DamageInfo ìƒì„±ì
             /// </summary>
-            /// <param name="dmg">µ¥¹ÌÁö ¾ç</param>
-            /// <param name="target">´ë»ó ÇÃ·¹ÀÌ¾î</param>
+            /// <param name="dmg">ë°ë¯¸ì§€ ì–‘</param>
+            /// <param name="target">ëŒ€ìƒ í”Œë ˆì´ì–´</param>
             public DamageInfo(int dmg, CardZone.OwnerType target)
             {
                 damage = dmg;
@@ -817,27 +850,27 @@ namespace Manager
         }
 
         /// <summary>
-        /// ¿¬»êÀÚ »ç¿ë °á°ú µ¿±âÈ­ (±âÁ¸ ½Ã½ºÅÛ)
-        /// ¿¬»ê °á°ú¸¦ ¸ğµç Å¬¶óÀÌ¾ğÆ®¿¡ µ¿±âÈ­
+        /// ì—°ì‚°ì ì‚¬ìš© ê²°ê³¼ ë™ê¸°í™” (ê¸°ì¡´ ì‹œìŠ¤í…œ)
+        /// ì—°ì‚° ê²°ê³¼ë¥¼ ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ì— ë™ê¸°í™”
         /// </summary>
-        /// <param name="operatorCard">»ç¿ëµÈ ¿¬»êÀÚ Ä«µå</param>
-        /// <param name="firstCard">Ã¹ ¹øÂ° ÇÇ¿¬»êÀÚ Ä«µå</param>
-        /// <param name="secondCard">µÎ ¹øÂ° ÇÇ¿¬»êÀÚ Ä«µå</param>
-        /// <param name="result">¿¬»ê °á°ú</param>
-        /// <param name="operatorType">¿¬»êÀÚ Å¸ÀÔ</param>
+        /// <param name="operatorCard">ì‚¬ìš©ëœ ì—°ì‚°ì ì¹´ë“œ</param>
+        /// <param name="firstCard">ì²« ë²ˆì§¸ í”¼ì—°ì‚°ì ì¹´ë“œ</param>
+        /// <param name="secondCard">ë‘ ë²ˆì§¸ í”¼ì—°ì‚°ì ì¹´ë“œ</param>
+        /// <param name="result">ì—°ì‚° ê²°ê³¼</param>
+        /// <param name="operatorType">ì—°ì‚°ì íƒ€ì…</param>
         public void SyncOperationResult(Card operatorCard, Card firstCard, Card secondCard, float result, OperatorType operatorType)
         {
             var actionResult = new GameActionResult("OPERATION");
 
-            // ¿¬»êÀÚ Ä«µå´Â Ç×»ó Á¦°Å
+            // ì—°ì‚°ì ì¹´ë“œëŠ” í•­ìƒ ì œê±°
             actionResult.removedCards.Add(GetCardNetworkId(operatorCard));
 
-            // ¿¬»êÀÚ Å¸ÀÔ¿¡ µû¸¥ °á°ú Ã³¸®
+            // ì—°ì‚°ì íƒ€ì…ì— ë”°ë¥¸ ê²°ê³¼ ì²˜ë¦¬
             switch (operatorType)
             {
                 case OperatorType.Plus:
                 case OperatorType.Multiply:
-                    // Ã¹ ¹øÂ° Ä«µåÀÇ °ªÀ» °á°ú·Î º¯°æ
+                    // ì²« ë²ˆì§¸ ì¹´ë“œì˜ ê°’ì„ ê²°ê³¼ë¡œ ë³€ê²½
                     actionResult.cardChanges.Add(new CardStateChange(
                         GetCardNetworkId(firstCard),
                         result.ToString(),
@@ -847,22 +880,22 @@ namespace Manager
 
                 case OperatorType.Minus:
                     if (result > 0)
-                        // °á°ú°¡ ¾ç¼ö¸é Ã¹ ¹øÂ° Ä«µå °ª º¯°æ
+                        // ê²°ê³¼ê°€ ì–‘ìˆ˜ë©´ ì²« ë²ˆì§¸ ì¹´ë“œ ê°’ ë³€ê²½
                         actionResult.cardChanges.Add(new CardStateChange(GetCardNetworkId(firstCard), result.ToString(), true));
                     else
-                        // °á°ú°¡ 0 ÀÌÇÏ¸é Ã¹ ¹øÂ° Ä«µå Á¦°Å
+                        // ê²°ê³¼ê°€ 0 ì´í•˜ë©´ ì²« ë²ˆì§¸ ì¹´ë“œ ì œê±°
                         actionResult.removedCards.Add(GetCardNetworkId(firstCard));
                     break;
 
                 case OperatorType.Divide:
                     if (result > 0)
-                        // ¸òÀÌ ÀÖÀ¸¸é Ã¹ ¹øÂ° Ä«µå °ª º¯°æ
+                        // ëª«ì´ ìˆìœ¼ë©´ ì²« ë²ˆì§¸ ì¹´ë“œ ê°’ ë³€ê²½
                         actionResult.cardChanges.Add(new CardStateChange(GetCardNetworkId(firstCard), result.ToString(), true));
                     else
-                        // ¸òÀÌ 0ÀÌ¸é Ã¹ ¹øÂ° Ä«µå Á¦°Å
+                        // ëª«ì´ 0ì´ë©´ ì²« ë²ˆì§¸ ì¹´ë“œ ì œê±°
                         actionResult.removedCards.Add(GetCardNetworkId(firstCard));
 
-                    // TODO: ³ª¸ÓÁö Ä«µå »ı¼º ·ÎÁ÷ ÇÊ¿ä
+                    // TODO: ë‚˜ë¨¸ì§€ ì¹´ë“œ ìƒì„± ë¡œì§ í•„ìš”
                     break;
             }
 
@@ -870,39 +903,39 @@ namespace Manager
         }
 
         /// <summary>
-        /// °ø°İ °á°ú µ¿±âÈ­ (±âÁ¸ ½Ã½ºÅÛ)
-        /// °ø°İ °á°ú¸¦ ¸ğµç Å¬¶óÀÌ¾ğÆ®¿¡ µ¿±âÈ­
+        /// ê³µê²© ê²°ê³¼ ë™ê¸°í™” (ê¸°ì¡´ ì‹œìŠ¤í…œ)
+        /// ê³µê²© ê²°ê³¼ë¥¼ ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ì— ë™ê¸°í™”
         /// </summary>
-        /// <param name="attacker">°ø°İÀÚ Ä«µå</param>
-        /// <param name="defender">¼öºñÀÚ Ä«µå (nullÀÌ¸é ºó ÇÊµå °ø°İ)</param>
-        /// <param name="attackValue">°ø°İ °ª</param>
-        /// <param name="defenseValue">¹æ¾î °ª</param>
+        /// <param name="attacker">ê³µê²©ì ì¹´ë“œ</param>
+        /// <param name="defender">ìˆ˜ë¹„ì ì¹´ë“œ (nullì´ë©´ ë¹ˆ í•„ë“œ ê³µê²©)</param>
+        /// <param name="attackValue">ê³µê²© ê°’</param>
+        /// <param name="defenseValue">ë°©ì–´ ê°’</param>
         public void SyncAttackResult(Card attacker, Card defender, float attackValue, float defenseValue)
         {
             var actionResult = new GameActionResult("ATTACK");
             float result = attackValue - defenseValue;
 
-            if (defender == null) // ºó ÇÊµå °ø°İ
+            if (defender == null) // ë¹ˆ í•„ë“œ ê³µê²©
             {
                 int damage = DamageCalculator.CalculateEmptyFieldDamage(attackValue);
                 actionResult.damages.Add(new DamageInfo(damage, CardZone.OwnerType.Opponent));
-                actionResult.cardChanges.Add(new CardStateChange(GetCardNetworkId(attacker), "", true)); // ¼öÁ¤µÊ Ç¥½Ã
+                actionResult.cardChanges.Add(new CardStateChange(GetCardNetworkId(attacker), "", true)); // ìˆ˜ì •ë¨ í‘œì‹œ
             }
-            else // ÀÏ¹İ °ø°İ
+            else // ì¼ë°˜ ê³µê²©
             {
-                if (result > 0) // °ø°İÀÚ ½Â¸®
+                if (result > 0) // ê³µê²©ì ìŠ¹ë¦¬
                 {
                     int damage = DamageCalculator.CalculateAttackDamage(attackValue, defenseValue);
                     actionResult.damages.Add(new DamageInfo(damage, CardZone.OwnerType.Opponent));
                     actionResult.cardChanges.Add(new CardStateChange(GetCardNetworkId(attacker), result.ToString(), true));
                     actionResult.removedCards.Add(GetCardNetworkId(defender));
                 }
-                else if (result < 0) // ¼öºñÀÚ ½Â¸®
+                else if (result < 0) // ìˆ˜ë¹„ì ìŠ¹ë¦¬
                 {
                     actionResult.cardChanges.Add(new CardStateChange(GetCardNetworkId(defender), Mathf.Abs(result).ToString()));
                     actionResult.removedCards.Add(GetCardNetworkId(attacker));
                 }
-                else // ¹«½ÂºÎ
+                else // ë¬´ìŠ¹ë¶€
                 {
                     actionResult.removedCards.Add(GetCardNetworkId(attacker));
                     actionResult.removedCards.Add(GetCardNetworkId(defender));
@@ -913,23 +946,23 @@ namespace Manager
         }
 
         /// <summary>
-        /// Á¶Ä¿ È¿°ú °á°ú µ¿±âÈ­ (±âÁ¸ ½Ã½ºÅÛ)
-        /// Á¶Ä¿ Ä«µå »ç¿ë °á°ú¸¦ ¸ğµç Å¬¶óÀÌ¾ğÆ®¿¡ µ¿±âÈ­
+        /// ì¡°ì»¤ íš¨ê³¼ ê²°ê³¼ ë™ê¸°í™” (ê¸°ì¡´ ì‹œìŠ¤í…œ)
+        /// ì¡°ì»¤ ì¹´ë“œ ì‚¬ìš© ê²°ê³¼ë¥¼ ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ì— ë™ê¸°í™”
         /// </summary>
-        /// <param name="jokerCard">»ç¿ëµÈ Á¶Ä¿ Ä«µå</param>
-        /// <param name="effectType">Á¶Ä¿ È¿°ú Å¸ÀÔ</param>
-        /// <param name="targetCards">´ë»ó Ä«µåµé (È¿°ú¿¡ µû¶ó »ç¿ë)</param>
+        /// <param name="jokerCard">ì‚¬ìš©ëœ ì¡°ì»¤ ì¹´ë“œ</param>
+        /// <param name="effectType">ì¡°ì»¤ íš¨ê³¼ íƒ€ì…</param>
+        /// <param name="targetCards">ëŒ€ìƒ ì¹´ë“œë“¤ (íš¨ê³¼ì— ë”°ë¼ ì‚¬ìš©)</param>
         public void SyncJokerResult(Card jokerCard, JokerEffectType effectType, List<Card> targetCards = null)
         {
             var actionResult = new GameActionResult("JOKER");
 
-            // Á¶Ä¿ Ä«µå´Â Ç×»ó Á¦°Å
+            // ì¡°ì»¤ ì¹´ë“œëŠ” í•­ìƒ ì œê±°
             actionResult.removedCards.Add(GetCardNetworkId(jokerCard));
 
             switch (effectType)
             {
                 case JokerEffectType.Draw:
-                    // Draw´Â °¢ÀÚ ·ÎÄÃ¿¡¼­ Ã³¸® (µ¦ÀÌ ´Ù¸£¹Ç·Î)
+                    // DrawëŠ” ê°ì ë¡œì»¬ì—ì„œ ì²˜ë¦¬ (ë±ì´ ë‹¤ë¥´ë¯€ë¡œ)
                     break;
 
                 case JokerEffectType.Delete:
@@ -953,9 +986,9 @@ namespace Manager
         }
 
         /// <summary>
-        /// °ÔÀÓ ¾×¼Ç °á°ú¸¦ RPC·Î Àü¼Û (±âÁ¸ ½Ã½ºÅÛ)
+        /// ê²Œì„ ì•¡ì…˜ ê²°ê³¼ë¥¼ RPCë¡œ ì „ì†¡ (ê¸°ì¡´ ì‹œìŠ¤í…œ)
         /// </summary>
-        /// <param name="result">°ÔÀÓ ¾×¼Ç °á°ú</param>
+        /// <param name="result">ê²Œì„ ì•¡ì…˜ ê²°ê³¼</param>
         private void SyncGameActionResult(GameActionResult result)
         {
             if (!CanPerformNetworkAction()) return;
@@ -965,9 +998,9 @@ namespace Manager
         }
 
         /// <summary>
-        /// °ÔÀÓ ¾×¼Ç °á°ú ¼ö½Å ¹× Àû¿ë (±âÁ¸ ½Ã½ºÅÛ)
+        /// ê²Œì„ ì•¡ì…˜ ê²°ê³¼ ìˆ˜ì‹  ë° ì ìš© (ê¸°ì¡´ ì‹œìŠ¤í…œ)
         /// </summary>
-        /// <param name="jsonData">Á÷·ÄÈ­µÈ °ÔÀÓ ¾×¼Ç °á°ú</param>
+        /// <param name="jsonData">ì§ë ¬í™”ëœ ê²Œì„ ì•¡ì…˜ ê²°ê³¼</param>
         [PunRPC]
         private void RPC_ApplyGameActionResult(string jsonData)
         {
@@ -978,35 +1011,35 @@ namespace Manager
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"[NetworkGameManager] °ÔÀÓ ¾×¼Ç °á°ú Àû¿ë ¿À·ù: {ex.Message}");
+                Debug.LogError($"[NetworkGameManager] ê²Œì„ ì•¡ì…˜ ê²°ê³¼ ì ìš© ì˜¤ë¥˜: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// °ÔÀÓ ¾×¼Ç °á°ú¸¦ ½ÇÁ¦ °ÔÀÓ »óÅÂ¿¡ Àû¿ë (±âÁ¸ ½Ã½ºÅÛ)
+        /// ê²Œì„ ì•¡ì…˜ ê²°ê³¼ë¥¼ ì‹¤ì œ ê²Œì„ ìƒíƒœì— ì ìš© (ê¸°ì¡´ ì‹œìŠ¤í…œ)
         /// </summary>
-        /// <param name="result">Àû¿ëÇÒ °ÔÀÓ ¾×¼Ç °á°ú</param>
+        /// <param name="result">ì ìš©í•  ê²Œì„ ì•¡ì…˜ ê²°ê³¼</param>
         private void ApplyGameActionResult(GameActionResult result)
         {
-            // 1´Ü°è: Ä«µå »óÅÂ º¯°æ Àû¿ë
+            // 1ë‹¨ê³„: ì¹´ë“œ ìƒíƒœ ë³€ê²½ ì ìš©
             foreach (var change in result.cardChanges)
             {
                 ApplyCardStateChange(change);
             }
 
-            // 2´Ü°è: Ä«µå Á¦°Å Àû¿ë
+            // 2ë‹¨ê³„: ì¹´ë“œ ì œê±° ì ìš©
             foreach (var cardId in result.removedCards)
             {
                 RemoveCardById(cardId);
             }
 
-            // 3´Ü°è: µ¥¹ÌÁö Àû¿ë
+            // 3ë‹¨ê³„: ë°ë¯¸ì§€ ì ìš©
             foreach (var damage in result.damages)
             {
                 ApplyDamageToPlayer(damage);
             }
 
-            // 4´Ü°è: Æ¯º° Ã³¸® (¾×¼Ç Å¸ÀÔº°)
+            // 4ë‹¨ê³„: íŠ¹ë³„ ì²˜ë¦¬ (ì•¡ì…˜ íƒ€ì…ë³„)
             switch (result.actionType)
             {
                 case "JOKER":
@@ -1016,9 +1049,9 @@ namespace Manager
         }
 
         /// <summary>
-        /// Ä«µå »óÅÂ º¯°æ Àû¿ë (±âÁ¸ ½Ã½ºÅÛ)
+        /// ì¹´ë“œ ìƒíƒœ ë³€ê²½ ì ìš© (ê¸°ì¡´ ì‹œìŠ¤í…œ)
         /// </summary>
-        /// <param name="change">Àû¿ëÇÒ Ä«µå »óÅÂ º¯°æ</param>
+        /// <param name="change">ì ìš©í•  ì¹´ë“œ ìƒíƒœ ë³€ê²½</param>
         private void ApplyCardStateChange(CardStateChange change)
         {
             Card card = FindCardByNetworkId(change.cardId);
@@ -1027,7 +1060,7 @@ namespace Manager
                 return;
             }
 
-            // °ª º¯°æ
+            // ê°’ ë³€ê²½
             if (!string.IsNullOrEmpty(change.newValue))
             {
                 var cardText = card.GetComponentInChildren<CardText>();
@@ -1037,13 +1070,13 @@ namespace Manager
                 }
             }
 
-            // ¼öÁ¤µÊ Ç¥½Ã
+            // ìˆ˜ì •ë¨ í‘œì‹œ
             if (change.wasModified)
             {
                 card.SetWasModifiedThisTurn(true);
             }
 
-            // Zone ÀÌµ¿
+            // Zone ì´ë™
             if (!string.IsNullOrEmpty(change.newZone))
             {
                 CardZone targetZone = FindZoneByReference(change.newZone);
@@ -1055,9 +1088,9 @@ namespace Manager
         }
 
         /// <summary>
-        /// ID·Î Ä«µå Á¦°Å (±âÁ¸ ½Ã½ºÅÛ)
+        /// IDë¡œ ì¹´ë“œ ì œê±° (ê¸°ì¡´ ì‹œìŠ¤í…œ)
         /// </summary>
-        /// <param name="cardId">Á¦°ÅÇÒ Ä«µåÀÇ ³×Æ®¿öÅ© ID</param>
+        /// <param name="cardId">ì œê±°í•  ì¹´ë“œì˜ ë„¤íŠ¸ì›Œí¬ ID</param>
         private void RemoveCardById(string cardId)
         {
             Card card = FindCardByNetworkId(cardId);
@@ -1075,9 +1108,9 @@ namespace Manager
         }
 
         /// <summary>
-        /// ÇÃ·¹ÀÌ¾î¿¡°Ô µ¥¹ÌÁö Àû¿ë (±âÁ¸ ½Ã½ºÅÛ)
+        /// í”Œë ˆì´ì–´ì—ê²Œ ë°ë¯¸ì§€ ì ìš© (ê¸°ì¡´ ì‹œìŠ¤í…œ)
         /// </summary>
-        /// <param name="damageInfo">Àû¿ëÇÒ µ¥¹ÌÁö Á¤º¸</param>
+        /// <param name="damageInfo">ì ìš©í•  ë°ë¯¸ì§€ ì •ë³´</param>
         private void ApplyDamageToPlayer(DamageInfo damageInfo)
         {
             CardZone.OwnerType target = (CardZone.OwnerType)damageInfo.targetPlayer;
@@ -1089,16 +1122,16 @@ namespace Manager
         }
 
         /// <summary>
-        /// Á¶Ä¿ Æ¯º° È¿°ú Ã³¸® (±âÁ¸ ½Ã½ºÅÛ)
+        /// ì¡°ì»¤ íŠ¹ë³„ íš¨ê³¼ ì²˜ë¦¬ (ê¸°ì¡´ ì‹œìŠ¤í…œ)
         /// </summary>
-        /// <param name="result">Á¶Ä¿ ¾×¼Ç °á°ú</param>
+        /// <param name="result">ì¡°ì»¤ ì•¡ì…˜ ê²°ê³¼</param>
         private void HandleJokerSpecialEffects(GameActionResult result)
         {
-            // Draw È¿°ú´Â °¢ÀÚ ·ÎÄÃ¿¡¼­ Ã³¸®ÇØ¾ß ÇÔ (µ¦ÀÌ ´Ù¸£¹Ç·Î)
-            // ¿©±â¼­´Â Draw ½ÅÈ£¸¸ ¹Ş¾Æ¼­ ·ÎÄÃ µå·Î¿ì ½ÇÇà
+            // Draw íš¨ê³¼ëŠ” ê°ì ë¡œì»¬ì—ì„œ ì²˜ë¦¬í•´ì•¼ í•¨ (ë±ì´ ë‹¤ë¥´ë¯€ë¡œ)
+            // ì—¬ê¸°ì„œëŠ” Draw ì‹ í˜¸ë§Œ ë°›ì•„ì„œ ë¡œì»¬ ë“œë¡œìš° ì‹¤í–‰
             if (result.actionType == "JOKER" && result.cardChanges.Count == 0 && result.removedCards.Count == 1)
             {
-                // Draw Á¶Ä¿·Î ÃßÁ¤
+                // Draw ì¡°ì»¤ë¡œ ì¶”ì •
                 if (InGameManager.Instance != null && TurnManager.Instance != null)
                 {
                     InGameManager.Instance.DrawCardsToHand(2, TurnManager.Instance.LocalPlayerRole);
@@ -1107,10 +1140,10 @@ namespace Manager
         }
 
         /// <summary>
-        /// Ä«µåÀÇ ³×Æ®¿öÅ© ID °¡Á®¿À±â (±âÁ¸ ½Ã½ºÅÛ È£È¯)
+        /// ì¹´ë“œì˜ ë„¤íŠ¸ì›Œí¬ ID ê°€ì ¸ì˜¤ê¸° (ê¸°ì¡´ ì‹œìŠ¤í…œ í˜¸í™˜)
         /// </summary>
-        /// <param name="card">ID¸¦ °¡Á®¿Ã Ä«µå</param>
-        /// <returns>Ä«µåÀÇ ³×Æ®¿öÅ© ID</returns>
+        /// <param name="card">IDë¥¼ ê°€ì ¸ì˜¬ ì¹´ë“œ</param>
+        /// <returns>ì¹´ë“œì˜ ë„¤íŠ¸ì›Œí¬ ID</returns>
         private string GetCardNetworkId(Card card)
         {
             var networkCard = card.GetComponent<NetworkCard>();
@@ -1118,20 +1151,20 @@ namespace Manager
         }
 
         /// <summary>
-        /// Zone ÂüÁ¶ ¹®ÀÚ¿­ »ı¼º (±âÁ¸ ½Ã½ºÅÛ È£È¯)
+        /// Zone ì°¸ì¡° ë¬¸ìì—´ ìƒì„± (ê¸°ì¡´ ì‹œìŠ¤í…œ í˜¸í™˜)
         /// </summary>
-        /// <param name="zone">ÂüÁ¶ÇÒ Zone</param>
-        /// <returns>Zone ÂüÁ¶ ¹®ÀÚ¿­</returns>
+        /// <param name="zone">ì°¸ì¡°í•  Zone</param>
+        /// <returns>Zone ì°¸ì¡° ë¬¸ìì—´</returns>
         private string GetZoneReference(CardZone zone)
         {
             return $"{zone.Owner}_{zone.Zone}";
         }
 
         /// <summary>
-        /// ³×Æ®¿öÅ© ID·Î Ä«µå Ã£±â (±âÁ¸ ½Ã½ºÅÛ È£È¯)
+        /// ë„¤íŠ¸ì›Œí¬ IDë¡œ ì¹´ë“œ ì°¾ê¸° (ê¸°ì¡´ ì‹œìŠ¤í…œ í˜¸í™˜)
         /// </summary>
-        /// <param name="cardId">Ã£À» Ä«µåÀÇ ³×Æ®¿öÅ© ID</param>
-        /// <returns>ÇØ´çÇÏ´Â Ä«µå ¶Ç´Â null</returns>
+        /// <param name="cardId">ì°¾ì„ ì¹´ë“œì˜ ë„¤íŠ¸ì›Œí¬ ID</param>
+        /// <returns>í•´ë‹¹í•˜ëŠ” ì¹´ë“œ ë˜ëŠ” null</returns>
         private Card FindCardByNetworkId(string cardId)
         {
             var networkCards = FindObjectsByType<NetworkCard>(FindObjectsSortMode.None);
@@ -1146,10 +1179,10 @@ namespace Manager
         }
 
         /// <summary>
-        /// Zone ÂüÁ¶ ¹®ÀÚ¿­·Î Zone Ã£±â (±âÁ¸ ½Ã½ºÅÛ È£È¯)
+        /// Zone ì°¸ì¡° ë¬¸ìì—´ë¡œ Zone ì°¾ê¸° (ê¸°ì¡´ ì‹œìŠ¤í…œ í˜¸í™˜)
         /// </summary>
-        /// <param name="zoneRef">Zone ÂüÁ¶ ¹®ÀÚ¿­</param>
-        /// <returns>ÇØ´çÇÏ´Â Zone ¶Ç´Â null</returns>
+        /// <param name="zoneRef">Zone ì°¸ì¡° ë¬¸ìì—´</param>
+        /// <returns>í•´ë‹¹í•˜ëŠ” Zone ë˜ëŠ” null</returns>
         private CardZone FindZoneByReference(string zoneRef)
         {
             string[] parts = zoneRef.Split('_');
@@ -1164,7 +1197,7 @@ namespace Manager
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"[NetworkGameManager] Zone ÂüÁ¶ ÆÄ½Ì ¿À·ù: {zoneRef}, {ex.Message}");
+                Debug.LogError($"[NetworkGameManager] Zone ì°¸ì¡° íŒŒì‹± ì˜¤ë¥˜: {zoneRef}, {ex.Message}");
                 return null;
             }
         }

@@ -5,10 +5,10 @@ using UnityEngine;
 namespace Objects
 {
     /// <summary>
-    /// Ä«µå°¡ ¹èÄ¡µÇ´Â Zone (¼ÕÆĞ, ÇÊµå µî)À» °ü¸®ÇÏ´Â ÄÄÆ÷³ÍÆ®
-    /// - Ä«µå ¸®½ºÆ® °ü¸®
-    /// - ¹èÄ¡´Â CardLayoutHelper¿¡ À§ÀÓ
-    /// - Ä«µåÀÇ Sprite ¹× Material ¼³Á¤ Æ÷ÇÔ
+    /// ì¹´ë“œê°€ ë°°ì¹˜ë˜ëŠ” Zone (ì†íŒ¨, í•„ë“œ ë“±)ì„ ê´€ë¦¬í•˜ëŠ” ì»´í¬ë„ŒíŠ¸
+    /// - ì¹´ë“œ ë¦¬ìŠ¤íŠ¸ ê´€ë¦¬
+    /// - ë°°ì¹˜ëŠ” CardLayoutHelperì— ìœ„ì„
+    /// - ì¹´ë“œì˜ Sprite ë° Material ì„¤ì • í¬í•¨
     /// </summary>
     public class CardZone : MonoBehaviour
     {
@@ -37,7 +37,7 @@ namespace Objects
         }
 
         /// <summary>
-        /// ÇöÀç Zone¿¡ ÀÖ´Â Ä«µå °³¼ö ¹İÈ¯
+        /// í˜„ì¬ Zoneì— ìˆëŠ” ì¹´ë“œ ê°œìˆ˜ ë°˜í™˜
         /// </summary>
         public int GetCardCount()
         {
@@ -45,7 +45,7 @@ namespace Objects
         }
 
         /// <summary>
-        /// ZoneÀÌ °¡µæ Âù »óÅÂÀÎÁö È®ÀÎ (¼ÕÆĞ¿ë)
+        /// Zoneì´ ê°€ë“ ì°¬ ìƒíƒœì¸ì§€ í™•ì¸ (ì†íŒ¨ìš©)
         /// </summary>
         public bool IsHandFull()
         {
@@ -53,20 +53,20 @@ namespace Objects
         }
 
         /// <summary>
-        /// Ä«µå Ãß°¡ °¡´É ¿©ºÎ È®ÀÎ
+        /// ì¹´ë“œ ì¶”ê°€ ê°€ëŠ¥ ì—¬ë¶€ í™•ì¸
         /// </summary>
         public bool CanAddCard()
         {
             if (zoneType == ZoneType.Hand)
                 return cards.Count < 10;
             else if (zoneType == ZoneType.Field)
-                return cards.Count < 5;  // ÇÊµå 5Àå Á¦ÇÑ Ãß°¡
+                return cards.Count < 5;  // í•„ë“œ 5ì¥ ì œí•œ ì¶”ê°€
 
             return true;
         }
 
         /// <summary>
-        /// ÇÊµå°¡ °¡µæ Âù »óÅÂÀÎÁö È®ÀÎ
+        /// í•„ë“œê°€ ê°€ë“ ì°¬ ìƒíƒœì¸ì§€ í™•ì¸
         /// </summary>
         public bool IsFieldFull()
         {
@@ -74,79 +74,84 @@ namespace Objects
         }
 
         /// <summary>
-        /// Ä«µå¸¦ Zone¿¡ Ãß°¡
-        /// NetworkCard ±â¹İÀÇ ³×Æ®¿öÅ© µ¿±âÈ­ ¹× À§Ä¡ ÃßÀû Æ÷ÇÔ
-        /// ÀÚµ¿ ³×Æ®¿öÅ© µ¿±âÈ­´Â Æ¯Á¤ Á¶°Ç¿¡¼­¸¸ ¼öÇà
+        /// ì¹´ë“œë¥¼ Zoneì— ì¶”ê°€
+        /// NetworkCard ê¸°ë°˜ì˜ ë„¤íŠ¸ì›Œí¬ ë™ê¸°í™” ë° ìœ„ì¹˜ ì¶”ì  í¬í•¨
+        /// ìë™ ë„¤íŠ¸ì›Œí¬ ë™ê¸°í™”ëŠ” íŠ¹ì • ì¡°ê±´ì—ì„œë§Œ ìˆ˜í–‰
         /// </summary>
-        /// <param name="card">Ãß°¡ÇÒ Ä«µåÀÇ Transform</param>
+        /// <param name="card">ì¶”ê°€í•  ì¹´ë“œì˜ Transform</param>
         public void AddCard(Transform card)
         {
-            // ±âº» Á¦ÇÑ Ã¼Å©µé
+            // ê¸°ë³¸ ì œí•œ ì²´í¬ë“¤
             if (zoneType == ZoneType.Hand && cards.Count >= 10)
             {
-                Debug.LogWarning($"[CardZone] ¼ÕÆĞ°¡ °¡µæÂü (10Àå): {ownerType}");
+                Debug.LogWarning($"[CardZone] ì†íŒ¨ê°€ ê°€ë“ì°¸ (10ì¥): {ownerType}");
                 return;
             }
 
             if (zoneType == ZoneType.Field && cards.Count >= 5)
             {
-                Debug.LogWarning($"[CardZone] ÇÊµå°¡ °¡µæÇÔ (5Àå): {ownerType}");
+                Debug.LogWarning($"[CardZone] í•„ë“œê°€ ê°€ë“í•¨ (5ì¥): {ownerType}");
                 return;
             }
 
             if (cards.Contains(card))
             {
-                Debug.LogWarning($"[CardZone] Ä«µå°¡ ÀÌ¹Ì Zone¿¡ Á¸ÀçÇÕ´Ï´Ù: {card.name}");
+                Debug.LogWarning($"[CardZone] ì¹´ë“œê°€ ì´ë¯¸ Zoneì— ì¡´ì¬í•©ë‹ˆë‹¤: {card.name}");
                 return;
             }
 
-            // Ä«µå ÄÄÆ÷³ÍÆ® °ËÁõ
+            // ì¹´ë“œ ì»´í¬ë„ŒíŠ¸ ê²€ì¦
             Card cardComponent = card.GetComponent<Card>();
             if (cardComponent == null)
             {
-                Debug.LogError($"[CardZone] Card ÄÄÆ÷³ÍÆ®¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù: {card.name}");
+                //Debug.LogError($"[CardZone] Card ì»´í¬ë„ŒíŠ¸ë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤: {card.name}");
                 return;
             }
 
-            // ¿¬»êÀÚ Ä«µå´Â ÇÊµå¿¡ ¹èÄ¡ ºÒ°¡
+            // ì—°ì‚°ì ì¹´ë“œëŠ” í•„ë“œì— ë°°ì¹˜ ë¶ˆê°€
             if (zoneType == ZoneType.Field && cardComponent.CardType == CardType.Operator)
             {
-                Debug.LogWarning($"[CardZone] ¿¬»êÀÚ Ä«µå´Â ÇÊµå¿¡ ¹èÄ¡ÇÒ ¼ö ¾ø½À´Ï´Ù: {card.name}");
+                Debug.LogWarning($"[CardZone] ì—°ì‚°ì ì¹´ë“œëŠ” í•„ë“œì— ë°°ì¹˜í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤: {card.name}");
                 return;
             }
 
-            // NetworkCard ÄÄÆ÷³ÍÆ® È®ÀÎ ¹× Ãß°¡
+            // NetworkCard ì»´í¬ë„ŒíŠ¸ í™•ì¸ ë° ì¶”ê°€
             NetworkCard networkCard = card.GetComponent<NetworkCard>();
             if (networkCard == null)
             {
-                Debug.Log($"[CardZone] NetworkCard ÄÄÆ÷³ÍÆ®°¡ ¾ø¾î ÀÚµ¿ Ãß°¡ÇÕ´Ï´Ù: {card.name}");
+                Debug.Log($"[CardZone] NetworkCard ì»´í¬ë„ŒíŠ¸ê°€ ì—†ì–´ ìë™ ì¶”ê°€í•©ë‹ˆë‹¤: {card.name}");
                 networkCard = card.gameObject.AddComponent<NetworkCard>();
             }
 
-            // ³×Æ®¿öÅ© µ¿±âÈ­ ÇÊ¿ä¼º ÆÇ´Ü
-            // Á¶°Ç: ÇÊµå ¹èÄ¡ + ÇÃ·¹ÀÌ¾î ¼ÒÀ¯ + ·ÎÄÃ ÇÃ·¹ÀÌ¾î ÅÏ + ³×Æ®¿öÅ© ¸Å´ÏÀú Á¸Àç
+            // ë„¤íŠ¸ì›Œí¬ ë™ê¸°í™” í•„ìš”ì„± íŒë‹¨ (ìˆ˜ì •ë¨)
+            // ì¡°ê±´: í•„ë“œ ë°°ì¹˜ + í”Œë ˆì´ì–´ ì†Œìœ  + ë„¤íŠ¸ì›Œí¬ ë§¤ë‹ˆì € ì¡´ì¬
             bool shouldSyncToNetwork = (zoneType == ZoneType.Field &&
                                        ownerType == OwnerType.Player &&
                                        NetworkGameManager.Instance != null &&
-                                       TurnManager.Instance != null &&
-                                       TurnManager.Instance.IsLocalPlayerTurn &&
                                        networkCard.CanPerformAction(NetworkActionType.PlaceToField));
 
-            // ³×Æ®¿öÅ© µ¿±âÈ­ Àü¼Û (Ä«µå ½ÇÁ¦ Ãß°¡ Àü¿¡ ½ÇÇà)
+            Debug.Log($"[CardZone] ë™ê¸°í™” ì¡°ê±´ ì²´í¬: zoneType={zoneType}, ownerType={ownerType}, NetworkManager={NetworkGameManager.Instance != null}, shouldSync={shouldSyncToNetwork}");
+
+            // ë„¤íŠ¸ì›Œí¬ ë™ê¸°í™” ì „ì†¡ (ì¹´ë“œ ì‹¤ì œ ì¶”ê°€ ì „ì— ì‹¤í–‰)
             if (shouldSyncToNetwork)
             {
                 Manager.CardData cardData = ExtractCardData(cardComponent);
                 bool isSecret = cardComponent.IsSecret;
 
+                Debug.Log($"[CardZone] ë„¤íŠ¸ì›Œí¬ ë™ê¸°í™” ì „ì†¡ ì‹œì‘: {cardComponent.CardType} to {ownerType} {zoneType} (ID: {networkCard.UniqueId})");
                 NetworkGameManager.Instance.SyncCardPlacement(cardData, ownerType, zoneType, isSecret);
-                Debug.Log($"[CardZone] ³×Æ®¿öÅ© µ¿±âÈ­ Àü¼Û: {cardComponent.CardType} to {ownerType} {zoneType} (ID: {networkCard.UniqueId})");
+                Debug.Log($"[CardZone] ë„¤íŠ¸ì›Œí¬ ë™ê¸°í™” ì „ì†¡ ì™„ë£Œ");
+            }
+            else
+            {
+                Debug.Log($"[CardZone] ë„¤íŠ¸ì›Œí¬ ë™ê¸°í™” ì¡°ê±´ ë¯¸ì¶©ì¡± - ë™ê¸°í™” ìƒëµ");
             }
 
-            // ½ÇÁ¦ Ä«µå Ãß°¡ ·ÎÁ÷ ½ÃÀÛ
+            // ì‹¤ì œ ì¹´ë“œ ì¶”ê°€ ë¡œì§ ì‹œì‘
             cards.Add(card);
             card.SetParent(transform);
 
-            // Opponent ¼ÕÆĞ ÅØ½ºÆ® ºñÈ°¼ºÈ­ (º¸¾È)
+            // Opponent ì†íŒ¨ í…ìŠ¤íŠ¸ ë¹„í™œì„±í™” (ë³´ì•ˆ)
             if (ownerType == OwnerType.Opponent && zoneType == ZoneType.Hand)
             {
                 var tmp = card.GetComponentInChildren<TMPro.TextMeshPro>();
@@ -156,7 +161,7 @@ namespace Objects
                 }
             }
 
-            // ¼ÕÆĞ¿¡¼­´Â GLOW È¿°ú ºñÈ°¼ºÈ­
+            // ì†íŒ¨ì—ì„œëŠ” GLOW íš¨ê³¼ ë¹„í™œì„±í™”
             if (zoneType == ZoneType.Hand)
             {
                 var glow = card.GetComponentInChildren<CardEffect>();
@@ -166,27 +171,27 @@ namespace Objects
                 }
             }
 
-            // ÇÊµå Ä«µå µî·Ï ¹× »óÅÂ ¼³Á¤
+            // í•„ë“œ ì¹´ë“œ ë“±ë¡ ë° ìƒíƒœ ì„¤ì •
             if (zoneType == ZoneType.Field && cardComponent != null)
             {
-                // InGameManager¿¡ ÇÊµå Ä«µå·Î µî·Ï
+                // InGameManagerì— í•„ë“œ ì¹´ë“œë¡œ ë“±ë¡
                 if (InGameManager.Instance != null)
                 {
                     InGameManager.Instance.RegisterFieldCard(cardComponent);
                 }
 
-                // ÇÃ·¹ÀÌ¾î Ä«µåÀÎ °æ¿ì ÀÌ¹ø ÅÏ¿¡ ¹èÄ¡µÊ Ç¥½Ã (°ø°İ Á¦ÇÑ¿ë)
+                // í”Œë ˆì´ì–´ ì¹´ë“œì¸ ê²½ìš° ì´ë²ˆ í„´ì— ë°°ì¹˜ë¨ í‘œì‹œ (ê³µê²© ì œí•œìš©)
                 if (ownerType == OwnerType.Player)
                 {
                     cardComponent.SetWasPlayedThisTurn(true);
-                    Debug.Log($"[CardZone] ÇÃ·¹ÀÌ¾î Ä«µå ÀÌ¹ø ÅÏ ¹èÄ¡ Ç¥½Ã: {card.name}");
+                    Debug.Log($"[CardZone] í”Œë ˆì´ì–´ ì¹´ë“œ ì´ë²ˆ í„´ ë°°ì¹˜ í‘œì‹œ: {card.name}");
                 }
             }
 
-            // NetworkCard À§Ä¡ Á¤º¸ ¾÷µ¥ÀÌÆ®
+            // NetworkCard ìœ„ì¹˜ ì •ë³´ ì—…ë°ì´íŠ¸
             networkCard.UpdateLocationInfo();
 
-            // Ä«µå ÀÎÅÍ·¢¼Ç ±ÇÇÑ ¼³Á¤
+            // ì¹´ë“œ ì¸í„°ë™ì…˜ ê¶Œí•œ ì„¤ì •
             ICard cardInterface = card.GetComponentInChildren<ICard>();
             if (cardInterface != null)
             {
@@ -194,13 +199,13 @@ namespace Objects
             }
             else
             {
-                Debug.LogWarning($"[CardZone] ICard ÀÎÅÍÆäÀÌ½º¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù: {card.name}");
+                Debug.LogWarning($"[CardZone] ICard ì¸í„°í˜ì´ìŠ¤ë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤: {card.name}");
             }
 
-            // ·¹ÀÌ¾Æ¿ô ¾÷µ¥ÀÌÆ®
+            // ë ˆì´ì•„ì›ƒ ì—…ë°ì´íŠ¸
             UpdateLayout();
 
-            // ¼ÕÆĞ¿¡¸¸ Àû¿ëµÇ´Â Ãß°¡ ¼³Á¤µé
+            // ì†íŒ¨ì—ë§Œ ì ìš©ë˜ëŠ” ì¶”ê°€ ì„¤ì •ë“¤
             if (zoneType == ZoneType.Hand)
             {
                 AddDragHandler(card);
@@ -212,47 +217,47 @@ namespace Objects
                 }
             }
 
-            Debug.Log($"[CardZone] Ä«µå Ãß°¡ ¿Ï·á: {card.name} to {ownerType} {zoneType} (ÃÑ {cards.Count}Àå)");
+            Debug.Log($"[CardZone] ì¹´ë“œ ì¶”ê°€ ì™„ë£Œ: {card.name} to {ownerType} {zoneType} (ì´ {cards.Count}ì¥)");
         }
 
         /// <summary>
-        /// Card ÄÄÆ÷³ÍÆ®¿¡¼­ Manager.CardData ÃßÃâ
-        /// CardPlayDetectorÀÇ µ¿ÀÏÇÑ ¸Ş¼­µå¿Í ÀÏÄ¡ÇÏ´Â ·ÎÁ÷
+        /// Card ì»´í¬ë„ŒíŠ¸ì—ì„œ Manager.CardData ì¶”ì¶œ
+        /// CardPlayDetectorì˜ ë™ì¼í•œ ë©”ì„œë“œì™€ ì¼ì¹˜í•˜ëŠ” ë¡œì§
         /// </summary>
-        /// <param name="card">µ¥ÀÌÅÍ¸¦ ÃßÃâÇÒ Ä«µå</param>
-        /// <returns>ÃßÃâµÈ CardData</returns>
+        /// <param name="card">ë°ì´í„°ë¥¼ ì¶”ì¶œí•  ì¹´ë“œ</param>
+        /// <returns>ì¶”ì¶œëœ CardData</returns>
         private Manager.CardData ExtractCardData(Card card)
         {
             switch (card.CardType)
             {
                 case CardType.Number:
-                    // ¼ıÀÚ Ä«µå: CardText¿¡¼­ ÇöÀç °ª ÃßÃâ
+                    // ìˆ«ì ì¹´ë“œ: CardTextì—ì„œ í˜„ì¬ ê°’ ì¶”ì¶œ
                     var cardText = card.GetComponentInChildren<CardText>();
                     long value = cardText != null ? (long)cardText.RawValue : 1;
                     return new Manager.CardData(value);
 
                 case CardType.Operator:
-                    // ¿¬»êÀÚ Ä«µå: OperatorType »ç¿ë
+                    // ì—°ì‚°ì ì¹´ë“œ: OperatorType ì‚¬ìš©
                     return new Manager.CardData(card.OperatorType);
 
                 case CardType.Joker:
-                    // Á¶Ä¿ Ä«µå: Á¤Àû »ı¼º ¸Ş¼­µå »ç¿ë
+                    // ì¡°ì»¤ ì¹´ë“œ: ì •ì  ìƒì„± ë©”ì„œë“œ ì‚¬ìš©
                     return Manager.CardData.CreateJoker();
 
                 default:
-                    // ¾Ë ¼ö ¾ø´Â Å¸ÀÔ: ±âº»°ª 1·Î ¼³Á¤
-                    Debug.LogWarning($"[CardZone] ¾Ë ¼ö ¾ø´Â Ä«µå Å¸ÀÔ: {card.CardType}");
+                    // ì•Œ ìˆ˜ ì—†ëŠ” íƒ€ì…: ê¸°ë³¸ê°’ 1ë¡œ ì„¤ì •
+                    Debug.LogWarning($"[CardZone] ì•Œ ìˆ˜ ì—†ëŠ” ì¹´ë“œ íƒ€ì…: {card.CardType}");
                     return new Manager.CardData(1);
             }
         }
 
         /// <summary>
-        /// Ä«µå Æ÷ÇÔ ¿©ºÎ È®ÀÎ (¿ÜºÎ¿¡¼­ Á¶È¸¿ë)
+        /// ì¹´ë“œ í¬í•¨ ì—¬ë¶€ í™•ì¸ (ì™¸ë¶€ì—ì„œ ì¡°íšŒìš©)
         /// </summary>
         public bool Contains(Transform card) => cards.Contains(card);
 
         /// <summary>
-        /// Ä«µå Á¦°Å ÈÄ ¹èÄ¡ °»½Å
+        /// ì¹´ë“œ ì œê±° í›„ ë°°ì¹˜ ê°±ì‹ 
         /// </summary>
         public void RemoveCard(Transform card)
         {
@@ -266,7 +271,7 @@ namespace Objects
         }
 
         /// <summary>
-        /// ÇöÀç Ä«µå »óÅÂ¿¡ ¸ÂÃç ·¹ÀÌ¾Æ¿ô Àç¹èÄ¡
+        /// í˜„ì¬ ì¹´ë“œ ìƒíƒœì— ë§ì¶° ë ˆì´ì•„ì›ƒ ì¬ë°°ì¹˜
         /// </summary>
         public void UpdateLayout()
         {
@@ -283,7 +288,7 @@ namespace Objects
         }
 
         /// <summary>
-        /// Ä«µå¿¡ Hover ¾Ö´Ï¸ŞÀÌ¼Ç Ãß°¡
+        /// ì¹´ë“œì— Hover ì• ë‹ˆë©”ì´ì…˜ ì¶”ê°€
         /// </summary>
         private void AddHover(Transform card)
         {
@@ -292,7 +297,7 @@ namespace Objects
         }
 
         /// <summary>
-        /// Ä«µå¿¡ DragHandler Ãß°¡
+        /// ì¹´ë“œì— DragHandler ì¶”ê°€
         /// </summary>
         private void AddDragHandler(Transform card)
         {
