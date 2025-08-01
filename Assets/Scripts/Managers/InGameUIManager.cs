@@ -94,9 +94,16 @@ namespace Manager
         /// </summary>
         private void EnableEndTurnButton()
         {
+            Debug.Log("[InGameUIManager] EnableEndTurnButton 호출됨");
+
             if (TurnManager.Instance != null && TurnManager.Instance.IsGameStarted)
             {
                 SetButtonState(endButton, true, enabledEndSprite);
+                Debug.Log("[InGameUIManager] End 버튼 활성화 완료");
+            }
+            else
+            {
+                Debug.LogWarning("[InGameUIManager] TurnManager가 없거나 게임이 시작되지 않음");
             }
         }
 
@@ -105,7 +112,9 @@ namespace Manager
         /// </summary>
         private void DisableEndTurnButton()
         {
+            Debug.Log("[InGameUIManager] DisableEndTurnButton 호출됨");
             SetButtonState(endButton, false, enabledEndSprite);
+            Debug.Log("[InGameUIManager] End 버튼 비활성화 완료");
         }
 
         /// <summary>
@@ -113,7 +122,6 @@ namespace Manager
         /// </summary>
         private void OnPlayerEnter()
         {
-            Debug.Log("[InGameUIManager] 플레이어 입장");
             UpdateButtons(PhotonNetwork.CurrentRoom?.PlayerCount ?? 0);
         }
 
@@ -122,7 +130,6 @@ namespace Manager
         /// </summary>
         private void OnPlayerLeave()
         {
-            Debug.Log("[InGameUIManager] 플레이어 퇴장");
             UpdateButtons(PhotonNetwork.CurrentRoom?.PlayerCount ?? 0);
 
             // 게임 중이었다면 게임 종료 처리
@@ -138,9 +145,11 @@ namespace Manager
         private void UpdateButtons(int playerCount)
         {
             bool canStart = playerCount == 2 && PhotonNetwork.IsMasterClient && !isStart;
-            SetButtonState(startButton, canStart, enabledStartSprite, !isStart);
+            bool shouldShowStart = PhotonNetwork.IsMasterClient && !isStart; // 방장이고 게임이 시작되지 않았을 때만 보이기
 
-            Debug.Log($"[InGameUIManager] 플레이어 수: {playerCount}, Start 버튼 활성화: {canStart}");
+            SetButtonState(startButton, canStart, enabledStartSprite, shouldShowStart);
+
+            Debug.Log($"[InGameUIManager] 플레이어 수: {playerCount}, Start 버튼 활성화: {canStart}, Start 버튼 표시: {shouldShowStart}");
         }
         #endregion
 
@@ -267,8 +276,7 @@ namespace Manager
             string resultText = winner == CardZone.OwnerType.Player ? "승리!" : "패배!";
             Debug.Log($"[InGameUIManager] 게임 결과: {resultText}");
 
-            // TODO: 게임 결과 UI 패널 표시
-            // 현재는 3초 후 자동으로 UI 리셋
+            // 3초 후 자동으로 UI 리셋
             Invoke(nameof(ResetUI), 3f);
         }
         #endregion
@@ -307,7 +315,7 @@ namespace Manager
         }
         #endregion
 
-        #region Event Subscriptions (게임 종료 시 정리)
+        #region Event Subscriptions
         private void OnDestroy()
         {
             // 버튼 이벤트 해제

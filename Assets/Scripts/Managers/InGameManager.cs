@@ -1,5 +1,4 @@
 using UnityEngine;
-using Photon.Pun.UtilityScripts;
 using System.Collections.Generic;
 using Utills;
 using Objects;
@@ -10,11 +9,11 @@ namespace Manager
 {
     /// <summary>
     /// 인 게임에서 필요한 기능들을 관리하는 매니저
+    /// TurnManager와 연동하여 턴 기반 게임플레이 제공
     /// </summary>
     public class InGameManager : Singleton<InGameManager>
     {
         #region Variables
-        PunTurnManager turnManager;
         public List<int> playerList = new List<int>();
         public List<string> playerADeck;
         public List<string> playerBDeck;
@@ -46,7 +45,6 @@ namespace Manager
         #endregion
 
         #region Process Management
-
         /// <summary>
         /// 현재 진행 중인 프로세스
         /// </summary>
@@ -92,31 +90,44 @@ namespace Manager
         {
             return currentProcess == process;
         }
-
         #endregion
 
+        #region Unity Lifecycle
         private void Start()
         {
-            turnManager = FindAnyObjectByType<PunTurnManager>();
+            // PunTurnManager 관련 코드 제거
+            // TurnManager가 유일한 턴 관리 시스템으로 동작
             SetCardColor();
         }
+        #endregion
 
-        // TODO :: 방장이 빨강 손님이 파랑
-        private void SetCardColor()
-        {
-        }
-
-        // 게임을 시작하는 버튼의 클릭 이벤트
+        #region UI Event Handlers
+        /// <summary>
+        /// 게임을 시작하는 버튼의 클릭 이벤트
+        /// </summary>
         public void OnClickStart()
         {
             isStart = true;
         }
+
+        /// <summary>
+        /// 턴 종료 버튼 클릭 이벤트
+        /// PunTurnManager 대신 TurnManager 사용
+        /// </summary>
         public void OnClickEnd()
         {
-            turnManager.SendMove(null, true);
-            turnManager.BeginTurn();
-        }
+            if (TurnManager.Instance == null)
+            {
+                Debug.LogError("[InGameManager] TurnManager를 찾을 수 없습니다!");
+                return;
+            }
 
+            // TurnManager를 통한 턴 종료 처리
+            TurnManager.Instance.EndTurn();
+        }
+        #endregion
+
+        #region Card Management
         /// <summary>
         /// 필드에 들어간 카드를 등록합니다.
         /// </summary>
@@ -137,13 +148,40 @@ namespace Manager
 
         /// <summary>
         /// 현재 필드에 존재하는 모든 카드를 반환합니다.
-        /// - 복사본 반환
+        /// 복사본 반환
         /// </summary>
         public List<Card> GetAllFieldCards()
         {
             return new List<Card>(fieldCards);
         }
 
+        /// <summary>
+        /// 모든 필드 카드 제거
+        /// </summary>
+        private void ClearAllFieldCards()
+        {
+            var allFieldCards = GetAllFieldCards();
+
+            foreach (var card in allFieldCards.ToArray()) // ToArray()로 복사본 생성
+            {
+                if (card != null && card.gameObject != null)
+                {
+                    var zone = card.GetComponentInParent<CardZone>();
+                    if (zone != null)
+                    {
+                        zone.RemoveCard(card.transform);
+                    }
+
+                    Destroy(card.gameObject);
+                }
+            }
+
+            // 필드 카드 리스트 정리
+            fieldCards.Clear();
+        }
+        #endregion
+
+        #region Game Flow Management
         /// <summary>
         /// 게임 시작 시 덱 초기화 및 초기 핸드 드로우
         /// </summary>
@@ -159,6 +197,49 @@ namespace Manager
             Debug.Log("[InGameManager] 게임 시작 - 덱 초기화 및 초기 핸드 드로우 완료");
         }
 
+        /// <summary>
+        /// 턴 시작 시 카드 1장 드로우
+        /// </summary>
+        public void StartTurn(CardZone.OwnerType currentPlayer)
+        {
+            DrawCardsToHand(1, currentPlayer);
+        }
+
+        /// <summary>
+        /// 게임 재시작
+        /// </summary>
+        public void RestartGame()
+        {
+            Debug.Log("[InGameManager] 게임 재시작");
+
+            // 게임 상태 초기화
+            IsGameEnded = false;
+            GameWinner = null;
+
+            // 체력 초기화
+            if (HealthManager.Instance != null)
+            {
+                HealthManager.Instance.InitializeHealth();
+            }
+
+            // 덱 초기화
+            if (DeckManager.Instance != null)
+            {
+                DeckManager.Instance.InitializeDecks();
+            }
+
+            // 필드 모든 카드 제거
+            ClearAllFieldCards();
+
+            // 초기 핸드 드로우
+            DrawCardsToHand(5, CardZone.OwnerType.Player);
+            DrawCardsToHand(5, CardZone.OwnerType.Opponent);
+
+            Debug.Log("[InGameManager] 게임 재시작 완료");
+        }
+        #endregion
+
+        #region Card Draw System
         /// <summary>
         /// 지정된 플레이어의 손패로 카드 드로우
         /// NetworkGameManager를 통한 네트워크 동기화 포함
@@ -232,9 +313,7 @@ namespace Manager
             {
                 if (NetworkGameManager.Instance != null)
                 {
-                    Debug.Log($"[InGameManager] {owner} {drawnCount}장 네트워크 동기화 시작");
                     NetworkGameManager.Instance.SyncCardDraw(owner, drawnCount);
-                    Debug.Log($"[InGameManager] {owner} {drawnCount}장 네트워크 동기화 완료");
                 }
                 else
                 {
@@ -262,20 +341,6 @@ namespace Manager
         }
 
         /// <summary>
-        /// 카드 정보 문자열 생성
-        /// </summary>
-        private string GetCardDescription(Manager.CardData cardData)
-        {
-            return cardData.cardType switch
-            {
-                CardType.Number => $"숫자({cardData.numberValue})",
-                CardType.Operator => $"연산자({cardData.operatorType})",
-                CardType.Joker => "조커",
-                _ => "알 수 없음"
-            };
-        }
-
-        /// <summary>
         /// 손패 Zone 찾기
         /// </summary>
         private CardZone FindHandZone(CardZone.OwnerType owner)
@@ -289,15 +354,21 @@ namespace Manager
         }
 
         /// <summary>
-        /// 턴 시작 시 카드 1장 드로우
+        /// 카드 정보 문자열 생성
         /// </summary>
-        public void StartTurn(CardZone.OwnerType currentPlayer)
+        private string GetCardDescription(Manager.CardData cardData)
         {
-            DrawCardsToHand(1, currentPlayer);
+            return cardData.cardType switch
+            {
+                CardType.Number => $"숫자({cardData.numberValue})",
+                CardType.Operator => $"연산자({cardData.operatorType})",
+                CardType.Joker => "조커",
+                _ => "알 수 없음"
+            };
         }
+        #endregion
 
         #region Game End Management
-
         /// <summary>
         /// 게임 종료 상태
         /// </summary>
@@ -388,9 +459,6 @@ namespace Manager
         /// <param name="loser">패배한 플레이어</param>
         private void ShowGameEndUI(CardZone.OwnerType winner, CardZone.OwnerType loser)
         {
-            // TODO: 게임 종료 UI 패널 표시
-            // 승리/패배 메시지, 재시작 버튼 등
-
             string winnerText = winner == CardZone.OwnerType.Player ? "플레이어 승리!" : "상대 승리!";
             Debug.Log($"[InGameManager] {winnerText}");
 
@@ -417,71 +485,22 @@ namespace Manager
         }
 
         /// <summary>
-        /// 게임 재시작
-        /// </summary>
-        public void RestartGame()
-        {
-            Debug.Log("[InGameManager] 게임 재시작");
-
-            // 게임 상태 초기화
-            IsGameEnded = false;
-            GameWinner = null;
-
-            // 체력 초기화
-            if (HealthManager.Instance != null)
-            {
-                HealthManager.Instance.InitializeHealth();
-            }
-
-            // 덱 초기화
-            if (DeckManager.Instance != null)
-            {
-                DeckManager.Instance.InitializeDecks();
-            }
-
-            // 필드 모든 카드 제거
-            ClearAllFieldCards();
-
-            // 초기 핸드 드로우
-            DrawCardsToHand(5, CardZone.OwnerType.Player);
-            DrawCardsToHand(5, CardZone.OwnerType.Opponent);
-
-            Debug.Log("[InGameManager] 게임 재시작 완료");
-        }
-
-        /// <summary>
-        /// 모든 필드 카드 제거
-        /// </summary>
-        private void ClearAllFieldCards()
-        {
-            var allFieldCards = GetAllFieldCards();
-
-            foreach (var card in allFieldCards.ToArray()) // ToArray()로 복사본 생성
-            {
-                if (card != null && card.gameObject != null)
-                {
-                    var zone = card.GetComponentInParent<CardZone>();
-                    if (zone != null)
-                    {
-                        zone.RemoveCard(card.transform);
-                    }
-
-                    Destroy(card.gameObject);
-                }
-            }
-
-            // 필드 카드 리스트 정리
-            fieldCards.Clear();
-        }
-
-        /// <summary>
         /// 현재 게임이 플레이 가능한 상태인지 확인
         /// </summary>
         public bool CanPlayGame()
         {
             return !IsGameEnded && HealthManager.Instance != null && !HealthManager.Instance.IsGameOver();
         }
+        #endregion
 
+        #region Legacy Code (향후 정리 예정)
+        /// <summary>
+        /// 카드 색상 설정 (향후 정리 예정)
+        /// </summary>
+        private void SetCardColor()
+        {
+            // TODO: 방장이 빨강 손님이 파랑
+        }
         #endregion
     }
 }

@@ -1,6 +1,5 @@
 using UnityEngine;
 using Photon.Pun;
-using Photon.Pun.UtilityScripts;
 using Photon.Realtime;
 using System.Collections;
 using Utills;
@@ -10,7 +9,7 @@ namespace Manager
 {
     /// <summary>
     /// 버그 방지 중심의 턴 관리 시스템
-    /// PunTurnManager와 연동하여 안전한 턴 기반 게임플레이 제공
+    /// PunTurnManager 의존성을 제거하고 독립적인 RPC 기반 턴 관리 제공
     /// MonoBehaviourPun을 사용한 RPC 방식
     /// </summary>
     public class TurnManager : MonoBehaviourPun
@@ -39,13 +38,6 @@ namespace Manager
                 Destroy(gameObject);
                 return;
             }
-
-            // PunTurnManager 찾기
-            punTurnManager = FindAnyObjectByType<PunTurnManager>();
-            if (punTurnManager == null)
-            {
-                Debug.LogError("[TurnManager] PunTurnManager를 찾을 수 없습니다!");
-            }
         }
         #endregion
 
@@ -53,9 +45,6 @@ namespace Manager
         [Header("턴 시스템 설정")]
         [SerializeField] private bool enableDebugLog = true;
         [SerializeField] private float turnTimeLimit = 60f; // 턴 제한 시간 (초)
-
-        // PunTurnManager 참조
-        private PunTurnManager punTurnManager;
 
         // 게임 상태
         private bool isGameStarted = false;
@@ -89,6 +78,7 @@ namespace Manager
 
         /// <summary>
         /// 로컬 플레이어의 턴인지 여부
+        /// 수정: 선공이 항상 첫 턴(턴 1)을 가지도록 수정
         /// </summary>
         public bool IsLocalPlayerTurn
         {
@@ -96,8 +86,11 @@ namespace Manager
             {
                 if (!isGameStarted) return false;
 
-                bool isOddTurn = (currentTurn % 2) == 1;
-                return isLocalPlayerFirst ? isOddTurn : !isOddTurn;
+                // 선공이 홀수 턴(1, 3, 5...), 후공이 짝수 턴(2, 4, 6...)을 가짐
+                bool isFirstPlayerTurn = (currentTurn % 2) == 1;
+
+                // 로컬 플레이어가 선공이면 홀수 턴이 내 턴, 후공이면 짝수 턴이 내 턴
+                return isLocalPlayerFirst == isFirstPlayerTurn;
             }
         }
 
@@ -237,7 +230,7 @@ namespace Manager
 
         #region Game Sequence
         /// <summary>
-        /// 게임 시작 시퀀스 수정
+        /// 게임 시작 시퀀스
         /// ExecuteInitialDraw() 호출을 RPC_StartGame으로 이동
         /// </summary>
         private IEnumerator StartGameSequence()
@@ -254,15 +247,16 @@ namespace Manager
             // 3단계: 덱 초기화 대기
             yield return new WaitForSeconds(0.5f);
 
-            // 4단계: ExecuteInitialDraw()는 RPC_StartGame에서 실행됨 (제거)
-
-            // 5단계: 첫 턴 시작
+            // 4단계: 첫 턴 시작 (RPC로 모든 클라이언트에 전송)
             yield return new WaitForSeconds(1f);
-            BeginFirstTurn();
+            if (PhotonNetwork.IsMasterClient)
+            {
+                photonView.RPC("RPC_BeginFirstTurn", RpcTarget.All);
+            }
         }
 
         /// <summary>
-        /// 턴 종료 시퀀스 (예외 처리 간소화)
+        /// 턴 종료 시퀀스
         /// </summary>
         private IEnumerator EndTurnSequence()
         {
@@ -286,7 +280,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// 게임 재시작 시퀀스 (예외 처리 간소화)
+        /// 게임 재시작 시퀀스
         /// </summary>
         private IEnumerator RestartGameSequence()
         {
@@ -331,7 +325,7 @@ namespace Manager
 
             Debug.Log($"[TurnManager] 초기 드로우: {drawCount}장 ({role})");
 
-            // 수정: 모든 플레이어가 Player 역할로 드로우 (각자 관점에서 자신의 카드)
+            // 모든 플레이어가 Player 역할로 드로우 (각자 관점에서 자신의 카드)
             InGameManager.Instance.DrawCardsToHand(drawCount, CardZone.OwnerType.Player);
         }
 
@@ -343,12 +337,16 @@ namespace Manager
             currentTurn = 1;
             lastTurnChangeTime = Time.time;
 
-            // 턴 시작 처리
+            // 디버그 로그 추가
+            Debug.Log($"[TurnManager] BeginFirstTurn - currentTurn: {currentTurn}, " +
+                      $"isLocalPlayerFirst: {isLocalPlayerFirst}, " +
+                      $"IsLocalPlayerTurn: {IsLocalPlayerTurn}");
+
             OnTurnStart();
         }
 
         /// <summary>
-        /// 턴 시작 처리 (기존 메서드에 드로우 동기화 개선)
+        /// 턴 시작 처리
         /// </summary>
         private void OnTurnStart()
         {
@@ -360,7 +358,7 @@ namespace Manager
                 // 내 턴: 카드 1장 드로우 (첫 턴 제외)
                 if (currentTurn > 1)
                 {
-                    // 수정: Player 역할로 통일
+                    // Player 역할로 통일
                     InGameManager.Instance.StartTurn(CardZone.OwnerType.Player);
                 }
             }
@@ -397,7 +395,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// 모든 카드의 턴 상태 초기화 (완전 새로운 메서드)
+        /// 모든 카드의 턴 상태 초기화
         /// </summary>
         private void ResetAllCardsForNewTurn()
         {
@@ -413,7 +411,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// 첫 라운드 종료 시 모든 카드의 GLOW 오버라이드 해제 (수정됨)
+        /// 첫 라운드 종료 시 모든 카드의 GLOW 오버라이드 해제
         /// </summary>
         private void ClearAllCardGlowOverrides()
         {
@@ -429,7 +427,7 @@ namespace Manager
         }
         #endregion
 
-        #region RPC Methods (정적 RPC 사용)
+        #region RPC Methods
         /// <summary>
         /// 게임 시작 RPC 수신 처리
         /// 모든 클라이언트에서 실행되어 각자 초기 드로우 수행
@@ -454,32 +452,53 @@ namespace Manager
             }
 
             string role = isLocalPlayerFirst ? "선공" : "후공";
+            Debug.Log($"[TurnManager] 게임 시작 - 역할: {role}");
 
             // 모든 클라이언트에서 각자 초기 드로우 실행
             ExecuteInitialDraw();
         }
 
+        /// <summary>
+        /// 턴 진행 RPC 수신 처리
+        /// </summary>
         [PunRPC]
         private void RPC_AdvanceTurn(int newTurn)
         {
             currentTurn = newTurn;
             lastTurnChangeTime = Time.time;
 
+            Debug.Log($"[TurnManager] 턴 진행: {newTurn}, IsLocalPlayerTurn: {IsLocalPlayerTurn}");
+
             // 턴 시작 처리
             OnTurnStart();
         }
 
+        /// <summary>
+        /// 첫 라운드 종료 RPC 수신 처리
+        /// </summary>
         [PunRPC]
         private void RPC_EndFirstRound()
         {
             isFirstRound = false;
 
-            // 첫 라운드 종료 시 모든 카드의 GLOW 오버라이드 해제 (수정됨)
+            // 첫 라운드 종료 시 모든 카드의 GLOW 오버라이드 해제
             ClearAllCardGlowOverrides();
 
             Debug.Log("[TurnManager] 첫 라운드 종료 - 공격 활성화");
         }
 
+        /// <summary>
+        /// 첫 턴 시작 RPC 수신 처리
+        /// </summary>
+        [PunRPC]
+        private void RPC_BeginFirstTurn()
+        {
+            BeginFirstTurn();
+        }
+
+        /// <summary>
+        /// 게임 리셋 RPC 수신 처리
+        /// </summary>
         [PunRPC]
         private void RPC_ResetGame()
         {
@@ -520,6 +539,7 @@ namespace Manager
         #region Event Notifications
         /// <summary>
         /// 턴 변경 알림
+        /// PunTurnManager 대신 PhotonManager에 직접 이벤트 전송
         /// </summary>
         private void NotifyTurnChange()
         {
@@ -527,10 +547,22 @@ namespace Manager
             var photonManager = FindAnyObjectByType<PhotonManager>();
             if (photonManager != null)
             {
+                Debug.Log($"[TurnManager] 턴 이벤트 발생 - IsLocalPlayerTurn: {IsLocalPlayerTurn}");
+
                 if (IsLocalPlayerTurn)
+                {
+                    Debug.Log("[TurnManager] 내 턴 이벤트 호출");
                     photonManager.MyTurn?.Invoke();
+                }
                 else
+                {
+                    Debug.Log("[TurnManager] 상대 턴 이벤트 호출");
                     photonManager.YourTurn?.Invoke();
+                }
+            }
+            else
+            {
+                Debug.LogError("[TurnManager] PhotonManager를 찾을 수 없습니다!");
             }
         }
 

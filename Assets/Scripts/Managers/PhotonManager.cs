@@ -1,33 +1,31 @@
-﻿using Photon.Pun.UtilityScripts;
-using Photon.Pun;
+﻿using Photon.Pun;
 using UnityEngine;
 using Photon.Realtime;
 using System;
 using UnityEngine.Events;
-using static UnityEngine.Rendering.DebugUI;
 
 namespace Manager
 {
     /// <summary>
     /// Photon 관련 기능을 관리하는 매니저
+    /// PunTurnManager 의존성을 제거하고 TurnManager와 연동
     /// </summary>
-    public class PhotonManager : MonoBehaviourPunCallbacks, IPunTurnManagerCallbacks
+    public class PhotonManager : MonoBehaviourPunCallbacks
     {
         #region Variables
-        PunTurnManager turnManager;
-
         // UI 관련 UnityAction (이벤트)
-        public UnityAction MyTurn;                          // 내 턴
-        public UnityAction YourTurn;                        // 상대 턴
-        public UnityAction EnterPlayer;                     // 다른플레이어 입장
-        public UnityAction LeavePlayer;                     // 다른플레이어 떠남
-        public UnityAction<int> UpdatePlayerCount; // 현재 인원 수를 전달하는 이벤트
+        public UnityAction MyTurn;                    // 내 턴
+        public UnityAction YourTurn;                  // 상대 턴
+        public UnityAction EnterPlayer;               // 다른플레이어 입장
+        public UnityAction LeavePlayer;               // 다른플레이어 떠남
+        public UnityAction<int> UpdatePlayerCount;    // 현재 인원 수를 전달하는 이벤트
         #endregion
 
+        #region Unity Lifecycle
         void Start()
         {
-            turnManager = GetComponent<PunTurnManager>();
-            turnManager.TurnManagerListener = this;
+            // PunTurnManager 관련 코드 완전 제거
+            // TurnManager가 유일한 턴 관리 시스템으로 동작
 
             // InGameUIManager에서 이벤트 등록
             InGameUIManager.Instance.RegisterPhotonManager(this);
@@ -38,7 +36,9 @@ namespace Manager
                 SetupRoomColors();
             }
         }
+        #endregion
 
+        #region Color Management
         /// <summary>
         /// 방장이 방 생성 시 색상 결정 및 방 속성에 저장
         /// </summary>
@@ -67,88 +67,25 @@ namespace Manager
         }
 
         /// <summary>
-        /// 턴 시작 시 이벤트 호출 (수정됨 - TurnManager 기준으로 통합)
-        /// PhotonNetwork.IsMasterClient 대신 TurnManager.IsLocalPlayerTurn 사용
+        /// 현재 내가 사용 중인 색상 이름 반환
         /// </summary>
-        /// <param name="turn">현재 턴 번호</param>
-        public void OnTurnBegins(int turn)
+        private string GetMyCurrentColor()
         {
-            Debug.Log($"[PhotonManager] OnTurnBegins 호출됨: Turn {turn}");
-
-            // 🔧 핵심 수정: TurnManager 기준으로 턴 판단
-            if (TurnManager.Instance != null)
+            if (ResourcesManager.Instance != null)
             {
-                // TurnManager의 턴 판단 로직을 사용
-                bool isMyTurn = TurnManager.Instance.IsLocalPlayerTurn;
-
-                Debug.Log($"[PhotonManager] TurnManager 기준 턴 판단: IsMyTurn={isMyTurn}");
-
-                if (isMyTurn)
+                var playerSprite = ResourcesManager.Instance.GetPlayerSprite();
+                if (playerSprite != null)
                 {
-                    Debug.Log("[PhotonManager] 내 턴 - MyTurn 이벤트 호출");
-                    MyTurn?.Invoke(); // 내 턴
-                }
-                else
-                {
-                    Debug.Log("[PhotonManager] 상대 턴 - YourTurn 이벤트 호출");
-                    YourTurn?.Invoke(); // 상대 턴
+                    return playerSprite.name;
                 }
             }
-            else
-            {
-                // TurnManager가 없으면 기존 로직 사용 (폴백)
-                Debug.LogWarning("[PhotonManager] TurnManager가 없어서 기존 로직 사용");
 
-                if (turn % 2 == 1)
-                {
-                    if (PhotonNetwork.IsMasterClient)
-                        MyTurn?.Invoke(); // 마스터 턴
-                    else
-                        YourTurn?.Invoke(); // 게스트 턴
-                }
-                else
-                {
-                    if (PhotonNetwork.IsMasterClient)
-                        YourTurn?.Invoke(); // 게스트 턴
-                    else
-                        MyTurn?.Invoke(); // 마스터 턴
-                }
-            }
-        }
-
-        public void OnTurnCompleted(int turn)
-        {
-            Debug.Log("Turn " + turn + " completed!");
-        }
-
-        public void OnPlayerMove(Player player, int turn, object move)
-        {
-            Debug.Log(player.NickName + " Move ");
-        }
-
-        public void OnPlayerFinished(Player player, int turn, object move)
-        {
-            Debug.Log(player.NickName + " finished turn " + turn);
-        }
-
-        public void OnTurnTimeEnds(int turn) { }
-
-        public override void OnPlayerEnteredRoom(Player newPlayer)
-        {
-            Debug.Log("New Player Entered Room: " + newPlayer.NickName);
-            UpdateRoomPlayerCount();
-
-            // 방장이고 2명이 되었을 때 저장된 색상으로 동기화
-            if (PhotonNetwork.IsMasterClient && PhotonNetwork.CurrentRoom.PlayerCount == 2)
-            {
-                SyncStoredColors();
-            }
-
-            EnterPlayer?.Invoke(); // 플레이어 입장 이벤트 실행
+            Debug.LogError("[PhotonManager] 현재 사용 중인 색상을 확인할 수 없습니다.");
+            return "";
         }
 
         /// <summary>
-        /// 방 속성에 저장된 색상으로 동기화 전송 (완전히 새로운 버전)
+        /// 방 속성에 저장된 색상으로 동기화 전송
         /// </summary>
         private void SyncStoredColors()
         {
@@ -187,8 +124,8 @@ namespace Manager
 
                 if (NetworkGameManager.Instance != null)
                 {
-                    Debug.Log($"[PhotonManager] 올바른 색상 동기화: 내색상={myColor}, 새플레이어색상={newPlayerColor}");
-                    NetworkGameManager.Instance.SyncStoredColors(myColor, newPlayerColor); // ← 간소화!
+                    Debug.Log($"[PhotonManager] 색상 동기화: 내색상={myColor}, 새플레이어색상={newPlayerColor}");
+                    NetworkGameManager.Instance.SyncStoredColors(myColor, newPlayerColor);
                 }
             }
             else
@@ -196,24 +133,21 @@ namespace Manager
                 Debug.LogError("[PhotonManager] 방 속성에서 색상 정보를 찾을 수 없습니다.");
             }
         }
+        #endregion
 
-        /// <summary>
-        /// 현재 내가 사용 중인 색상 이름 반환 (새로 추가)
-        /// </summary>
-        private string GetMyCurrentColor()
+        #region Room Events
+        public override void OnPlayerEnteredRoom(Player newPlayer)
         {
-            if (ResourcesManager.Instance != null)
+            Debug.Log("New Player Entered Room: " + newPlayer.NickName);
+            UpdateRoomPlayerCount();
+
+            // 방장이고 2명이 되었을 때 저장된 색상으로 동기화
+            if (PhotonNetwork.IsMasterClient && PhotonNetwork.CurrentRoom.PlayerCount == 2)
             {
-                var playerSprite = ResourcesManager.Instance.GetPlayerSprite();
-                if (playerSprite != null)
-                {
-                    Debug.Log($"[PhotonManager] 현재 내 색상: {playerSprite.name}");
-                    return playerSprite.name;
-                }
+                SyncStoredColors();
             }
 
-            Debug.LogError("[PhotonManager] 현재 사용 중인 색상을 확인할 수 없습니다.");
-            return "";
+            EnterPlayer?.Invoke(); // 플레이어 입장 이벤트 실행
         }
 
         public override void OnPlayerLeftRoom(Player otherPlayer)
@@ -235,12 +169,12 @@ namespace Manager
             if (propertiesThatChanged.ContainsKey("currentPlayers"))
             {
                 int currentPlayers = (int)propertiesThatChanged["currentPlayers"];
-                Debug.Log($"[Room] 현재 인원 업데이트 감지: {currentPlayers}");
-
                 UpdatePlayerCount?.Invoke(currentPlayers); // 현재 인원 업데이트 이벤트 호출
             }
         }
+        #endregion
 
+        #region Room Management
         private void UpdateRoomPlayerCount()
         {
             if (PhotonNetwork.CurrentRoom != null)
@@ -252,8 +186,6 @@ namespace Manager
                     { "currentPlayers", currentPlayers }
                 };
                 PhotonNetwork.CurrentRoom.SetCustomProperties(roomProperties);
-
-                Debug.Log($"[Room] 현재 인원 업데이트: {currentPlayers}");
             }
         }
 
@@ -270,19 +202,21 @@ namespace Manager
             PhotonNetwork.LoadLevel("LobbyScene");
         }
 
-        // 방을 초기 상태로 되돌리는 메서드
+        /// <summary>
+        /// 방을 초기 상태로 되돌리는 메서드
+        /// </summary>
         private void ResetGame()
         {
             Debug.Log("방에 혼자 남음, 초기 상태로 리셋");
 
             // 초기화해야 할 내용 추가
             PhotonNetwork.CurrentRoom.SetCustomProperties(new ExitGames.Client.Photon.Hashtable
-    {
+            {
                 { "currentPlayers", 1 }
-    });
-            // Turn 0으로 초기화
-            PhotonNetwork.CurrentRoom.SetTurn(0, true);
+            });
+
             InGameUIManager.Instance.ResetUI();
         }
+        #endregion
     }
 }
