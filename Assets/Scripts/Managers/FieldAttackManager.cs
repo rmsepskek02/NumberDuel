@@ -7,6 +7,7 @@ namespace Manager
     /// <summary>
     /// 필드 카드 간 공격 시스템을 관리하는 매니저
     /// 공격자 선택 → 수비자 선택 → 공격 실행 → 결과 처리 흐름을 담당
+    /// Secret 카드 해제를 포함한 네트워크 동기화 지원
     /// </summary>
     public class FieldAttackManager : MonoBehaviour
     {
@@ -107,7 +108,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// 빈 필드 공격 실행 (원본 값 사용하도록 수정)
+        /// 빈 필드 공격 실행 (Secret 해제 로직 포함)
         /// </summary>
         private IEnumerator ExecuteEmptyFieldAttack(Card attacker)
         {
@@ -120,7 +121,16 @@ namespace Manager
             if (enableDebugLog)
                 Debug.Log($"[FieldAttackManager] 빈 필드 공격 시작: {attacker.name}");
 
-            // 원본 공격자 값 미리 저장
+            // Secret 해제: 공격자가 Secret 상태라면 로컬에서 해제
+            bool attackerWasSecret = attacker.IsSecret;
+            if (attackerWasSecret)
+            {
+                attacker.RevealSecret();
+                if (enableDebugLog)
+                    Debug.Log($"[FieldAttackManager] 공격자 Secret 로컬 해제: {attacker.name}");
+            }
+
+            // 원본 공격자 값 미리 저장 (Secret 해제 후)
             float originalAttackerValue = GetCardValue(attacker);
 
             if (enableDebugLog)
@@ -152,10 +162,10 @@ namespace Manager
             // 빈 필드 공격 결과 적용 (원본 값 사용)
             ApplyEmptyFieldResult(attacker, originalAttackerValue);
 
-            // 공격 완료 표시 (새로 추가)
+            // 공격 완료 표시
             attacker.SetHasAttackedThisTurn(true);
 
-            // 네트워크 동기화 - 빈 필드 공격 결과 전송 (defender는 null)
+            // 네트워크 동기화 - 빈 필드 공격 결과 전송 (defender는 null, Secret 정보 포함)
             if (NetworkGameManager.Instance != null)
             {
                 NetworkGameManager.Instance.SyncAttackResult(attacker, null, originalAttackerValue, 0);
@@ -176,44 +186,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// 빈 필드 공격 결과 적용 (수정된 버전)
-        /// </summary>
-        /// <param name="attacker">공격한 카드</param>
-        /// <param name="damage">상대에게 가할 데미지</param>
-        private void ApplyEmptyFieldResult(Card attacker, float damage)
-        {
-            if (enableDebugLog)
-                Debug.Log($"[FieldAttackManager] 빈 필드 공격 결과 적용 - 데미지: {damage}");
-
-            // DamageCalculator를 통해 최종 데미지 계산
-            int finalDamage = Utills.DamageCalculator.CalculateEmptyFieldDamage(damage);
-
-            // HealthManager를 통해 실제 데미지 적용
-            if (HealthManager.Instance != null)
-            {
-                int actualDamage = HealthManager.Instance.ApplyDamage(finalDamage, CardZone.OwnerType.Opponent);
-
-                if (enableDebugLog)
-                    Debug.Log($"[FieldAttackManager] 상대에게 {actualDamage} 데미지 적용 완료");
-            }
-            else
-            {
-                Debug.LogError("[FieldAttackManager] HealthManager를 찾을 수 없습니다!");
-            }
-        }
-
-        /// <summary>
-        /// 단일 카드의 값 반환
-        /// </summary>
-        /// <param name="card">값을 가져올 카드</param>
-        /// <returns>카드의 숫자 값</returns>
-        private float GetCardValue(Card card)
-        {
-            return card.GetComponentInChildren<CardText>()?.RawValue ?? 0;
-        }
-
-        /// <summary>
-        /// 공격 실행 및 결과 처리 (수정된 버전)
+        /// 공격 실행 및 결과 처리 (Secret 해제 로직 포함)
         /// </summary>
         private IEnumerator ExecuteAttack(Card attacker, Card defender)
         {
@@ -226,7 +199,25 @@ namespace Manager
             if (enableDebugLog)
                 Debug.Log($"[FieldAttackManager] 공격 실행: {attacker.name} → {defender.name}");
 
-            // 원본 카드 값 미리 저장 (카드 변경 전)
+            // Secret 해제: 공격자와 방어자 모두 Secret 상태라면 로컬에서 해제
+            bool attackerWasSecret = attacker.IsSecret;
+            bool defenderWasSecret = defender.IsSecret;
+
+            if (attackerWasSecret)
+            {
+                attacker.RevealSecret();
+                if (enableDebugLog)
+                    Debug.Log($"[FieldAttackManager] 공격자 Secret 로컬 해제: {attacker.name}");
+            }
+
+            if (defenderWasSecret)
+            {
+                defender.RevealSecret();
+                if (enableDebugLog)
+                    Debug.Log($"[FieldAttackManager] 방어자 Secret 로컬 해제: {defender.name}");
+            }
+
+            // 원본 카드 값 미리 저장 (Secret 해제 후 값 저장)
             var (originalAttackerValue, originalDefenderValue) = GetCardValues(attacker, defender);
 
             if (enableDebugLog)
@@ -258,10 +249,10 @@ namespace Manager
             // 결과 적용 (원본 값 전달)
             ApplyBattleResult(attacker, defender, originalAttackerValue, originalDefenderValue);
 
-            // 공격 완료 표시 (새로 추가)
+            // 공격 완료 표시
             attacker.SetHasAttackedThisTurn(true);
 
-            // 네트워크 동기화 - 공격 결과 전송
+            // 네트워크 동기화 - 공격 결과 전송 (Secret 정보 포함)
             if (NetworkGameManager.Instance != null)
             {
                 NetworkGameManager.Instance.SyncAttackResult(attacker, defender, originalAttackerValue, originalDefenderValue);
@@ -279,7 +270,34 @@ namespace Manager
         }
 
         /// <summary>
-        /// 전투 결과 적용 (수정된 버전 - 원본 값 사용)
+        /// 빈 필드 공격 결과 적용
+        /// </summary>
+        /// <param name="attacker">공격한 카드</param>
+        /// <param name="damage">상대에게 가할 데미지</param>
+        private void ApplyEmptyFieldResult(Card attacker, float damage)
+        {
+            if (enableDebugLog)
+                Debug.Log($"[FieldAttackManager] 빈 필드 공격 결과 적용 - 데미지: {damage}");
+
+            // DamageCalculator를 통해 최종 데미지 계산
+            int finalDamage = Utills.DamageCalculator.CalculateEmptyFieldDamage(damage);
+
+            // HealthManager를 통해 실제 데미지 적용
+            if (HealthManager.Instance != null)
+            {
+                int actualDamage = HealthManager.Instance.ApplyDamage(finalDamage, CardZone.OwnerType.Opponent);
+
+                if (enableDebugLog)
+                    Debug.Log($"[FieldAttackManager] 상대에게 {actualDamage} 데미지 적용 완료");
+            }
+            else
+            {
+                Debug.LogError("[FieldAttackManager] HealthManager를 찾을 수 없습니다!");
+            }
+        }
+
+        /// <summary>
+        /// 전투 결과 적용 (원본 값 사용)
         /// </summary>
         private void ApplyBattleResult(Card attacker, Card defender, float originalAttackerValue, float originalDefenderValue)
         {
@@ -337,7 +355,6 @@ namespace Manager
                     Debug.Log("[FieldAttackManager] 상호 파괴");
             }
         }
-        
         #endregion
 
         #region Expression Zone Management
@@ -382,11 +399,11 @@ namespace Manager
             {
                 if (card.CurrentOwnerType == CardZone.OwnerType.Player)
                 {
-                    card.SetGlowOverride(false); // ← 수정!
+                    card.SetGlowOverride(false);
                 }
                 else if (card.CurrentOwnerType == CardZone.OwnerType.Opponent)
                 {
-                    card.SetGlowOverride(true, Global.GlowRed); // ← 수정!
+                    card.SetGlowOverride(true, Global.GlowRed);
                 }
             }
         }
@@ -427,10 +444,17 @@ namespace Manager
             // 연산자 모드 중이면 공격 차단
             if (OperatorManager.Instance.IsInOperatorMode) return false;
 
-            // 첫 라운드에서는 공격 차단 (이 부분이 있는지 확인!)
+            // 첫 라운드에서는 공격 차단
             if (TurnManager.Instance.IsFirstRound)
             {
                 Debug.Log("[FieldAttackManager] 첫 라운드에서는 공격이 불가능합니다.");
+                return false;
+            }
+
+            // 턴 검증
+            if (!TurnManager.Instance.IsLocalPlayerTurn)
+            {
+                Debug.Log("[FieldAttackManager] 내 턴이 아닙니다.");
                 return false;
             }
 
@@ -455,7 +479,6 @@ namespace Manager
             return card.CurrentOwnerType == CardZone.OwnerType.Opponent &&
                    card.CurrentZoneType == CardZone.ZoneType.Field;
         }
-        #endregion
 
         /// <summary>
         /// 상대 필드가 비어있는지 확인
@@ -484,8 +507,19 @@ namespace Manager
 
             return isEmpty;
         }
+        #endregion
 
         #region Utility
+        /// <summary>
+        /// 단일 카드의 값 반환
+        /// </summary>
+        /// <param name="card">값을 가져올 카드</param>
+        /// <returns>카드의 숫자 값</returns>
+        private float GetCardValue(Card card)
+        {
+            return card.GetComponentInChildren<CardText>()?.RawValue ?? 0;
+        }
+
         /// <summary>
         /// 두 카드의 값 반환
         /// </summary>

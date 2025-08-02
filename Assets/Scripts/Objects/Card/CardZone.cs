@@ -81,6 +81,15 @@ namespace Objects
         /// <param name="card">추가할 카드의 Transform</param>
         public void AddCard(Transform card)
         {
+            // 새로 추가: 플레이어가 자신의 필드에 카드 배치할 때만 턴 검증
+            if (zoneType == ZoneType.Field &&
+                ownerType == OwnerType.Player &&
+                !TurnManager.Instance.IsLocalPlayerTurn)
+            {
+                Debug.Log("[CardZone] 내 턴이 아닙니다.");
+                return;
+            }
+
             // 기본 제한 체크들
             if (zoneType == ZoneType.Hand && cards.Count >= 10)
             {
@@ -152,12 +161,45 @@ namespace Objects
             card.SetParent(transform);
 
             // Opponent 손패 텍스트 비활성화 (보안)
-            if (ownerType == OwnerType.Opponent && zoneType == ZoneType.Hand)
+            //if (ownerType == OwnerType.Opponent && zoneType == ZoneType.Hand)
+            //{
+            //    var tmp = card.GetComponentInChildren<TMPro.TextMeshPro>();
+            //    if (tmp != null)
+            //    {
+            //        tmp.gameObject.SetActive(false);
+            //    }
+            //}
+
+            // 새로운 코드 (추가):
+            // 상대방 카드 텍스트 처리 (Zone별 분기)
+            if (ownerType == OwnerType.Opponent)
             {
                 var tmp = card.GetComponentInChildren<TMPro.TextMeshPro>();
                 if (tmp != null)
                 {
-                    tmp.gameObject.SetActive(false);
+                    if (zoneType == ZoneType.Hand)
+                    {
+                        // 손패: 항상 텍스트 숨김 (보안)
+                        tmp.gameObject.SetActive(false);
+                    }
+                    else if (zoneType == ZoneType.Field && cardComponent != null && cardComponent.IsSecret)
+                    {
+                        // 필드의 Secret 카드: 텍스트 숨김
+                        tmp.gameObject.SetActive(false);
+                    }
+                    // 필드의 일반 카드는 텍스트가 보임 (SetSecret에서 처리하지 않음)
+                }
+            }
+
+            // 내 카드의 Secret 상태 처리 (필드 배치 시)
+            if (ownerType == OwnerType.Player && zoneType == ZoneType.Field && cardComponent != null && cardComponent.IsSecret)
+            {
+                var tmp = card.GetComponentInChildren<TMPro.TextMeshPro>();
+                if (tmp != null)
+                {
+                    // 내 Secret 카드: 흰색 텍스트로 표시
+                    tmp.gameObject.SetActive(true);
+                    tmp.color = Color.white;
                 }
             }
 

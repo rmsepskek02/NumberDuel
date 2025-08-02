@@ -52,6 +52,8 @@ MonoBehaviour:
   - RPC_AssignPlayerColor
   - RPC_SyncAllPlayersColors
   - RPC_BeginFirstTurn
+  - RPC_RevealSecret
+  - RPC_AttackResult
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1

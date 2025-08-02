@@ -59,6 +59,13 @@ namespace Manager
         /// </summary>
         public void StartOperation(Card operatorCard)
         {
+            // 새로 추가: 턴 검증
+            if (!TurnManager.Instance.IsLocalPlayerTurn)
+            {
+                Debug.Log("[OperatorManager] 내 턴이 아닙니다.");
+                return;
+            }
+
             if (!CanStartOperation(operatorCard)) return;
 
             InitializeOperation(operatorCard);
