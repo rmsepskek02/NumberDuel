@@ -108,10 +108,10 @@ namespace Photon.Realtime
             {
                 websocketType = Type.GetType("ExitGames.Client.Photon.SocketWebTcp, Assembly-CSharp", false);
             }
-            #if UNITY_WEBGL
-            if (websocketType == null && this.DebugOut >= DebugLevel.WARNING)
+            #if UNITY_WEBGL && !UNITY_EDITOR
+            if (websocketType == null && this.DebugOut >= DebugLevel.ERROR)
             {
-                this.Listener.DebugReturn(DebugLevel.WARNING, "SocketWebTcp type not found in the usual Assemblies. This is required as wrapper for the browser WebSocket API. Make sure to make the PhotonLibs\\WebSocket code available.");
+                this.Listener.DebugReturn(DebugLevel.ERROR, "SocketWebTcp type not found in the usual Assemblies. This is required as wrapper for the browser WebSocket API. Make sure to make the PhotonLibs\\WebSocket code available.");
             }
             #endif
             #endif
@@ -560,7 +560,7 @@ namespace Photon.Realtime
         /// </summary>
         /// <param name="becomeInactive">Async games can be re-joined (loaded) later on. Set to false, if you want to abandon a game entirely.</param>
         /// <param name="sendAuthCookie">WebFlag: Securely transmit the encrypted object AuthCookie to the web service in PathLeave webhook when available</param>
-        /// <returns>If the opteration can be send currently.</returns>
+        /// <returns>If the operation can be sent currently.</returns>
         public virtual bool OpLeaveRoom(bool becomeInactive, bool sendAuthCookie = false)
         {
             Dictionary<byte, object> opParameters = new Dictionary<byte, object>();

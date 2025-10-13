@@ -54,6 +54,7 @@ MonoBehaviour:
   - RPC_BeginFirstTurn
   - RPC_RevealSecret
   - RPC_AttackResult
+  - RPC_EnhancedAttackResult
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1
