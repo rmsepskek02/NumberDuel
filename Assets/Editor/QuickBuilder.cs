@@ -8,6 +8,10 @@ public class QuickBuilder
 {
     private static string buildPath = "Builds"; // 기본 빌드 경로
 
+    // 새로 추가: x1 메뉴
+    [MenuItem("Tools/Build Clients/x1")]
+    public static void BuildClientsX1() => BuildClients(1);
+
     [MenuItem("Tools/Build Clients/x2")]
     public static void BuildClientsX2() => BuildClients(2);
 
@@ -24,6 +28,9 @@ public class QuickBuilder
     {
         string[] scenes = GetEnabledScenes();
 
+        // 빌드 전 모든 클라이언트의 이전 로그 파일 삭제
+        CleanupOldLogs(clientCount);
+
         for (int i = 1; i <= clientCount; i++)
         {
             string clientPath = Path.Combine(buildPath, $"Client{i}");
@@ -36,12 +43,45 @@ public class QuickBuilder
             // 클라이언트 설정 저장
             SaveClientSettings(clientPath, i);
 
-            // 실행 시 창 모드 적용하는 설정 파일 생성
+            // 실행 시 창 모드 및 로그 경로 설정 파일 생성
             CreateWindowedConfig(clientPath, i);
         }
 
+        Debug.Log("=== 모든 클라이언트 빌드 완료! 이전 로그 파일이 삭제되었습니다. ===");
+
         // 빌드된 클라이언트 실행
         RunBuiltClients(clientCount);
+    }
+
+    // 이전 로그 파일 삭제
+    private static void CleanupOldLogs(int clientCount)
+    {
+        Debug.Log("=== 이전 로그 파일 정리 중... ===");
+
+        for (int i = 1; i <= clientCount; i++)
+        {
+            string clientPath = Path.Combine(buildPath, $"Client{i}");
+            string logFile = Path.Combine(clientPath, "Player.log");
+
+            if (File.Exists(logFile))
+            {
+                try
+                {
+                    File.Delete(logFile);
+                    Debug.Log($"Client {i}: 이전 로그 삭제 완료");
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning($"Client {i}: 로그 삭제 실패 - {e.Message}");
+                }
+            }
+            else
+            {
+                Debug.Log($"Client {i}: 이전 로그 없음 (처음 빌드)");
+            }
+        }
+
+        Debug.Log("=== 로그 파일 정리 완료! ===");
     }
 
     // 활성화된 씬 목록 가져오기
@@ -72,7 +112,6 @@ public class QuickBuilder
         {
             Debug.Log($"Client {clientNumber} 기존 설정 로드");
             ClientSettings settings = JsonUtils.LoadFromFile<ClientSettings>(clientFolder, settingsFile);
-            //JsonUtils.SaveToFile(settings, clientFolder, settingsFile); // 재저장 (갱신)
         }
         else
         {
@@ -82,14 +121,24 @@ public class QuickBuilder
         }
     }
 
-    // 창 모드 적용하는 설정 파일 생성
+    // 창 모드 및 로그 경로 설정 파일 생성
     private static void CreateWindowedConfig(string clientPath, int clientNumber)
     {
         string settingsFile = Path.Combine(clientPath, "ClientSettings.txt");
         ClientSettings settings = JsonUtils.LoadFromFile<ClientSettings>($"Client{clientNumber}", "ClientSettings.txt");
 
+        // 로그 파일 경로를 절대 경로로 설정
+        string fullClientPath = Path.GetFullPath(clientPath);
+        string logFilePath = Path.Combine(fullClientPath, "Player.log");
+
         string configPath = Path.Combine(clientPath, "windowed.txt");
-        File.WriteAllText(configPath, $"-screen-width {settings.ScreenWidth} -screen-height {settings.ScreenHeight} -screen-fullscreen 0");
+
+        // 창 모드 + 로그 파일 경로 지정
+        string arguments = $"-screen-width {settings.ScreenWidth} -screen-height {settings.ScreenHeight} -screen-fullscreen 0 -logFile \"{logFilePath}\"";
+
+        File.WriteAllText(configPath, arguments);
+
+        Debug.Log($"Client {clientNumber} 로그 경로: {logFilePath}");
     }
 
     // 빌드된 클라이언트 실행 (창 모드 강제 적용)
@@ -104,6 +153,7 @@ public class QuickBuilder
             {
                 // 창 모드 설정 적용하여 실행
                 System.Diagnostics.Process.Start(clientExe, File.ReadAllText(configPath));
+                Debug.Log($"Client {i} 실행: {clientExe}");
             }
             else
             {

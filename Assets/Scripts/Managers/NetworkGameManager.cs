@@ -2,7 +2,6 @@ using Objects;
 using Photon.Pun;
 using System.Collections.Generic;
 using UnityEngine;
-using Utills;
 
 namespace Manager
 {
@@ -289,6 +288,123 @@ namespace Manager
         }
         #endregion
 
+        #region NetworkCard Registry System
+        private Dictionary<string, NetworkCard> registeredCards = new Dictionary<string, NetworkCard>();
+
+        /// <summary>
+        /// NetworkCard를 등록하여 중앙에서 관리
+        /// </summary>
+        public void RegisterNetworkCard(NetworkCard card)
+        {
+            if (card == null)
+            {
+                Debug.LogWarning("[NetworkGameManager] 등록할 카드가 null입니다.");
+                return;
+            }
+
+            string uniqueId = card.UniqueId;
+
+            if (string.IsNullOrEmpty(uniqueId))
+            {
+                Debug.LogWarning($"[NetworkGameManager] 카드 {card.name}의 ID가 비어있어 등록할 수 없습니다.");
+                return;
+            }
+
+            if (registeredCards.ContainsKey(uniqueId))
+            {
+                if (registeredCards[uniqueId] == card)
+                {
+                    Debug.Log($"[NetworkGameManager] 카드 {card.name} (ID: {uniqueId})는 이미 등록되어 있습니다.");
+                    return;
+                }
+
+                Debug.LogWarning($"[NetworkGameManager] ID 충돌 감지! 기존 카드를 새 카드로 교체합니다. ID: {uniqueId}");
+                registeredCards[uniqueId] = card;
+            }
+            else
+            {
+                registeredCards.Add(uniqueId, card);
+                Debug.Log($"[NetworkGameManager] 카드 등록 완료: {card.name} (ID: {uniqueId}) - 총 {registeredCards.Count}장");
+            }
+        }
+
+        /// <summary>
+        /// NetworkCard 등록 해제
+        /// </summary>
+        public void UnregisterNetworkCard(string uniqueId)
+        {
+            if (string.IsNullOrEmpty(uniqueId))
+            {
+                Debug.LogWarning("[NetworkGameManager] 등록 해제할 ID가 비어있습니다.");
+                return;
+            }
+
+            if (registeredCards.ContainsKey(uniqueId))
+            {
+                var card = registeredCards[uniqueId];
+                registeredCards.Remove(uniqueId);
+                Debug.Log($"[NetworkGameManager] 카드 등록 해제: {(card != null ? card.name : "null")} (ID: {uniqueId}) - 남은 카드: {registeredCards.Count}장");
+            }
+            else
+            {
+                Debug.LogWarning($"[NetworkGameManager] 등록되지 않은 카드 ID입니다: {uniqueId}");
+            }
+        }
+
+        /// <summary>
+        /// ID로 등록된 NetworkCard 찾기
+        /// </summary>
+        public NetworkCard FindNetworkCard(string uniqueId)
+        {
+            if (string.IsNullOrEmpty(uniqueId))
+            {
+                return null;
+            }
+
+            if (registeredCards.TryGetValue(uniqueId, out NetworkCard card))
+            {
+                if (card != null)
+                {
+                    return card;
+                }
+                else
+                {
+                    Debug.LogWarning($"[NetworkGameManager] 카드가 파괴되었으나 등록은 남아있습니다. ID: {uniqueId}");
+                    registeredCards.Remove(uniqueId);
+                    return null;
+                }
+            }
+
+            Debug.LogWarning($"[NetworkGameManager] ID를 찾을 수 없습니다: {uniqueId}");
+            return null;
+        }
+
+        /// <summary>
+        /// 등록된 모든 카드 정보 출력 (디버깅용)
+        /// </summary>
+        public void PrintRegisteredCards()
+        {
+            Debug.Log($"[NetworkGameManager] === 등록된 카드 목록 ({registeredCards.Count}장) ===");
+
+            foreach (var kvp in registeredCards)
+            {
+                string cardName = kvp.Value != null ? kvp.Value.name : "null";
+                string cardInfo = kvp.Value != null ? $"IsValid: {kvp.Value != null}" : "Destroyed";
+                Debug.Log($"  - ID: {kvp.Key}, Name: {cardName}, {cardInfo}");
+            }
+        }
+
+        /// <summary>
+        /// 모든 카드 등록 해제 (씬 전환 시 등)
+        /// </summary>
+        public void ClearAllRegisteredCards()
+        {
+            int count = registeredCards.Count;
+            registeredCards.Clear();
+            Debug.Log($"[NetworkGameManager] 모든 카드 등록 해제 완료 ({count}장)");
+        }
+        #endregion
+
         #region Card Draw Synchronization System
         /// <summary>
         /// 네트워크 액션 수행 가능 여부 확인 (초기 드로우 허용)
@@ -480,10 +596,11 @@ namespace Manager
         /// <param name="owner">카드 소유자</param>
         /// <param name="zoneType">배치될 Zone 타입</param>
         /// <param name="isSecret">Secret 모드 여부</param>
+        /// <param name="uniqueId">카드의 고유 ID (NetworkCard에서 전달받음)</param>
         public void SyncCardPlacement(Manager.CardData cardData, CardZone.OwnerType owner,
-                                     CardZone.ZoneType zoneType, bool isSecret)
+                                     CardZone.ZoneType zoneType, bool isSecret, string uniqueId)
         {
-            Debug.Log($"[NetworkGameManager] SyncCardPlacement 호출됨: {cardData.cardType} to {owner} {zoneType}");
+            Debug.Log($"[NetworkGameManager] SyncCardPlacement 호출됨: {cardData.cardType} to {owner} {zoneType} (ID: {uniqueId})");
 
             if (!CanPerformNetworkAction())
             {
@@ -491,8 +608,12 @@ namespace Manager
                 return;
             }
 
-            // 고유 ID 생성 (NetworkCard 기반)
-            string uniqueId = GenerateNetworkCardId();
+            // uniqueId 검증
+            if (string.IsNullOrEmpty(uniqueId))
+            {
+                Debug.LogError("[NetworkGameManager] uniqueId가 비어있어 동기화를 중단합니다.");
+                return;
+            }
 
             var placementData = new CardPlacementData(cardData, owner, zoneType, isSecret, uniqueId);
             string jsonData = JsonUtility.ToJson(placementData);
@@ -624,19 +745,66 @@ namespace Manager
         }
         #endregion
 
-        #region Attack Result Synchronization (Secret 해제 포함)
+        #region Combat Synchronization System
+
         /// <summary>
-        /// 공격 결과 동기화 (Secret 해제 정보 포함)
+        /// 전투 액션 데이터 구조체
         /// </summary>
-        /// <param name="attacker">공격자 카드</param>
-        /// <param name="defender">방어자 카드 (빈 필드 공격 시 null)</param>
-        /// <param name="attackerValue">공격자 값</param>
-        /// <param name="defenderValue">방어자 값</param>
-        public void SyncAttackResult(Card attacker, Card defender, float attackerValue, float defenderValue)
+        [System.Serializable]
+        public class CombatActionData
+        {
+            public string attackerCardId;
+            public string defenderCardId;
+            public float attackerValue;
+            public float defenderValue;
+            public bool attackerWasSecret;
+            public bool defenderWasSecret;
+            public int damageToOpponent;
+            public bool isEmptyFieldAttack;
+
+            // 전투 결과로 제거될 카드들
+            public bool destroyAttacker;
+            public bool destroyDefender;
+
+            // 추가: 전투 후 변경될 카드 값
+            public float newAttackerValue;  // 공격자 승리 시 새로운 값
+            public float newDefenderValue;  // 방어자 승리 시 새로운 값
+
+            public CombatActionData(string attId, string defId, float attVal, float defVal,
+                                   bool attSecret, bool defSecret, int damage,
+                                   bool destroyAtt = false, bool destroyDef = false,
+                                   float newAttVal = 0f, float newDefVal = 0f)
+            {
+                attackerCardId = attId;
+                defenderCardId = defId;
+                attackerValue = attVal;
+                defenderValue = defVal;
+                attackerWasSecret = attSecret;
+                defenderWasSecret = defSecret;
+                damageToOpponent = damage;
+                isEmptyFieldAttack = string.IsNullOrEmpty(defId);
+                destroyAttacker = destroyAtt;
+                destroyDefender = destroyDef;
+                newAttackerValue = newAttVal;
+                newDefenderValue = newDefVal;
+            }
+        }
+
+        /// <summary>
+        /// 전투 액션 동기화 (공격, ExpressionZone, HP 모두 포함)
+        /// </summary>
+        public void SyncCombatAction(Card attacker, Card defender, float attackerValue,
+                                     float defenderValue, int damageAmount)
         {
             if (attacker == null)
             {
-                Debug.LogWarning("[NetworkGameManager] SyncAttackResult: attacker가 null입니다.");
+                Debug.LogWarning("[NetworkGameManager] SyncCombatAction: attacker가 null입니다.");
+                return;
+            }
+
+            if (!CanPerformNetworkAction())
+            {
+                Debug.LogWarning("[NetworkGameManager] 네트워크 액션 수행 불가");
                 return;
             }
 
@@ -645,7 +813,7 @@ namespace Manager
             string attackerCardId = attackerNetworkCard != null ? attackerNetworkCard.UniqueId : "";
             bool attackerWasSecret = attacker.IsSecret;
 
-            // 방어자 정보  
+            // 방어자 정보
             string defenderCardId = "";
             bool defenderWasSecret = false;
             if (defender != null)
@@ -655,48 +823,180 @@ namespace Manager
                 defenderWasSecret = defender.IsSecret;
             }
 
-            Debug.Log($"[NetworkGameManager] 공격 결과 동기화: Attacker={attackerCardId}(Secret:{attackerWasSecret}), Defender={defenderCardId}(Secret:{defenderWasSecret})");
+            // 전투 결과 계산 (어느 카드가 파괴되는지 + 새로운 값)
+            bool destroyAttacker = false;
+            bool destroyDefender = false;
+            float newAttackerValue = 0f;
+            float newDefenderValue = 0f;
 
-            // RPC 전송 (Secret 정보 포함)
-            photonView.RPC("RPC_AttackResult", RpcTarget.All,
-                attackerCardId, defenderCardId, attackerValue, defenderValue,
-                attackerWasSecret, defenderWasSecret);
+            if (defender != null) // 일반 공격
+            {
+                float result = attackerValue - defenderValue;
+                if (result > 0) // 공격자 승리
+                {
+                    destroyDefender = true;
+                    newAttackerValue = result; // 공격자의 새로운 값
+                }
+                else if (result < 0) // 방어자 승리
+                {
+                    destroyAttacker = true;
+                    newDefenderValue = Mathf.Abs(result); // 방어자의 새로운 값
+                }
+                else // 무승부
+                {
+                    destroyAttacker = true;
+                    destroyDefender = true;
+                }
+            }
+            // 빈 필드 공격은 카드 파괴 없음
+
+            Debug.Log($"[NetworkGameManager] 전투 액션 동기화: Attacker={attackerCardId}, Defender={defenderCardId}, Damage={damageAmount}, DestroyAtt={destroyAttacker}, DestroyDef={destroyDefender}, NewAttVal={newAttackerValue}, NewDefVal={newDefenderValue}");
+
+            var combatData = new CombatActionData(
+                attackerCardId, defenderCardId,
+                attackerValue, defenderValue,
+                attackerWasSecret, defenderWasSecret,
+                damageAmount,
+                destroyAttacker, destroyDefender,
+                newAttackerValue, newDefenderValue
+            );
+
+            string jsonData = JsonUtility.ToJson(combatData);
+            photonView.RPC("RPC_SyncCombatAction", RpcTarget.Others, jsonData);
         }
 
-        /// <summary>
-        /// 공격 결과 RPC 수신 처리 (Secret 해제 포함)
-        /// </summary>
         [PunRPC]
-        private void RPC_AttackResult(string attackerCardId, string defenderCardId,
-            float attackerValue, float defenderValue, bool attackerWasSecret, bool defenderWasSecret)
+        private void RPC_SyncCombatAction(string jsonData)
         {
-            Debug.Log($"[NetworkGameManager] RPC_AttackResult 수신: Attacker={attackerCardId}, Defender={defenderCardId}");
+            Debug.Log($"[NetworkGameManager] RPC_SyncCombatAction 수신");
 
-            // 공격자 Secret 해제
-            if (attackerWasSecret && !string.IsNullOrEmpty(attackerCardId))
+            try
             {
-                var attackerCard = FindCardByNetworkId(attackerCardId);
-                if (attackerCard != null)
-                {
-                    Debug.Log($"[NetworkGameManager] 공격자 Secret 해제: {attackerCard.name}");
-                    attackerCard.RevealSecret();
-                }
+                var combatData = JsonUtility.FromJson<CombatActionData>(jsonData);
+                ApplyRemoteCombatAction(combatData);
             }
-
-            // 방어자 Secret 해제
-            if (defenderWasSecret && !string.IsNullOrEmpty(defenderCardId))
+            catch (System.Exception ex)
             {
-                var defenderCard = FindCardByNetworkId(defenderCardId);
-                if (defenderCard != null)
-                {
-                    Debug.Log($"[NetworkGameManager] 방어자 Secret 해제: {defenderCard.name}");
-                    defenderCard.RevealSecret();
-                }
+                Debug.LogError($"[NetworkGameManager] 전투 동기화 오류: {ex.Message}");
             }
-
-            Debug.Log("[NetworkGameManager] 공격 결과 Secret 해제 처리 완료");
         }
 
+        private void ApplyRemoteCombatAction(CombatActionData combatData)
+        {
+            Debug.Log("[NetworkGameManager] 원격 전투 액션 적용 시작");
+
+            // 1. 공격자/방어자 카드 찾기
+            Card attackerCard = FindCardByNetworkId(combatData.attackerCardId);
+            Card defenderCard = !string.IsNullOrEmpty(combatData.defenderCardId)
+                ? FindCardByNetworkId(combatData.defenderCardId)
+                : null;
+
+            if (attackerCard == null)
+            {
+                Debug.LogError($"[NetworkGameManager] 공격자 찾을 수 없음: {combatData.attackerCardId}");
+                return;
+            }
+
+            // 2. Secret 해제
+            if (combatData.attackerWasSecret)
+            {
+                attackerCard.RevealSecret();
+                Debug.Log($"[NetworkGameManager] 공격자 Secret 해제: {attackerCard.name}");
+            }
+
+            if (defenderCard != null && combatData.defenderWasSecret)
+            {
+                defenderCard.RevealSecret();
+                Debug.Log($"[NetworkGameManager] 방어자 Secret 해제: {defenderCard.name}");
+            }
+
+            // 3. ExpressionZone 업데이트
+            StartCoroutine(SyncExpressionZone(attackerCard, defenderCard, combatData));
+        }
+
+        private System.Collections.IEnumerator SyncExpressionZone(Card attacker, Card defender, CombatActionData data)
+        {
+            var ezManager = ExpressionZoneManager.Instance;
+
+            // 공격 초기화
+            ezManager.InitForAttack();
+            ezManager.SetAttackerCard(attacker);
+
+            yield return new WaitForSeconds(0.5f);
+
+            if (data.isEmptyFieldAttack)
+            {
+                // 빈 필드 공격
+                ezManager.SetEmptyFieldDefender(CardZone.OwnerType.Player);
+                yield return new WaitForSeconds(1.5f);
+                ezManager.ShowEmptyFieldResult(data.attackerValue);
+            }
+            else
+            {
+                // 일반 공격
+                if (defender != null)
+                {
+                    ezManager.SetDefenderCard(defender);
+                }
+
+                yield return new WaitForSeconds(1.5f);
+                ezManager.ShowResult(data.attackerValue, data.defenderValue);
+            }
+
+            yield return new WaitForSeconds(1f);
+
+            // HP 감소 (상대방 관점에서는 내 HP가 감소)
+            if (data.damageToOpponent > 0 && HealthManager.Instance != null)
+            {
+                HealthManager.Instance.ApplyDamage(data.damageToOpponent, CardZone.OwnerType.Player);
+                Debug.Log($"[NetworkGameManager] HP 감소 적용: {data.damageToOpponent}");
+            }
+
+            yield return new WaitForSeconds(0.5f);
+
+            // 추가: 카드 값 업데이트 (제거 전에 실행)
+            if (data.newAttackerValue > 0 && attacker != null && !data.destroyAttacker)
+            {
+                var attackerText = attacker.GetComponentInChildren<CardText>();
+                if (attackerText != null)
+                {
+                    attackerText.SetRawValue(data.newAttackerValue);
+                    Debug.Log($"[NetworkGameManager] 공격자 값 업데이트: {data.newAttackerValue}");
+                }
+            }
+
+            if (data.newDefenderValue > 0 && defender != null && !data.destroyDefender)
+            {
+                var defenderText = defender.GetComponentInChildren<CardText>();
+                if (defenderText != null)
+                {
+                    defenderText.SetRawValue(data.newDefenderValue);
+                    Debug.Log($"[NetworkGameManager] 방어자 값 업데이트: {data.newDefenderValue}");
+                }
+            }
+
+            // 카드 제거 처리
+            if (data.destroyAttacker && attacker != null)
+            {
+                Debug.Log($"[NetworkGameManager] 공격자 카드 제거: {attacker.name}");
+                var zone = attacker.GetComponentInParent<CardZone>();
+                zone?.RemoveCard(attacker.transform);
+                Destroy(attacker.gameObject);
+            }
+
+            if (data.destroyDefender && defender != null)
+            {
+                Debug.Log($"[NetworkGameManager] 방어자 카드 제거: {defender.name}");
+                var zone = defender.GetComponentInParent<CardZone>();
+                zone?.RemoveCard(defender.transform);
+                Destroy(defender.gameObject);
+            }
+
+            yield return new WaitForSeconds(0.3f);
+
+            // ExpressionZone은 다음 공격 시작 시 InitForAttack()에서 초기화됨
+            Debug.Log("[NetworkGameManager] 원격 전투 액션 완료");
+        }
         /// <summary>
         /// NetworkCard ID로 Card 컴포넌트 찾기
         /// </summary>
@@ -716,8 +1016,9 @@ namespace Manager
             Debug.LogWarning($"[NetworkGameManager] NetworkCard ID {cardId}를 찾을 수 없습니다.");
             return null;
         }
-        #endregion
 
+        #endregion
+        
         #region Network Utility Methods
         /// <summary>
         /// NetworkCard용 고유 ID 생성

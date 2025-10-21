@@ -239,21 +239,30 @@ namespace Objects
                 return;
             }
 
+            // UniqueId 검증 추가
+            string cardId = networkCard.UniqueId;
+            if (string.IsNullOrEmpty(cardId))
+            {
+                Debug.LogError($"[CardPlayDetector] NetworkCard의 ID가 비어있습니다: {card.name}");
+                return;
+            }
+
             // 카드 데이터 추출
             Manager.CardData cardData = ExtractCardData(card);
 
             // 위치 정보 업데이트 (배치 후 정확한 위치 반영)
             networkCard.UpdateLocationInfo();
 
-            // 네트워크 동기화 전송
+            // 네트워크 동기화 전송 - uniqueId 추가!
             NetworkGameManager.Instance.SyncCardPlacement(
                 cardData,
                 targetZone.Owner,
                 targetZone.Zone,
-                isSecret
+                isSecret,
+                cardId  // 5번째 파라미터 추가!
             );
 
-            Debug.Log($"[CardPlayDetector] 카드 배치 네트워크 동기화 전송 완료: {card.CardType} to {targetZone.Owner} {targetZone.Zone} (ID: {networkCard.UniqueId})");
+            Debug.Log($"[CardPlayDetector] 카드 배치 네트워크 동기화 전송 완료: {card.CardType} to {targetZone.Owner} {targetZone.Zone} (ID: {cardId})");
         }
 
         /// <summary>

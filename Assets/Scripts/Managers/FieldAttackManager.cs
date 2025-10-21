@@ -160,15 +160,21 @@ namespace Manager
             }
 
             // 빈 필드 공격 결과 적용 (원본 값 사용)
-            ApplyEmptyFieldResult(attacker, originalAttackerValue);
+            int damage = ApplyEmptyFieldResult(attacker, originalAttackerValue);
 
             // 공격 완료 표시
             attacker.SetHasAttackedThisTurn(true);
 
-            // 네트워크 동기화 - 빈 필드 공격 결과 전송 (defender는 null, Secret 정보 포함)
+            // 수정: 전체 전투 액션 동기화 (ExpressionZone + HP 포함)
             if (NetworkGameManager.Instance != null)
             {
-                NetworkGameManager.Instance.SyncAttackResult(attacker, null, originalAttackerValue, 0);
+                NetworkGameManager.Instance.SyncCombatAction(
+                    attacker,
+                    null,  // defender는 null (빈 필드)
+                    originalAttackerValue,
+                    0f,    // 방어자 값 0
+                    damage // 실제 데미지
+                );
             }
 
             // 상태 초기화
@@ -246,16 +252,22 @@ namespace Manager
                 yield break;
             }
 
-            // 결과 적용 (원본 값 전달)
-            ApplyBattleResult(attacker, defender, originalAttackerValue, originalDefenderValue);
+            // 결과 적용 (원본 값 전달) - 실제 데미지 계산
+            int damage = ApplyBattleResult(attacker, defender, originalAttackerValue, originalDefenderValue);
 
             // 공격 완료 표시
             attacker.SetHasAttackedThisTurn(true);
 
-            // 네트워크 동기화 - 공격 결과 전송 (Secret 정보 포함)
+            // 수정: 전체 전투 액션 동기화 (ExpressionZone + HP 포함)
             if (NetworkGameManager.Instance != null)
             {
-                NetworkGameManager.Instance.SyncAttackResult(attacker, defender, originalAttackerValue, originalDefenderValue);
+                NetworkGameManager.Instance.SyncCombatAction(
+                    attacker,
+                    defender,
+                    originalAttackerValue,
+                    originalDefenderValue,
+                    damage // 실제 데미지
+                );
             }
 
             // 상태 초기화
@@ -274,7 +286,7 @@ namespace Manager
         /// </summary>
         /// <param name="attacker">공격한 카드</param>
         /// <param name="damage">상대에게 가할 데미지</param>
-        private void ApplyEmptyFieldResult(Card attacker, float damage)
+        private int ApplyEmptyFieldResult(Card attacker, float damage)
         {
             if (enableDebugLog)
                 Debug.Log($"[FieldAttackManager] 빈 필드 공격 결과 적용 - 데미지: {damage}");
@@ -289,22 +301,27 @@ namespace Manager
 
                 if (enableDebugLog)
                     Debug.Log($"[FieldAttackManager] 상대에게 {actualDamage} 데미지 적용 완료");
+
+                return actualDamage; // 추가: 데미지 반환
             }
             else
             {
                 Debug.LogError("[FieldAttackManager] HealthManager를 찾을 수 없습니다!");
+                return 0;
             }
         }
+
 
         /// <summary>
         /// 전투 결과 적용 (원본 값 사용)
         /// </summary>
-        private void ApplyBattleResult(Card attacker, Card defender, float originalAttackerValue, float originalDefenderValue)
+        private int ApplyBattleResult(Card attacker, Card defender, float originalAttackerValue, float originalDefenderValue)
         {
             var attackerText = attacker.GetComponentInChildren<CardText>();
             var defenderText = defender.GetComponentInChildren<CardText>();
 
             float result = originalAttackerValue - originalDefenderValue;
+            int actualDamage = 0; // 추가: 데미지 추적
 
             if (enableDebugLog)
                 Debug.Log($"[FieldAttackManager] 전투 결과 계산: {originalAttackerValue} - {originalDefenderValue} = {result}");
@@ -315,7 +332,7 @@ namespace Manager
                 if (HealthManager.Instance != null)
                 {
                     int damage = Utills.DamageCalculator.CalculateAttackDamage(originalAttackerValue, originalDefenderValue);
-                    int actualDamage = HealthManager.Instance.ApplyDamage(damage, CardZone.OwnerType.Opponent);
+                    actualDamage = HealthManager.Instance.ApplyDamage(damage, CardZone.OwnerType.Opponent);
 
                     if (enableDebugLog)
                         Debug.Log($"[FieldAttackManager] 공격 성공 - 상대에게 {actualDamage} 데미지");
@@ -354,6 +371,8 @@ namespace Manager
                 if (enableDebugLog)
                     Debug.Log("[FieldAttackManager] 상호 파괴");
             }
+
+            return actualDamage; // 추가: 데미지 반환
         }
         #endregion
 
@@ -539,7 +558,7 @@ namespace Manager
 
             // 애니메이션 완료 후 Zone에서 제거하도록 수정
             StartCoroutine(card.AnimateRemoval(() => {
-                zone?.RemoveCard(card.transform); // 애니메이션 후 정렬 발생
+                zone?.RemoveCard(card.transform);
                 Destroy(card.gameObject);
             }));
         }

@@ -132,23 +132,29 @@ namespace Objects
                 networkCard = card.gameObject.AddComponent<NetworkCard>();
             }
 
-            // 네트워크 동기화 필요성 판단 (수정됨)
-            // 조건: 필드 배치 + 플레이어 소유 + 네트워크 매니저 존재
             bool shouldSyncToNetwork = (zoneType == ZoneType.Field &&
-                                       ownerType == OwnerType.Player &&
-                                       NetworkGameManager.Instance != null &&
-                                       networkCard.CanPerformAction(NetworkActionType.PlaceToField));
+                            ownerType == OwnerType.Player &&
+                            NetworkGameManager.Instance != null &&
+                            cardComponent.CardType == CardType.Number);
 
             Debug.Log($"[CardZone] 동기화 조건 체크: zoneType={zoneType}, ownerType={ownerType}, NetworkManager={NetworkGameManager.Instance != null}, shouldSync={shouldSyncToNetwork}");
 
             // 네트워크 동기화 전송 (카드 실제 추가 전에 실행)
             if (shouldSyncToNetwork)
             {
-                Manager.CardData cardData = ExtractCardData(cardComponent);
+                CardData cardData = ExtractCardData(cardComponent);
                 bool isSecret = cardComponent.IsSecret;
 
+                string cardId = networkCard.UniqueId;
+
+                if (string.IsNullOrEmpty(cardId))
+                {
+                    Debug.LogError($"[CardZone] NetworkCard의 ID가 비어있습니다: {card.name}");
+                    return;
+                }
+
                 Debug.Log($"[CardZone] 네트워크 동기화 전송 시작: {cardComponent.CardType} to {ownerType} {zoneType} (ID: {networkCard.UniqueId})");
-                NetworkGameManager.Instance.SyncCardPlacement(cardData, ownerType, zoneType, isSecret);
+                NetworkGameManager.Instance.SyncCardPlacement(cardData, ownerType, zoneType, isSecret, cardId);
                 Debug.Log($"[CardZone] 네트워크 동기화 전송 완료");
             }
             else
