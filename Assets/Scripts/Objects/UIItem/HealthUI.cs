@@ -539,18 +539,6 @@ namespace Objects
             if (opponentHealthBorder != null)
                 opponentHealthBorder.color = originalOpponentBorderColor;
 
-            // 스케일 초기화
-            if (playerHPBar != null)
-            {
-                playerHPBar.localScale = Vector3.one;
-                playerHPBar.anchoredPosition = Vector2.zero;
-            }
-            if (opponentHPBar != null)
-            {
-                opponentHPBar.localScale = Vector3.one;
-                opponentHPBar.anchoredPosition = Vector2.zero;
-            }
-
             // 텍스트 업데이트
             UpdateHealthText(CardZone.OwnerType.Player);
             UpdateHealthText(CardZone.OwnerType.Opponent);

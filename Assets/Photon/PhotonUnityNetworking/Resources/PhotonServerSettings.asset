@@ -59,6 +59,7 @@ MonoBehaviour:
   - RPC_RemoveCard
   - RPC_SyncJoker
   - RPC_SyncOperation
+  - RPC_RestartGameForAll
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1

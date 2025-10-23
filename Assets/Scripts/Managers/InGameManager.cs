@@ -232,18 +232,32 @@ namespace Manager
         }
 
         /// <summary>
-        /// 게임 재시작
+        /// 게임 재시작 (방장만 호출)
         /// </summary>
         public void RestartGame()
         {
             Debug.Log("[InGameManager] 게임 재시작 시작");
 
-            // 0. 방장 체크
+            // 방장 체크
             if (!Photon.Pun.PhotonNetwork.IsMasterClient)
             {
                 Debug.LogWarning("[InGameManager] 방장만 게임을 재시작할 수 있습니다.");
                 return;
             }
+
+            // TurnManager를 통한 게임 재시작 (RPC로 모든 클라이언트 초기화)
+            if (TurnManager.Instance != null)
+            {
+                TurnManager.Instance.RestartGame();
+            }
+        }
+
+        /// <summary>
+        /// 로컬 게임 초기화 (모든 클라이언트에서 실행)
+        /// </summary>
+        public void RestartGameLocal()
+        {
+            Debug.Log("[InGameManager] 로컬 게임 초기화 시작");
 
             // 1. 게임 상태 플래그 리셋
             IsGameEnded = false;
@@ -253,23 +267,23 @@ namespace Manager
             // 2. 모든 진행 중인 프로세스 강제 종료
             ForceEndAllProcesses();
 
-            // 3. HealthManager 초기화 (먼저!)
+            // 3. InGameUIManager 초기화 (WIN/LOSE 텍스트 숨김)
+            if (InGameUIManager.Instance != null)
+            {
+                InGameUIManager.Instance.HideGameResultTexts();
+            }
+
+            // 4. HealthManager 초기화
             if (HealthManager.Instance != null)
             {
                 HealthManager.Instance.InitializeHealth();
             }
 
-            // 4. HealthUI 초기화 (HealthManager 이후)
+            // 5. HealthUI 초기화 (DOTween 애니메이션 정리)
             var healthUI = FindAnyObjectByType<HealthUI>();
             if (healthUI != null)
             {
                 healthUI.ResetUI();
-            }
-
-            // 5. InGameUIManager 초기화
-            if (InGameUIManager.Instance != null)
-            {
-                InGameUIManager.Instance.HideGameResultTexts();
             }
 
             // 6. ExpressionZone 초기화
@@ -297,13 +311,7 @@ namespace Manager
                 DeckManager.Instance.InitializeDecks();
             }
 
-            // 11. TurnManager를 통한 게임 재시작
-            if (TurnManager.Instance != null)
-            {
-                TurnManager.Instance.RestartGame();
-            }
-
-            Debug.Log("[InGameManager] 게임 재시작 완료");
+            Debug.Log("[InGameManager] 로컬 게임 초기화 완료");
         }
 
         /// <summary>

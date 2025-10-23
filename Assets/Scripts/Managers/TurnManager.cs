@@ -286,13 +286,33 @@ namespace Manager
         {
             Debug.Log("[TurnManager] 게임 재시작 시퀀스 시작");
 
-            // 1단계: 게임 상태 리셋
+            // 1단계: RPC로 모든 클라이언트의 게임 초기화
+            photonView.RPC("RPC_RestartGameForAll", RpcTarget.All);
+
+            yield return new WaitForSeconds(1f);
+
+            // 2단계: 게임 상태 리셋
             photonView.RPC("RPC_ResetGame", RpcTarget.All);
 
             yield return new WaitForSeconds(0.5f);
 
-            // 2단계: 새 게임 시작
+            // 3단계: 새 게임 시작
             StartGame();
+        }
+
+        /// <summary>
+        /// 모든 클라이언트에서 게임 초기화 실행
+        /// </summary>
+        [PunRPC]
+        private void RPC_RestartGameForAll()
+        {
+            Debug.Log("[TurnManager] RPC_RestartGameForAll 수신");
+
+            // InGameManager의 초기화 로직 실행 (방장 체크 제거)
+            if (InGameManager.Instance != null)
+            {
+                InGameManager.Instance.RestartGameLocal();
+            }
         }
         #endregion
 

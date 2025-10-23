@@ -187,9 +187,24 @@ namespace Manager
                 return;
             }
 
-            Debug.Log("[InGameUIManager] 게임 시작 버튼 클릭");
-            isStart = true;
-            StartGame();
+            Debug.Log("[InGameUIManager] START 버튼 클릭");
+            startButton.gameObject.SetActive(false);
+
+            // 게임이 종료된 상태인지 확인
+            if (InGameManager.Instance != null && InGameManager.Instance.IsGameEnded)
+            {
+                // 게임 재시작
+                Debug.Log("[InGameUIManager] 게임 재시작 실행");
+                isStart = true;
+                InGameManager.Instance.RestartGame();
+            }
+            else
+            {
+                // 새 게임 시작
+                Debug.Log("[InGameUIManager] 새 게임 시작");
+                isStart = true;
+                StartGame();
+            }
         }
 
         /// <summary>
@@ -237,9 +252,6 @@ namespace Manager
         /// </summary>
         private void StartGame()
         {
-            // Start 버튼 숨기기
-            startButton.gameObject.SetActive(false);
-
             if (PhotonNetwork.IsMasterClient)
             {
                 // TurnManager를 통한 게임 시작
