@@ -162,7 +162,22 @@ namespace Objects
             // 패배 이펙트 재생
             PlayDefeatEffect(defeatedPlayer);
 
-            // InGameManager에게 게임 종료 알림
+            // 핵심: HP 바 애니메이션이 완료될 때까지 대기 후 게임 종료
+            StartCoroutine(WaitForAnimationThenEndGame(defeatedPlayer));
+        }
+
+        /// <summary>
+        /// HP 바 애니메이션 완료 대기 후 게임 종료
+        /// </summary>
+        private IEnumerator WaitForAnimationThenEndGame(CardZone.OwnerType defeatedPlayer)
+        {
+            // HP 바 애니메이션 시간만큼 대기
+            yield return new WaitForSeconds(hpBarAnimDuration);
+
+            // 추가로 패배 이펙트 시간만큼 대기
+            yield return new WaitForSeconds(0.5f);
+
+            // 이제 게임 종료 처리
             if (InGameManager.Instance != null)
             {
                 InGameManager.Instance.OnGameEnd(defeatedPlayer);
@@ -322,13 +337,6 @@ namespace Objects
             {
                 // 패배 시 어두운 색상으로 변경
                 targetFillImage.DOColor(Color.black, 0.5f);
-            }
-
-            if (targetBar != null)
-            {
-                // 스케일 축소 애니메이션
-                targetBar.DOScale(0.9f, 0.5f)
-                    .SetEase(Ease.InOutQuart);
             }
         }
         #endregion
@@ -493,6 +501,63 @@ namespace Objects
         /// 디버그 로그 활성화/비활성화
         /// </summary>
         public void SetDebugMode(bool enable) => enableDebugLog = enable;
+        #endregion
+
+        #region Public Methods
+        /// <summary>
+        /// UI 완전 초기화 (게임 재시작 시 사용)
+        /// </summary>
+        public void ResetUI()
+        {
+            // 진행 중인 모든 DOTween 애니메이션 중지
+            if (playerHealthFill != null)
+                playerHealthFill.DOKill();
+            if (opponentHealthFill != null)
+                opponentHealthFill.DOKill();
+            if (playerHealthBorder != null)
+                playerHealthBorder.DOKill();
+            if (opponentHealthBorder != null)
+                opponentHealthBorder.DOKill();
+            if (playerHPBar != null)
+                playerHPBar.DOKill();
+            if (opponentHPBar != null)
+                opponentHPBar.DOKill();
+
+            // Fill Amount 초기화
+            if (playerHealthFill != null)
+                playerHealthFill.fillAmount = 1.0f;
+            if (opponentHealthFill != null)
+                opponentHealthFill.fillAmount = 1.0f;
+
+            // 색상 초기화
+            if (playerHealthFill != null)
+                playerHealthFill.color = originalPlayerFillColor;
+            if (opponentHealthFill != null)
+                opponentHealthFill.color = originalOpponentFillColor;
+            if (playerHealthBorder != null)
+                playerHealthBorder.color = originalPlayerBorderColor;
+            if (opponentHealthBorder != null)
+                opponentHealthBorder.color = originalOpponentBorderColor;
+
+            // 스케일 초기화
+            if (playerHPBar != null)
+            {
+                playerHPBar.localScale = Vector3.one;
+                playerHPBar.anchoredPosition = Vector2.zero;
+            }
+            if (opponentHPBar != null)
+            {
+                opponentHPBar.localScale = Vector3.one;
+                opponentHPBar.anchoredPosition = Vector2.zero;
+            }
+
+            // 텍스트 업데이트
+            UpdateHealthText(CardZone.OwnerType.Player);
+            UpdateHealthText(CardZone.OwnerType.Opponent);
+
+            if (enableDebugLog)
+                Debug.Log("[HealthUI] UI 완전 초기화 완료");
+        }
         #endregion
     }
 }

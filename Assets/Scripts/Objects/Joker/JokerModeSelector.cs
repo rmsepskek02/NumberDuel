@@ -302,7 +302,6 @@ namespace Objects
             RemoveJokerCardImmediately();
 
             InGameManager.Instance.EndProcess();
-            EndJokerProcess();
             Hide();
 
             Debug.Log("[JokerModeSelector] Draw 효과 실행 완료");

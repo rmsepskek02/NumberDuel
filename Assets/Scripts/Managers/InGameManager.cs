@@ -1,9 +1,10 @@
-using UnityEngine;
-using System.Collections.Generic;
-using Utills;
 using Objects;
-using System.Linq;
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+using Utills;
 
 namespace Manager
 {
@@ -95,9 +96,34 @@ namespace Manager
         #region Unity Lifecycle
         private void Start()
         {
-            // PunTurnManager 관련 코드 제거
-            // TurnManager가 유일한 턴 관리 시스템으로 동작
-            SetCardColor();
+            //StartCoroutine(FindHealthManagerLater());
+        }
+
+        private IEnumerator FindHealthManagerLater()
+        {
+            yield return new WaitForEndOfFrame(); // 모든 Start() 실행 후
+
+            var healthManager = FindAnyObjectByType<HealthManager>();
+            if (healthManager != null)
+            {
+                Debug.Log($"HealthManager 발견: {healthManager.gameObject.name}");
+                Debug.Log($"경로: {GetGameObjectPath(healthManager.gameObject)}");
+            }
+            else
+            {
+                Debug.Log("HealthManager가 정말로 씬에 없습니다.");
+            }
+        }
+
+        string GetGameObjectPath(GameObject obj)
+        {
+            string path = obj.name;
+            while (obj.transform.parent != null)
+            {
+                obj = obj.transform.parent.gameObject;
+                path = obj.name + "/" + path;
+            }
+            return path;
         }
         #endregion
 
@@ -210,32 +236,106 @@ namespace Manager
         /// </summary>
         public void RestartGame()
         {
-            Debug.Log("[InGameManager] 게임 재시작");
+            Debug.Log("[InGameManager] 게임 재시작 시작");
 
-            // 게임 상태 초기화
+            // 0. 방장 체크
+            if (!Photon.Pun.PhotonNetwork.IsMasterClient)
+            {
+                Debug.LogWarning("[InGameManager] 방장만 게임을 재시작할 수 있습니다.");
+                return;
+            }
+
+            // 1. 게임 상태 플래그 리셋
             IsGameEnded = false;
             GameWinner = null;
+            currentProcess = GameProcessState.Idle;
 
-            // 체력 초기화
+            // 2. 모든 진행 중인 프로세스 강제 종료
+            ForceEndAllProcesses();
+
+            // 3. HealthManager 초기화 (먼저!)
             if (HealthManager.Instance != null)
             {
                 HealthManager.Instance.InitializeHealth();
             }
 
-            // 덱 초기화
+            // 4. HealthUI 초기화 (HealthManager 이후)
+            var healthUI = FindAnyObjectByType<HealthUI>();
+            if (healthUI != null)
+            {
+                healthUI.ResetUI();
+            }
+
+            // 5. InGameUIManager 초기화
+            if (InGameUIManager.Instance != null)
+            {
+                InGameUIManager.Instance.HideGameResultTexts();
+            }
+
+            // 6. ExpressionZone 초기화
+            if (ExpressionZoneManager.Instance != null)
+            {
+                ExpressionZoneManager.Instance.ResetAllSlots();
+            }
+
+            // 7. NetworkGameManager 카드 레지스트리 초기화
+            if (NetworkGameManager.Instance != null)
+            {
+                NetworkGameManager.Instance.ClearAllRegisteredCards();
+            }
+
+            // 8. 모든 Zone의 카드 완전 제거
+            ClearAllZones();
+
+            // 9. 필드 카드 리스트 초기화
+            fieldCards.Clear();
+
+            // 10. DeckManager 초기화
             if (DeckManager.Instance != null)
             {
+                DeckManager.Instance.ResetDecks();
                 DeckManager.Instance.InitializeDecks();
             }
 
-            // 필드 모든 카드 제거
-            ClearAllFieldCards();
-
-            // 초기 핸드 드로우
-            DrawCardsToHand(5, CardZone.OwnerType.Player);
-            DrawCardsToHand(5, CardZone.OwnerType.Opponent);
+            // 11. TurnManager를 통한 게임 재시작
+            if (TurnManager.Instance != null)
+            {
+                TurnManager.Instance.RestartGame();
+            }
 
             Debug.Log("[InGameManager] 게임 재시작 완료");
+        }
+
+        /// <summary>
+        /// 모든 Zone의 카드 완전 제거
+        /// </summary>
+        private void ClearAllZones()
+        {
+            if (CardZone.AllZonesRoot == null)
+            {
+                Debug.LogWarning("[InGameManager] AllZonesRoot가 null입니다.");
+                return;
+            }
+
+            var allZones = CardZone.AllZonesRoot.GetComponentsInChildren<CardZone>();
+            foreach (var zone in allZones)
+            {
+                // Zone 내 모든 카드 제거
+                var childCount = zone.transform.childCount;
+                for (int i = childCount - 1; i >= 0; i--)
+                {
+                    var child = zone.transform.GetChild(i);
+                    var card = child.GetComponent<Card>();
+
+                    if (card != null)
+                    {
+                        zone.RemoveCard(child);
+                        Destroy(child.gameObject);
+                    }
+                }
+            }
+
+            Debug.Log("[InGameManager] 모든 Zone 초기화 완료");
         }
         #endregion
 
@@ -452,6 +552,7 @@ namespace Manager
             }
         }
 
+        #region Game End Management
         /// <summary>
         /// 게임 종료 UI 표시
         /// </summary>
@@ -459,12 +560,19 @@ namespace Manager
         /// <param name="loser">패배한 플레이어</param>
         private void ShowGameEndUI(CardZone.OwnerType winner, CardZone.OwnerType loser)
         {
-            string winnerText = winner == CardZone.OwnerType.Player ? "플레이어 승리!" : "상대 승리!";
-            Debug.Log($"[InGameManager] {winnerText}");
+            // 핵심: GameWinner는 OnGameEnd에서 이미 각 클라이언트 관점으로 설정됨
+            // Player가 승자면 로컬 플레이어 승리, Opponent가 승자면 로컬 플레이어 패배
+            bool localPlayerWon = (winner == CardZone.OwnerType.Player);
 
-            // 임시: 3초 후 재시작 옵션 표시
-            StartCoroutine(ShowRestartOption());
+            Debug.Log($"[InGameManager] 게임 결과: {(localPlayerWon ? "WIN" : "LOSE")} (winner={winner}, loser={loser})");
+
+            // InGameUIManager에 결과 전달
+            if (InGameUIManager.Instance != null)
+            {
+                InGameUIManager.Instance.ShowGameResult(localPlayerWon);
+            }
         }
+        #endregion
 
         /// <summary>
         /// 재시작 옵션 표시 (임시)
@@ -490,16 +598,6 @@ namespace Manager
         public bool CanPlayGame()
         {
             return !IsGameEnded && HealthManager.Instance != null && !HealthManager.Instance.IsGameOver();
-        }
-        #endregion
-
-        #region Legacy Code (향후 정리 예정)
-        /// <summary>
-        /// 카드 색상 설정 (향후 정리 예정)
-        /// </summary>
-        private void SetCardColor()
-        {
-            // TODO: 방장이 빨강 손님이 파랑
         }
         #endregion
     }

@@ -1,6 +1,8 @@
+using DG.Tweening;
 using Objects;
 using Photon.Pun;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,6 +19,8 @@ namespace Manager
         public Button endButton;
         public Button leaveButton;
         public TextMeshProUGUI turn;
+        public TextMeshProUGUI playerText;
+        public TextMeshProUGUI opponentText;
 
         [Header("버튼 스프라이트")]
         public Sprite enabledStartSprite;
@@ -27,7 +31,19 @@ namespace Manager
         [Header("게임 상태")]
         public bool isStart;
 
+        [Header("애니메이션 설정")]
+        [SerializeField] private float fadeInDuration = 0.5f;
+        [SerializeField] private float scaleUpDuration = 0.6f;
+        [SerializeField] private float pulseScale = 1.2f;
+        [SerializeField] private float pulseDuration = 0.8f;
+        [SerializeField] private int pulseCount = 3;
+        [SerializeField] private Ease scaleEase = Ease.OutBack;
+
         private PhotonManager pm;
+        [SerializeField] private string winText = "WIN";
+        [SerializeField] private string loseText = "LOSE";
+        [SerializeField] private Color winColor = Color.green;
+        [SerializeField] private Color loseColor = Color.red;
 
         #region Unity Lifecycle
         void Start()
@@ -256,10 +272,7 @@ namespace Manager
 
             // Start 버튼 다시 표시 및 상태 설정
             int playerCount = PhotonNetwork.CurrentRoom?.PlayerCount ?? 0;
-            bool canStart = playerCount == 2 && PhotonNetwork.IsMasterClient;
-
-            startButton.gameObject.SetActive(true);
-            SetButtonState(startButton, canStart, enabledStartSprite);
+            UpdateButtons(playerCount);
 
             // 턴 종료 버튼 비활성화
             SetButtonState(endButton, false, enabledEndSprite);
@@ -269,15 +282,134 @@ namespace Manager
         }
 
         /// <summary>
-        /// 게임 승리/패배 UI 표시
+        /// 게임 결과 표시 (애니메이션 포함)
         /// </summary>
-        public void ShowGameResult(CardZone.OwnerType winner)
+        /// <param name="isWin">로컬 플레이어가 승리했는지 여부</param>
+        public void ShowGameResult(bool isWin)
         {
-            string resultText = winner == CardZone.OwnerType.Player ? "승리!" : "패배!";
-            Debug.Log($"[InGameUIManager] 게임 결과: {resultText}");
+            Debug.Log($"[InGameUIManager] 게임 결과 표시: {(isWin ? "WIN" : "LOSE")}");
 
-            // 3초 후 자동으로 UI 리셋
-            Invoke(nameof(ResetUI), 3f);
+            if (isWin)
+            {
+                ShowWinResult();
+            }
+            else
+            {
+                ShowLoseResult();
+            }
+        }
+
+        /// <summary>
+        /// 승리 결과 표시
+        /// </summary>
+        private void ShowWinResult()
+        {
+            // 플레이어 텍스트: WIN
+            if (playerText != null)
+            {
+                playerText.text = winText;
+                playerText.color = winColor;
+                playerText.gameObject.SetActive(true);
+                PlayResultAnimation(playerText, true);
+            }
+
+            // 상대 텍스트: LOSE
+            if (opponentText != null)
+            {
+                opponentText.text = loseText;
+                opponentText.color = loseColor;
+                opponentText.gameObject.SetActive(true);
+                PlayResultAnimation(opponentText, false);
+            }
+        }
+
+        /// <summary>
+        /// 패배 결과 표시
+        /// </summary>
+        private void ShowLoseResult()
+        {
+            // 플레이어 텍스트: LOSE
+            if (playerText != null)
+            {
+                playerText.text = loseText;
+                playerText.color = loseColor;
+                playerText.gameObject.SetActive(true);
+                PlayResultAnimation(playerText, false);
+            }
+
+            // 상대 텍스트: WIN
+            if (opponentText != null)
+            {
+                opponentText.text = winText;
+                opponentText.color = winColor;
+                opponentText.gameObject.SetActive(true);
+                PlayResultAnimation(opponentText, true);
+            }
+        }
+
+        /// <summary>
+        /// 결과 텍스트 애니메이션 재생
+        /// </summary>
+        /// <param name="textMesh">애니메이션을 적용할 텍스트</param>
+        /// <param name="isWin">승리 텍스트인지 여부</param>
+        private void PlayResultAnimation(TextMeshProUGUI textMesh, bool isWin)
+        {
+            // 초기 상태 설정
+            textMesh.alpha = 0f;
+            textMesh.transform.localScale = Vector3.zero;
+
+            DG.Tweening.Sequence animSequence = DOTween.Sequence();
+
+            // 1단계: 페이드 인 + 스케일 업
+            animSequence.Append(textMesh.DOFade(1f, fadeInDuration).SetEase(Ease.OutQuad));
+            animSequence.Join(textMesh.transform.DOScale(Vector3.one, scaleUpDuration).SetEase(scaleEase));
+
+            // 2단계: 승리 텍스트는 펄스 효과 추가
+            if (isWin)
+            {
+                animSequence.AppendInterval(0.2f); // 짧은 대기
+
+                // 펄스 효과 (여러 번 반복)
+                for (int i = 0; i < pulseCount; i++)
+                {
+                    animSequence.Append(textMesh.transform.DOScale(Vector3.one * pulseScale, pulseDuration / 2)
+                        .SetEase(Ease.InOutQuad));
+                    animSequence.Append(textMesh.transform.DOScale(Vector3.one, pulseDuration / 2)
+                        .SetEase(Ease.InOutQuad));
+                }
+            }
+            else
+            {
+                // 패배 텍스트는 약간 어두워지는 효과
+                animSequence.AppendInterval(0.3f);
+                Color darkenedColor = textMesh.color * 0.7f;
+                darkenedColor.a = 1f;
+                animSequence.Append(textMesh.DOColor(darkenedColor, 0.5f));
+            }
+        }
+
+        /// <summary>
+        /// 게임 결과 텍스트 숨김 (게임 재시작 시 사용)
+        /// </summary>
+        public void HideGameResultTexts()
+        {
+            if (playerText != null)
+            {
+                playerText.DOKill(); // 진행 중인 애니메이션 중지
+                playerText.gameObject.SetActive(false);
+                playerText.alpha = 0f;
+                playerText.transform.localScale = Vector3.zero;
+            }
+
+            if (opponentText != null)
+            {
+                opponentText.DOKill(); // 진행 중인 애니메이션 중지
+                opponentText.gameObject.SetActive(false);
+                opponentText.alpha = 0f;
+                opponentText.transform.localScale = Vector3.zero;
+            }
+
+            Debug.Log("[InGameUIManager] 게임 결과 텍스트 숨김 완료");
         }
         #endregion
 

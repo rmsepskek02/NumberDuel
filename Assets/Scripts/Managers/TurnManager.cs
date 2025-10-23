@@ -406,7 +406,7 @@ namespace Manager
             foreach (var card in fieldCards)
             {
                 // 새로운 Card.cs API 사용
-                card.ResetTurnState(); // WasPlayedThisTurn, HasAttackedThisTurn 초기화
+                card.ResetForNewTurn(); // WasPlayedThisTurn, HasAttackedThisTurn 초기화
             }
         }
 
@@ -508,9 +508,9 @@ namespace Manager
 
         #region State Management
         /// <summary>
-        /// 게임 상태 초기화
+        /// 게임 상태 초기화 (public으로 변경)
         /// </summary>
-        private void ResetGameState()
+        public void ResetGameState()
         {
             isGameStarted = false;
             isFirstRound = true;
@@ -519,6 +519,8 @@ namespace Manager
             isLocalPlayerFirst = false;
             isProcessingTurn = false;
             lastTurnChangeTime = 0f;
+
+            Debug.Log("[TurnManager] 게임 상태 초기화 완료");
         }
 
         /// <summary>
