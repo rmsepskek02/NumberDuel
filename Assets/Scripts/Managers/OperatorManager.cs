@@ -168,24 +168,26 @@ namespace Manager
 
             yield return new WaitForSeconds(1.2f);
 
-            // 연산 실행
+            // 카드 값 변경 BEFORE에 원본 값 저장!
             var (first, second) = GetCardValues();
             ezManager.ShowResult(first, second, currentOperator);
 
             yield return new WaitForSeconds(0.6f);
 
-            // 결과 적용
+            // 네트워크 동기화를 카드 값 변경 BEFORE에 전송!
+            float result = CalculateResult(first, second);
+            if (NetworkGameManager.Instance != null)
+            {
+                NetworkGameManager.Instance.SyncOperationResult(
+                    operatorCard, firstCard, secondCard, result, currentOperator
+                );
+            }
+
+            // 결과 적용 (값 변경)
             ApplyOperationResult(first, second);
 
             // 연산자 카드 제거
             yield return StartCoroutine(RemoveOperatorCard());
-
-            // 네트워크 동기화 - 연산 결과 전송
-            if (NetworkGameManager.Instance != null)
-            {
-                float result = CalculateResult(first, second);
-                NetworkGameManager.Instance.SyncOperationResult(operatorCard, firstCard, secondCard, result, currentOperator);
-            }
 
             // 상태 복원
             RestoreDefaultGlowStates();

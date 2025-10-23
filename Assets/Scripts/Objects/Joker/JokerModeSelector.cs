@@ -8,12 +8,6 @@ using System.Collections.Generic;
 
 namespace Objects
 {
-    /// <summary>
-    /// 조커 카드 클릭 시 효과를 선택하는 UI를 제어한다.
-    /// 통합된 GLOW 상태 관리 시스템
-    /// Draw/Delete/Swap 조커 효과 처리
-    /// 사용 조건 검증 및 UI 활성화 관리
-    /// </summary>
     public class JokerModeSelector : MonoBehaviour
     {
         #region Singleton
@@ -51,14 +45,8 @@ namespace Objects
         private Card selectedJokerCard;
         private ObjectMouseEvent bgClick;
         private JokerEffectType selectedEffect;
-
-        /// <summary>초기화 완료 여부</summary>
         private bool isInitialized = false;
-
-        /// <summary>스프라이트 설정 완료 여부 - 첫 Show() 시에만 설정</summary>
         private bool isSpritesSet = false;
-
-        /// <summary>GLOW 상태 저장용 통합 관리</summary>
         private Dictionary<Card, bool> savedGlowStates = new Dictionary<Card, bool>();
         #endregion
 
@@ -76,13 +64,8 @@ namespace Objects
         #endregion
 
         #region Safe Initialization
-        /// <summary>
-        /// 안전한 초기화 시퀀스
-        /// ResourcesManager 기본 초기화 완료까지 대기 후 초기화
-        /// </summary>
         private IEnumerator SafeInitialization()
         {
-            // ResourcesManager 기본 초기화 완료 대기
             float timeout = 10f;
             float elapsed = 0f;
 
@@ -103,7 +86,6 @@ namespace Objects
                 yield break;
             }
 
-            // 기본 초기화 실행
             try
             {
                 InitializeOptions();
@@ -112,6 +94,7 @@ namespace Objects
                 SetUIActive(false);
 
                 isInitialized = true;
+                Debug.Log("[JokerModeSelector] 초기화 완료");
             }
             catch (System.Exception ex)
             {
@@ -121,9 +104,6 @@ namespace Objects
         #endregion
 
         #region Basic Initialization
-        /// <summary>
-        /// 조커 효과 옵션들 초기화
-        /// </summary>
         private void InitializeOptions()
         {
             if (drawOption != null) drawOption.SetSelector(this);
@@ -131,9 +111,6 @@ namespace Objects
             if (swapOption != null) swapOption.SetSelector(this);
         }
 
-        /// <summary>
-        /// 배경 클릭 이벤트 초기화
-        /// </summary>
         private void InitializeBackground()
         {
             if (dimBackground != null)
@@ -144,9 +121,6 @@ namespace Objects
             }
         }
 
-        /// <summary>
-        /// 효과 설명 텍스트 초기화
-        /// </summary>
         private void InitializeTexts()
         {
             if (drawText != null) drawText.text = "Draw\n2 Card";
@@ -156,10 +130,6 @@ namespace Objects
         #endregion
 
         #region Public Interface
-        /// <summary>
-        /// 조커 카드 효과 선택 UI를 표시
-        /// 첫 호출 시에만 현재 플레이어 색상으로 스프라이트 설정
-        /// </summary>
         public void Show(Card jokerCard)
         {
             if (!isInitialized)
@@ -176,8 +146,8 @@ namespace Objects
             }
 
             selectedJokerCard = jokerCard;
+            Debug.Log($"[JokerModeSelector] 조커 UI 표시 - 카드: {jokerCard.name}");
 
-            // 첫 Show() 호출 시에만 스프라이트 설정
             if (!isSpritesSet)
             {
                 SetSpritesForCurrentColor();
@@ -189,41 +159,35 @@ namespace Objects
             PlayShowAnimation();
         }
 
-        /// <summary>
-        /// UI를 숨기고 내부 상태를 초기화
-        /// </summary>
         public void Hide()
         {
+            Debug.Log("[JokerModeSelector] UI 숨김");
             selectedJokerCard = null;
             SetUIActive(false);
         }
 
-        /// <summary>
-        /// 조커 효과가 선택되었을 때 호출됨
-        /// </summary>
         public void OnJokerEffectSelected(JokerEffectType effectType)
         {
-            if (selectedJokerCard == null) return;
+            if (selectedJokerCard == null)
+            {
+                Debug.LogError("[JokerModeSelector] selectedJokerCard가 null입니다.");
+                return;
+            }
 
+            Debug.Log($"[JokerModeSelector] 조커 효과 선택: {effectType}");
             selectedEffect = effectType;
             SetUIActive(false);
             ExecuteJokerEffect();
         }
 
-        /// <summary>
-        /// 취소 버튼 클릭 시 호출
-        /// </summary>
         public void OnCancelPressed()
         {
+            Debug.Log("[JokerModeSelector] 취소 버튼 클릭");
             Hide();
         }
         #endregion
 
         #region Sprite Management
-        /// <summary>
-        /// 현재 플레이어 색상에 맞는 조커 스프라이트 설정
-        /// 첫 Show() 호출 시에만 실행되며 이후 재사용
-        /// </summary>
         private void SetSpritesForCurrentColor()
         {
             try
@@ -234,7 +198,6 @@ namespace Objects
                     return;
                 }
 
-                // 현재 플레이어 스프라이트 가져오기
                 var playerSprite = ResourcesManager.Instance.GetPlayerSprite();
                 if (playerSprite == null)
                 {
@@ -242,18 +205,17 @@ namespace Objects
                     return;
                 }
 
-                // 색상 추출: "color_green_empty" -> "green"
                 string currentColor = ExtractColorFromSpriteName(playerSprite.name);
 
-                // 조커 스프라이트 이름 생성 및 설정
                 string drawSpriteName = $"color_{currentColor}_draw";
                 string deleteSpriteName = $"color_{currentColor}_delete";
                 string swapSpriteName = $"color_{currentColor}_swap";
 
-                // 각 옵션에 현재 색상의 스프라이트 적용
                 SetOptionSprite(drawOption, drawSpriteName);
                 SetOptionSprite(deleteOption, deleteSpriteName);
                 SetOptionSprite(swapOption, swapSpriteName);
+
+                Debug.Log($"[JokerModeSelector] 스프라이트 설정 완료 - 색상: {currentColor}");
             }
             catch (System.Exception ex)
             {
@@ -261,40 +223,28 @@ namespace Objects
             }
         }
 
-        /// <summary>
-        /// 스프라이트 이름에서 색상 추출
-        /// "color_green_empty" -> "green"
-        /// "color_purple_empty" -> "purple"
-        /// </summary>
         private string ExtractColorFromSpriteName(string spriteName)
         {
             if (string.IsNullOrEmpty(spriteName))
                 return "green";
 
-            // "color_" 제거
             if (spriteName.StartsWith("color_"))
             {
-                string remaining = spriteName.Substring(6); // "green_empty"
-
-                // 첫 번째 "_" 위치 찾기
+                string remaining = spriteName.Substring(6);
                 int underscoreIndex = remaining.IndexOf('_');
                 if (underscoreIndex > 0)
                 {
-                    return remaining.Substring(0, underscoreIndex); // "green"
+                    return remaining.Substring(0, underscoreIndex);
                 }
                 else
                 {
-                    return remaining; // "_"가 없으면 전체가 색상
+                    return remaining;
                 }
             }
 
-            return "green"; // 파싱 실패 시 기본값
+            return "green";
         }
 
-        /// <summary>
-        /// 개별 옵션의 스프라이트 설정
-        /// ResourcesManager를 통한 조커 스프라이트 적용
-        /// </summary>
         private void SetOptionSprite(JokerEffectOption option, string spriteName)
         {
             if (option == null) return;
@@ -302,7 +252,6 @@ namespace Objects
             var sr = option.GetComponentInChildren<SpriteRenderer>();
             if (sr == null) return;
 
-            // ResourcesManager를 통해 조커 스프라이트 가져오기
             Sprite sprite = ResourcesManager.Instance.GetSprite(Global.Joker, spriteName);
 
             if (sprite != null)
@@ -317,9 +266,6 @@ namespace Objects
         #endregion
 
         #region Effect Execution
-        /// <summary>
-        /// 선택된 조커 효과 실행
-        /// </summary>
         private void ExecuteJokerEffect()
         {
             switch (selectedEffect)
@@ -336,43 +282,43 @@ namespace Objects
             }
         }
 
-        /// <summary>
-        /// 카드 드로우 효과 실행
-        /// </summary>
         private void ExecuteDrawEffect()
         {
+            Debug.Log("[JokerModeSelector] Draw 효과 실행 시작");
             InGameManager.Instance.StartProcess(GameProcessState.JokerDrawProcess);
 
             CardZone.OwnerType cardOwner = selectedJokerCard.CurrentOwnerType;
+
+            // 1. 로컬에서 2장 드로우
             InGameManager.Instance.DrawCardsToHand(2, cardOwner);
 
-            InGameManager.Instance.EndProcess();
-            EndJokerProcess();
-            RemoveUsedJokerCard();
-
-            // 네트워크 동기화 - Draw 조커 결과 전송
+            // 2. 네트워크 동기화 전송
             if (NetworkGameManager.Instance != null)
             {
                 NetworkGameManager.Instance.SyncJokerResult(selectedJokerCard, JokerEffectType.Draw);
             }
+
+            // 3. 조커 카드 즉시 제거
+            RemoveJokerCardImmediately();
+
+            InGameManager.Instance.EndProcess();
+            EndJokerProcess();
             Hide();
+
+            Debug.Log("[JokerModeSelector] Draw 효과 실행 완료");
         }
 
-        /// <summary>
-        /// 카드 삭제 대상 선택 시작
-        /// </summary>
         private void StartDeleteTargetSelection()
         {
+            Debug.Log("[JokerModeSelector] Delete 대상 선택 시작");
             InGameManager.Instance.StartProcess(GameProcessState.JokerDeleteProcess);
             StartJokerProcess(JokerEffectType.Delete);
             JokerTargetSelector.Instance.StartTargetSelection(JokerTargetMode.Delete, OnDeleteTargetSelected);
         }
 
-        /// <summary>
-        /// 카드 교환 대상 선택 시작
-        /// </summary>
         private void StartSwapTargetSelection()
         {
+            Debug.Log("[JokerModeSelector] Swap 대상 선택 시작");
             InGameManager.Instance.StartProcess(GameProcessState.JokerSwapProcess);
             StartJokerProcess(JokerEffectType.Swap);
             JokerTargetSelector.Instance.StartTargetSelection(JokerTargetMode.SwapFirst, OnSwapFirstTargetSelected);
@@ -380,21 +326,17 @@ namespace Objects
         #endregion
 
         #region Effect Callbacks
-        /// <summary>
-        /// 삭제 대상이 선택되었을 때
-        /// </summary>
         private void OnDeleteTargetSelected(Card target)
         {
             if (target == null) return;
+            Debug.Log($"[JokerModeSelector] Delete 대상 선택됨: {target.name}");
             StartCoroutine(DeleteCardSequence(target));
         }
 
-        /// <summary>
-        /// 교환 첫 번째 대상이 선택되었을 때
-        /// </summary>
         private void OnSwapFirstTargetSelected(Card firstTarget)
         {
             if (firstTarget == null) return;
+            Debug.Log($"[JokerModeSelector] Swap 첫 번째 대상 선택됨: {firstTarget.name}");
 
             ClearAllGlow();
             ApplyGlowToOpponentCards();
@@ -404,15 +346,13 @@ namespace Objects
                 (secondTarget) => OnSwapSecondTargetSelected(firstTarget, secondTarget));
         }
 
-        /// <summary>
-        /// 교환 두 번째 대상이 선택되었을 때
-        /// </summary>
         private void OnSwapSecondTargetSelected(Card firstTarget, Card secondTarget)
         {
             if (firstTarget == null || secondTarget == null) return;
+            Debug.Log($"[JokerModeSelector] Swap 두 번째 대상 선택됨: {secondTarget.name}");
 
             SwapCardValues(firstTarget, secondTarget);
-            RemoveUsedJokerCard();
+            RemoveJokerCardImmediately();
 
             InGameManager.Instance.EndProcess();
             EndJokerProcess();
@@ -421,40 +361,55 @@ namespace Objects
         #endregion
 
         #region Card Sequences
-        /// <summary>
-        /// 카드 삭제 시퀀스 (대상 카드 → 조커 카드)
-        /// </summary>
         private IEnumerator DeleteCardSequence(Card targetCard)
         {
-            // 대상 카드 삭제 애니메이션
+            Debug.Log($"[JokerModeSelector] 카드 삭제 시퀀스 시작: {targetCard.name}");
+
+            // 핵심: NetworkCard ID를 삭제 전에 미리 추출
+            var targetNetworkCard = targetCard.GetComponent<NetworkCard>();
+            string targetCardId = targetNetworkCard != null ? targetNetworkCard.UniqueId : "";
+
+            if (string.IsNullOrEmpty(targetCardId))
+            {
+                Debug.LogError($"[JokerModeSelector] 대상 카드의 ID를 찾을 수 없습니다: {targetCard.name}");
+            }
+
+            // 1. 네트워크 동기화 먼저 전송 (카드 삭제 전!)
+            if (NetworkGameManager.Instance != null && !string.IsNullOrEmpty(targetCardId))
+            {
+                // targetCard 대신 ID만 직접 전달하도록 수정된 메서드 필요
+                var targetCards = new System.Collections.Generic.List<Card> { targetCard };
+                NetworkGameManager.Instance.SyncJokerResult(selectedJokerCard, JokerEffectType.Delete, targetCards);
+                Debug.Log($"[JokerModeSelector] Delete 동기화 전송 완료: {targetCardId}");
+            }
+
+            yield return new WaitForSeconds(0.3f);
+
+            // 2. 카드 삭제 애니메이션 및 제거
             CardZone targetZone = FindZoneOfCard(targetCard.transform);
             yield return StartCoroutine(targetCard.AnimateRemoval(() =>
             {
                 if (targetZone != null)
+                {
                     targetZone.RemoveCard(targetCard.transform);
+                    Debug.Log($"[JokerModeSelector] Zone에서 카드 제거: {targetCard.name}");
+                }
                 Destroy(targetCard.gameObject);
+                Debug.Log($"[JokerModeSelector] 카드 오브젝트 파괴: {targetCard.name}");
             }));
 
             yield return new WaitForSeconds(0.2f);
 
-            // 네트워크 동기화 - Delete 조커 결과 전송
-            if (NetworkGameManager.Instance != null)
-            {
-                var targetCards = new System.Collections.Generic.List<Card> { targetCard };
-                NetworkGameManager.Instance.SyncJokerResult(selectedJokerCard, JokerEffectType.Delete, targetCards);
-            }
-
-            // 조커 카드 삭제
-            RemoveUsedJokerCard();
+            // 3. 조커 카드 제거
+            RemoveJokerCardImmediately();
 
             InGameManager.Instance.EndProcess();
             EndJokerProcess();
             Hide();
+
+            Debug.Log("[JokerModeSelector] 카드 삭제 시퀀스 완료");
         }
 
-        /// <summary>
-        /// 두 카드의 텍스트 값 교환
-        /// </summary>
         private void SwapCardValues(Card firstTarget, Card secondTarget)
         {
             var firstCardText = firstTarget.GetComponentInChildren<CardText>();
@@ -465,23 +420,27 @@ namespace Objects
                 float firstValue = firstCardText.RawValue;
                 float secondValue = secondCardText.RawValue;
 
+                // 1. 값 교환
                 firstCardText.SetRawValue(secondValue);
                 secondCardText.SetRawValue(firstValue);
 
-                // 네트워크 동기화 - Swap 조커 결과 전송
+                Debug.Log($"[JokerModeSelector] 카드 값 교환 완료: {firstValue} <-> {secondValue}");
+
+                // 2. 네트워크 동기화 전송
                 if (NetworkGameManager.Instance != null)
                 {
                     var targetCards = new System.Collections.Generic.List<Card> { firstTarget, secondTarget };
                     NetworkGameManager.Instance.SyncJokerResult(selectedJokerCard, JokerEffectType.Swap, targetCards);
+                    Debug.Log("[JokerModeSelector] Swap 동기화 전송 완료");
                 }
             }
+
+            // 3. 조커 카드 제거
+            RemoveJokerCardImmediately();
         }
         #endregion
 
         #region GLOW Management System
-        /// <summary>
-        /// 조커 프로세스 시작 - 현재 GLOW 상태 저장 후 초기화
-        /// </summary>
         private void StartJokerProcess(JokerEffectType effectType)
         {
             SaveCurrentGlowStates();
@@ -489,9 +448,6 @@ namespace Objects
             ApplyJokerSpecificGlow(effectType);
         }
 
-        /// <summary>
-        /// 조커 프로세스 종료 - 원래 GLOW 상태 복원
-        /// </summary>
         private void EndJokerProcess()
         {
             ClearAllGlow();
@@ -499,9 +455,6 @@ namespace Objects
             savedGlowStates.Clear();
         }
 
-        /// <summary>
-        /// 현재 모든 카드의 GLOW 상태 저장
-        /// </summary>
         private void SaveCurrentGlowStates()
         {
             savedGlowStates.Clear();
@@ -515,9 +468,6 @@ namespace Objects
             }
         }
 
-        /// <summary>
-        /// 저장된 GLOW 상태 복원
-        /// </summary>
         private void RestoreGlowStates()
         {
             foreach (var kvp in savedGlowStates)
@@ -527,9 +477,6 @@ namespace Objects
             }
         }
 
-        /// <summary>
-        /// 모든 카드의 GLOW 제거
-        /// </summary>
         private void ClearAllGlow()
         {
             var allCards = InGameManager.Instance.GetAllFieldCards();
@@ -537,9 +484,6 @@ namespace Objects
                 card.SetCardState(false);
         }
 
-        /// <summary>
-        /// 조커 효과별 특정 GLOW 적용
-        /// </summary>
         private void ApplyJokerSpecificGlow(JokerEffectType effectType)
         {
             switch (effectType)
@@ -553,9 +497,6 @@ namespace Objects
             }
         }
 
-        /// <summary>
-        /// 상대방 카드들에 GLOW 적용
-        /// </summary>
         private void ApplyGlowToOpponentCards()
         {
             var fieldCards = InGameManager.Instance.GetAllFieldCards();
@@ -566,9 +507,6 @@ namespace Objects
             }
         }
 
-        /// <summary>
-        /// 플레이어 카드들에 GLOW 적용
-        /// </summary>
         private void ApplyGlowToPlayerCards()
         {
             var fieldCards = InGameManager.Instance.GetAllFieldCards();
@@ -582,33 +520,71 @@ namespace Objects
 
         #region Joker Card Management
         /// <summary>
-        /// 사용한 조커 카드 제거
+        /// 조커 카드를 즉시 제거 (코루틴 없이)
         /// </summary>
-        private void RemoveUsedJokerCard()
+        private void RemoveJokerCardImmediately()
         {
-            if (selectedJokerCard != null)
-                StartCoroutine(RemoveJokerCardWithAnimation(selectedJokerCard));
+            if (selectedJokerCard == null)
+            {
+                Debug.LogWarning("[JokerModeSelector] 제거할 조커 카드가 없습니다 (null)");
+                return;
+            }
+
+            Debug.Log($"[JokerModeSelector] 조커 카드 즉시 제거 시작: {selectedJokerCard.name}");
+
+            GameObject jokerObj = selectedJokerCard.gameObject;
+
+            // 1. 즉시 비활성화하여 화면에서 숨김
+            jokerObj.SetActive(false);
+            Debug.Log($"[JokerModeSelector] 조커 카드 비활성화 완료");
+
+            // 2. Zone에서 제거
+            CardZone zone = FindZoneOfCard(selectedJokerCard.transform);
+            if (zone != null)
+            {
+                Debug.Log($"[JokerModeSelector] Zone 발견: {zone.name}");
+                zone.RemoveCard(selectedJokerCard.transform);
+                Debug.Log($"[JokerModeSelector] Zone에서 조커 카드 제거 완료");
+            }
+            else
+            {
+                Debug.LogWarning($"[JokerModeSelector] 조커 카드의 Zone을 찾을 수 없습니다: {selectedJokerCard.name}");
+                LogAllZones();
+            }
+
+            // 3. 부모에서 분리
+            selectedJokerCard.transform.SetParent(null);
+            Debug.Log($"[JokerModeSelector] 조커 카드 부모에서 분리 완료");
+
+            // 4. 오브젝트 파괴
+            Destroy(jokerObj);
+            Debug.Log($"[JokerModeSelector] 조커 오브젝트 파괴 요청 완료: {jokerObj.name}");
+
+            selectedJokerCard = null;
         }
 
         /// <summary>
-        /// 조커 카드를 애니메이션과 함께 제거
+        /// 디버깅용: 모든 Zone 정보 출력
         /// </summary>
-        private IEnumerator RemoveJokerCardWithAnimation(Card jokerCard)
+        private void LogAllZones()
         {
-            CardZone zone = FindZoneOfCard(jokerCard.transform);
-            yield return StartCoroutine(jokerCard.AnimateRemoval(() =>
+            if (CardZone.AllZonesRoot == null)
             {
-                if (zone != null)
-                    zone.RemoveCard(jokerCard.transform);
-                Destroy(jokerCard.gameObject);
-            }));
+                Debug.LogError("[JokerModeSelector] AllZonesRoot가 null입니다");
+                return;
+            }
+
+            var allZones = CardZone.AllZonesRoot.GetComponentsInChildren<CardZone>();
+            Debug.Log($"[JokerModeSelector] 전체 Zone 개수: {allZones.Length}");
+
+            foreach (var zone in allZones)
+            {
+                Debug.Log($"[JokerModeSelector] Zone: {zone.name}, Cards: {zone.transform.childCount}");
+            }
         }
         #endregion
 
         #region Validation & Utility
-        /// <summary>
-        /// 조커 카드 유효성 검증
-        /// </summary>
         private bool ValidateJokerCard(Card jokerCard)
         {
             if (jokerCard == null || jokerCard.CardType != CardType.Joker)
@@ -619,9 +595,6 @@ namespace Objects
             return true;
         }
 
-        /// <summary>
-        /// 사용 가능한 효과 확인 및 UI 업데이트
-        /// </summary>
         private void UpdateAvailableEffects()
         {
             var fieldCards = InGameManager.Instance.GetAllFieldCards();
@@ -642,9 +615,6 @@ namespace Objects
             SetEffectAvailability(swapOption, hasMyFieldCards && hasOpponentFieldCards);
         }
 
-        /// <summary>
-        /// 효과 사용 가능 여부에 따라 UI 업데이트
-        /// </summary>
         private void SetEffectAvailability(JokerEffectOption option, bool available)
         {
             if (option == null) return;
@@ -662,26 +632,27 @@ namespace Objects
                 mouseEvent.isClickable = available;
         }
 
-        /// <summary>
-        /// 카드가 속한 Zone 찾기
-        /// </summary>
         private CardZone FindZoneOfCard(Transform card)
         {
-            if (CardZone.AllZonesRoot == null || card == null) return null;
+            if (CardZone.AllZonesRoot == null || card == null)
+            {
+                Debug.LogWarning("[JokerModeSelector] AllZonesRoot 또는 card가 null입니다");
+                return null;
+            }
 
             foreach (var zone in CardZone.AllZonesRoot.GetComponentsInChildren<CardZone>())
             {
                 if (zone.Contains(card))
+                {
                     return zone;
+                }
             }
+
             return null;
         }
         #endregion
 
         #region UI Management
-        /// <summary>
-        /// 하위 UI 오브젝트들을 일괄로 켜거나 끈다
-        /// </summary>
         private void SetUIActive(bool active)
         {
             if (dimBackground != null) dimBackground.SetActive(active);
@@ -691,9 +662,6 @@ namespace Objects
             if (swapOption != null) swapOption.gameObject.SetActive(active);
         }
 
-        /// <summary>
-        /// UI 표시 애니메이션 실행
-        /// </summary>
         private void PlayShowAnimation()
         {
             if (drawOption != null)

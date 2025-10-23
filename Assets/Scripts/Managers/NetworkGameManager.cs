@@ -1,6 +1,8 @@
 using Objects;
 using Photon.Pun;
 using System.Collections.Generic;
+using System.Collections;
+using System;
 using UnityEngine;
 
 namespace Manager
@@ -48,7 +50,7 @@ namespace Manager
         /// 카드 색상 동기화 데이터
         /// 모든 클라이언트가 동일한 카드 색상을 사용하도록 보장
         /// </summary>
-        [System.Serializable]
+        [Serializable]
         public class CardColorData
         {
             /// <summary>플레이어 카드 스프라이트 이름</summary>
@@ -163,7 +165,7 @@ namespace Manager
         /// 카드 드로우 네트워크 데이터
         /// 상대방에게 드로우 행위를 알리기 위한 구조체
         /// </summary>
-        [System.Serializable]
+        [Serializable]
         public class CardDrawData
         {
             /// <summary>카드 소유자 (0=Player, 1=Opponent)</summary>
@@ -193,7 +195,7 @@ namespace Manager
         /// 카드 배치 네트워크 데이터
         /// 상대방 화면에 카드 배치를 동기화하기 위한 구조체
         /// </summary>
-        [System.Serializable]
+        [Serializable]
         public class CardPlacementData
         {
             /// <summary>카드 타입 (Number, Operator, Joker)</summary>
@@ -266,7 +268,7 @@ namespace Manager
         /// 덱 상태 동기화 데이터
         /// 양쪽 덱의 남은 카드 수를 동기화하기 위한 구조체
         /// </summary>
-        [System.Serializable]
+        [Serializable]
         public class DeckSyncData
         {
             /// <summary>플레이어 덱 남은 카드 수</summary>
@@ -469,7 +471,7 @@ namespace Manager
                 var drawData = JsonUtility.FromJson<CardDrawData>(jsonData);
                 ApplyRemoteCardDraw(drawData);
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 Debug.LogError($"[NetworkGameManager] 카드 드로우 동기화 오류: {ex.Message}");
             }
@@ -641,7 +643,7 @@ namespace Manager
                 ApplyRemoteCardPlacement(placementData);
                 Debug.Log($"[NetworkGameManager] 원격 카드 배치 적용 완료");
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 Debug.LogError($"[NetworkGameManager] 카드 배치 동기화 오류: {ex.Message}");
             }
@@ -750,7 +752,7 @@ namespace Manager
         /// <summary>
         /// 전투 액션 데이터 구조체
         /// </summary>
-        [System.Serializable]
+        [Serializable]
         public class CombatActionData
         {
             public string attackerCardId;
@@ -875,7 +877,7 @@ namespace Manager
                 var combatData = JsonUtility.FromJson<CombatActionData>(jsonData);
                 ApplyRemoteCombatAction(combatData);
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 Debug.LogError($"[NetworkGameManager] 전투 동기화 오류: {ex.Message}");
             }
@@ -914,7 +916,7 @@ namespace Manager
             StartCoroutine(SyncExpressionZone(attackerCard, defenderCard, combatData));
         }
 
-        private System.Collections.IEnumerator SyncExpressionZone(Card attacker, Card defender, CombatActionData data)
+        private IEnumerator SyncExpressionZone(Card attacker, Card defender, CombatActionData data)
         {
             var ezManager = ExpressionZoneManager.Instance;
 
@@ -1027,7 +1029,7 @@ namespace Manager
         /// <returns>8자리 알파뉴메릭 고유 ID</returns>
         private string GenerateNetworkCardId()
         {
-            return System.Guid.NewGuid().ToString("N")[..8].ToUpper();
+            return Guid.NewGuid().ToString("N")[..8].ToUpper();
         }
 
         /// <summary>
@@ -1092,23 +1094,396 @@ namespace Manager
         }
         #endregion
 
-        #region Legacy System Support
+        #region Operator & Joker Synchronization
         /// <summary>
-        /// 연산자 사용 결과 동기화 (기존 시스템 유지)
+        /// 연산자 사용 결과 동기화 데이터
+        /// </summary>
+        [Serializable]
+        public class OperationData
+        {
+            public int operatorType;        // OperatorType
+            public string firstCardId;      // 결과가 적용될 카드
+            public string secondCardId;     // 두 번째 카드 (삭제될 수 있음)
+            public float firstCardValue;    // 첫 번째 카드의 원래 값
+            public float secondCardValue;   // 두 번째 카드의 원래 값
+            public float result;            // 연산 결과
+            public float remainder;         // 나머지 (Divide만)
+            public bool destroySecondCard;  // 두 번째 카드 삭제 여부
+
+            public OperationData(OperatorType op, string first, string second,
+                                float firstVal, float secondVal, float res, float rem = 0)
+            {
+                operatorType = (int)op;
+                firstCardId = first;
+                secondCardId = second;
+                firstCardValue = firstVal;
+                secondCardValue = secondVal;
+                result = res;
+                remainder = rem;
+                destroySecondCard = false;
+            }
+        }
+
+        /// <summary>
+        /// 조커 효과 동기화 데이터
+        /// </summary>
+        [Serializable]
+        public class JokerData
+        {
+            public int effectType;          // JokerEffectType
+            public string[] targetCardIds;  // 대상 카드 ID 배열
+            public float[] cardValues;      // 카드 값 배열 (Swap용)
+
+            public JokerData(JokerEffectType type, string[] targets = null, float[] values = null)
+            {
+                effectType = (int)type;
+                targetCardIds = targets ?? new string[0];
+                cardValues = values ?? new float[0];
+            }
+        }
+
+        /// <summary>
+        /// 연산자 사용 결과 동기화
         /// </summary>
         public void SyncOperationResult(Card operatorCard, Card firstCard, Card secondCard, float result, OperatorType operatorType)
         {
-            // 기존 연산자 동기화 로직은 유지
+            if (!CanPerformNetworkAction()) return;
+
+            // 카드 ID 추출
+            var firstNetworkCard = firstCard?.GetComponent<NetworkCard>();
+            var secondNetworkCard = secondCard?.GetComponent<NetworkCard>();
+
+            string firstId = firstNetworkCard?.UniqueId ?? "";
+            string secondId = secondNetworkCard?.UniqueId ?? "";
+
+            if (string.IsNullOrEmpty(firstId) || string.IsNullOrEmpty(secondId))
+            {
+                Debug.LogWarning("[NetworkGameManager] 연산 카드 ID를 찾을 수 없습니다.");
+                return;
+            }
+
+            // 카드 값 추출
+            float firstValue = firstCard.GetComponentInChildren<CardText>()?.RawValue ?? 0;
+            float secondValue = secondCard.GetComponentInChildren<CardText>()?.RawValue ?? 0;
+
+            // 나머지 계산 (Divide만)
+            float remainder = 0;
+            if (operatorType == OperatorType.Divide && secondValue != 0)
+            {
+                remainder = firstValue % secondValue;
+            }
+
+            var opData = new OperationData(operatorType, firstId, secondId, firstValue, secondValue, result, remainder);
+
+            // secondCard가 삭제되는 경우 체크
+            if (operatorType == OperatorType.Minus && result <= 0)
+                opData.destroySecondCard = false; // Minus는 firstCard가 삭제됨
+            else if (operatorType == OperatorType.Divide && result <= 0)
+                opData.destroySecondCard = false; // Divide도 firstCard가 삭제됨
+
+            string jsonData = JsonUtility.ToJson(opData);
+            photonView.RPC("RPC_SyncOperation", RpcTarget.Others, jsonData);
+
             Debug.Log($"[NetworkGameManager] 연산 결과 동기화: {operatorType} = {result}");
         }
 
         /// <summary>
-        /// 조커 효과 결과 동기화 (기존 시스템 유지)
+        /// 연산 결과 RPC 수신
+        /// </summary>
+        [PunRPC]
+        private void RPC_SyncOperation(string jsonData)
+        {
+            try
+            {
+                var opData = JsonUtility.FromJson<OperationData>(jsonData);
+                StartCoroutine(ApplyRemoteOperation(opData));
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[NetworkGameManager] 연산 동기화 오류: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 원격 연산 결과 적용
+        /// </summary>
+        private IEnumerator ApplyRemoteOperation(OperationData data)
+        {
+            OperatorType opType = (OperatorType)data.operatorType;
+            Debug.Log($"[NetworkGameManager] 원격 연산 적용 시작: {opType}");
+
+            // 카드 찾기 (소유자 변환 적용)
+            var firstCard = FindCardByNetworkId(data.firstCardId);
+            var secondCard = FindCardByNetworkId(data.secondCardId);
+
+            if (firstCard == null || secondCard == null)
+            {
+                Debug.LogError($"[NetworkGameManager] 연산 대상 카드를 찾을 수 없습니다.");
+                yield break;
+            }
+
+            // ExpressionZone에 수식 표시
+            var ezManager = ExpressionZoneManager.Instance;
+            if (ezManager != null)
+            {
+                ezManager.InitForOperation();
+                ezManager.SetFirstOperand(firstCard);
+
+                // 연산자 표시 (임시 연산자 카드 생성 필요 없이 타입만 전달)
+                ezManager.SetOperatorByType(opType);
+
+                ezManager.SetSecondOperand(secondCard);
+                ezManager.ShowResult(data.firstCardValue, data.secondCardValue, opType);
+            }
+
+            yield return new WaitForSeconds(1.5f);
+
+            // 결과 적용
+            switch (opType)
+            {
+                case OperatorType.Plus:
+                case OperatorType.Multiply:
+                    UpdateRemoteCardValue(firstCard, data.result);
+                    break;
+
+                case OperatorType.Minus:
+                    if (data.result > 0)
+                        UpdateRemoteCardValue(firstCard, data.result);
+                    else
+                        DestroyRemoteCard(firstCard);
+                    break;
+
+                case OperatorType.Divide:
+                    if (data.result > 0)
+                        UpdateRemoteCardValue(firstCard, data.result);
+                    else
+                        DestroyRemoteCard(firstCard);
+
+                    // 나머지 카드 생성
+                    if (data.remainder > 0)
+                    {
+                        yield return new WaitForSeconds(0.3f);
+                        CreateRemoteRemainderCard(data.remainder, firstCard.CurrentOwnerType);
+                    }
+                    break;
+            }
+
+            RemoveBackCardFromHand(CardZone.OwnerType.Opponent);
+
+            Debug.Log($"[NetworkGameManager] 원격 연산 완료: {opType}");
+        }
+
+        /// <summary>
+        /// 조커 효과 결과 동기화
         /// </summary>
         public void SyncJokerResult(Card jokerCard, JokerEffectType effectType, List<Card> targetCards = null)
         {
-            // 기존 조커 동기화 로직은 유지
+            if (!CanPerformNetworkAction()) return;
+
+            string[] targetIds = null;
+            float[] cardValues = null;
+
+            // 대상 카드 정보 추출
+            if (targetCards != null && targetCards.Count > 0)
+            {
+                targetIds = new string[targetCards.Count];
+                cardValues = new float[targetCards.Count];
+
+                for (int i = 0; i < targetCards.Count; i++)
+                {
+                    var networkCard = targetCards[i]?.GetComponent<NetworkCard>();
+                    targetIds[i] = networkCard?.UniqueId ?? "";
+
+                    var cardText = targetCards[i]?.GetComponentInChildren<CardText>();
+                    cardValues[i] = cardText?.RawValue ?? 0;
+                }
+            }
+
+            var jokerData = new JokerData(effectType, targetIds, cardValues);
+            string jsonData = JsonUtility.ToJson(jokerData);
+            photonView.RPC("RPC_SyncJoker", RpcTarget.Others, jsonData);
+
             Debug.Log($"[NetworkGameManager] 조커 효과 동기화: {effectType}");
+        }
+
+        /// <summary>
+        /// 조커 효과 RPC 수신
+        /// </summary>
+        [PunRPC]
+        private void RPC_SyncJoker(string jsonData)
+        {
+            try
+            {
+                var jokerData = JsonUtility.FromJson<JokerData>(jsonData);
+                StartCoroutine(ApplyRemoteJoker(jokerData));
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[NetworkGameManager] 조커 동기화 오류: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 원격 조커 효과 적용
+        /// </summary>
+        private IEnumerator ApplyRemoteJoker(JokerData data)
+        {
+            JokerEffectType effectType = (JokerEffectType)data.effectType;
+            Debug.Log($"[NetworkGameManager] 원격 조커 효과 적용: {effectType}");
+
+            switch (effectType)
+            {
+                case JokerEffectType.Draw:
+                    yield return ApplyRemoteDraw();
+                    break;
+
+                case JokerEffectType.Delete:
+                    yield return ApplyRemoteDelete(data);
+                    break;
+
+                case JokerEffectType.Swap:
+                    yield return ApplyRemoteSwap(data);
+                    break;
+            }
+
+            Debug.Log($"[NetworkGameManager] 원격 조커 효과 완료: {effectType}");
+        }
+
+        /// <summary>
+        /// 원격 Draw 효과 (상대방이 2장 드로우)
+        /// </summary>
+        private IEnumerator ApplyRemoteDraw()
+        {
+            Debug.Log("[NetworkGameManager] 원격 Draw 효과: 조커 카드 제거");
+
+            // DrawCardsToHand 내부에서 이미 SyncCardDraw를 호출하여
+            // 상대방 화면에 뒷면 카드 2장이 생성되었음
+
+            // 하지만 조커 카드 자체도 상대방 화면에서는 뒷면 카드로 보이므로
+            // 조커 사용 후 해당 뒷면 카드를 제거해야 함
+            yield return new WaitForSeconds(0.1f);
+            RemoveBackCardFromHand(CardZone.OwnerType.Opponent);
+
+            Debug.Log("[NetworkGameManager] 원격 Draw 효과 완료: 조커 뒷면 카드 제거됨");
+
+            yield break;
+        }
+
+        /// <summary>
+        /// 원격 Delete 효과
+        /// </summary>
+        private IEnumerator ApplyRemoteDelete(JokerData data)
+        {
+            if (data.targetCardIds == null || data.targetCardIds.Length == 0)
+                yield break;
+
+            string targetId = data.targetCardIds[0];
+            var targetCard = FindCardByNetworkId(targetId);
+
+            if (targetCard == null)
+            {
+                Debug.LogWarning($"[NetworkGameManager] 삭제 대상 카드를 찾을 수 없습니다: {targetId}");
+                yield break;
+            }
+
+            yield return new WaitForSeconds(0.5f);
+
+            RemoveBackCardFromHand(CardZone.OwnerType.Opponent);
+            DestroyRemoteCard(targetCard);
+        }
+
+        /// <summary>
+        /// 원격 Swap 효과
+        /// </summary>
+        private IEnumerator ApplyRemoteSwap(JokerData data)
+        {
+            if (data.targetCardIds == null || data.targetCardIds.Length < 2)
+                yield break;
+
+            var firstCard = FindCardByNetworkId(data.targetCardIds[0]);
+            var secondCard = FindCardByNetworkId(data.targetCardIds[1]);
+
+            if (firstCard == null || secondCard == null)
+            {
+                Debug.LogWarning("[NetworkGameManager] 교환 대상 카드를 찾을 수 없습니다.");
+                yield break;
+            }
+
+            yield return new WaitForSeconds(0.5f);
+
+            // 값 교환
+            var firstCardText = firstCard.GetComponentInChildren<CardText>();
+            var secondCardText = secondCard.GetComponentInChildren<CardText>();
+
+            if (firstCardText != null && secondCardText != null)
+            {
+                float firstValue = firstCardText.RawValue;
+                float secondValue = secondCardText.RawValue;
+
+                firstCardText.SetRawValue(secondValue);
+                secondCardText.SetRawValue(firstValue);
+            }
+
+            RemoveBackCardFromHand(CardZone.OwnerType.Opponent);
+        }
+
+        /// <summary>
+        /// 원격 카드 값 업데이트
+        /// </summary>
+        private void UpdateRemoteCardValue(Card card, float newValue)
+        {
+            var cardText = card.GetComponentInChildren<CardText>();
+            if (cardText != null)
+            {
+                cardText.SetRawValue(newValue);
+                Debug.Log($"[NetworkGameManager] 카드 값 업데이트: {card.name} = {newValue}");
+            }
+        }
+
+        /// <summary>
+        /// 원격 카드 삭제
+        /// </summary>
+        private void DestroyRemoteCard(Card card)
+        {
+            var zone = card.GetComponentInParent<CardZone>();
+            zone?.RemoveCard(card.transform);
+            Destroy(card.gameObject);
+            Debug.Log($"[NetworkGameManager] 카드 삭제: {card.name}");
+        }
+
+        /// <summary>
+        /// 원격 나머지 카드 생성
+        /// </summary>
+        private void CreateRemoteRemainderCard(float value, CardZone.OwnerType ownerType)
+        {
+            // 소유자 변환 (상대방 관점)
+            CardZone.OwnerType displayOwner = ownerType == CardZone.OwnerType.Player
+                ? CardZone.OwnerType.Opponent
+                : CardZone.OwnerType.Player;
+
+            var fieldZone = FindZone(displayOwner, CardZone.ZoneType.Field);
+            if (fieldZone == null || !fieldZone.CanAddCard())
+            {
+                Debug.LogWarning($"[NetworkGameManager] 나머지 카드를 생성할 수 없습니다.");
+                return;
+            }
+
+            var template = displayOwner == CardZone.OwnerType.Player
+                ? ResourcesManager.Instance.GetPlayerCardTemplate()
+                : ResourcesManager.Instance.GetOpponentCardTemplate();
+
+            if (template == null) return;
+
+            var newCard = Instantiate(template);
+            int intValue = Mathf.FloorToInt(value);
+            newCard.name = $"RemainderCard_{intValue}";
+            newCard.SetActive(true);
+
+            var cardComponent = newCard.GetComponent<Card>();
+            cardComponent?.InitializeAsNumber(intValue);
+
+            fieldZone.AddCard(newCard.transform);
+            Debug.Log($"[NetworkGameManager] 나머지 카드 생성: {intValue}");
         }
         #endregion
     }

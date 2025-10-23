@@ -490,5 +490,19 @@ namespace Manager
         /// </summary>
         public void SetDebugMode(bool enable) => enableDebugLog = enable;
         #endregion
+
+        /// <summary>
+        /// 연산자 타입으로 직접 설정 (네트워크 동기화용)
+        /// 연산자 카드 객체 없이 타입만으로 연산자 기호를 표시
+        /// </summary>
+        /// <param name="operatorType">표시할 연산자 타입</param>
+        public void SetOperatorByType(OperatorType operatorType)
+        {
+            string symbol = GetOperatorSymbol(operatorType);
+            UpdateSlot(1, symbol, neutralSprite, true);
+
+            if (enableDebugLog)
+                Debug.Log($"[ExpressionZoneManager] 연산자 타입 설정: {operatorType} ({symbol})");
+        }
     }
 }

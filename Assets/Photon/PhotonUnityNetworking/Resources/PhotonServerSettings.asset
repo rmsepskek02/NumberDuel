@@ -57,6 +57,8 @@ MonoBehaviour:
   - RPC_EnhancedAttackResult
   - RPC_SyncCombatAction
   - RPC_RemoveCard
+  - RPC_SyncJoker
+  - RPC_SyncOperation
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1
