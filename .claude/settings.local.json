@@ -12,7 +12,15 @@
       "Bash(dir \"%APPDATA%\\Claude\" /s /b)",
       "mcp__mcp-unity__execute_menu_item",
       "mcp__mcp-unity__update_gameobject",
-      "mcp__mcp-unity__update_component"
+      "mcp__mcp-unity__update_component",
+      "Bash(dir:*)",
+      "mcp__mcp-unity__send_console_log",
+      "mcp__mcp-unity__add_asset_to_scene",
+      "Bash(timeout /t 3)",
+      "mcp__mcp-unity__get_console_logs",
+      "mcp__mcp-unity__select_gameobject",
+      "Read(//tmp/ClaudeCodeVS/be0957c1-f549-4101-82d8-b9070deffaae/**)",
+      "Read(//tmp/ClaudeCodeVS/ef769b48-f2cb-4643-adfd-11e561c9121e/**)"
     ],
     "deny": [],
     "ask": []

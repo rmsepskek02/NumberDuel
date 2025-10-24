@@ -7,19 +7,19 @@ using Utills;
 namespace Manager
 {
     /// <summary>
-    /// ExpressionZoneÀÇ 5°³ ½½·ÔÀ» °ü¸®ÇÏ¿© ¼ö½ÄÀ» ½Ã°¢ÀûÀ¸·Î Ç¥ÇöÇÏ´Â ¸Å´ÏÀú
-    /// ½½·Ô ±¸Á¶: [0:³»Ä«µå] [1:¿¬»êÀÚ] [2:»ó´ëÄ«µå] [3:µîÈ£] [4:°á°ú]
+    /// ExpressionZoneï¿½ï¿½ 5ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½Å´ï¿½ï¿½ï¿½
+    /// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: [0:ï¿½ï¿½Ä«ï¿½ï¿½] [1:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½] [2:ï¿½ï¿½ï¿½Ä«ï¿½ï¿½] [3:ï¿½ï¿½È£] [4:ï¿½ï¿½ï¿½]
     /// </summary>
     public class ExpressionZoneManager : Singleton<ExpressionZoneManager>
     {
-        [Header("Expression Zone ¼³Á¤")]
+        [Header("Expression Zone ï¿½ï¿½ï¿½ï¿½")]
         [SerializeField] private CardZone expressionZone;
         [SerializeField] private bool enableDebugLog = false;
 
         private ExpressionCard[] slots;
         private Sprite neutralSprite;
 
-        // ¼º´É ÃÖÀûÈ­¿ë Ä³½Ã
+        // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È­ï¿½ï¿½ Ä³ï¿½ï¿½
         private readonly Color[] cachedColors = new Color[5];
         private readonly bool[] cachedActiveStates = new bool[5];
 
@@ -55,7 +55,7 @@ namespace Manager
             CacheNeutralSprite();
 
             if (enableDebugLog)
-                Debug.Log($"[ExpressionZoneManager] ÃÊ±âÈ­ ¿Ï·á - ½½·Ô ¼ö: {slots.Length}");
+                Debug.Log($"[ExpressionZoneManager] ï¿½Ê±ï¿½È­ ï¿½Ï·ï¿½ - ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½: {slots.Length}");
         }
 
         private void CacheNeutralSprite()
@@ -78,17 +78,17 @@ namespace Manager
 
         #region Core Slot Management
         /// <summary>
-        /// ½½·Ô ¾÷µ¥ÀÌÆ® (º¯°æ»çÇ×ÀÌ ÀÖÀ» ¶§¸¸ ½ÇÁ¦ ¾÷µ¥ÀÌÆ®)
+        /// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®)
         /// </summary>
         private void UpdateSlot(int index, string text, Sprite sprite, bool showText, bool canCancel = false)
         {
-            if (!IsValidSlotIndex(index) || index == 3) return; // 3¹ø ½½·Ô º¸È£
+            if (!IsValidSlotIndex(index) || index == 3) return; // 3ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È£
 
             var slot = slots[index];
             var targetSprite = sprite ?? neutralSprite;
             var targetColor = Global.GetColorByName(targetSprite.name);
 
-            // º¯°æ»çÇ× È®ÀÎ ÈÄ ÇÊ¿ä½Ã¿¡¸¸ ¾÷µ¥ÀÌÆ®
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½ ï¿½ï¿½ ï¿½Ê¿ï¿½Ã¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
             bool needsUpdate = false;
 
             if (slot.GetComponentInChildren<SpriteRenderer>().sprite != targetSprite)
@@ -112,23 +112,23 @@ namespace Manager
                 needsUpdate = true;
             }
 
-            // Ãë¼Ò °¡´É »óÅÂ ¼³Á¤
+            // ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             if (canCancel) slot.SetCancelable(true);
             else slot.ClearGlow();
 
             if (enableDebugLog && needsUpdate)
-                Debug.Log($"[ExpressionZoneManager] ½½·Ô {index} ¾÷µ¥ÀÌÆ®: '{text}'");
+                Debug.Log($"[ExpressionZoneManager] ï¿½ï¿½ï¿½ï¿½ {index} ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®: '{text}'");
         }
 
         /// <summary>
-        /// 3¹ø ½½·Ô (µîÈ£) °íÁ¤ ¼³Á¤
+        /// 3ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½È£) ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         /// </summary>
         private void FixEqualSlot()
         {
             const int equalIndex = 3;
             var slot = slots[equalIndex];
 
-            // ÀÌ¹Ì ¿Ã¹Ù¸¥ »óÅÂÀÎÁö È®ÀÎ
+            // ï¿½Ì¹ï¿½ ï¿½Ã¹Ù¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
             if (slot.CurrentText == "=" && slot.GetComponentInChildren<SpriteRenderer>().sprite == neutralSprite)
                 return;
 
@@ -143,14 +143,14 @@ namespace Manager
         }
 
         /// <summary>
-        /// À¯È¿ÇÑ ½½·Ô ÀÎµ¦½ºÀÎÁö È®ÀÎ
+        /// ï¿½ï¿½È¿ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
         /// </summary>
         private bool IsValidSlotIndex(int index) => index >= 0 && index < slots.Length;
         #endregion
 
         #region Public Interface
         /// <summary>
-        /// °ø°ÝÀÚ Ä«µå¸¦ 0¹ø ½½·Ô¿¡ ¼³Á¤
+        /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½å¸¦ 0ï¿½ï¿½ ï¿½ï¿½ï¿½Ô¿ï¿½ ï¿½ï¿½ï¿½ï¿½
         /// </summary>
         public void SetAttackerCard(Card card)
         {
@@ -158,7 +158,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ¼öºñÀÚ Ä«µå¸¦ 2¹ø ½½·Ô¿¡ ¼³Á¤
+        /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½å¸¦ 2ï¿½ï¿½ ï¿½ï¿½ï¿½Ô¿ï¿½ ï¿½ï¿½ï¿½ï¿½
         /// </summary>
         public void SetDefenderCard(Card card)
         {
@@ -166,7 +166,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// Ã¹ ¹øÂ° ¿¬»ê ´ë»óÀ» 0¹ø ½½·Ô¿¡ ¼³Á¤
+        /// Ã¹ ï¿½ï¿½Â° ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ 0ï¿½ï¿½ ï¿½ï¿½ï¿½Ô¿ï¿½ ï¿½ï¿½ï¿½ï¿½
         /// </summary>
         public void SetFirstOperand(Card card)
         {
@@ -174,7 +174,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// µÎ ¹øÂ° ¿¬»ê ´ë»óÀ» 2¹ø ½½·Ô¿¡ ¼³Á¤
+        /// ï¿½ï¿½ ï¿½ï¿½Â° ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ 2ï¿½ï¿½ ï¿½ï¿½ï¿½Ô¿ï¿½ ï¿½ï¿½ï¿½ï¿½
         /// </summary>
         public void SetSecondOperand(Card card)
         {
@@ -182,23 +182,35 @@ namespace Manager
         }
 
         /// <summary>
-        /// ¿¬»êÀÚ¸¦ 1¹ø ½½·Ô¿¡ ¼³Á¤
+        /// ï¿½ï¿½ï¿½ï¿½ï¿½Ú¸ï¿½ 1ï¿½ï¿½ ï¿½ï¿½ï¿½Ô¿ï¿½ ï¿½ï¿½ï¿½ï¿½
         /// </summary>
         public void SetOperator(Card operatorCard)
         {
             if (operatorCard?.CardType != CardType.Operator)
             {
-                Debug.LogError("[ExpressionZoneManager] À¯È¿ÇÏÁö ¾ÊÀº ¿¬»êÀÚ Ä«µå");
+                Debug.LogError("[ExpressionZoneManager] ï¿½ï¿½È¿ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½");
                 return;
             }
 
             string symbol = GetOperatorSymbol(operatorCard.OperatorType);
-            var sprite = operatorCard.GetComponentInChildren<SpriteRenderer>()?.sprite;
+
+            // ï¿½Æ´ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ü½ï¿½Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® Ã£ï¿½ï¿½
+            Sprite sprite = null;
+            var allRenderers = operatorCard.GetComponentsInChildren<SpriteRenderer>(true);
+            foreach (var renderer in allRenderers)
+            {
+                if (!renderer.gameObject.name.Contains("Icon"))
+                {
+                    sprite = renderer.sprite;
+                    break;
+                }
+            }
+
             UpdateSlot(1, symbol, sprite, true);
         }
 
         /// <summary>
-        /// °ø°Ý¿ë »©±â ±âÈ£¸¦ 1¹ø ½½·Ô¿¡ ¼³Á¤
+        /// ï¿½ï¿½ï¿½Ý¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È£ï¿½ï¿½ 1ï¿½ï¿½ ï¿½ï¿½ï¿½Ô¿ï¿½ ï¿½ï¿½ï¿½ï¿½
         /// </summary>
         public void SetAttackOperator()
         {
@@ -206,7 +218,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ¿¬»ê °á°ú¸¦ 4¹ø ½½·Ô¿¡ Ç¥½Ã
+        /// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ 4ï¿½ï¿½ ï¿½ï¿½ï¿½Ô¿ï¿½ Ç¥ï¿½ï¿½
         /// </summary>
         public void ShowResult(float a, float b, OperatorType? operatorType = null)
         {
@@ -217,13 +229,13 @@ namespace Manager
             UpdateSlot(4, resultText, resultSprite, true);
 
             if (enableDebugLog)
-                Debug.Log($"[ExpressionZoneManager] °á°ú Ç¥½Ã: {a} {GetOperatorSymbol(operatorType)} {b} = {result}");
+                Debug.Log($"[ExpressionZoneManager] ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½: {a} {GetOperatorSymbol(operatorType)} {b} = {result}");
         }
         #endregion
 
         #region Process Control
         /// <summary>
-        /// °ø°Ý ÇÁ·Î¼¼½º¿ë ÃÊ±âÈ­
+        /// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Î¼ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­
         /// </summary>
         public void InitForAttack()
         {
@@ -235,7 +247,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ¿¬»ê ÇÁ·Î¼¼½º¿ë ÃÊ±âÈ­
+        /// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Î¼ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­
         /// </summary>
         public void InitForOperation()
         {
@@ -247,7 +259,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ¸ðµç ½½·Ô ÃÊ±âÈ­
+        /// ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­
         /// </summary>
         public void ResetAllSlots()
         {
@@ -260,7 +272,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// Ã¹ ¹øÂ° ¼±ÅÃ¸¸ ÃÊ±âÈ­ (¿¬»ê Áß Àç¼±ÅÃ¿ë)
+        /// Ã¹ ï¿½ï¿½Â° ï¿½ï¿½ï¿½Ã¸ï¿½ ï¿½Ê±ï¿½È­ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ç¼±ï¿½Ã¿ï¿½)
         /// </summary>
         public void ResetFirstSelection()
         {
@@ -270,7 +282,7 @@ namespace Manager
 
         #region Cancellation System
         /// <summary>
-        /// ÁöÁ¤µÈ ½½·ÔµéÀ» Ãë¼Ò °¡´ÉÇÏ°Ô ¼³Á¤
+        /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ôµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½ï¿½ï¿½ï¿½
         /// </summary>
         public void EnableCancellation(params int[] slotIndices)
         {
@@ -286,7 +298,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ¸ðµç ½½·ÔÀÇ Ãë¼Ò ±â´É ºñÈ°¼ºÈ­
+        /// ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½È°ï¿½ï¿½È­
         /// </summary>
         public void ClearAllCancelable()
         {
@@ -295,7 +307,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ½½·Ô Å¬¸¯ ÀÌº¥Æ® Ã³¸®
+        /// ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ ï¿½Ìºï¿½Æ® Ã³ï¿½ï¿½
         /// </summary>
         private void HandleSlotClicked(ExpressionCard clickedSlot)
         {
@@ -311,11 +323,11 @@ namespace Manager
         }
 
         /// <summary>
-        /// °ø°Ý Ãë¼Ò Ã³¸®
+        /// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½
         /// </summary>
         private void HandleAttackCancellation(int slotIndex)
         {
-            if (slotIndex == 0) // °ø°ÝÀÚ ½½·Ô Å¬¸¯½Ã °ø°Ý Ãë¼Ò
+            if (slotIndex == 0) // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
             {
                 var attackManager = FindAnyObjectByType<FieldAttackManager>();
                 attackManager?.ForceResetAttackState();
@@ -324,7 +336,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ¿¬»ê Ãë¼Ò Ã³¸®
+        /// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½
         /// </summary>
         private void HandleOperationCancellation(int slotIndex)
         {
@@ -333,11 +345,11 @@ namespace Manager
 
             switch (slotIndex)
             {
-                case 0: // Ã¹ ¹øÂ° ¼±ÅÃ Àç¼³Á¤
+                case 0: // Ã¹ ï¿½ï¿½Â° ï¿½ï¿½ï¿½ï¿½ ï¿½ç¼³ï¿½ï¿½
                     operatorManager.ResetFirstCardSelection();
                     EnableCancellation(1);
                     break;
-                case 1: // ¿¬»ê ¿ÏÀü Ãë¼Ò
+                case 1: // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
                     operatorManager.CancelOperatorMode();
                     break;
             }
@@ -351,33 +363,33 @@ namespace Manager
         #endregion
 
         /// <summary>
-        /// ºó ÇÊµå °ø°Ý¿ë - slot 2¹ø¿¡ »ó´ë¹æ »ö»óÀÇ "0" Ç¥½Ã
-        /// ½ÇÁ¦ Ä«µå°¡ ¾Æ´Ñ °¡»óÀÇ ¹æ¾î°ªÀ» ½Ã°¢ÀûÀ¸·Î Ç¥Çö
+        /// ï¿½ï¿½ ï¿½Êµï¿½ ï¿½ï¿½ï¿½Ý¿ï¿½ - slot 2ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ "0" Ç¥ï¿½ï¿½
+        /// ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½å°¡ ï¿½Æ´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½î°ªï¿½ï¿½ ï¿½Ã°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½
         /// </summary>
-        /// <param name="opponentType">»ó´ë¹æ Å¸ÀÔ (Player ¶Ç´Â Opponent)</param>
+        /// <param name="opponentType">ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½ (Player ï¿½Ç´ï¿½ Opponent)</param>
         public void SetEmptyFieldDefender(CardZone.OwnerType opponentType)
         {
-            // »ó´ë¹æ »ö»ó ½ºÇÁ¶óÀÌÆ® °¡Á®¿À±â
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             Sprite opponentSprite = GetSpriteByOwnerType(opponentType);
 
             if (opponentSprite == null)
             {
-                Debug.LogWarning("[ExpressionZoneManager] »ó´ë¹æ ½ºÇÁ¶óÀÌÆ®¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù. ±âº» ½ºÇÁ¶óÀÌÆ® »ç¿ë");
+                Debug.LogWarning("[ExpressionZoneManager] ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ Ã£ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½. ï¿½âº» ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½");
                 opponentSprite = neutralSprite;
             }
 
-            // slot 2¹ø¿¡ "0" ÅØ½ºÆ®¿Í »ó´ë¹æ »ö»óÀ¸·Î ¼³Á¤
+            // slot 2ï¿½ï¿½ï¿½ï¿½ "0" ï¿½Ø½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             UpdateSlot(2, "0", opponentSprite, true);
 
             if (enableDebugLog)
-                Debug.Log($"[ExpressionZoneManager] ºó ÇÊµå ¹æ¾îÀÚ ¼³Á¤: {opponentType} »ö»óÀ¸·Î '0' Ç¥½Ã");
+                Debug.Log($"[ExpressionZoneManager] ï¿½ï¿½ ï¿½Êµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: {opponentType} ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ '0' Ç¥ï¿½ï¿½");
         }
 
         /// <summary>
-        /// ¼ÒÀ¯ÀÚ Å¸ÀÔ¿¡ µû¸¥ ½ºÇÁ¶óÀÌÆ® ¹ÝÈ¯
+        /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½Ô¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½È¯
         /// </summary>
-        /// <param name="ownerType">Ä«µå ¼ÒÀ¯ÀÚ Å¸ÀÔ</param>
-        /// <returns>ÇØ´ç ¼ÒÀ¯ÀÚÀÇ ½ºÇÁ¶óÀÌÆ®</returns>
+        /// <param name="ownerType">Ä«ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½</param>
+        /// <returns>ï¿½Ø´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®</returns>
         private Sprite GetSpriteByOwnerType(CardZone.OwnerType ownerType)
         {
             return ownerType switch
@@ -389,36 +401,51 @@ namespace Manager
         }
 
         /// <summary>
-        /// ºó ÇÊµå °ø°Ý °á°ú Ç¥½Ã (°ø°ÝÀÚ °ªÀÌ ±×´ë·Î µ¥¹ÌÁö°¡ µÊ)
+        /// ï¿½ï¿½ ï¿½Êµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½×´ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½)
         /// </summary>
-        /// <param name="attackerValue">°ø°ÝÀÚ Ä«µå °ª</param>
+        /// <param name="attackerValue">ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½ ï¿½ï¿½</param>
         public void ShowEmptyFieldResult(float attackerValue)
         {
-            // ºó ÇÊµå °ø°Ý: °ø°ÝÀÚ °ª - 0 = °ø°ÝÀÚ °ª
+            // ï¿½ï¿½ ï¿½Êµï¿½ ï¿½ï¿½ï¿½ï¿½: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ - 0 = ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½
             float result = attackerValue;
             string resultText = Mathf.FloorToInt(result).ToString();
 
-            // °á°ú´Â °ø°ÝÀÚ »ö»óÀ¸·Î Ç¥½Ã (¾ç¼öÀÌ¹Ç·Î)
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½Ì¹Ç·ï¿½)
             Sprite resultSprite = slots[0].GetComponentInChildren<SpriteRenderer>().sprite;
 
             UpdateSlot(4, resultText, resultSprite, true);
 
             if (enableDebugLog)
-                Debug.Log($"[ExpressionZoneManager] ºó ÇÊµå °ø°Ý °á°ú: {attackerValue} - 0 = {result}");
+                Debug.Log($"[ExpressionZoneManager] ï¿½ï¿½ ï¿½Êµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½: {attackerValue} - 0 = {result}");
         }
 
         #region Utility Methods
         /// <summary>
-        /// Ä«µå Á¤º¸¸¦ ½½·Ô¿¡ ¼³Á¤ÇÏ´Â °øÅë ¸Þ¼Òµå
+        /// Ä«ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ô¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Þ¼Òµï¿½
         /// </summary>
         private void SetCardToSlot(Card card, int slotIndex, string methodName)
         {
             var cardText = card?.GetComponentInChildren<CardText>();
-            var spriteRenderer = card?.GetComponentInChildren<SpriteRenderer>();
+
+            // ï¿½Æ´ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ü½ï¿½Å°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ SpriteRenderer Ã£ï¿½ï¿½
+            SpriteRenderer spriteRenderer = null;
+            if (card != null)
+            {
+                var allRenderers = card.GetComponentsInChildren<SpriteRenderer>(true);
+                foreach (var renderer in allRenderers)
+                {
+                    // "Icon"ï¿½ï¿½ ï¿½ï¿½ï¿½Ôµï¿½ GameObjectï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+                    if (!renderer.gameObject.name.Contains("Icon"))
+                    {
+                        spriteRenderer = renderer;
+                        break;
+                    }
+                }
+            }
 
             if (cardText?.TextValue == null || spriteRenderer?.sprite == null)
             {
-                Debug.LogError($"[ExpressionZoneManager] {methodName} - Ä«µå µ¥ÀÌÅÍ°¡ À¯È¿ÇÏÁö ¾ÊÀ½");
+                Debug.LogError($"[ExpressionZoneManager] {methodName} - Ä«ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í°ï¿½ ï¿½ï¿½È¿ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½");
                 return;
             }
 
@@ -426,7 +453,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ¿¬»ê °á°ú °è»ê
+        /// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
         /// </summary>
         private float CalculateResult(float a, float b, OperatorType? operatorType)
         {
@@ -435,32 +462,32 @@ namespace Manager
                 OperatorType.Plus => a + b,
                 OperatorType.Minus => a - b,
                 OperatorType.Multiply => a * b,
-                OperatorType.Divide => b != 0 ? Mathf.Floor(a / b) : 0, // ¸ò¸¸ ¹ÝÈ¯
-                _ => a - b // °ø°Ý (±âº» »©±â)
+                OperatorType.Divide => b != 0 ? Mathf.Floor(a / b) : 0, // ï¿½ï¿½ ï¿½ï¿½È¯
+                _ => a - b // ï¿½ï¿½ï¿½ï¿½ (ï¿½âº» ï¿½ï¿½ï¿½ï¿½)
             };
         }
 
         /// <summary>
-        /// °á°ú ÅØ½ºÆ® Æ÷¸ËÆÃ
+        /// ï¿½ï¿½ï¿½ ï¿½Ø½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         /// </summary>
         private string FormatResultText(float result, OperatorType? operatorType)
         {
             return operatorType switch
             {
-                null => Mathf.Abs(Mathf.FloorToInt(result)).ToString(), // °ø°ÝÀº Àý´ñ°ªÀÇ Á¤¼ö ºÎºÐ
-                OperatorType.Minus => Mathf.FloorToInt(result).ToString(), // »©±â´Â Á¤¼ö ºÎºÐ (À½¼ö Æ÷ÇÔ)
-                _ => Mathf.FloorToInt(result).ToString() // ³ª¸ÓÁö´Â Á¤¼ö ºÎºÐ
+                null => Mathf.Abs(Mathf.FloorToInt(result)).ToString(), // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Îºï¿½
+                OperatorType.Minus => Mathf.FloorToInt(result).ToString(), // ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Îºï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
+                _ => Mathf.FloorToInt(result).ToString() // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Îºï¿½
             };
         }
 
         /// <summary>
-        /// °á°ú¿¡ ¸Â´Â ½ºÇÁ¶óÀÌÆ® ¹ÝÈ¯
+        /// ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Â´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½È¯
         /// </summary>
         private Sprite GetResultSprite(float result, OperatorType? operatorType)
         {
             if (result == 0) return neutralSprite;
 
-            if (operatorType == null) // °ø°Ý ÇÁ·Î¼¼½º
+            if (operatorType == null) // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Î¼ï¿½ï¿½ï¿½
             {
                 return result > 0
                     ? slots[0].GetComponentInChildren<SpriteRenderer>().sprite
@@ -471,7 +498,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ¿¬»êÀÚ Å¸ÀÔÀ» ±âÈ£·Î º¯È¯
+        /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È£ï¿½ï¿½ ï¿½ï¿½È¯
         /// </summary>
         private string GetOperatorSymbol(OperatorType? operatorType)
         {
@@ -479,30 +506,30 @@ namespace Manager
             {
                 OperatorType.Plus => "+",
                 OperatorType.Minus => "-",
-                OperatorType.Multiply => "¡¿",
-                OperatorType.Divide => "¡À",
+                OperatorType.Multiply => "ï¿½ï¿½",
+                OperatorType.Divide => "ï¿½ï¿½",
                 _ => "?"
             };
         }
 
         /// <summary>
-        /// µð¹ö±× ·Î±× È°¼ºÈ­/ºñÈ°¼ºÈ­
+        /// ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Î±ï¿½ È°ï¿½ï¿½È­/ï¿½ï¿½È°ï¿½ï¿½È­
         /// </summary>
         public void SetDebugMode(bool enable) => enableDebugLog = enable;
         #endregion
 
         /// <summary>
-        /// ¿¬»êÀÚ Å¸ÀÔÀ¸·Î Á÷Á¢ ¼³Á¤ (³×Æ®¿öÅ© µ¿±âÈ­¿ë)
-        /// ¿¬»êÀÚ Ä«µå °´Ã¼ ¾øÀÌ Å¸ÀÔ¸¸À¸·Î ¿¬»êÀÚ ±âÈ£¸¦ Ç¥½Ã
+        /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½Æ®ï¿½ï¿½Å© ï¿½ï¿½ï¿½ï¿½È­ï¿½ï¿½)
+        /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½ ï¿½ï¿½Ã¼ ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½Ô¸ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È£ï¿½ï¿½ Ç¥ï¿½ï¿½
         /// </summary>
-        /// <param name="operatorType">Ç¥½ÃÇÒ ¿¬»êÀÚ Å¸ÀÔ</param>
+        /// <param name="operatorType">Ç¥ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½</param>
         public void SetOperatorByType(OperatorType operatorType)
         {
             string symbol = GetOperatorSymbol(operatorType);
             UpdateSlot(1, symbol, neutralSprite, true);
 
             if (enableDebugLog)
-                Debug.Log($"[ExpressionZoneManager] ¿¬»êÀÚ Å¸ÀÔ ¼³Á¤: {operatorType} ({symbol})");
+                Debug.Log($"[ExpressionZoneManager] ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: {operatorType} ({symbol})");
         }
     }
 }

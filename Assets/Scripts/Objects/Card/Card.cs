@@ -10,14 +10,18 @@ using UnityEngine;
 namespace Objects
 {
     /// <summary>
-    /// °³º° Ä«µå ¿ÀºêÁ§Æ®ÀÇ »óÅÂ ¹× Å¬¸¯ ¹İÀÀÀ» °ü¸®ÇÏ´Â ÄÄÆ÷³ÍÆ®
-    /// Secret Ä«µå ½Ã°¢Àû È¿°ú´Â CardEffect¿Í ¿¬µ¿ÇÏ¿© Material Property Block Ãæµ¹ ¹æÁö
+    /// ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ Å¬ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
+    /// Secret Ä«ï¿½ï¿½ ï¿½Ã°ï¿½ï¿½ï¿½ È¿ï¿½ï¿½ï¿½ï¿½ CardEffectï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ Material Property Block ï¿½æµ¹ ï¿½ï¿½ï¿½ï¿½
     /// </summary>
     public class Card : MonoBehaviourPun, ICard
     {
         private TextMeshPro cardTMP;
         private CardText cardText;
         private SpriteRenderer spriteRenderer;
+
+        // Combat Icon References
+        [SerializeField] private GameObject swordIcon;
+        [SerializeField] private GameObject shieldIcon;
 
         public static event Action<Card> onClicked;
         public static event Action<Transform> OnCardDropped;
@@ -29,12 +33,12 @@ namespace Objects
         public bool IsSecret { get; private set; }
         public bool CanAttack { get; private set; } = false;
 
-        // ÅÏº° »óÅÂ °ü¸®
+        // ï¿½Ïºï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         public bool WasModifiedThisTurn { get; private set; } = false;
         public bool WasPlayedThisTurn { get; private set; } = false;
         public bool HasAttackedThisTurn { get; private set; } = false;
 
-        // GLOW Á¦¾î °ü¸®
+        // GLOW ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         private bool isGlowOverridden = false;
         private bool overrideGlowState = false;
         private Color? overrideGlowColor = null;
@@ -84,9 +88,9 @@ namespace Objects
 
         #region Card Initialization
         /// <summary>
-        /// ¼ıÀÚ Ä«µå·Î ÃÊ±âÈ­
+        /// ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­
         /// </summary>
-        /// <param name="value">Ä«µå °ª</param>
+        /// <param name="value">Ä«ï¿½ï¿½ ï¿½ï¿½</param>
         public void InitializeAsNumber(float value)
         {
             CardType = CardType.Number;
@@ -94,9 +98,9 @@ namespace Objects
         }
 
         /// <summary>
-        /// ¿¬»êÀÚ Ä«µå·Î ÃÊ±âÈ­
+        /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­
         /// </summary>
-        /// <param name="opType">¿¬»êÀÚ Å¸ÀÔ</param>
+        /// <param name="opType">ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å¸ï¿½ï¿½</param>
         public void InitializeAsOperator(OperatorType opType)
         {
             CardType = CardType.Operator;
@@ -105,7 +109,7 @@ namespace Objects
         }
 
         /// <summary>
-        /// Á¶Ä¿ Ä«µå·Î ÃÊ±âÈ­
+        /// ï¿½ï¿½Ä¿ Ä«ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­
         /// </summary>
         public void InitializeAsJoker()
         {
@@ -155,8 +159,8 @@ namespace Objects
 
         #region Attack Logic
         /// <summary>
-        /// °ø°İ °¡´É ¿©ºÎ Ã¼Å©
-        /// Secret »óÅÂ¿Í °ü°è¾øÀÌ °ø°İ °¡´É (¹èÄ¡ÅÏ ÀÌÈÄ)
+        /// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã¼Å©
+        /// Secret ï¿½ï¿½ï¿½Â¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
         /// </summary>
         public bool IsAttackableThisTurn()
         {
@@ -257,10 +261,10 @@ namespace Objects
 
         #region Secret Management
         /// <summary>
-        /// Secret »óÅÂ ¼³Á¤
-        /// CardEffect¿Í ¿¬µ¿ÇÏ¿© Material Property Block Ãæµ¹ ¹æÁö
+        /// Secret ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        /// CardEffectï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ Material Property Block ï¿½æµ¹ ï¿½ï¿½ï¿½ï¿½
         /// </summary>
-        /// <param name="isSecret">Secret ¸ğµå ¿©ºÎ</param>
+        /// <param name="isSecret">Secret ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½</param>
         public void SetSecret(bool isSecret)
         {
             IsSecret = isSecret;
@@ -276,12 +280,12 @@ namespace Objects
         }
 
         /// <summary>
-        /// Secret ½Ã°¢Àû È¿°ú Àû¿ë
-        /// CardEffect¿¡°Ô ½ºÇÁ¶óÀÌÆ® º¯°æÀ» ¾Ë·Á Material Property Block ¾÷µ¥ÀÌÆ® À§ÀÓ
+        /// Secret ï¿½Ã°ï¿½ï¿½ï¿½ È¿ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        /// CardEffectï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ë·ï¿½ Material Property Block ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½
         /// </summary>
         private void ApplySecretVisual()
         {
-            // ½ºÇÁ¶óÀÌÆ®¸¦ Secret ½ºÇÁ¶óÀÌÆ®·Î º¯°æ
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ Secret ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             if (spriteRenderer != null)
             {
                 var secretSprite = ResourcesManager.Instance.GetSprite(Global.Card, Global.SpriteColorBlack);
@@ -289,7 +293,7 @@ namespace Objects
                 {
                     spriteRenderer.sprite = secretSprite;
 
-                    // CardEffect¿¡°Ô ½ºÇÁ¶óÀÌÆ® º¯°æ ¾Ë¸² (Material Property Block ¾÷µ¥ÀÌÆ®)
+                    // CardEffectï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ ï¿½Ë¸ï¿½ (Material Property Block ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®)
                     var cardEffect = GetComponentInChildren<CardEffect>();
                     if (cardEffect != null)
                     {
@@ -298,30 +302,30 @@ namespace Objects
                 }
             }
 
-            // ÅØ½ºÆ® Ã³¸®
+            // ï¿½Ø½ï¿½Æ® Ã³ï¿½ï¿½
             if (cardTMP != null)
             {
                 if (CurrentOwnerType == CardZone.OwnerType.Player)
                 {
-                    // ÇÃ·¹ÀÌ¾î Secret Ä«µå: Èò»ö ÅØ½ºÆ®·Î Ç¥½Ã
+                    // ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ Secret Ä«ï¿½ï¿½: ï¿½ï¿½ï¿½ ï¿½Ø½ï¿½Æ®ï¿½ï¿½ Ç¥ï¿½ï¿½
                     cardTMP.gameObject.SetActive(true);
                     cardTMP.color = Color.white;
                 }
                 else
                 {
-                    // »ó´ë¹æ Secret Ä«µå: ÅØ½ºÆ® ¼û±è
+                    // ï¿½ï¿½ï¿½ï¿½ Secret Ä«ï¿½ï¿½: ï¿½Ø½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½
                     cardTMP.gameObject.SetActive(false);
                 }
             }
         }
 
         /// <summary>
-        /// ¿ø·¡ »óÅÂ º¹¿ø
-        /// CardEffect¿¡°Ô ½ºÇÁ¶óÀÌÆ® º¯°æÀ» ¾Ë·Á Material Property Block ¾÷µ¥ÀÌÆ® À§ÀÓ
+        /// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        /// CardEffectï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ë·ï¿½ Material Property Block ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½
         /// </summary>
         private void RestoreOriginalVisual()
         {
-            // ½ºÇÁ¶óÀÌÆ®¸¦ ¿øº»À¸·Î º¹¿ø
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             if (spriteRenderer != null)
             {
                 Sprite originalSprite;
@@ -338,7 +342,7 @@ namespace Objects
                 {
                     spriteRenderer.sprite = originalSprite;
 
-                    // CardEffect¿¡°Ô ½ºÇÁ¶óÀÌÆ® º¯°æ ¾Ë¸² (Material Property Block ¾÷µ¥ÀÌÆ®)
+                    // CardEffectï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ ï¿½Ë¸ï¿½ (Material Property Block ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®)
                     var cardEffect = GetComponentInChildren<CardEffect>();
                     if (cardEffect != null)
                     {
@@ -347,12 +351,12 @@ namespace Objects
                 }
             }
 
-            // ÅØ½ºÆ® º¹¿ø
+            // ï¿½Ø½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½
             if (cardTMP != null)
             {
                 cardTMP.gameObject.SetActive(true);
 
-                // ¿øº» »ö»óÀ¸·Î º¹¿ø
+                // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
                 Color targetColor;
                 if (CurrentOwnerType == CardZone.OwnerType.Player)
                 {
@@ -370,7 +374,7 @@ namespace Objects
         }
 
         /// <summary>
-        /// Secret Ä«µå °ø°³ (°ø°İ ½Ã È£Ãâ)
+        /// Secret Ä«ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ È£ï¿½ï¿½)
         /// </summary>
         public void RevealSecret()
         {
@@ -383,10 +387,10 @@ namespace Objects
 
         #region Zone Interaction
         /// <summary>
-        /// Ä«µåÀÇ Zone ¹× ¼ÒÀ¯ÀÚ ¼³Á¤°ú »óÈ£ÀÛ¿ë ±ÇÇÑ Àû¿ë
+        /// Ä«ï¿½ï¿½ï¿½ï¿½ Zone ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È£ï¿½Û¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         /// </summary>
-        /// <param name="zoneType">Ä«µå°¡ À§Ä¡ÇÑ Zone</param>
-        /// <param name="ownerType">Ä«µå ¼ÒÀ¯ÀÚ</param>
+        /// <param name="zoneType">Ä«ï¿½å°¡ ï¿½ï¿½Ä¡ï¿½ï¿½ Zone</param>
+        /// <param name="ownerType">Ä«ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½</param>
         public void SetInteraction(CardZone.ZoneType zoneType, CardZone.OwnerType ownerType)
         {
             CurrentZoneType = zoneType;
@@ -537,10 +541,10 @@ namespace Objects
 
         #region Animation
         /// <summary>
-        /// Ä«µå Á¦°Å ¾Ö´Ï¸ŞÀÌ¼Ç ½ÇÇà
+        /// Ä«ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´Ï¸ï¿½ï¿½Ì¼ï¿½ ï¿½ï¿½ï¿½ï¿½
         /// </summary>
-        /// <param name="onComplete">¾Ö´Ï¸ŞÀÌ¼Ç ¿Ï·á ÈÄ ½ÇÇàÇÒ Äİ¹é</param>
-        /// <param name="delay">Áö¿¬ ½Ã°£</param>
+        /// <param name="onComplete">ï¿½Ö´Ï¸ï¿½ï¿½Ì¼ï¿½ ï¿½Ï·ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½İ¹ï¿½</param>
+        /// <param name="delay">ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½</param>
         public IEnumerator AnimateRemoval(Action onComplete = null, float delay = 0f)
         {
             if (delay > 0f)
@@ -615,6 +619,43 @@ namespace Objects
             }
 
             onComplete?.Invoke();
+        }
+        #endregion
+
+        #region Combat Icons
+        /// <summary>
+        /// ê³µê²© ì•„ì´ì½˜ í‘œì‹œ (Sword)
+        /// </summary>
+        public void ShowAttackIcon()
+        {
+            HideAllIcons();
+            if (swordIcon != null)
+            {
+                swordIcon.SetActive(true);
+                Debug.Log($"[Card] {name} - ê³µê²© ì•„ì´ì½˜ í‘œì‹œ");
+            }
+        }
+
+        /// <summary>
+        /// ë°©ì–´ ì•„ì´ì½˜ í‘œì‹œ (Shield)
+        /// </summary>
+        public void ShowDefenseIcon()
+        {
+            HideAllIcons();
+            if (shieldIcon != null)
+            {
+                shieldIcon.SetActive(true);
+                Debug.Log($"[Card] {name} - ë°©ì–´ ì•„ì´ì½˜ í‘œì‹œ");
+            }
+        }
+
+        /// <summary>
+        /// ëª¨ë“  ì•„ì´ì½˜ ìˆ¨ê¹€
+        /// </summary>
+        public void HideAllIcons()
+        {
+            if (swordIcon != null) swordIcon.SetActive(false);
+            if (shieldIcon != null) shieldIcon.SetActive(false);
         }
         #endregion
 

@@ -772,6 +772,10 @@ namespace Manager
             public float newAttackerValue;  // 공격자 승리 시 새로운 값
             public float newDefenderValue;  // 방어자 승리 시 새로운 값
 
+            // 전투 아이콘 표시 상태
+            public bool showAttackerSwordIcon;   // 공격자에게 칼 아이콘 표시
+            public bool showDefenderShieldIcon;  // 방어자에게 방패 아이콘 표시
+
             public CombatActionData(string attId, string defId, float attVal, float defVal,
                                    bool attSecret, bool defSecret, int damage,
                                    bool destroyAtt = false, bool destroyDef = false,
@@ -789,6 +793,10 @@ namespace Manager
                 destroyDefender = destroyDef;
                 newAttackerValue = newAttVal;
                 newDefenderValue = newDefVal;
+
+                // 아이콘 상태 설정: 공격자는 항상 칼, 방어자가 있을 때만 방패
+                showAttackerSwordIcon = true;
+                showDefenderShieldIcon = !string.IsNullOrEmpty(defId);
             }
         }
 
@@ -912,7 +920,18 @@ namespace Manager
                 Debug.Log($"[NetworkGameManager] 방어자 Secret 해제: {defenderCard.name}");
             }
 
-            // 3. ExpressionZone 업데이트
+            // 3. 전투 아이콘 표시
+            if (combatData.showAttackerSwordIcon)
+            {
+                attackerCard.ShowAttackIcon();
+            }
+
+            if (combatData.showDefenderShieldIcon && defenderCard != null)
+            {
+                defenderCard.ShowDefenseIcon();
+            }
+
+            // 4. ExpressionZone 업데이트
             StartCoroutine(SyncExpressionZone(attackerCard, defenderCard, combatData));
         }
 
@@ -995,6 +1014,17 @@ namespace Manager
             }
 
             yield return new WaitForSeconds(0.3f);
+
+            // 아이콘 숨김
+            if (attacker != null)
+            {
+                attacker.HideAllIcons();
+            }
+
+            if (defender != null)
+            {
+                defender.HideAllIcons();
+            }
 
             // ExpressionZone은 다음 공격 시작 시 InitForAttack()에서 초기화됨
             Debug.Log("[NetworkGameManager] 원격 전투 액션 완료");

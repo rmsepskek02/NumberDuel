@@ -12,7 +12,7 @@ namespace Manager
     public class HealthManager : Singleton<HealthManager>
     {
         [Header("체력 설정")]
-        [SerializeField] private int maxHP = 3;
+        [SerializeField] private int maxHP = 30;
         [SerializeField] private bool enableDebugLog = true;
 
         // 현재 체력

@@ -5,9 +5,9 @@ using Objects;
 namespace Manager
 {
     /// <summary>
-    /// ÇÊµå Ä«µå °£ °ø°Ý ½Ã½ºÅÛÀ» °ü¸®ÇÏ´Â ¸Å´ÏÀú
-    /// °ø°ÝÀÚ ¼±ÅÃ ¡æ ¼öºñÀÚ ¼±ÅÃ ¡æ °ø°Ý ½ÇÇà ¡æ °á°ú Ã³¸® Èå¸§À» ´ã´ç
-    /// Secret Ä«µå ÇØÁ¦¸¦ Æ÷ÇÔÇÑ ³×Æ®¿öÅ© µ¿±âÈ­ Áö¿ø
+    /// ï¿½Êµï¿½ Ä«ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ã½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ï¿½Å´ï¿½ï¿½ï¿½
+    /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ ï¿½å¸§ï¿½ï¿½ ï¿½ï¿½ï¿½
+    /// Secret Ä«ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½Å© ï¿½ï¿½ï¿½ï¿½È­ ï¿½ï¿½ï¿½ï¿½
     /// </summary>
     public class FieldAttackManager : MonoBehaviour
     {
@@ -15,7 +15,7 @@ namespace Manager
 
         private Card currentAttacker;
 
-        // ¼º´É ÃÖÀûÈ­¿ë Ä³½Ã
+        // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È­ï¿½ï¿½ Ä³ï¿½ï¿½
         private readonly System.Collections.Generic.List<Card> fieldCardsCache = new System.Collections.Generic.List<Card>();
 
         #region Unity Lifecycle
@@ -32,17 +32,17 @@ namespace Manager
 
         #region Public Interface
         /// <summary>
-        /// ÇöÀç °ø°ÝÀÚ°¡ ¼±ÅÃµÈ »óÅÂÀÎÁö È®ÀÎ
+        /// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ú°ï¿½ ï¿½ï¿½ï¿½Ãµï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
         /// </summary>
         public bool HasAttackerSelected() => currentAttacker != null;
 
         /// <summary>
-        /// ÇöÀç °ø°ÝÀÚ ¹ÝÈ¯
+        /// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯
         /// </summary>
         public Card GetCurrentAttacker() => currentAttacker;
 
         /// <summary>
-        /// °ø°Ý »óÅÂ °­Á¦ ÃÊ±âÈ­ (ÅÏ Á¾·á, ´Ù¸¥ ÇÁ·Î¼¼½º ½ÃÀÛ ½Ã µî)
+        /// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­ (ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½, ï¿½Ù¸ï¿½ ï¿½ï¿½ï¿½Î¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½)
         /// </summary>
         public void ForceResetAttackState()
         {
@@ -50,35 +50,35 @@ namespace Manager
             {
                 ResetAttackState();
                 if (enableDebugLog)
-                    Debug.Log("[FieldAttackManager] °ø°Ý »óÅÂ °­Á¦ ÃÊ±âÈ­");
+                    Debug.Log("[FieldAttackManager] ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­");
             }
         }
         #endregion
 
         #region Attack Flow
         /// <summary>
-        /// Ä«µå Å¬¸¯ ÀÌº¥Æ® Ã³¸®
+        /// Ä«ï¿½ï¿½ Å¬ï¿½ï¿½ ï¿½Ìºï¿½Æ® Ã³ï¿½ï¿½
         /// </summary>
         private void HandleCardClick(Card clickedCard)
         {
             if (!CanProcessAttack()) return;
 
-            // °ø°ÝÀÚ ¼±ÅÃ (³» ÇÊµå Ä«µå)
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ ï¿½Êµï¿½ Ä«ï¿½ï¿½)
             if (IsValidAttacker(clickedCard))
             {
-                if (currentAttacker != null) return; // ÀÌ¹Ì °ø°ÝÀÚ ¼±ÅÃµÊ
+                if (currentAttacker != null) return; // ï¿½Ì¹ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ãµï¿½
                 SelectAttacker(clickedCard);
             }
-            // °ø°Ý ½ÇÇà (»ó´ë ÇÊµå Ä«µå)
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ ï¿½Êµï¿½ Ä«ï¿½ï¿½)
             else if (IsValidTarget(clickedCard))
             {
-                if (currentAttacker == null) return; // °ø°ÝÀÚ ¹Ì¼±ÅÃ
+                if (currentAttacker == null) return; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¼ï¿½ï¿½ï¿½
                 StartCoroutine(ExecuteAttack(currentAttacker, clickedCard));
             }
         }
 
         /// <summary>
-        /// °ø°ÝÀÚ ¼±ÅÃ Ã³¸®
+        /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½
         /// </summary>
         private void SelectAttacker(Card attacker)
         {
@@ -86,126 +86,132 @@ namespace Manager
             SetupExpressionZone(attacker);
 
             if (enableDebugLog)
-                Debug.Log($"[FieldAttackManager] °ø°ÝÀÚ ¼±ÅÃ: {attacker.name}");
+                Debug.Log($"[FieldAttackManager] ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: {attacker.name}");
 
-            // »ó´ë ÇÊµå°¡ ºñ¾îÀÖ´ÂÁö Ã¼Å©
+            // ï¿½ï¿½ï¿½ ï¿½Êµå°¡ ï¿½ï¿½ï¿½ï¿½Ö´ï¿½ï¿½ï¿½ Ã¼Å©
             if (IsOpponentFieldEmpty())
             {
                 if (enableDebugLog)
-                    Debug.Log("[FieldAttackManager] »ó´ë ÇÊµå°¡ ºñ¾îÀÖÀ½ - Áï½Ã ºó ÇÊµå °ø°Ý ½ÇÇà");
+                    Debug.Log("[FieldAttackManager] ï¿½ï¿½ï¿½ ï¿½Êµå°¡ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ - ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Êµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½");
 
-                // Áï½Ã ºó ÇÊµå °ø°Ý ½ÇÇà
+                // ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Êµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
                 StartCoroutine(ExecuteEmptyFieldAttack(attacker));
             }
             else
             {
                 if (enableDebugLog)
-                    Debug.Log("[FieldAttackManager] »ó´ë ÇÊµå¿¡ Ä«µå Á¸Àç - ´ë»ó ¼±ÅÃ ´ë±â");
+                    Debug.Log("[FieldAttackManager] ï¿½ï¿½ï¿½ ï¿½Êµå¿¡ Ä«ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ - ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½");
 
-                // ±âÁ¸ ·ÎÁ÷: ´ë»ó ¼±ÅÃ ´ë±â
+                // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
                 UpdateGlowStatesForTargetSelection();
             }
         }
 
         /// <summary>
-        /// ºó ÇÊµå °ø°Ý ½ÇÇà (Secret ÇØÁ¦ ·ÎÁ÷ Æ÷ÇÔ)
+        /// ï¿½ï¿½ ï¿½Êµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (Secret ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
         /// </summary>
         private IEnumerator ExecuteEmptyFieldAttack(Card attacker)
         {
-            // °ÔÀÓÀÌ Á¾·áµÇ¾ú´Ù¸é °ø°Ý Áß´Ü
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ç¾ï¿½ï¿½Ù¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ß´ï¿½
             if (InGameManager.Instance.IsGameEnded)
             {
                 yield break;
             }
 
             if (enableDebugLog)
-                Debug.Log($"[FieldAttackManager] ºó ÇÊµå °ø°Ý ½ÃÀÛ: {attacker.name}");
+                Debug.Log($"[FieldAttackManager] ï¿½ï¿½ ï¿½Êµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: {attacker.name}");
 
-            // Secret ÇØÁ¦: °ø°ÝÀÚ°¡ Secret »óÅÂ¶ó¸é ·ÎÄÃ¿¡¼­ ÇØÁ¦
+            // Secret ï¿½ï¿½ï¿½ï¿½: ï¿½ï¿½ï¿½ï¿½ï¿½Ú°ï¿½ Secret ï¿½ï¿½ï¿½Â¶ï¿½ï¿½ ï¿½ï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             bool attackerWasSecret = attacker.IsSecret;
             if (attackerWasSecret)
             {
                 attacker.RevealSecret();
                 if (enableDebugLog)
-                    Debug.Log($"[FieldAttackManager] °ø°ÝÀÚ Secret ·ÎÄÃ ÇØÁ¦: {attacker.name}");
+                    Debug.Log($"[FieldAttackManager] ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Secret ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: {attacker.name}");
             }
 
-            // ¿øº» °ø°ÝÀÚ °ª ¹Ì¸® ÀúÀå (Secret ÇØÁ¦ ÈÄ)
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½
+            attacker.ShowAttackIcon();
+
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½ï¿½ (Secret ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½)
             float originalAttackerValue = GetCardValue(attacker);
 
             if (enableDebugLog)
-                Debug.Log($"[FieldAttackManager] ¿øº» °ø°ÝÀÚ °ª: {originalAttackerValue}");
+                Debug.Log($"[FieldAttackManager] ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½: {originalAttackerValue}");
 
-            // ExpressionZone¿¡ °¡»ó ¹æ¾îÀÚ ¼³Á¤ (»ó´ë¹æ »ö»óÀÇ "0")
+            // ExpressionZoneï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ "0")
             var ezManager = ExpressionZoneManager.Instance;
             ezManager.SetEmptyFieldDefender(CardZone.OwnerType.Opponent);
 
             yield return new WaitForSeconds(1.5f);
 
-            // °ÔÀÓ Á¾·á ÀçÃ¼Å©
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã¼Å©
             if (InGameManager.Instance.IsGameEnded)
             {
                 yield break;
             }
 
-            // °ø°Ý °á°ú °è»ê ¹× Ç¥½Ã
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ Ç¥ï¿½ï¿½
             ezManager.ShowEmptyFieldResult(originalAttackerValue);
 
             yield return new WaitForSeconds(1f);
 
-            // °ÔÀÓ Á¾·á ÀçÃ¼Å©
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã¼Å©
             if (InGameManager.Instance.IsGameEnded)
             {
                 yield break;
             }
 
-            // ºó ÇÊµå °ø°Ý °á°ú Àû¿ë (¿øº» °ª »ç¿ë)
+            // ï¿½ï¿½ ï¿½Êµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½)
             int damage = ApplyEmptyFieldResult(attacker, originalAttackerValue);
 
-            // °ø°Ý ¿Ï·á Ç¥½Ã
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½Ï·ï¿½ Ç¥ï¿½ï¿½
             attacker.SetHasAttackedThisTurn(true);
 
-            // ¼öÁ¤: ÀüÃ¼ ÀüÅõ ¾×¼Ç µ¿±âÈ­ (ExpressionZone + HP Æ÷ÇÔ)
+            // ï¿½ï¿½ï¿½ï¿½: ï¿½ï¿½Ã¼ ï¿½ï¿½ï¿½ï¿½ ï¿½×¼ï¿½ ï¿½ï¿½ï¿½ï¿½È­ (ExpressionZone + HP ï¿½ï¿½ï¿½ï¿½)
             if (NetworkGameManager.Instance != null)
             {
                 NetworkGameManager.Instance.SyncCombatAction(
                     attacker,
-                    null,  // defender´Â null (ºó ÇÊµå)
+                    null,  // defenderï¿½ï¿½ null (ï¿½ï¿½ ï¿½Êµï¿½)
                     originalAttackerValue,
-                    0f,    // ¹æ¾îÀÚ °ª 0
-                    damage // ½ÇÁ¦ µ¥¹ÌÁö
+                    0f,    // ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ 0
+                    damage // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                 );
             }
 
-            // »óÅÂ ÃÊ±âÈ­
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            attacker.HideAllIcons();
+
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­
             currentAttacker = null;
             yield return new WaitForSeconds(0.8f);
 
-            // °ÔÀÓÀÌ Á¾·áµÇÁö ¾Ê¾Ò´Ù¸é GLOW »óÅÂ º¹¿ø
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¾Ò´Ù¸ï¿½ GLOW ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             if (!InGameManager.Instance.IsGameEnded)
             {
                 RestoreDefaultGlowStates();
             }
 
             if (enableDebugLog)
-                Debug.Log("[FieldAttackManager] ºó ÇÊµå °ø°Ý ¿Ï·á");
+                Debug.Log("[FieldAttackManager] ï¿½ï¿½ ï¿½Êµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ï·ï¿½");
         }
 
         /// <summary>
-        /// °ø°Ý ½ÇÇà ¹× °á°ú Ã³¸® (Secret ÇØÁ¦ ·ÎÁ÷ Æ÷ÇÔ)
+        /// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ (Secret ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
         /// </summary>
         private IEnumerator ExecuteAttack(Card attacker, Card defender)
         {
-            // °ÔÀÓÀÌ Á¾·áµÇ¾ú´Ù¸é °ø°Ý Áß´Ü
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ç¾ï¿½ï¿½Ù¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ß´ï¿½
             if (InGameManager.Instance.IsGameEnded)
             {
                 yield break;
             }
 
             if (enableDebugLog)
-                Debug.Log($"[FieldAttackManager] °ø°Ý ½ÇÇà: {attacker.name} ¡æ {defender.name}");
+                Debug.Log($"[FieldAttackManager] ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: {attacker.name} ï¿½ï¿½ {defender.name}");
 
-            // Secret ÇØÁ¦: °ø°ÝÀÚ¿Í ¹æ¾îÀÚ ¸ðµÎ Secret »óÅÂ¶ó¸é ·ÎÄÃ¿¡¼­ ÇØÁ¦
+            // Secret ï¿½ï¿½ï¿½ï¿½: ï¿½ï¿½ï¿½ï¿½ï¿½Ú¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ Secret ï¿½ï¿½ï¿½Â¶ï¿½ï¿½ ï¿½ï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             bool attackerWasSecret = attacker.IsSecret;
             bool defenderWasSecret = defender.IsSecret;
 
@@ -213,52 +219,56 @@ namespace Manager
             {
                 attacker.RevealSecret();
                 if (enableDebugLog)
-                    Debug.Log($"[FieldAttackManager] °ø°ÝÀÚ Secret ·ÎÄÃ ÇØÁ¦: {attacker.name}");
+                    Debug.Log($"[FieldAttackManager] ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Secret ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: {attacker.name}");
             }
 
             if (defenderWasSecret)
             {
                 defender.RevealSecret();
                 if (enableDebugLog)
-                    Debug.Log($"[FieldAttackManager] ¹æ¾îÀÚ Secret ·ÎÄÃ ÇØÁ¦: {defender.name}");
+                    Debug.Log($"[FieldAttackManager] ï¿½ï¿½ï¿½ï¿½ï¿½ Secret ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: {defender.name}");
             }
 
-            // ¿øº» Ä«µå °ª ¹Ì¸® ÀúÀå (Secret ÇØÁ¦ ÈÄ °ª ÀúÀå)
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½
+            attacker.ShowAttackIcon();
+            defender.ShowDefenseIcon();
+
+            // ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½ ï¿½ï¿½ ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½ï¿½ (Secret ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
             var (originalAttackerValue, originalDefenderValue) = GetCardValues(attacker, defender);
 
             if (enableDebugLog)
-                Debug.Log($"[FieldAttackManager] ¿øº» °ª ÀúÀå: °ø°ÝÀÚ={originalAttackerValue}, ¹æ¾îÀÚ={originalDefenderValue}");
+                Debug.Log($"[FieldAttackManager] ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½={originalAttackerValue}, ï¿½ï¿½ï¿½ï¿½ï¿½={originalDefenderValue}");
 
-            // ¼ö½ÄÁ¸¿¡ ¼öºñÀÚ ¼³Á¤
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             var ezManager = ExpressionZoneManager.Instance;
             ezManager.SetDefenderCard(defender);
 
             yield return new WaitForSeconds(1.5f);
 
-            // °ÔÀÓ Á¾·á ÀçÃ¼Å©
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã¼Å©
             if (InGameManager.Instance.IsGameEnded)
             {
                 yield break;
             }
 
-            // °ø°Ý °á°ú °è»ê ¹× Ç¥½Ã
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ Ç¥ï¿½ï¿½
             ezManager.ShowResult(originalAttackerValue, originalDefenderValue);
 
             yield return new WaitForSeconds(1f);
 
-            // °ÔÀÓ Á¾·á ÀçÃ¼Å©
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ã¼Å©
             if (InGameManager.Instance.IsGameEnded)
             {
                 yield break;
             }
 
-            // °á°ú Àû¿ë (¿øº» °ª Àü´Þ) - ½ÇÁ¦ µ¥¹ÌÁö °è»ê
-            int damage = ApplyBattleResult(attacker, defender, originalAttackerValue, originalDefenderValue);
+            // ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½) - ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
+            int damage = ApplyBattleResult(attacker, defender, originalAttackerValue, originalDefenderValue, defenderWasSecret);
 
-            // °ø°Ý ¿Ï·á Ç¥½Ã
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½Ï·ï¿½ Ç¥ï¿½ï¿½
             attacker.SetHasAttackedThisTurn(true);
 
-            // ¼öÁ¤: ÀüÃ¼ ÀüÅõ ¾×¼Ç µ¿±âÈ­ (ExpressionZone + HP Æ÷ÇÔ)
+            // ï¿½ï¿½ï¿½ï¿½: ï¿½ï¿½Ã¼ ï¿½ï¿½ï¿½ï¿½ ï¿½×¼ï¿½ ï¿½ï¿½ï¿½ï¿½È­ (ExpressionZone + HP ï¿½ï¿½ï¿½ï¿½)
             if (NetworkGameManager.Instance != null)
             {
                 NetworkGameManager.Instance.SyncCombatAction(
@@ -266,15 +276,19 @@ namespace Manager
                     defender,
                     originalAttackerValue,
                     originalDefenderValue,
-                    damage // ½ÇÁ¦ µ¥¹ÌÁö
+                    damage // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                 );
             }
 
-            // »óÅÂ ÃÊ±âÈ­
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+            attacker.HideAllIcons();
+            defender.HideAllIcons();
+
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­
             currentAttacker = null;
             yield return new WaitForSeconds(0.8f);
 
-            // °ÔÀÓÀÌ Á¾·áµÇÁö ¾Ê¾Ò´Ù¸é GLOW »óÅÂ º¹¿ø
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¾Ò´Ù¸ï¿½ GLOW ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             if (!InGameManager.Instance.IsGameEnded)
             {
                 RestoreDefaultGlowStates();
@@ -282,103 +296,108 @@ namespace Manager
         }
 
         /// <summary>
-        /// ºó ÇÊµå °ø°Ý °á°ú Àû¿ë
+        /// ï¿½ï¿½ ï¿½Êµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         /// </summary>
-        /// <param name="attacker">°ø°ÝÇÑ Ä«µå</param>
-        /// <param name="damage">»ó´ë¿¡°Ô °¡ÇÒ µ¥¹ÌÁö</param>
+        /// <param name="attacker">ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½</param>
+        /// <param name="damage">ï¿½ï¿½ë¿¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½</param>
         private int ApplyEmptyFieldResult(Card attacker, float damage)
         {
             if (enableDebugLog)
-                Debug.Log($"[FieldAttackManager] ºó ÇÊµå °ø°Ý °á°ú Àû¿ë - µ¥¹ÌÁö: {damage}");
+                Debug.Log($"[FieldAttackManager] ï¿½ï¿½ ï¿½Êµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½: {damage}");
 
-            // DamageCalculator¸¦ ÅëÇØ ÃÖÁ¾ µ¥¹ÌÁö °è»ê
+            // DamageCalculatorï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
             int finalDamage = Utills.DamageCalculator.CalculateEmptyFieldDamage(damage);
 
-            // HealthManager¸¦ ÅëÇØ ½ÇÁ¦ µ¥¹ÌÁö Àû¿ë
+            // HealthManagerï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             if (HealthManager.Instance != null)
             {
                 int actualDamage = HealthManager.Instance.ApplyDamage(finalDamage, CardZone.OwnerType.Opponent);
 
                 if (enableDebugLog)
-                    Debug.Log($"[FieldAttackManager] »ó´ë¿¡°Ô {actualDamage} µ¥¹ÌÁö Àû¿ë ¿Ï·á");
+                    Debug.Log($"[FieldAttackManager] ï¿½ï¿½ë¿¡ï¿½ï¿½ {actualDamage} ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ï·ï¿½");
 
-                return actualDamage; // Ãß°¡: µ¥¹ÌÁö ¹ÝÈ¯
+                return actualDamage; // ï¿½ß°ï¿½: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯
             }
             else
             {
-                Debug.LogError("[FieldAttackManager] HealthManager¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù!");
+                Debug.LogError("[FieldAttackManager] HealthManagerï¿½ï¿½ Ã£ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½!");
                 return 0;
             }
         }
 
 
         /// <summary>
-        /// ÀüÅõ °á°ú Àû¿ë (¿øº» °ª »ç¿ë)
+        /// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½)
         /// </summary>
-        private int ApplyBattleResult(Card attacker, Card defender, float originalAttackerValue, float originalDefenderValue)
+        private int ApplyBattleResult(Card attacker, Card defender, float originalAttackerValue, float originalDefenderValue, bool defenderWasSecret = false)
         {
             var attackerText = attacker.GetComponentInChildren<CardText>();
             var defenderText = defender.GetComponentInChildren<CardText>();
 
             float result = originalAttackerValue - originalDefenderValue;
-            int actualDamage = 0; // Ãß°¡: µ¥¹ÌÁö ÃßÀû
+            int actualDamage = 0; // ï¿½ß°ï¿½: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
             if (enableDebugLog)
-                Debug.Log($"[FieldAttackManager] ÀüÅõ °á°ú °è»ê: {originalAttackerValue} - {originalDefenderValue} = {result}");
+                Debug.Log($"[FieldAttackManager] ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½: {originalAttackerValue} - {originalDefenderValue} = {result}");
 
-            if (result > 0) // °ø°ÝÀÚ ½Â¸®
+            if (result > 0) // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Â¸ï¿½
             {
-                // ½ÇÁ¦ µ¥¹ÌÁö °è»ê (Ä«µå º¯°æ Àü ¿øº» °ª »ç¿ë)
-                if (HealthManager.Instance != null)
+                // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ (Ä«ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½)
+                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½: ï¿½ï¿½Å©ï¿½ï¿½ Ä«ï¿½å¸¦ ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½ï¿½ ï¿½Ì°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+                if (HealthManager.Instance != null && !defenderWasSecret)
                 {
                     int damage = Utills.DamageCalculator.CalculateAttackDamage(originalAttackerValue, originalDefenderValue);
                     actualDamage = HealthManager.Instance.ApplyDamage(damage, CardZone.OwnerType.Opponent);
 
                     if (enableDebugLog)
-                        Debug.Log($"[FieldAttackManager] °ø°Ý ¼º°ø - »ó´ë¿¡°Ô {actualDamage} µ¥¹ÌÁö");
+                        Debug.Log($"[FieldAttackManager] ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ - ï¿½ï¿½ë¿¡ï¿½ï¿½ {actualDamage} ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
+                }
+                else if (defenderWasSecret && enableDebugLog)
+                {
+                    Debug.Log($"[FieldAttackManager] ï¿½ï¿½Å©ï¿½ï¿½ Ä«ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½");
                 }
 
-                // Ä«µå ÀüÅõ Ã³¸® (µ¥¹ÌÁö Àû¿ë ÈÄ)
+                // Ä«ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½)
                 attackerText.SetRawValue(result);
                 DestroyCard(defender);
 
                 if (enableDebugLog)
-                    Debug.Log($"[FieldAttackManager] {attacker.name} ½Â¸® (»õ °ª: {result})");
+                    Debug.Log($"[FieldAttackManager] {attacker.name} ï¿½Â¸ï¿½ (ï¿½ï¿½ ï¿½ï¿½: {result})");
             }
-            else if (result < 0) // ¼öºñÀÚ ½Â¸®
+            else if (result < 0) // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Â¸ï¿½
             {
-                // ¼öºñÀÚ ½Â¸® ½Ã¿¡´Â ÇÃ·¹ÀÌ¾î¿¡°Ô µ¥¹ÌÁö ¾øÀ½ (¼³°è ¿ä±¸»çÇ×)
+                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Â¸ï¿½ ï¿½Ã¿ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾î¿¡ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ä±¸ï¿½ï¿½ï¿½ï¿½)
                 if (enableDebugLog)
-                    Debug.Log("[FieldAttackManager] ¼öºñÀÚ ½Â¸® - ÇÃ·¹ÀÌ¾î µ¥¹ÌÁö ¾øÀ½");
+                    Debug.Log("[FieldAttackManager] ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Â¸ï¿½ - ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½");
 
-                // Ä«µå ÀüÅõ Ã³¸®
+                // Ä«ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½
                 defenderText.SetRawValue(Mathf.Abs(result));
                 DestroyCard(attacker);
 
                 if (enableDebugLog)
-                    Debug.Log($"[FieldAttackManager] {defender.name} ½Â¸® (»õ °ª: {Mathf.Abs(result)})");
+                    Debug.Log($"[FieldAttackManager] {defender.name} ï¿½Â¸ï¿½ (ï¿½ï¿½ ï¿½ï¿½: {Mathf.Abs(result)})");
             }
-            else // ¹«½ÂºÎ
+            else // ï¿½ï¿½ï¿½Âºï¿½
             {
-                // ¹«½ÂºÎ ½Ã¿¡µµ µ¥¹ÌÁö ¾øÀ½
+                // ï¿½ï¿½ï¿½Âºï¿½ ï¿½Ã¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
                 if (enableDebugLog)
-                    Debug.Log("[FieldAttackManager] ¹«½ÂºÎ - µ¥¹ÌÁö ¾øÀ½");
+                    Debug.Log("[FieldAttackManager] ï¿½ï¿½ï¿½Âºï¿½ - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½");
 
-                // Ä«µå ÀüÅõ Ã³¸®
+                // Ä«ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½
                 DestroyCard(attacker);
                 StartCoroutine(DelayedDestroy(defender, 0.2f));
 
                 if (enableDebugLog)
-                    Debug.Log("[FieldAttackManager] »óÈ£ ÆÄ±«");
+                    Debug.Log("[FieldAttackManager] ï¿½ï¿½È£ ï¿½Ä±ï¿½");
             }
 
-            return actualDamage; // Ãß°¡: µ¥¹ÌÁö ¹ÝÈ¯
+            return actualDamage; // ï¿½ß°ï¿½: ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¯
         }
         #endregion
 
         #region Expression Zone Management
         /// <summary>
-        /// °ø°Ý¿ë ¼ö½ÄÁ¸ ¼³Á¤
+        /// ï¿½ï¿½ï¿½Ý¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         /// </summary>
         private void SetupExpressionZone(Card attacker)
         {
@@ -389,7 +408,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// °ø°Ý »óÅÂ ÃÊ±âÈ­
+        /// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­
         /// </summary>
         private void ResetAttackState()
         {
@@ -408,7 +427,7 @@ namespace Manager
 
         #region GLOW Management
         /// <summary>
-        /// °ø°Ý ´ë»ó ¼±ÅÃÀ» À§ÇÑ GLOW »óÅÂ ¼³Á¤
+        /// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ GLOW ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         /// </summary>
         private void UpdateGlowStatesForTargetSelection()
         {
@@ -428,7 +447,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ±âº» GLOW »óÅÂ·Î º¹¿ø
+        /// ï¿½âº» GLOW ï¿½ï¿½ï¿½Â·ï¿½ ï¿½ï¿½ï¿½ï¿½
         /// </summary>
         private void RestoreDefaultGlowStates()
         {
@@ -436,13 +455,13 @@ namespace Manager
 
             foreach (var card in fieldCardsCache)
             {
-                // °­Á¦ ¼³Á¤ ÇØÁ¦ ÈÄ ÀÚµ¿ °è»êÇÏµµ·Ï º¯°æ
+                // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
                 card.ClearGlowOverride();
             }
         }
 
         /// <summary>
-        /// ÇÊµå Ä«µå Ä³½Ã ¾÷µ¥ÀÌÆ® (¼º´É ÃÖÀûÈ­)
+        /// ï¿½Êµï¿½ Ä«ï¿½ï¿½ Ä³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½È­)
         /// </summary>
         private void UpdateFieldCache()
         {
@@ -453,27 +472,27 @@ namespace Manager
 
         #region Validation
         /// <summary>
-        /// °ø°Ý Ã³¸® °¡´É ¿©ºÎ È®ÀÎ
+        /// ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
         /// </summary>
         private bool CanProcessAttack()
         {
-            // ´Ù¸¥ ÇÁ·Î¼¼½º ÁøÇà ÁßÀÌ¸é °ø°Ý Â÷´Ü
+            // ï¿½Ù¸ï¿½ ï¿½ï¿½ï¿½Î¼ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             if (InGameManager.Instance.IsProcessing) return false;
 
-            // ¿¬»êÀÚ ¸ðµå ÁßÀÌ¸é °ø°Ý Â÷´Ü
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             if (OperatorManager.Instance.IsInOperatorMode) return false;
 
-            // Ã¹ ¶ó¿îµå¿¡¼­´Â °ø°Ý Â÷´Ü
+            // Ã¹ ï¿½ï¿½ï¿½å¿¡ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             if (TurnManager.Instance.IsFirstRound)
             {
-                Debug.Log("[FieldAttackManager] Ã¹ ¶ó¿îµå¿¡¼­´Â °ø°ÝÀÌ ºÒ°¡´ÉÇÕ´Ï´Ù.");
+                Debug.Log("[FieldAttackManager] Ã¹ ï¿½ï¿½ï¿½å¿¡ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ò°ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.");
                 return false;
             }
 
-            // ÅÏ °ËÁõ
+            // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             if (!TurnManager.Instance.IsLocalPlayerTurn)
             {
-                Debug.Log("[FieldAttackManager] ³» ÅÏÀÌ ¾Æ´Õ´Ï´Ù.");
+                Debug.Log("[FieldAttackManager] ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Æ´Õ´Ï´ï¿½.");
                 return false;
             }
 
@@ -481,7 +500,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// À¯È¿ÇÑ °ø°ÝÀÚÀÎÁö È®ÀÎ
+        /// ï¿½ï¿½È¿ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
         /// </summary>
         private bool IsValidAttacker(Card card)
         {
@@ -491,7 +510,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// À¯È¿ÇÑ °ø°Ý ´ë»óÀÎÁö È®ÀÎ
+        /// ï¿½ï¿½È¿ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
         /// </summary>
         private bool IsValidTarget(Card card)
         {
@@ -500,12 +519,12 @@ namespace Manager
         }
 
         /// <summary>
-        /// »ó´ë ÇÊµå°¡ ºñ¾îÀÖ´ÂÁö È®ÀÎ
+        /// ï¿½ï¿½ï¿½ ï¿½Êµå°¡ ï¿½ï¿½ï¿½ï¿½Ö´ï¿½ï¿½ï¿½ È®ï¿½ï¿½
         /// </summary>
-        /// <returns>»ó´ë ÇÊµå¿¡ Ä«µå°¡ ¾øÀ¸¸é true</returns>
+        /// <returns>ï¿½ï¿½ï¿½ ï¿½Êµå¿¡ Ä«ï¿½å°¡ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ true</returns>
         private bool IsOpponentFieldEmpty()
         {
-            // CardZone.AllZonesRoot¿¡¼­ »ó´ë ÇÊµå Zone Ã£±â
+            // CardZone.AllZonesRootï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½Êµï¿½ Zone Ã£ï¿½ï¿½
             if (CardZone.AllZonesRoot == null) return false;
 
             var zones = CardZone.AllZonesRoot.GetComponentsInChildren<CardZone>();
@@ -515,14 +534,14 @@ namespace Manager
 
             if (opponentFieldZone == null)
             {
-                Debug.LogWarning("[FieldAttackManager] »ó´ë ÇÊµå ZoneÀ» Ã£À» ¼ö ¾ø½À´Ï´Ù.");
+                Debug.LogWarning("[FieldAttackManager] ï¿½ï¿½ï¿½ ï¿½Êµï¿½ Zoneï¿½ï¿½ Ã£ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.");
                 return false;
             }
 
             bool isEmpty = opponentFieldZone.GetCardCount() == 0;
 
             if (enableDebugLog)
-                Debug.Log($"[FieldAttackManager] »ó´ë ÇÊµå Ä«µå ¼ö: {opponentFieldZone.GetCardCount()}, ºñ¾îÀÖÀ½: {isEmpty}");
+                Debug.Log($"[FieldAttackManager] ï¿½ï¿½ï¿½ ï¿½Êµï¿½ Ä«ï¿½ï¿½ ï¿½ï¿½: {opponentFieldZone.GetCardCount()}, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½: {isEmpty}");
 
             return isEmpty;
         }
@@ -530,17 +549,17 @@ namespace Manager
 
         #region Utility
         /// <summary>
-        /// ´ÜÀÏ Ä«µåÀÇ °ª ¹ÝÈ¯
+        /// ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½È¯
         /// </summary>
-        /// <param name="card">°ªÀ» °¡Á®¿Ã Ä«µå</param>
-        /// <returns>Ä«µåÀÇ ¼ýÀÚ °ª</returns>
+        /// <param name="card">ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½</param>
+        /// <returns>Ä«ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½</returns>
         private float GetCardValue(Card card)
         {
             return card.GetComponentInChildren<CardText>()?.RawValue ?? 0;
         }
 
         /// <summary>
-        /// µÎ Ä«µåÀÇ °ª ¹ÝÈ¯
+        /// ï¿½ï¿½ Ä«ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½È¯
         /// </summary>
         private (float attacker, float defender) GetCardValues(Card attacker, Card defender)
         {
@@ -550,13 +569,13 @@ namespace Manager
         }
 
         /// <summary>
-        /// Ä«µå ÆÄ±« (¾Ö´Ï¸ÞÀÌ¼Ç Æ÷ÇÔ)
+        /// Ä«ï¿½ï¿½ ï¿½Ä±ï¿½ (ï¿½Ö´Ï¸ï¿½ï¿½Ì¼ï¿½ ï¿½ï¿½ï¿½ï¿½)
         /// </summary>
         private void DestroyCard(Card card)
         {
             var zone = card.GetComponentInParent<CardZone>();
 
-            // ¾Ö´Ï¸ÞÀÌ¼Ç ¿Ï·á ÈÄ Zone¿¡¼­ Á¦°ÅÇÏµµ·Ï ¼öÁ¤
+            // ï¿½Ö´Ï¸ï¿½ï¿½Ì¼ï¿½ ï¿½Ï·ï¿½ ï¿½ï¿½ Zoneï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
             StartCoroutine(card.AnimateRemoval(() => {
                 zone?.RemoveCard(card.transform);
                 Destroy(card.gameObject);
@@ -564,7 +583,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// Áö¿¬µÈ Ä«µå ÆÄ±«
+        /// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½ ï¿½Ä±ï¿½
         /// </summary>
         private IEnumerator DelayedDestroy(Card card, float delay)
         {
@@ -573,7 +592,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// µð¹ö±× ·Î±× È°¼ºÈ­/ºñÈ°¼ºÈ­
+        /// ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Î±ï¿½ È°ï¿½ï¿½È­/ï¿½ï¿½È°ï¿½ï¿½È­
         /// </summary>
         public void SetDebugMode(bool enable) => enableDebugLog = enable;
         #endregion
