@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/rmsep/AppData/Roaming/Claude/**)",
+      "Read(//c/Users/rmsep/AppData/Local/ClaudeCodeExtension/**)",
+      "Bash(where:*)",
+      "Bash(test -f:*)",
+      "Bash(node --version:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Read(//tmp/ClaudeCodeVS/1c1ec50c-4736-4d0c-8c98-33d2fab3c3a1/**)",
+      "Bash(dir \"%APPDATA%\\Claude\" /s /b)",
+      "mcp__mcp-unity__execute_menu_item",
+      "mcp__mcp-unity__update_gameobject",
+      "mcp__mcp-unity__update_component"
+    ],
+    "deny": [],
+    "ask": []
+  },
+  "enableAllProjectMcpServers": true
+}
