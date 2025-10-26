@@ -10,8 +10,8 @@ using UnityEngine;
 namespace Objects
 {
     /// <summary>
-    /// ���� ī�� ������Ʈ�� ���� �� Ŭ�� ������ �����ϴ� ������Ʈ
-    /// Secret ī�� �ð��� ȿ���� CardEffect�� �����Ͽ� Material Property Block �浹 ����
+    /// 메인 카드 컴포넌트로 생성 및 클릭 이벤트를 처리하는 컴포넌트
+    /// Secret 카드 시각화 효과는 CardEffect를 사용하여 Material Property Block 충돌 방지
     /// </summary>
     public class Card : MonoBehaviourPun, ICard
     {
@@ -33,12 +33,12 @@ namespace Objects
         public bool IsSecret { get; private set; }
         public bool CanAttack { get; private set; } = false;
 
-        // �Ϻ� ���� ����
+        // 턴별 상태 관리
         public bool WasModifiedThisTurn { get; private set; } = false;
         public bool WasPlayedThisTurn { get; private set; } = false;
         public bool HasAttackedThisTurn { get; private set; } = false;
 
-        // GLOW ���� ����
+        // GLOW 강제 설정
         private bool isGlowOverridden = false;
         private bool overrideGlowState = false;
         private Color? overrideGlowColor = null;
@@ -88,9 +88,9 @@ namespace Objects
 
         #region Card Initialization
         /// <summary>
-        /// ���� ī��� �ʱ�ȭ
+        /// 숫자 카드 초기화
         /// </summary>
-        /// <param name="value">ī�� ��</param>
+        /// <param name="value">카드 값</param>
         public void InitializeAsNumber(float value)
         {
             CardType = CardType.Number;
@@ -98,9 +98,9 @@ namespace Objects
         }
 
         /// <summary>
-        /// ������ ī��� �ʱ�ȭ
+        /// 연산자 카드 초기화
         /// </summary>
-        /// <param name="opType">������ Ÿ��</param>
+        /// <param name="opType">연산자 타입</param>
         public void InitializeAsOperator(OperatorType opType)
         {
             CardType = CardType.Operator;
@@ -109,7 +109,7 @@ namespace Objects
         }
 
         /// <summary>
-        /// ��Ŀ ī��� �ʱ�ȭ
+        /// 조커 카드 초기화
         /// </summary>
         public void InitializeAsJoker()
         {
@@ -159,8 +159,8 @@ namespace Objects
 
         #region Attack Logic
         /// <summary>
-        /// ���� ���� ���� üũ
-        /// Secret ���¿� ������� ���� ���� (��ġ�� ����)
+        /// 공격 가능 상태 체크
+        /// Secret 상태에 상관없이 공격 가능 (위치와 조건)
         /// </summary>
         public bool IsAttackableThisTurn()
         {
@@ -261,10 +261,10 @@ namespace Objects
 
         #region Secret Management
         /// <summary>
-        /// Secret ���� ����
-        /// CardEffect�� �����Ͽ� Material Property Block �浹 ����
+        /// Secret 상태 설정
+        /// CardEffect를 사용하여 Material Property Block 충돌 방지
         /// </summary>
-        /// <param name="isSecret">Secret ��� ����</param>
+        /// <param name="isSecret">Secret 모드 여부</param>
         public void SetSecret(bool isSecret)
         {
             IsSecret = isSecret;
@@ -280,12 +280,12 @@ namespace Objects
         }
 
         /// <summary>
-        /// Secret �ð��� ȿ�� ����
-        /// CardEffect���� ��������Ʈ ������ �˷� Material Property Block ������Ʈ ����
+        /// Secret 시각화 효과 적용
+        /// CardEffect에게 스프라이트 변경을 알려 Material Property Block 업데이트 진행
         /// </summary>
         private void ApplySecretVisual()
         {
-            // ��������Ʈ�� Secret ��������Ʈ�� ����
+            // 스프라이트를 Secret 스프라이트로 변경
             if (spriteRenderer != null)
             {
                 var secretSprite = ResourcesManager.Instance.GetSprite(Global.Card, Global.SpriteColorBlack);
@@ -293,7 +293,7 @@ namespace Objects
                 {
                     spriteRenderer.sprite = secretSprite;
 
-                    // CardEffect���� ��������Ʈ ���� �˸� (Material Property Block ������Ʈ)
+                    // CardEffect에게 스프라이트 변경 알림 (Material Property Block 업데이트)
                     var cardEffect = GetComponentInChildren<CardEffect>();
                     if (cardEffect != null)
                     {
@@ -302,30 +302,30 @@ namespace Objects
                 }
             }
 
-            // �ؽ�Ʈ ó��
+            // 텍스트 처리
             if (cardTMP != null)
             {
                 if (CurrentOwnerType == CardZone.OwnerType.Player)
                 {
-                    // �÷��̾� Secret ī��: ��� �ؽ�Ʈ�� ǥ��
+                    // 플레이어 Secret 카드: 자신 텍스트만 표시
                     cardTMP.gameObject.SetActive(true);
                     cardTMP.color = Color.white;
                 }
                 else
                 {
-                    // ���� Secret ī��: �ؽ�Ʈ ����
+                    // 상대 Secret 카드: 텍스트 숨김
                     cardTMP.gameObject.SetActive(false);
                 }
             }
         }
 
         /// <summary>
-        /// ���� ���� ����
-        /// CardEffect���� ��������Ʈ ������ �˷� Material Property Block ������Ʈ ����
+        /// 원본 모습 복원
+        /// CardEffect에게 스프라이트 변경을 알려 Material Property Block 업데이트 진행
         /// </summary>
         private void RestoreOriginalVisual()
         {
-            // ��������Ʈ�� �������� ����
+            // 스프라이트를 원래대로 복원
             if (spriteRenderer != null)
             {
                 Sprite originalSprite;
@@ -342,7 +342,7 @@ namespace Objects
                 {
                     spriteRenderer.sprite = originalSprite;
 
-                    // CardEffect���� ��������Ʈ ���� �˸� (Material Property Block ������Ʈ)
+                    // CardEffect에게 스프라이트 변경 알림 (Material Property Block 업데이트)
                     var cardEffect = GetComponentInChildren<CardEffect>();
                     if (cardEffect != null)
                     {
@@ -351,12 +351,12 @@ namespace Objects
                 }
             }
 
-            // �ؽ�Ʈ ����
+            // 텍스트 복원
             if (cardTMP != null)
             {
                 cardTMP.gameObject.SetActive(true);
 
-                // ���� �������� ����
+                // 색상 원래대로 복원
                 Color targetColor;
                 if (CurrentOwnerType == CardZone.OwnerType.Player)
                 {
@@ -374,7 +374,7 @@ namespace Objects
         }
 
         /// <summary>
-        /// Secret ī�� ���� (���� �� ȣ��)
+        /// Secret 카드 공개 (전투 시 호출)
         /// </summary>
         public void RevealSecret()
         {
@@ -387,10 +387,10 @@ namespace Objects
 
         #region Zone Interaction
         /// <summary>
-        /// ī���� Zone �� ������ ������ ��ȣ�ۿ� ���� ����
+        /// 카드가 Zone 에 들어갈 때마다 상호작용 상태 설정
         /// </summary>
-        /// <param name="zoneType">ī�尡 ��ġ�� Zone</param>
-        /// <param name="ownerType">ī�� ������</param>
+        /// <param name="zoneType">카드가 위치한 Zone</param>
+        /// <param name="ownerType">카드 소유자</param>
         public void SetInteraction(CardZone.ZoneType zoneType, CardZone.OwnerType ownerType)
         {
             CurrentZoneType = zoneType;
@@ -541,10 +541,10 @@ namespace Objects
 
         #region Animation
         /// <summary>
-        /// ī�� ���� �ִϸ��̼� ����
+        /// 카드 제거 애니메이션 실행
         /// </summary>
-        /// <param name="onComplete">�ִϸ��̼� �Ϸ� �� ������ �ݹ�</param>
-        /// <param name="delay">���� �ð�</param>
+        /// <param name="onComplete">애니메이션 완료 시 실행할 콜백</param>
+        /// <param name="delay">지연 시간</param>
         public IEnumerator AnimateRemoval(Action onComplete = null, float delay = 0f)
         {
             if (delay > 0f)
@@ -632,7 +632,6 @@ namespace Objects
             if (swordIcon != null)
             {
                 swordIcon.SetActive(true);
-                Debug.Log($"[Card] {name} - 공격 아이콘 표시");
             }
         }
 
@@ -645,7 +644,6 @@ namespace Objects
             if (shieldIcon != null)
             {
                 shieldIcon.SetActive(true);
-                Debug.Log($"[Card] {name} - 방어 아이콘 표시");
             }
         }
 

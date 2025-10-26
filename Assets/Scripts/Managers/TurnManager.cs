@@ -8,9 +8,15 @@ using Objects;
 namespace Manager
 {
     /// <summary>
-    /// ¹ö±× ¹æÁö Áß½ÉÀÇ ÅÏ °ü¸® ½Ã½ºÅÛ
-    /// PunTurnManager ÀÇÁ¸¼ºÀ» Á¦°ÅÇÏ°í µ¶¸³ÀûÀÎ RPC ±â¹İ ÅÏ °ü¸® Á¦°ø
-    /// MonoBehaviourPunÀ» »ç¿ëÇÑ RPC ¹æ½Ä
+    /// ê²Œì„ í„´ì„ ì¤‘ì‹¬ìœ¼ë¡œ í•œ ê´€ë¦¬ ì‹œìŠ¤í…œ
+    /// PunTurnManager ì‚¬ìš©í•˜ì§€ ì•Šìœ¼ë©° ì»¤ìŠ¤í…€ RPC ê¸°ë°˜ í„´ ê´€ë¦¬ ì‚¬ìš©
+    /// MonoBehaviourPunì„ ìƒì†í•´ RPC ì‚¬ìš©
+    ///
+    /// ì£¼ìš” ê¸°ëŠ¥:
+    /// - í„´ ìˆœì„œ ê´€ë¦¬ (í™€ìˆ˜ í„´: ì„ ê³µ, ì§ìˆ˜ í„´: í›„ê³µ)
+    /// - ì²« ë¼ìš´ë“œ ê´€ë¦¬ (ì²« 2í„´ì€ ê³µê²© ë¶ˆê°€)
+    /// - ê²Œì„ ì‹œì‘/ì¢…ë£Œ/ì¬ì‹œì‘ ì²˜ë¦¬
+    /// - ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ ê°„ í„´ ë™ê¸°í™”
     /// </summary>
     public class TurnManager : MonoBehaviourPun
     {
@@ -28,7 +34,7 @@ namespace Manager
 
         private void Awake()
         {
-            // Singleton ¼³Á¤
+            // Singleton ì„¤ì •
             if (instance == null)
             {
                 instance = this;
@@ -42,43 +48,46 @@ namespace Manager
         #endregion
 
         #region Fields
-        [Header("ÅÏ ½Ã½ºÅÛ ¼³Á¤")]
+        [Header("í„´ ì‹œìŠ¤í…œ ì„¤ì •")]
         [SerializeField] private bool enableDebugLog = true;
-        [SerializeField] private float turnTimeLimit = 60f; // ÅÏ Á¦ÇÑ ½Ã°£ (ÃÊ)
+        [SerializeField] private float turnTimeLimit = 60f; // í„´ ì œí•œ ì‹œê°„ (ì´ˆ)
 
-        // °ÔÀÓ »óÅÂ
+        // ê²Œì„ ìƒíƒœ
         private bool isGameStarted = false;
-        private bool isFirstRound = true;
-        private int currentTurn = 0;
-        private int firstPlayerActorNumber = -1;
+        private bool isFirstRound = true; // ì²« 2í„´ì€ ê³µê²© ë¶ˆê°€
+        private int currentTurn = 0; // í˜„ì¬ í„´ ë²ˆí˜¸ (1ë¶€í„° ì‹œì‘)
+        private int firstPlayerActorNumber = -1; // ì„ ê³µ í”Œë ˆì´ì–´ ActorNumber
 
-        // ÇÃ·¹ÀÌ¾î ¿ªÇÒ (µ¿Àû ÇÒ´ç)
-        private bool isLocalPlayerFirst = false; // ·ÎÄÃ ÇÃ·¹ÀÌ¾î°¡ ¼±°øÀÎÁö
+        // í”Œë ˆì´ì–´ ì—­í•  (ê²Œì„ ì‹œì‘ì‹œ í• ë‹¹)
+        private bool isLocalPlayerFirst = false; // ë¡œì»¬ í”Œë ˆì´ì–´ê°€ ì„ ê³µì¸ì§€ ì—¬ë¶€
 
-        // ¾ÈÀüÀåÄ¡
-        private bool isProcessingTurn = false;
-        private float lastTurnChangeTime = 0f;
+        // í”„ë¡œì„¸ìŠ¤ í”Œë˜ê·¸
+        private bool isProcessingTurn = false; // í„´ ì „í™˜ ì²˜ë¦¬ ì¤‘
+        private float lastTurnChangeTime = 0f; // ë§ˆì§€ë§‰ í„´ ë³€ê²½ ì‹œê°„
         #endregion
 
         #region Properties
         /// <summary>
-        /// °ÔÀÓÀÌ ½ÃÀÛµÇ¾ú´ÂÁö ¿©ºÎ
+        /// ê²Œì„ì´ ì‹œì‘ë˜ì—ˆëŠ”ì§€ ì—¬ë¶€
         /// </summary>
         public bool IsGameStarted => isGameStarted;
 
         /// <summary>
-        /// Ã¹ ¹øÂ° ¶ó¿îµåÀÎÁö ¿©ºÎ (°ø°İ Á¦ÇÑ)
+        /// ì²« ë²ˆì§¸ ë¼ìš´ë“œì¸ì§€ ì—¬ë¶€ (ê³µê²© ë¶ˆê°€ êµ¬ê°„)
+        /// ì²« 2í„´ ë™ì•ˆì€ ê³µê²©ì´ ë¶ˆê°€ëŠ¥í•˜ë©°, 3í„´ë¶€í„° ê³µê²© ê°€ëŠ¥
         /// </summary>
         public bool IsFirstRound => isFirstRound;
 
         /// <summary>
-        /// ÇöÀç ÅÏ ¹øÈ£
+        /// í˜„ì¬ í„´ ë²ˆí˜¸ (1ë¶€í„° ì‹œì‘)
         /// </summary>
         public int CurrentTurn => currentTurn;
 
         /// <summary>
-        /// ·ÎÄÃ ÇÃ·¹ÀÌ¾îÀÇ ÅÏÀÎÁö ¿©ºÎ
-        /// ¼öÁ¤: ¼±°øÀÌ Ç×»ó Ã¹ ÅÏ(ÅÏ 1)À» °¡Áöµµ·Ï ¼öÁ¤
+        /// ë¡œì»¬ í”Œë ˆì´ì–´ì˜ í„´ì¸ì§€ ì—¬ë¶€
+        /// ë¡œì§: ì„ ê³µì€ í™€ìˆ˜ í„´(1, 3, 5...), í›„ê³µì€ ì§ìˆ˜ í„´(2, 4, 6...)ì„ ê°€ì§
+        ///
+        /// ì¤‘ìš”: ê²Œì„ì´ ì‹œì‘ë˜ì§€ ì•Šì•˜ìœ¼ë©´ í•­ìƒ false ë°˜í™˜
         /// </summary>
         public bool IsLocalPlayerTurn
         {
@@ -86,27 +95,29 @@ namespace Manager
             {
                 if (!isGameStarted) return false;
 
-                // ¼±°øÀÌ È¦¼ö ÅÏ(1, 3, 5...), ÈÄ°øÀÌ Â¦¼ö ÅÏ(2, 4, 6...)À» °¡Áü
+                // ì„ ê³µì€ í™€ìˆ˜ í„´(1, 3, 5...), í›„ê³µì€ ì§ìˆ˜ í„´(2, 4, 6...)ì„ ë‹´ë‹¹
                 bool isFirstPlayerTurn = (currentTurn % 2) == 1;
 
-                // ·ÎÄÃ ÇÃ·¹ÀÌ¾î°¡ ¼±°øÀÌ¸é È¦¼ö ÅÏÀÌ ³» ÅÏ, ÈÄ°øÀÌ¸é Â¦¼ö ÅÏÀÌ ³» ÅÏ
+                // ë¡œì»¬ í”Œë ˆì´ì–´ê°€ ì„ ê³µì´ë©´ í™€ìˆ˜ í„´ì¼ ë•Œ true, í›„ê³µì´ë©´ ì§ìˆ˜ í„´ì¼ ë•Œ true
                 return isLocalPlayerFirst == isFirstPlayerTurn;
             }
         }
 
         /// <summary>
-        /// ·ÎÄÃ ÇÃ·¹ÀÌ¾î°¡ ¼±°øÀÎÁö ¿©ºÎ
+        /// ë¡œì»¬ í”Œë ˆì´ì–´ê°€ ì„ ê³µì¸ì§€ ì—¬ë¶€
         /// </summary>
         public bool IsLocalPlayerFirst => isLocalPlayerFirst;
 
         /// <summary>
-        /// ·ÎÄÃ ÇÃ·¹ÀÌ¾îÀÇ ¿ªÇÒ (Player ¶Ç´Â Opponent)
+        /// ë¡œì»¬ í”Œë ˆì´ì–´ì˜ ì—­í•  (Player ë˜ëŠ” Opponent)
+        /// ì„ ê³µì´ë©´ Player, í›„ê³µì´ë©´ Opponent
         /// </summary>
         public CardZone.OwnerType LocalPlayerRole =>
             isLocalPlayerFirst ? CardZone.OwnerType.Player : CardZone.OwnerType.Opponent;
 
         /// <summary>
-        /// »ó´ë ÇÃ·¹ÀÌ¾îÀÇ ¿ªÇÒ
+        /// ìƒëŒ€ í”Œë ˆì´ì–´ì˜ ì—­í• 
+        /// ë¡œì»¬ í”Œë ˆì´ì–´ì˜ ì—­í• ê³¼ ë°˜ëŒ€
         /// </summary>
         public CardZone.OwnerType OpponentPlayerRole =>
             isLocalPlayerFirst ? CardZone.OwnerType.Opponent : CardZone.OwnerType.Player;
@@ -115,10 +126,10 @@ namespace Manager
         #region Unity Lifecycle
         private void Start()
         {
-            // ÀÌº¥Æ® ±¸µ¶
+            // ì´ë²¤íŠ¸ êµ¬ë…
             SubscribeToEvents();
 
-            // °ÔÀÓ »óÅÂ ÃÊ±âÈ­
+            // ê²Œì„ ìƒíƒœ ì´ˆê¸°í™”
             ResetGameState();
         }
 
@@ -129,12 +140,18 @@ namespace Manager
         #endregion
 
         #region Event Subscription
+        /// <summary>
+        /// ì´ë²¤íŠ¸ êµ¬ë… ë“±ë¡
+        /// InGameManagerì˜ ê²Œì„ ì¢…ë£Œ ì´ë²¤íŠ¸ ìˆ˜ì‹ 
+        /// </summary>
         private void SubscribeToEvents()
         {
-            // InGameManager °ÔÀÓ Á¾·á ÀÌº¥Æ® ±¸µ¶
             InGameManager.OnGameEnded += OnGameEnded;
         }
 
+        /// <summary>
+        /// ì´ë²¤íŠ¸ êµ¬ë… í•´ì œ
+        /// </summary>
         private void UnsubscribeFromEvents()
         {
             InGameManager.OnGameEnded -= OnGameEnded;
@@ -143,25 +160,31 @@ namespace Manager
 
         #region Public Interface
         /// <summary>
-        /// °ÔÀÓ ½ÃÀÛ (¹æÀå¸¸ È£Ãâ °¡´É)
+        /// ê²Œì„ ì‹œì‘ (ë§ˆìŠ¤í„° í´ë¼ì´ì–¸íŠ¸ë§Œ í˜¸ì¶œ ê°€ëŠ¥)
+        ///
+        /// ì‹¤í–‰ ìˆœì„œ:
+        /// 1. ì„ ê³µ í”Œë ˆì´ì–´ ëœë¤ ê²°ì •
+        /// 2. RPCë¡œ ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ì— ê²Œì„ ì‹œì‘ ì•Œë¦¼
+        /// 3. ë± ì´ˆê¸°í™” ë° ì´ˆê¸° ì¹´ë“œ ë“œë¡œìš°
+        /// 4. ì²« í„´ ì‹œì‘
         /// </summary>
         public void StartGame()
         {
             if (!PhotonNetwork.IsMasterClient)
             {
-                Debug.LogWarning("[TurnManager] ¹æÀå¸¸ °ÔÀÓÀ» ½ÃÀÛÇÒ ¼ö ÀÖ½À´Ï´Ù.");
+                Debug.LogWarning("[TurnManager] ë§ˆìŠ¤í„° í´ë¼ì´ì–¸íŠ¸ë§Œ ê²Œì„ì„ ì‹œì‘í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.");
                 return;
             }
 
             if (isGameStarted)
             {
-                Debug.LogWarning("[TurnManager] °ÔÀÓÀÌ ÀÌ¹Ì ½ÃÀÛµÇ¾ú½À´Ï´Ù.");
+                Debug.LogWarning("[TurnManager] ê²Œì„ì´ ì´ë¯¸ ì‹œì‘ë˜ì—ˆìŠµë‹ˆë‹¤.");
                 return;
             }
 
             if (PhotonNetwork.CurrentRoom.PlayerCount != 2)
             {
-                Debug.LogWarning("[TurnManager] 2¸íÀÇ ÇÃ·¹ÀÌ¾î°¡ ÇÊ¿äÇÕ´Ï´Ù.");
+                Debug.LogWarning("[TurnManager] 2ëª…ì˜ í”Œë ˆì´ì–´ê°€ í•„ìš”í•©ë‹ˆë‹¤.");
                 return;
             }
 
@@ -169,25 +192,30 @@ namespace Manager
         }
 
         /// <summary>
-        /// ÅÏ Á¾·á
+        /// í„´ ì¢…ë£Œ (ë¡œì»¬ í”Œë ˆì´ì–´ì˜ í„´ì¼ ë•Œë§Œ í˜¸ì¶œ ê°€ëŠ¥)
+        ///
+        /// ì‹¤í–‰ ìˆœì„œ:
+        /// 1. í„´ ì¢…ë£Œ ì²˜ë¦¬ (ê³µê²© ìƒíƒœ ì´ˆê¸°í™”, ì—°ì‚°ì ëª¨ë“œ ì·¨ì†Œ ë“±)
+        /// 2. í„´ ë²ˆí˜¸ ì¦ê°€ (RPCë¡œ ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ì— ë™ê¸°í™”)
+        /// 3. ì²« ë¼ìš´ë“œ ì¢…ë£Œ ì²´í¬
         /// </summary>
         public void EndTurn()
         {
             if (!IsLocalPlayerTurn)
             {
-                Debug.LogWarning("[TurnManager] ³» ÅÏÀÌ ¾Æ´Õ´Ï´Ù.");
+                Debug.LogWarning("[TurnManager] ë‚´ í„´ì´ ì•„ë‹™ë‹ˆë‹¤.");
                 return;
             }
 
             if (isProcessingTurn)
             {
-                Debug.LogWarning("[TurnManager] ÅÏ Ã³¸® ÁßÀÔ´Ï´Ù.");
+                Debug.LogWarning("[TurnManager] í„´ ì²˜ë¦¬ ì¤‘ì…ë‹ˆë‹¤.");
                 return;
             }
 
             if (InGameManager.Instance.IsProcessing)
             {
-                Debug.LogWarning("[TurnManager] ´Ù¸¥ ÇÁ·Î¼¼½º°¡ ÁøÇà ÁßÀÔ´Ï´Ù.");
+                Debug.LogWarning("[TurnManager] ë‹¤ë¥¸ í”„ë¡œì„¸ìŠ¤ê°€ ì§„í–‰ ì¤‘ì…ë‹ˆë‹¤.");
                 return;
             }
 
@@ -195,13 +223,17 @@ namespace Manager
         }
 
         /// <summary>
-        /// °ÔÀÓ Àç½ÃÀÛ (¹æÀå¸¸ È£Ãâ °¡´É)
+        /// ê²Œì„ ì¬ì‹œì‘ (ë§ˆìŠ¤í„° í´ë¼ì´ì–¸íŠ¸ë§Œ í˜¸ì¶œ ê°€ëŠ¥)
+        ///
+        /// ì‹¤í–‰ ìˆœì„œ:
+        /// 1. RPCë¡œ ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ ê²Œì„ ìƒíƒœ ì´ˆê¸°í™”
+        /// 2. ê²Œì„ ì¬ì‹œì‘
         /// </summary>
         public void RestartGame()
         {
             if (!PhotonNetwork.IsMasterClient)
             {
-                Debug.LogWarning("[TurnManager] ¹æÀå¸¸ °ÔÀÓÀ» Àç½ÃÀÛÇÒ ¼ö ÀÖ½À´Ï´Ù.");
+                Debug.LogWarning("[TurnManager] ë§ˆìŠ¤í„° í´ë¼ì´ì–¸íŠ¸ë§Œ ì¬ì‹œì‘í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.");
                 return;
             }
 
@@ -209,7 +241,8 @@ namespace Manager
         }
 
         /// <summary>
-        /// ÇöÀç ÇÃ·¹ÀÌ¾î°¡ ¾×¼ÇÀ» ¼öÇàÇÒ ¼ö ÀÖ´ÂÁö È®ÀÎ
+        /// ë¡œì»¬ í”Œë ˆì´ì–´ê°€ ì•¡ì…˜ì„ ìˆ˜í–‰í•  ìˆ˜ ìˆëŠ”ì§€ í™•ì¸
+        /// ê²Œì„ ì‹œì‘, ìì‹ ì˜ í„´, í„´ ì „í™˜ ì¤‘ì´ ì•„ë‹˜, ë‹¤ë¥¸ í”„ë¡œì„¸ìŠ¤ ì§„í–‰ ì¤‘ì´ ì•„ë‹˜ ëª¨ë‘ ë§Œì¡±í•´ì•¼ í•¨
         /// </summary>
         public bool CanPerformAction()
         {
@@ -220,34 +253,40 @@ namespace Manager
         }
 
         /// <summary>
-        /// Ã¹ ¶ó¿îµå¿¡¼­ °ø°İÀÌ °¡´ÉÇÑÁö È®ÀÎ
+        /// ì²« ë¼ìš´ë“œì—ì„œ ê³µê²©ì´ ê°€ëŠ¥í•œì§€ í™•ì¸
+        /// ì²« 2í„´(ì„ ê³µ 1í„´, í›„ê³µ 1í„´)ì€ ê³µê²© ë¶ˆê°€
         /// </summary>
         public bool CanAttackInFirstRound()
         {
-            return !isFirstRound; // Ã¹ ¶ó¿îµå¿¡¼­´Â °ø°İ ºÒ°¡
+            return !isFirstRound;
         }
         #endregion
 
         #region Game Sequence
         /// <summary>
-        /// °ÔÀÓ ½ÃÀÛ ½ÃÄö½º
-        /// ExecuteInitialDraw() È£ÃâÀ» RPC_StartGameÀ¸·Î ÀÌµ¿
+        /// ê²Œì„ ì‹œì‘ ì‹œí€€ìŠ¤
+        /// ExecuteInitialDraw() í˜¸ì¶œì€ RPC_StartGameì—ì„œ ì´ë™
+        ///
+        /// ì‹¤í–‰ ìˆœì„œ:
+        /// 1. ì„ ê³µ í”Œë ˆì´ì–´ ëœë¤ ê²°ì •
+        /// 2. RPCë¡œ ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ì— ê²Œì„ ì‹œì‘ ì•Œë¦¼ (ë± ì´ˆê¸°í™” ë° ì¹´ë“œ ë“œë¡œìš°)
+        /// 3. ì²« í„´ ì‹œì‘
         /// </summary>
         private IEnumerator StartGameSequence()
         {
-            // 1´Ü°è: Ã¹ ÅÏ ÇÃ·¹ÀÌ¾î ·£´ı °áÁ¤
+            // 1ë‹¨ê³„: ì²« ë²ˆì§¸ í”Œë ˆì´ì–´ ëœë¤ ê²°ì •
             int randomFirstPlayer = DetermineFirstPlayer();
 
-            // 2´Ü°è: ¸ğµç Å¬¶óÀÌ¾ğÆ®¿¡ °ÔÀÓ ½ÃÀÛ ¾Ë¸² (ÃÊ±â µå·Î¿ì Æ÷ÇÔ)
+            // 2ë‹¨ê³„: ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ì— ê²Œì„ ì‹œì‘ ì•Œë¦¼ (ì´ˆê¸° ë“œë¡œìš° í¬í•¨)
             if (PhotonNetwork.IsMasterClient)
             {
                 photonView.RPC("RPC_StartGame", RpcTarget.All, randomFirstPlayer);
             }
 
-            // 3´Ü°è: µ¦ ÃÊ±âÈ­ ´ë±â
+            // 3ë‹¨ê³„: ë± ì´ˆê¸°í™” ëŒ€ê¸°
             yield return new WaitForSeconds(0.5f);
 
-            // 4´Ü°è: Ã¹ ÅÏ ½ÃÀÛ (RPC·Î ¸ğµç Å¬¶óÀÌ¾ğÆ®¿¡ Àü¼Û)
+            // 4ë‹¨ê³„: ì²« í„´ ì‹œì‘ (RPCë¡œ ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ì— ë™ê¸°í™”)
             yield return new WaitForSeconds(1f);
             if (PhotonNetwork.IsMasterClient)
             {
@@ -256,20 +295,25 @@ namespace Manager
         }
 
         /// <summary>
-        /// ÅÏ Á¾·á ½ÃÄö½º
+        /// í„´ ì¢…ë£Œ ì‹œí€€ìŠ¤
+        ///
+        /// ì‹¤í–‰ ìˆœì„œ:
+        /// 1. í„´ ì¢…ë£Œ ì²˜ë¦¬ (ê³µê²© ìƒíƒœ ì´ˆê¸°í™”, ì—°ì‚°ì ëª¨ë“œ ì·¨ì†Œ ë“±)
+        /// 2. ë‹¤ìŒ í„´ìœ¼ë¡œ ì „í™˜ (RPCë¡œ ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ ë™ê¸°í™”)
+        /// 3. ì²« ë¼ìš´ë“œ ì¢…ë£Œ ì²´í¬ (í„´ 3 ì´ìƒì´ë©´ ê³µê²© í™œì„±í™”)
         /// </summary>
         private IEnumerator EndTurnSequence()
         {
             isProcessingTurn = true;
 
-            // 1´Ü°è: ÅÏ Á¾·á Ã³¸®
+            // 1ë‹¨ê³„: í„´ ì¢…ë£Œ ì²˜ë¦¬
             yield return StartCoroutine(ProcessTurnEnd());
 
-            // 2´Ü°è: ´ÙÀ½ ÅÏÀ¸·Î ÁøÇà
+            // 2ë‹¨ê³„: ë‹¤ìŒ í„´ìœ¼ë¡œ ì „í™˜
             int nextTurn = currentTurn + 1;
             photonView.RPC("RPC_AdvanceTurn", RpcTarget.All, nextTurn);
 
-            // 3´Ü°è: Ã¹ ¶ó¿îµå Á¾·á Ã¼Å©
+            // 3ë‹¨ê³„: ì²« ë¼ìš´ë“œ ì¢…ë£Œ ì²´í¬
             if (isFirstRound && nextTurn > 2)
             {
                 photonView.RPC("RPC_EndFirstRound", RpcTarget.All);
@@ -280,35 +324,36 @@ namespace Manager
         }
 
         /// <summary>
-        /// °ÔÀÓ Àç½ÃÀÛ ½ÃÄö½º
+        /// ê²Œì„ ì¬ì‹œì‘ ì‹œí€€ìŠ¤
+        ///
+        /// ì‹¤í–‰ ìˆœì„œ:
+        /// 1. RPCë¡œ ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ ê²Œì„ ìƒíƒœ ì´ˆê¸°í™”
+        /// 2. ê²Œì„ ìƒíƒœ ë¦¬ì…‹
+        /// 3. ìƒˆ ê²Œì„ ì‹œì‘
         /// </summary>
         private IEnumerator RestartGameSequence()
         {
-            Debug.Log("[TurnManager] °ÔÀÓ Àç½ÃÀÛ ½ÃÄö½º ½ÃÀÛ");
-
-            // 1´Ü°è: RPC·Î ¸ğµç Å¬¶óÀÌ¾ğÆ®ÀÇ °ÔÀÓ ÃÊ±âÈ­
+            // 1ë‹¨ê³„: RPCë¡œ ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ì— ê²Œì„ ì´ˆê¸°í™”
             photonView.RPC("RPC_RestartGameForAll", RpcTarget.All);
 
             yield return new WaitForSeconds(1f);
 
-            // 2´Ü°è: °ÔÀÓ »óÅÂ ¸®¼Â
+            // 2ë‹¨ê³„: ê²Œì„ ìƒíƒœ ë¦¬ì…‹
             photonView.RPC("RPC_ResetGame", RpcTarget.All);
 
             yield return new WaitForSeconds(0.5f);
 
-            // 3´Ü°è: »õ °ÔÀÓ ½ÃÀÛ
+            // 3ë‹¨ê³„: ìƒˆ ê²Œì„ ì‹œì‘
             StartGame();
         }
 
         /// <summary>
-        /// ¸ğµç Å¬¶óÀÌ¾ğÆ®¿¡¼­ °ÔÀÓ ÃÊ±âÈ­ ½ÇÇà
+        /// ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ì—ì„œ ê²Œì„ ì´ˆê¸°í™” ìˆ˜í–‰
+        /// InGameManagerì˜ ë¡œì»¬ ì¬ì‹œì‘ ë¡œì§ í˜¸ì¶œ
         /// </summary>
         [PunRPC]
         private void RPC_RestartGameForAll()
         {
-            Debug.Log("[TurnManager] RPC_RestartGameForAll ¼ö½Å");
-
-            // InGameManagerÀÇ ÃÊ±âÈ­ ·ÎÁ÷ ½ÇÇà (¹æÀå Ã¼Å© Á¦°Å)
             if (InGameManager.Instance != null)
             {
                 InGameManager.Instance.RestartGameLocal();
@@ -318,7 +363,8 @@ namespace Manager
 
         #region Turn Processing
         /// <summary>
-        /// Ã¹ ÅÏ ÇÃ·¹ÀÌ¾î °áÁ¤ (·£´ı)
+        /// ì²« ë²ˆì§¸ í”Œë ˆì´ì–´ ê²°ì • (ëœë¤)
+        /// PhotonNetwork.PlayerListì—ì„œ ëœë¤ ì„ íƒ
         /// </summary>
         private int DetermineFirstPlayer()
         {
@@ -328,84 +374,93 @@ namespace Manager
         }
 
         /// <summary>
-        /// ÃÊ±â µå·Î¿ì ½ÇÇà (Â÷µî µå·Î¿ì: ¼±°ø 4Àå, ÈÄ°ø 5Àå)
-        /// ¸ğµç ÇÃ·¹ÀÌ¾î°¡ Player ¿ªÇÒ·Î µå·Î¿ìÇÏ¿© ¾ç¹æÇâ µ¿±âÈ­ º¸Àå
+        /// ì´ˆê¸° ì¹´ë“œ ë“œë¡œìš° ì‹¤í–‰
+        ///
+        /// ë“œë¡œìš° ê·œì¹™:
+        /// - ì„ ê³µ: 4ì¥
+        /// - í›„ê³µ: 5ì¥ (ì„ ê³µ ë¶ˆì´ìµ ë³´ìƒ)
+        ///
+        /// ì¤‘ìš”: ëª¨ë“  í”Œë ˆì´ì–´ê°€ ìì‹ ì˜ ê´€ì ì—ì„œ Player ì¡´ìœ¼ë¡œ ë“œë¡œìš°í•¨
+        /// NetworkGameManagerê°€ ìƒëŒ€ í´ë¼ì´ì–¸íŠ¸ì—ëŠ” Opponent ì¹´ë“œë¡œ ë™ê¸°í™”
         /// </summary>
         private void ExecuteInitialDraw()
         {
             if (InGameManager.Instance == null)
             {
-                Debug.LogError("[TurnManager] InGameManager ÀÎ½ºÅÏ½º¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù!");
+                Debug.LogError("[TurnManager] InGameManager ì¸ìŠ¤í„´ìŠ¤ë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤!");
                 return;
             }
 
-            // ¼±°øÀº 4Àå, ÈÄ°øÀº 5Àå µå·Î¿ì
+            // ì„ ê³µì€ 4ì¥, í›„ê³µì€ 5ì¥ ë“œë¡œìš°
             int drawCount = isLocalPlayerFirst ? 4 : 5;
-            string role = isLocalPlayerFirst ? "¼±°ø" : "ÈÄ°ø";
 
-            Debug.Log($"[TurnManager] ÃÊ±â µå·Î¿ì: {drawCount}Àå ({role})");
-
-            // ¸ğµç ÇÃ·¹ÀÌ¾î°¡ Player ¿ªÇÒ·Î µå·Î¿ì (°¢ÀÚ °üÁ¡¿¡¼­ ÀÚ½ÅÀÇ Ä«µå)
+            // ëª¨ë“  í”Œë ˆì´ì–´ê°€ Player ì¡´ìœ¼ë¡œ ë“œë¡œìš° (ë¡œì»¬ ê´€ì ì—ì„œ ìì‹ ì˜ ì¹´ë“œ)
             InGameManager.Instance.DrawCardsToHand(drawCount, CardZone.OwnerType.Player);
         }
 
         /// <summary>
-        /// Ã¹ ÅÏ ½ÃÀÛ
+        /// ì²« í„´ ì‹œì‘
+        /// í„´ ë²ˆí˜¸ë¥¼ 1ë¡œ ì„¤ì •í•˜ê³  í„´ ì‹œì‘ ì²˜ë¦¬ í˜¸ì¶œ
         /// </summary>
         private void BeginFirstTurn()
         {
             currentTurn = 1;
             lastTurnChangeTime = Time.time;
 
-            // µğ¹ö±× ·Î±× Ãß°¡
-            Debug.Log($"[TurnManager] BeginFirstTurn - currentTurn: {currentTurn}, " +
-                      $"isLocalPlayerFirst: {isLocalPlayerFirst}, " +
-                      $"IsLocalPlayerTurn: {IsLocalPlayerTurn}");
-
             OnTurnStart();
         }
 
         /// <summary>
-        /// ÅÏ ½ÃÀÛ Ã³¸®
+        /// í„´ ì‹œì‘ ì²˜ë¦¬
+        ///
+        /// ì‹¤í–‰ ë‚´ìš©:
+        /// 1. ëª¨ë“  í•„ë“œ ì¹´ë“œì˜ í„´ ìƒíƒœ ì´ˆê¸°í™” (WasPlayedThisTurn, HasAttackedThisTurn ë“±)
+        /// 2. ë¡œì»¬ í”Œë ˆì´ì–´ í„´ì´ë©´ ì¹´ë“œ 1ì¥ ë“œë¡œìš° (ì²« í„´ ì œì™¸)
+        /// 3. UI ì—…ë°ì´íŠ¸ ì´ë²¤íŠ¸ ë°œìƒ
         /// </summary>
         private void OnTurnStart()
         {
-            // ¸ğµç ÇÊµå Ä«µåÀÇ ÅÏ »óÅÂ ÃÊ±âÈ­
+            // ëª¨ë“  í•„ë“œ ì¹´ë“œì˜ í„´ ìƒíƒœ ì´ˆê¸°í™”
             ResetAllCardsForNewTurn();
 
             if (IsLocalPlayerTurn)
             {
-                // ³» ÅÏ: Ä«µå 1Àå µå·Î¿ì (Ã¹ ÅÏ Á¦¿Ü)
+                // í„´ ì‹œì‘: ì¹´ë“œ 1ì¥ ë“œë¡œìš° (ì²« í„´ ì œì™¸)
                 if (currentTurn > 1)
                 {
-                    // Player ¿ªÇÒ·Î ÅëÀÏ
+                    // Player ì¡´ìœ¼ë¡œ ë“œë¡œìš°
                     InGameManager.Instance.StartTurn(CardZone.OwnerType.Player);
                 }
             }
 
-            // UI ¾÷µ¥ÀÌÆ® ÀÌº¥Æ® ¹ß»ı
+            // UI ì—…ë°ì´íŠ¸ ì´ë²¤íŠ¸ ë°œìƒ
             NotifyTurnChange();
         }
 
         /// <summary>
-        /// ÅÏ Á¾·á Ã³¸®
+        /// í„´ ì¢…ë£Œ ì²˜ë¦¬
+        ///
+        /// ì •ë¦¬ ë‚´ìš©:
+        /// 1. InGameManager í”„ë¡œì„¸ìŠ¤ ìƒíƒœ ì´ˆê¸°í™”
+        /// 2. ê³µê²© ìƒíƒœ ê°•ì œ ë¦¬ì…‹
+        /// 3. ì—°ì‚°ì ëª¨ë“œ ì·¨ì†Œ
         /// </summary>
         private IEnumerator ProcessTurnEnd()
         {
-            // ¸ğµç ÇÁ·Î¼¼½º °­Á¦ Á¾·á
+            // ëª¨ë“  í”„ë¡œì„¸ìŠ¤ ìƒíƒœ ì¢…ë£Œ
             if (InGameManager.Instance.IsProcessing)
             {
                 InGameManager.Instance.EndProcess();
             }
 
-            // °ø°İ »óÅÂ ¸®¼Â
+            // ê³µê²© ìƒíƒœ ë¦¬ì…‹
             var attackManager = FindAnyObjectByType<FieldAttackManager>();
             if (attackManager != null)
             {
                 attackManager.ForceResetAttackState();
             }
 
-            // ¿¬»êÀÚ ¸ğµå Ãë¼Ò
+            // ì—°ì‚°ì ëª¨ë“œ ì·¨ì†Œ
             if (OperatorManager.Instance != null && OperatorManager.Instance.IsInOperatorMode)
             {
                 OperatorManager.Instance.CancelOperatorMode();
@@ -415,7 +470,12 @@ namespace Manager
         }
 
         /// <summary>
-        /// ¸ğµç Ä«µåÀÇ ÅÏ »óÅÂ ÃÊ±âÈ­
+        /// ëª¨ë“  í•„ë“œ ì¹´ë“œì˜ í„´ ìƒíƒœ ì´ˆê¸°í™”
+        ///
+        /// ì´ˆê¸°í™” í•­ëª©:
+        /// - WasPlayedThisTurn: ì´ë²ˆ í„´ì— ë°°ì¹˜ë¨ (falseë¡œ ì´ˆê¸°í™”)
+        /// - HasAttackedThisTurn: ì´ë²ˆ í„´ì— ê³µê²©í•¨ (falseë¡œ ì´ˆê¸°í™”)
+        /// - WasModifiedThisTurn: ì´ë²ˆ í„´ì— ìˆ˜ì •ë¨ (falseë¡œ ì´ˆê¸°í™”)
         /// </summary>
         private void ResetAllCardsForNewTurn()
         {
@@ -425,13 +485,14 @@ namespace Manager
 
             foreach (var card in fieldCards)
             {
-                // »õ·Î¿î Card.cs API »ç¿ë
-                card.ResetForNewTurn(); // WasPlayedThisTurn, HasAttackedThisTurn ÃÊ±âÈ­
+                // ìƒˆë¡œìš´ Card.cs API ì‚¬ìš©
+                card.ResetForNewTurn();
             }
         }
 
         /// <summary>
-        /// Ã¹ ¶ó¿îµå Á¾·á ½Ã ¸ğµç Ä«µåÀÇ GLOW ¿À¹ö¶óÀÌµå ÇØÁ¦
+        /// ì²« ë¼ìš´ë“œ ì¢…ë£Œ í›„ ëª¨ë“  ì¹´ë“œì˜ GLOW ì˜¤ë²„ë¼ì´ë“œ í•´ì œ
+        /// ê³µê²© ê°€ëŠ¥í•œ ì¹´ë“œëŠ” ìë™ìœ¼ë¡œ ì´ˆë¡ìƒ‰ GLOW í‘œì‹œë¨
         /// </summary>
         private void ClearAllCardGlowOverrides()
         {
@@ -441,7 +502,7 @@ namespace Manager
 
             foreach (var card in fieldCards)
             {
-                // »õ·Î¿î Card.cs API »ç¿ë: °­Á¦ GLOW ÇØÁ¦ÇÏ¿© ÀÏ¹İ ¸ğµå·Î º¹±Í
+                // ìƒˆë¡œìš´ Card.cs API ì‚¬ìš©: ê°•ì œ GLOW í•´ì œí•˜ì—¬ ì¼ë°˜ ìƒíƒœ ë³µê·€
                 card.ClearGlowOverride();
             }
         }
@@ -449,8 +510,13 @@ namespace Manager
 
         #region RPC Methods
         /// <summary>
-        /// °ÔÀÓ ½ÃÀÛ RPC ¼ö½Å Ã³¸®
-        /// ¸ğµç Å¬¶óÀÌ¾ğÆ®¿¡¼­ ½ÇÇàµÇ¾î °¢ÀÚ ÃÊ±â µå·Î¿ì ¼öÇà
+        /// ê²Œì„ ì‹œì‘ RPC í•¸ë“¤ëŸ¬
+        ///
+        /// ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ì—ì„œ ì‹¤í–‰ë˜ì–´ ë‹¤ìŒ ì‘ì—… ìˆ˜í–‰:
+        /// 1. ì„ ê³µ í”Œë ˆì´ì–´ ê²°ì • ë° ë¡œì»¬ í”Œë ˆì´ì–´ ì—­í•  ì„¤ì •
+        /// 2. ê²Œì„ ìƒíƒœ ì´ˆê¸°í™”
+        /// 3. ë± ì´ˆê¸°í™” (ì¹´ë“œ ìƒ‰ìƒ ë™ê¸°í™” ì™„ë£Œ í›„ ì‹¤í–‰)
+        /// 4. ì´ˆê¸° ì¹´ë“œ ë“œë¡œìš° (ì„ ê³µ 4ì¥, í›„ê³µ 5ì¥)
         /// </summary>
         [PunRPC]
         private void RPC_StartGame(int firstPlayerActorNumber)
@@ -461,25 +527,23 @@ namespace Manager
             isFirstRound = true;
             currentTurn = 0;
 
-            // µ¦ ÃÊ±âÈ­ (»ö»ó µ¿±âÈ­ ¿Ï·á ÈÄ ½ÇÇà)
+            // ë± ì´ˆê¸°í™” (ì¹´ë“œ ìƒ‰ìƒ ë™ê¸°í™” ì™„ë£Œ í›„ ì‹¤í–‰)
             if (DeckManager.Instance != null)
             {
                 DeckManager.Instance.InitializeDecks();
             }
             else
             {
-                Debug.LogError("[TurnManager] DeckManager ÀÎ½ºÅÏ½º¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù!");
+                Debug.LogError("[TurnManager] DeckManager ì¸ìŠ¤í„´ìŠ¤ë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤!");
             }
 
-            string role = isLocalPlayerFirst ? "¼±°ø" : "ÈÄ°ø";
-            Debug.Log($"[TurnManager] °ÔÀÓ ½ÃÀÛ - ¿ªÇÒ: {role}");
-
-            // ¸ğµç Å¬¶óÀÌ¾ğÆ®¿¡¼­ °¢ÀÚ ÃÊ±â µå·Î¿ì ½ÇÇà
+            // ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ì—ì„œ ìì‹ ì˜ ì´ˆê¸° ì¹´ë“œ ë“œë¡œìš° ì‹¤í–‰
             ExecuteInitialDraw();
         }
 
         /// <summary>
-        /// ÅÏ ÁøÇà RPC ¼ö½Å Ã³¸®
+        /// í„´ ì§„í–‰ RPC í•¸ë“¤ëŸ¬
+        /// ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ì˜ í„´ ë²ˆí˜¸ë¥¼ ë™ê¸°í™”í•˜ê³  í„´ ì‹œì‘ ì²˜ë¦¬ í˜¸ì¶œ
         /// </summary>
         [PunRPC]
         private void RPC_AdvanceTurn(int newTurn)
@@ -487,28 +551,29 @@ namespace Manager
             currentTurn = newTurn;
             lastTurnChangeTime = Time.time;
 
-            Debug.Log($"[TurnManager] ÅÏ ÁøÇà: {newTurn}, IsLocalPlayerTurn: {IsLocalPlayerTurn}");
-
-            // ÅÏ ½ÃÀÛ Ã³¸®
+            // í„´ ì‹œì‘ ì²˜ë¦¬
             OnTurnStart();
         }
 
         /// <summary>
-        /// Ã¹ ¶ó¿îµå Á¾·á RPC ¼ö½Å Ã³¸®
+        /// ì²« ë¼ìš´ë“œ ì¢…ë£Œ RPC í•¸ë“¤ëŸ¬
+        ///
+        /// ì²« ë¼ìš´ë“œ ì¢…ë£Œ ì‹œ ìˆ˜í–‰:
+        /// 1. isFirstRound í”Œë˜ê·¸ í•´ì œ (ê³µê²© í™œì„±í™”)
+        /// 2. ëª¨ë“  ì¹´ë“œì˜ GLOW ì˜¤ë²„ë¼ì´ë“œ í•´ì œ (ì •ìƒ ê³µê²© ê°€ëŠ¥ í‘œì‹œ)
         /// </summary>
         [PunRPC]
         private void RPC_EndFirstRound()
         {
             isFirstRound = false;
 
-            // Ã¹ ¶ó¿îµå Á¾·á ½Ã ¸ğµç Ä«µåÀÇ GLOW ¿À¹ö¶óÀÌµå ÇØÁ¦
+            // ì²« ë¼ìš´ë“œ ì¢…ë£Œ í›„ ëª¨ë“  ì¹´ë“œì˜ GLOW ì˜¤ë²„ë¼ì´ë“œ í•´ì œ
             ClearAllCardGlowOverrides();
-
-            Debug.Log("[TurnManager] Ã¹ ¶ó¿îµå Á¾·á - °ø°İ È°¼ºÈ­");
         }
 
         /// <summary>
-        /// Ã¹ ÅÏ ½ÃÀÛ RPC ¼ö½Å Ã³¸®
+        /// ì²« í„´ ì‹œì‘ RPC í•¸ë“¤ëŸ¬
+        /// BeginFirstTurn() í˜¸ì¶œí•˜ì—¬ í„´ ë²ˆí˜¸ë¥¼ 1ë¡œ ì„¤ì •í•˜ê³  ê²Œì„ ì‹œì‘
         /// </summary>
         [PunRPC]
         private void RPC_BeginFirstTurn()
@@ -517,7 +582,8 @@ namespace Manager
         }
 
         /// <summary>
-        /// °ÔÀÓ ¸®¼Â RPC ¼ö½Å Ã³¸®
+        /// ê²Œì„ ë¦¬ì…‹ RPC í•¸ë“¤ëŸ¬
+        /// ResetGameState() í˜¸ì¶œí•˜ì—¬ ê²Œì„ ìƒíƒœ ì´ˆê¸°í™”
         /// </summary>
         [PunRPC]
         private void RPC_ResetGame()
@@ -528,7 +594,15 @@ namespace Manager
 
         #region State Management
         /// <summary>
-        /// °ÔÀÓ »óÅÂ ÃÊ±âÈ­ (publicÀ¸·Î º¯°æ)
+        /// ê²Œì„ ìƒíƒœ ì´ˆê¸°í™”
+        ///
+        /// ì´ˆê¸°í™” í•­ëª©:
+        /// - ê²Œì„ ì‹œì‘ í”Œë˜ê·¸
+        /// - ì²« ë¼ìš´ë“œ í”Œë˜ê·¸
+        /// - í„´ ë²ˆí˜¸
+        /// - ì„ ê³µ í”Œë ˆì´ì–´ ActorNumber
+        /// - ë¡œì»¬ í”Œë ˆì´ì–´ ì—­í• 
+        /// - í„´ ì²˜ë¦¬ í”Œë˜ê·¸
         /// </summary>
         public void ResetGameState()
         {
@@ -539,61 +613,63 @@ namespace Manager
             isLocalPlayerFirst = false;
             isProcessingTurn = false;
             lastTurnChangeTime = 0f;
-
-            Debug.Log("[TurnManager] °ÔÀÓ »óÅÂ ÃÊ±âÈ­ ¿Ï·á");
         }
 
         /// <summary>
-        /// °ÔÀÓ Á¾·á ÀÌº¥Æ® Ã³¸®
+        /// ê²Œì„ ì¢…ë£Œ ì´ë²¤íŠ¸ í•¸ë“¤ëŸ¬
+        /// InGameManager.OnGameEnded ì´ë²¤íŠ¸ ìˆ˜ì‹ 
+        ///
+        /// ì²˜ë¦¬ ë‚´ìš©:
+        /// 1. ê²Œì„ ìƒíƒœ í”Œë˜ê·¸ í•´ì œ
+        /// 2. UIì— ì¬ì‹œì‘ ë²„íŠ¼ í™œì„±í™” ì•Œë¦¼
         /// </summary>
         private void OnGameEnded(CardZone.OwnerType winner)
         {
             isGameStarted = false;
             isProcessingTurn = false;
 
-            Debug.Log($"[TurnManager] °ÔÀÓ Á¾·á - ½ÂÀÚ: {winner}");
-
-            // UI¿¡ Àç½ÃÀÛ ¹öÆ° È°¼ºÈ­ ¾Ë¸²
+            // UIì— ì¬ì‹œì‘ ë²„íŠ¼ í™œì„±í™” ì•Œë¦¼
             NotifyGameEnded();
         }
         #endregion
 
         #region Event Notifications
         /// <summary>
-        /// ÅÏ º¯°æ ¾Ë¸²
-        /// PunTurnManager ´ë½Å PhotonManager¿¡ Á÷Á¢ ÀÌº¥Æ® Àü¼Û
+        /// í„´ ë³€ê²½ ì•Œë¦¼
+        ///
+        /// PhotonManagerë¥¼ í†µí•´ UIì— í„´ ë³€ê²½ ì´ë²¤íŠ¸ ì „ë‹¬:
+        /// - ë¡œì»¬ í”Œë ˆì´ì–´ í„´: MyTurn ì´ë²¤íŠ¸ ë°œìƒ
+        /// - ìƒëŒ€ í”Œë ˆì´ì–´ í„´: YourTurn ì´ë²¤íŠ¸ ë°œìƒ
+        ///
+        /// InGameUIManagerê°€ ì´ ì´ë²¤íŠ¸ë¥¼ ìˆ˜ì‹ í•˜ì—¬ UI ì—…ë°ì´íŠ¸
         /// </summary>
         private void NotifyTurnChange()
         {
-            // PhotonManager¿¡ ÅÏ º¯°æ ¾Ë¸²
+            // PhotonManagerì— í„´ ë³€ê²½ ì•Œë¦¼
             var photonManager = FindAnyObjectByType<PhotonManager>();
             if (photonManager != null)
             {
-                Debug.Log($"[TurnManager] ÅÏ ÀÌº¥Æ® ¹ß»ı - IsLocalPlayerTurn: {IsLocalPlayerTurn}");
-
                 if (IsLocalPlayerTurn)
                 {
-                    Debug.Log("[TurnManager] ³» ÅÏ ÀÌº¥Æ® È£Ãâ");
                     photonManager.MyTurn?.Invoke();
                 }
                 else
                 {
-                    Debug.Log("[TurnManager] »ó´ë ÅÏ ÀÌº¥Æ® È£Ãâ");
                     photonManager.YourTurn?.Invoke();
                 }
             }
             else
             {
-                Debug.LogError("[TurnManager] PhotonManager¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù!");
+                Debug.LogError("[TurnManager] PhotonManagerë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤!");
             }
         }
 
         /// <summary>
-        /// °ÔÀÓ Á¾·á ¾Ë¸²
+        /// ê²Œì„ ì¢…ë£Œ ì•Œë¦¼
+        /// InGameUIManagerì— ì¬ì‹œì‘ ë²„íŠ¼ í™œì„±í™” ìš”ì²­
         /// </summary>
         private void NotifyGameEnded()
         {
-            // InGameUIManager¿¡ Àç½ÃÀÛ ¹öÆ° È°¼ºÈ­ ¿äÃ»
             if (InGameUIManager.Instance != null)
             {
                 InGameUIManager.Instance.ResetUI();
@@ -603,13 +679,14 @@ namespace Manager
 
         #region Debug & Utility
         /// <summary>
-        /// ÇöÀç »óÅÂ µğ¹ö±× Ãâ·Â
+        /// í˜„ì¬ ê²Œì„ ìƒíƒœë¥¼ ë¡œê·¸ë¡œ ì¶œë ¥ (ì—ë””í„° ì „ìš©)
+        /// ë””ë²„ê¹… ëª©ì ìœ¼ë¡œ í„´ ê´€ë¦¬ ì‹œìŠ¤í…œì˜ ìƒíƒœ í™•ì¸ ê°€ëŠ¥
         /// </summary>
         [System.Diagnostics.Conditional("UNITY_EDITOR")]
         public void DebugPrintState()
         {
-            Debug.Log($"[TurnManager] °ÔÀÓ»óÅÂ: {isGameStarted}, ÅÏ: {currentTurn}, " +
-                     $"Ã¹¶ó¿îµå: {isFirstRound}, ³»ÅÏ: {IsLocalPlayerTurn}, ¿ªÇÒ: {LocalPlayerRole}");
+            Debug.Log($"[TurnManager] ê²Œì„ì‹œì‘: {isGameStarted}, í„´: {currentTurn}, " +
+                     $"ì²«ë¼ìš´ë“œ: {isFirstRound}, ë‚´í„´: {IsLocalPlayerTurn}, ì—­í• : {LocalPlayerRole}");
         }
         #endregion
     }

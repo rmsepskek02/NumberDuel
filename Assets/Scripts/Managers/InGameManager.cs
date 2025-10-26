@@ -9,8 +9,15 @@ using Utills;
 namespace Manager
 {
     /// <summary>
-    /// ÀÎ °ÔÀÓ¿¡¼­ ÇÊ¿äÇÑ ±â´ÉµéÀ» °ü¸®ÇÏ´Â ¸Å´ÏÀú
-    /// TurnManager¿Í ¿¬µ¿ÇÏ¿© ÅÏ ±â¹İ °ÔÀÓÇÃ·¹ÀÌ Á¦°ø
+    /// ì¸ê²Œì„ì—ì„œ í•„ìš”í•œ ê¸°ëŠ¥ë“¤ì„ ê´€ë¦¬í•˜ëŠ” ë§¤ë‹ˆì €
+    /// TurnManagerì™€ í˜‘ë ¥í•˜ì—¬ í„´ ê¸°ë°˜ ê²Œì„í”Œë ˆì´ë¥¼ êµ¬í˜„
+    ///
+    /// ì£¼ìš” ê¸°ëŠ¥:
+    /// - ì¹´ë“œ ë“œë¡œìš° ì‹œìŠ¤í…œ (ìµœëŒ€ 10ì¥ ì œí•œ)
+    /// - í•„ë“œ ì¹´ë“œ ë“±ë¡/ê´€ë¦¬
+    /// - ê²Œì„ ì¢…ë£Œ ì²˜ë¦¬
+    /// - ê²Œì„ ì¬ì‹œì‘ ì²˜ë¦¬
+    /// - í”„ë¡œì„¸ìŠ¤ ìƒíƒœ ê´€ë¦¬ (ë™ì‹œ ì•¡ì…˜ ë°©ì§€)
     /// </summary>
     public class InGameManager : Singleton<InGameManager>
     {
@@ -42,33 +49,43 @@ namespace Manager
         public bool isMultiple;
         public bool isDivision;
 
+        /// <summary>
+        /// í˜„ì¬ í•„ë“œì— ë°°ì¹˜ëœ ëª¨ë“  ì¹´ë“œ ë¦¬ìŠ¤íŠ¸
+        /// RegisterFieldCard/UnregisterFieldCardë¡œ ê´€ë¦¬
+        /// </summary>
         private readonly List<Card> fieldCards = new List<Card>();
         #endregion
 
         #region Process Management
         /// <summary>
-        /// ÇöÀç ÁøÇà ÁßÀÎ ÇÁ·Î¼¼½º
+        /// í˜„ì¬ ì§„í–‰ ì¤‘ì¸ í”„ë¡œì„¸ìŠ¤
+        /// ë™ì‹œ ì•¡ì…˜ ë°©ì§€ë¥¼ ìœ„í•œ ìƒíƒœ í”Œë˜ê·¸
         /// </summary>
         private GameProcessState currentProcess = GameProcessState.Idle;
 
         /// <summary>
-        /// ÇöÀç ÇÁ·Î¼¼½º »óÅÂ (ÀĞ±â Àü¿ë)
+        /// í˜„ì¬ í”„ë¡œì„¸ìŠ¤ ìƒíƒœ (ì½ê¸° ì „ìš©)
         /// </summary>
         public GameProcessState CurrentProcess => currentProcess;
 
         /// <summary>
-        /// ÇÁ·Î¼¼½º°¡ ÁøÇà ÁßÀÎÁö ¿©ºÎ
+        /// í”„ë¡œì„¸ìŠ¤ê°€ ì§„í–‰ ì¤‘ì¸ì§€ ì—¬ë¶€
+        /// Idleì´ ì•„ë‹ˆë©´ true ë°˜í™˜
         /// </summary>
         public bool IsProcessing => currentProcess != GameProcessState.Idle;
 
         /// <summary>
-        /// ÇÁ·Î¼¼½º ½ÃÀÛ
+        /// í”„ë¡œì„¸ìŠ¤ ì‹œì‘
+        /// ì´ë¯¸ ë‹¤ë¥¸ í”„ë¡œì„¸ìŠ¤ê°€ ì§„í–‰ ì¤‘ì´ë©´ false ë°˜í™˜
+        ///
+        /// ì‚¬ìš© ì˜ˆ:
+        /// if (!InGameManager.Instance.StartProcess(GameProcessState.CardAttackProcess))
+        ///     return; // ë‹¤ë¥¸ í”„ë¡œì„¸ìŠ¤ ì§„í–‰ ì¤‘
         /// </summary>
         public bool StartProcess(GameProcessState process)
         {
             if (IsProcessing)
             {
-                Debug.LogWarning($"[InGameManager] ÀÌ¹Ì {currentProcess} ÇÁ·Î¼¼½º°¡ ÁøÇà ÁßÀÔ´Ï´Ù. {process} ½ÃÀÛ ½ÇÆĞ.");
                 return false;
             }
 
@@ -77,7 +94,8 @@ namespace Manager
         }
 
         /// <summary>
-        /// ÇÁ·Î¼¼½º Á¾·á
+        /// í”„ë¡œì„¸ìŠ¤ ì¢…ë£Œ
+        /// ìƒíƒœë¥¼ Idleë¡œ ë³µê·€
         /// </summary>
         public void EndProcess()
         {
@@ -85,7 +103,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// Æ¯Á¤ ÇÁ·Î¼¼½º°¡ ÁøÇà ÁßÀÎÁö È®ÀÎ
+        /// íŠ¹ì • í”„ë¡œì„¸ìŠ¤ê°€ ì§„í–‰ ì¤‘ì¸ì§€ í™•ì¸
         /// </summary>
         public bool IsProcessActive(GameProcessState process)
         {
@@ -96,40 +114,13 @@ namespace Manager
         #region Unity Lifecycle
         private void Start()
         {
-            //StartCoroutine(FindHealthManagerLater());
-        }
-
-        private IEnumerator FindHealthManagerLater()
-        {
-            yield return new WaitForEndOfFrame(); // ¸ğµç Start() ½ÇÇà ÈÄ
-
-            var healthManager = FindAnyObjectByType<HealthManager>();
-            if (healthManager != null)
-            {
-                Debug.Log($"HealthManager ¹ß°ß: {healthManager.gameObject.name}");
-                Debug.Log($"°æ·Î: {GetGameObjectPath(healthManager.gameObject)}");
-            }
-            else
-            {
-                Debug.Log("HealthManager°¡ Á¤¸»·Î ¾À¿¡ ¾ø½À´Ï´Ù.");
-            }
-        }
-
-        string GetGameObjectPath(GameObject obj)
-        {
-            string path = obj.name;
-            while (obj.transform.parent != null)
-            {
-                obj = obj.transform.parent.gameObject;
-                path = obj.name + "/" + path;
-            }
-            return path;
+            // í•„ìš”ì‹œ ì´ˆê¸°í™” ë¡œì§ ì¶”ê°€
         }
         #endregion
 
         #region UI Event Handlers
         /// <summary>
-        /// °ÔÀÓÀ» ½ÃÀÛÇÏ´Â ¹öÆ°ÀÇ Å¬¸¯ ÀÌº¥Æ®
+        /// ê²Œì„ì„ ì‹œì‘í•˜ëŠ” ë²„íŠ¼ í´ë¦­ ì´ë²¤íŠ¸
         /// </summary>
         public void OnClickStart()
         {
@@ -137,25 +128,26 @@ namespace Manager
         }
 
         /// <summary>
-        /// ÅÏ Á¾·á ¹öÆ° Å¬¸¯ ÀÌº¥Æ®
-        /// PunTurnManager ´ë½Å TurnManager »ç¿ë
+        /// í„´ ì¢…ë£Œ ë²„íŠ¼ í´ë¦­ ì´ë²¤íŠ¸
+        /// TurnManagerë¥¼ í†µí•´ í„´ ì¢…ë£Œ ì²˜ë¦¬
         /// </summary>
         public void OnClickEnd()
         {
             if (TurnManager.Instance == null)
             {
-                Debug.LogError("[InGameManager] TurnManager¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù!");
+                Debug.LogError("[InGameManager] TurnManagerë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤!");
                 return;
             }
 
-            // TurnManager¸¦ ÅëÇÑ ÅÏ Á¾·á Ã³¸®
+            // TurnManagerë¥¼ í†µí•œ í„´ ì¢…ë£Œ ì²˜ë¦¬
             TurnManager.Instance.EndTurn();
         }
         #endregion
 
         #region Card Management
         /// <summary>
-        /// ÇÊµå¿¡ µé¾î°£ Ä«µå¸¦ µî·ÏÇÕ´Ï´Ù.
+        /// í•„ë“œì— ìƒˆ ì¹´ë“œë¥¼ ë“±ë¡í•©ë‹ˆë‹¤.
+        /// í„´ ê´€ë¦¬ ì‹œìŠ¤í…œì—ì„œ í•„ë“œ ì¹´ë“œ ìƒíƒœ ì—…ë°ì´íŠ¸ì— ì‚¬ìš©
         /// </summary>
         public void RegisterFieldCard(Card card)
         {
@@ -164,7 +156,8 @@ namespace Manager
         }
 
         /// <summary>
-        /// ÇÊµå¿¡¼­ Á¦°ÅµÈ Ä«µå¸¦ ÇØÁ¦ÇÕ´Ï´Ù.
+        /// í•„ë“œì—ì„œ ì œê±°ëœ ì¹´ë“œë¥¼ ë“±ë¡ í•´ì œí•©ë‹ˆë‹¤.
+        /// ì¹´ë“œ íŒŒê´´ ì‹œ í˜¸ì¶œ
         /// </summary>
         public void UnregisterFieldCard(Card card)
         {
@@ -173,8 +166,8 @@ namespace Manager
         }
 
         /// <summary>
-        /// ÇöÀç ÇÊµå¿¡ Á¸ÀçÇÏ´Â ¸ğµç Ä«µå¸¦ ¹İÈ¯ÇÕ´Ï´Ù.
-        /// º¹»çº» ¹İÈ¯
+        /// í˜„ì¬ í•„ë“œì— ì¡´ì¬í•˜ëŠ” ëª¨ë“  ì¹´ë“œë¥¼ ë°˜í™˜í•©ë‹ˆë‹¤.
+        /// ë³µì‚¬ë³¸ ë°˜í™˜í•˜ì—¬ ì›ë³¸ ë¦¬ìŠ¤íŠ¸ ë³´í˜¸
         /// </summary>
         public List<Card> GetAllFieldCards()
         {
@@ -182,13 +175,14 @@ namespace Manager
         }
 
         /// <summary>
-        /// ¸ğµç ÇÊµå Ä«µå Á¦°Å
+        /// ëª¨ë“  í•„ë“œ ì¹´ë“œ ì œê±°
+        /// ê²Œì„ ì¬ì‹œì‘ ì‹œ í˜¸ì¶œ
         /// </summary>
         private void ClearAllFieldCards()
         {
             var allFieldCards = GetAllFieldCards();
 
-            foreach (var card in allFieldCards.ToArray()) // ToArray()·Î º¹»çº» »ı¼º
+            foreach (var card in allFieldCards.ToArray()) // ToArray()ë¡œ ë³µì‚¬ë³¸ ìƒì„±
             {
                 if (card != null && card.gameObject != null)
                 {
@@ -202,29 +196,29 @@ namespace Manager
                 }
             }
 
-            // ÇÊµå Ä«µå ¸®½ºÆ® Á¤¸®
+            // í•„ë“œ ì¹´ë“œ ë¦¬ìŠ¤íŠ¸ ì´ˆê¸°í™”
             fieldCards.Clear();
         }
         #endregion
 
         #region Game Flow Management
         /// <summary>
-        /// °ÔÀÓ ½ÃÀÛ ½Ã µ¦ ÃÊ±âÈ­ ¹× ÃÊ±â ÇÚµå µå·Î¿ì
+        /// ê²Œì„ ì‹œì‘ ì‹œ ë± ì´ˆê¸°í™” ë° ì´ˆê¸° ì¹´ë“œ ë“œë¡œìš°
+        /// (í˜„ì¬ëŠ” TurnManagerì—ì„œ ì²˜ë¦¬)
         /// </summary>
         public void StartGame()
         {
-            // µ¦ ÃÊ±âÈ­
+            // ë± ì´ˆê¸°í™”
             DeckManager.Instance.InitializeDecks();
 
-            // ÃÊ±â ÇÚµå µå·Î¿ì (°¢ÀÚ 5Àå)
+            // ì´ˆê¸° ì¹´ë“œ ë“œë¡œìš° (ê°ê° 5ì¥)
             DrawCardsToHand(5, CardZone.OwnerType.Player);
             DrawCardsToHand(5, CardZone.OwnerType.Opponent);
-
-            Debug.Log("[InGameManager] °ÔÀÓ ½ÃÀÛ - µ¦ ÃÊ±âÈ­ ¹× ÃÊ±â ÇÚµå µå·Î¿ì ¿Ï·á");
         }
 
         /// <summary>
-        /// ÅÏ ½ÃÀÛ ½Ã Ä«µå 1Àå µå·Î¿ì
+        /// í„´ ì‹œì‘ ì‹œ ì¹´ë“œ 1ì¥ ë“œë¡œìš°
+        /// TurnManagerì—ì„œ í˜¸ì¶œ
         /// </summary>
         public void StartTurn(CardZone.OwnerType currentPlayer)
         {
@@ -232,20 +226,19 @@ namespace Manager
         }
 
         /// <summary>
-        /// °ÔÀÓ Àç½ÃÀÛ (¹æÀå¸¸ È£Ãâ)
+        /// ê²Œì„ ì¬ì‹œì‘ (ë§ˆìŠ¤í„° í´ë¼ì´ì–¸íŠ¸ë§Œ í˜¸ì¶œ)
+        /// TurnManagerë¥¼ í†µí•´ RPCë¡œ ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ ë™ê¸°í™”
         /// </summary>
         public void RestartGame()
         {
-            Debug.Log("[InGameManager] °ÔÀÓ Àç½ÃÀÛ ½ÃÀÛ");
-
-            // ¹æÀå Ã¼Å©
+            // ê¶Œí•œ ì²´í¬
             if (!Photon.Pun.PhotonNetwork.IsMasterClient)
             {
-                Debug.LogWarning("[InGameManager] ¹æÀå¸¸ °ÔÀÓÀ» Àç½ÃÀÛÇÒ ¼ö ÀÖ½À´Ï´Ù.");
+                Debug.LogWarning("[InGameManager] ë§ˆìŠ¤í„° í´ë¼ì´ì–¸íŠ¸ë§Œ ì¬ì‹œì‘í•  ìˆ˜ ìˆìŠµë‹ˆë‹¤.");
                 return;
             }
 
-            // TurnManager¸¦ ÅëÇÑ °ÔÀÓ Àç½ÃÀÛ (RPC·Î ¸ğµç Å¬¶óÀÌ¾ğÆ® ÃÊ±âÈ­)
+            // TurnManagerë¥¼ í†µí•œ ê²Œì„ ì¬ì‹œì‘ (RPCë¡œ ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ ì´ˆê¸°í™”)
             if (TurnManager.Instance != null)
             {
                 TurnManager.Instance.RestartGame();
@@ -253,82 +246,92 @@ namespace Manager
         }
 
         /// <summary>
-        /// ·ÎÄÃ °ÔÀÓ ÃÊ±âÈ­ (¸ğµç Å¬¶óÀÌ¾ğÆ®¿¡¼­ ½ÇÇà)
+        /// ë¡œì»¬ ê²Œì„ ìƒíƒœ ì´ˆê¸°í™” (ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ì—ì„œ ì‹¤í–‰)
+        /// TurnManagerì˜ RPC_RestartGameForAllì—ì„œ í˜¸ì¶œ
+        ///
+        /// ì´ˆê¸°í™” ìˆœì„œ:
+        /// 1. ê²Œì„ ì¢…ë£Œ í”Œë˜ê·¸ í•´ì œ
+        /// 2. ëª¨ë“  ì§„í–‰ ì¤‘ì¸ í”„ë¡œì„¸ìŠ¤ ê°•ì œ ì¢…ë£Œ
+        /// 3. UI ì´ˆê¸°í™” (WIN/LOSE í…ìŠ¤íŠ¸ ìˆ¨ê¹€)
+        /// 4. HealthManager ì´ˆê¸°í™”
+        /// 5. HealthUI ì´ˆê¸°í™”
+        /// 6. ExpressionZone ì´ˆê¸°í™”
+        /// 7. NetworkGameManager ì¹´ë“œ ë ˆì§€ìŠ¤íŠ¸ë¦¬ ì´ˆê¸°í™”
+        /// 8. ëª¨ë“  Zoneì˜ ì¹´ë“œ ì˜¤ë¸Œì íŠ¸ ì‚­ì œ
+        /// 9. í•„ë“œ ì¹´ë“œ ë¦¬ìŠ¤íŠ¸ ì´ˆê¸°í™”
+        /// 10. DeckManager ì´ˆê¸°í™”
         /// </summary>
         public void RestartGameLocal()
         {
-            Debug.Log("[InGameManager] ·ÎÄÃ °ÔÀÓ ÃÊ±âÈ­ ½ÃÀÛ");
-
-            // 1. °ÔÀÓ »óÅÂ ÇÃ·¡±× ¸®¼Â
+            // 1. ê²Œì„ ì¢…ë£Œ í”Œë˜ê·¸ í•´ì œ
             IsGameEnded = false;
             GameWinner = null;
             currentProcess = GameProcessState.Idle;
 
-            // 2. ¸ğµç ÁøÇà ÁßÀÎ ÇÁ·Î¼¼½º °­Á¦ Á¾·á
+            // 2. ëª¨ë“  ì§„í–‰ ì¤‘ì¸ í”„ë¡œì„¸ìŠ¤ ê°•ì œ ì¢…ë£Œ
             ForceEndAllProcesses();
 
-            // 3. InGameUIManager ÃÊ±âÈ­ (WIN/LOSE ÅØ½ºÆ® ¼û±è)
+            // 3. InGameUIManager ì´ˆê¸°í™” (WIN/LOSE í…ìŠ¤íŠ¸ ìˆ¨ê¹€)
             if (InGameUIManager.Instance != null)
             {
                 InGameUIManager.Instance.HideGameResultTexts();
             }
 
-            // 4. HealthManager ÃÊ±âÈ­
+            // 4. HealthManager ì´ˆê¸°í™”
             if (HealthManager.Instance != null)
             {
                 HealthManager.Instance.InitializeHealth();
             }
 
-            // 5. HealthUI ÃÊ±âÈ­ (DOTween ¾Ö´Ï¸ŞÀÌ¼Ç Á¤¸®)
+            // 5. HealthUI ì´ˆê¸°í™” (DOTween ì• ë‹ˆë©”ì´ì…˜ ì¤‘ë‹¨)
             var healthUI = FindAnyObjectByType<HealthUI>();
             if (healthUI != null)
             {
                 healthUI.ResetUI();
             }
 
-            // 6. ExpressionZone ÃÊ±âÈ­
+            // 6. ExpressionZone ì´ˆê¸°í™”
             if (ExpressionZoneManager.Instance != null)
             {
                 ExpressionZoneManager.Instance.ResetAllSlots();
             }
 
-            // 7. NetworkGameManager Ä«µå ·¹Áö½ºÆ®¸® ÃÊ±âÈ­
+            // 7. NetworkGameManager ì¹´ë“œ ë ˆì§€ìŠ¤íŠ¸ë¦¬ ì´ˆê¸°í™”
             if (NetworkGameManager.Instance != null)
             {
                 NetworkGameManager.Instance.ClearAllRegisteredCards();
             }
 
-            // 8. ¸ğµç ZoneÀÇ Ä«µå ¿ÏÀü Á¦°Å
+            // 8. ëª¨ë“  Zoneì˜ ì¹´ë“œ ì˜¤ë¸Œì íŠ¸ ì‚­ì œ
             ClearAllZones();
 
-            // 9. ÇÊµå Ä«µå ¸®½ºÆ® ÃÊ±âÈ­
+            // 9. í•„ë“œ ì¹´ë“œ ë¦¬ìŠ¤íŠ¸ ì´ˆê¸°í™”
             fieldCards.Clear();
 
-            // 10. DeckManager ÃÊ±âÈ­
+            // 10. DeckManager ì´ˆê¸°í™”
             if (DeckManager.Instance != null)
             {
                 DeckManager.Instance.ResetDecks();
                 DeckManager.Instance.InitializeDecks();
             }
-
-            Debug.Log("[InGameManager] ·ÎÄÃ °ÔÀÓ ÃÊ±âÈ­ ¿Ï·á");
         }
 
         /// <summary>
-        /// ¸ğµç ZoneÀÇ Ä«µå ¿ÏÀü Á¦°Å
+        /// ëª¨ë“  Zoneì˜ ì¹´ë“œ ì˜¤ë¸Œì íŠ¸ ì‚­ì œ
+        /// ê²Œì„ ì¬ì‹œì‘ ì‹œ í˜¸ì¶œí•˜ì—¬ ì”¬ì„ ê¹¨ë—í•˜ê²Œ ì •ë¦¬
         /// </summary>
         private void ClearAllZones()
         {
             if (CardZone.AllZonesRoot == null)
             {
-                Debug.LogWarning("[InGameManager] AllZonesRoot°¡ nullÀÔ´Ï´Ù.");
+                Debug.LogWarning("[InGameManager] AllZonesRootê°€ nullì…ë‹ˆë‹¤.");
                 return;
             }
 
             var allZones = CardZone.AllZonesRoot.GetComponentsInChildren<CardZone>();
             foreach (var zone in allZones)
             {
-                // Zone ³» ¸ğµç Ä«µå Á¦°Å
+                // Zone ë‚´ ëª¨ë“  ì¹´ë“œ ì œê±°
                 var childCount = zone.transform.childCount;
                 for (int i = childCount - 1; i >= 0; i--)
                 {
@@ -342,81 +345,84 @@ namespace Manager
                     }
                 }
             }
-
-            Debug.Log("[InGameManager] ¸ğµç Zone ÃÊ±âÈ­ ¿Ï·á");
         }
         #endregion
 
         #region Card Draw System
         /// <summary>
-        /// ÁöÁ¤µÈ ÇÃ·¹ÀÌ¾îÀÇ ¼ÕÆĞ·Î Ä«µå µå·Î¿ì
-        /// NetworkGameManager¸¦ ÅëÇÑ ³×Æ®¿öÅ© µ¿±âÈ­ Æ÷ÇÔ
-        /// NetworkCard ±â¹İÀÇ °íÀ¯ ID ½Ã½ºÅÛ »ç¿ë
+        /// ì§€ì •ëœ í”Œë ˆì´ì–´ì˜ ì†ìœ¼ë¡œ ì¹´ë“œ ë“œë¡œìš°
+        /// NetworkGameManagerë¥¼ í†µí•´ ë„¤íŠ¸ì›Œí¬ ë™ê¸°í™” ìˆ˜í–‰
+        /// NetworkCard ì»´í¬ë„ŒíŠ¸ê°€ ê³ ìœ  ID ì‹œìŠ¤í…œ ì œê³µ
+        ///
+        /// ì¹´ë“œ ë“œë¡œìš° ê·œì¹™:
+        /// - ì†ì— ìµœëŒ€ 10ì¥ê¹Œì§€ë§Œ ë³´ìœ  ê°€ëŠ¥
+        /// - 10ì¥ ì´ˆê³¼ ì‹œ ë“œë¡œìš°í•œ ì¹´ë“œëŠ” ì¦‰ì‹œ íê¸°
+        /// - ì‹¤ì œë¡œ ë“œë¡œìš°ëœ ì¹´ë“œ ìˆ˜ë§Œí¼ NetworkGameManagerë¥¼ í†µí•´ ìƒëŒ€ì—ê²Œ ë™ê¸°í™”
+        ///
         /// </summary>
-        /// <param name="count">µå·Î¿ìÇÒ Ä«µå ¼ö</param>
-        /// <param name="owner">Ä«µå ¼ÒÀ¯ÀÚ (Player ¶Ç´Â Opponent)</param>
+        /// <param name="count">ë“œë¡œìš°í•  ì¹´ë“œ ìˆ˜</param>
+        /// <param name="owner">ì¹´ë“œ ì†Œìœ ì (Player ë˜ëŠ” Opponent)</param>
         public void DrawCardsToHand(int count, CardZone.OwnerType owner)
         {
-            // ¼ÕÆĞ Zone Ã£±â ¹× °ËÁõ
+            // ì†íŒ¨ Zone ì°¾ê¸° ë° ê²€ì¦
             CardZone handZone = FindHandZone(owner);
             if (handZone == null)
             {
-                Debug.LogError($"[InGameManager] {owner} ¼ÕÆĞ ZoneÀ» Ã£À» ¼ö ¾ø½À´Ï´Ù.");
+                Debug.LogError($"[InGameManager] {owner} ì†íŒ¨ Zoneì„ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
                 return;
             }
 
             int drawnCount = 0;
             int destroyedCount = 0;
 
-            // ¿äÃ»µÈ ¼ö¸¸Å­ Ä«µå µå·Î¿ì ½Ãµµ
+            // ìš”ì²­ëœ ìˆ˜ë§Œí¼ ì¹´ë“œ ë“œë¡œìš° ì‹œë„
             for (int i = 0; i < count; i++)
             {
-                // ÇöÀç ¼ÕÆĞ °³¼ö È®ÀÎ (10Àå Á¦ÇÑ)
+                // í˜„ì¬ ì†íŒ¨ ì¹´ë“œ ìˆ˜ í™•ì¸ (10ì¥ ì œí•œ)
                 int currentHandCount = GetHandCardCount(handZone);
 
-                // µ¦¿¡¼­ Ä«µå µ¥ÀÌÅÍ µå·Î¿ì (·ÎÄÃ ½ÇÇà)
+                // ë±ì—ì„œ ì¹´ë“œ ë°ì´í„° ë“œë¡œìš° (ë±ì´ ë¹„ì—ˆìœ¼ë©´ null ë°˜í™˜)
                 var cardData = owner == CardZone.OwnerType.Player
                     ? DeckManager.Instance.DrawPlayerCard()
                     : DeckManager.Instance.DrawOpponentCard();
 
-                // µ¦ÀÌ ºñ¾îÀÖ´ÂÁö È®ÀÎ
+                // ì¹´ë“œ ìœ íš¨ì„± í™•ì¸
                 if (!cardData.HasValue)
                 {
-                    Debug.LogWarning($"[InGameManager] {owner} µ¦ÀÌ ºñ¾îÀÖ¾î ´õ ÀÌ»ó µå·Î¿ìÇÒ ¼ö ¾ø½À´Ï´Ù.");
                     break;
                 }
 
-                // ¼ÕÆĞ Á¦ÇÑ Ã¼Å© (ÃÖ´ë 10Àå)
+                // ì†íŒ¨ ì œí•œ ì²´í¬ (ìµœëŒ€ 10ì¥)
                 if (currentHandCount >= 10)
                 {
-                    // Ä«µå µ¥ÀÌÅÍ´Â ÀÌ¹Ì µ¦¿¡¼­ Á¦°ÅµÇ¾úÀ¸¹Ç·Î ÆÄ±« Ã³¸®
+                    // ì¹´ë“œ ë°ì´í„°ëŠ” ì´ë¯¸ ë±ì—ì„œ ì œê±°ë˜ì—ˆìœ¼ë¯€ë¡œ íŒŒê¸° ì²˜ë¦¬
                     destroyedCount++;
                     continue;
                 }
 
-                // ½ÇÁ¦ Ä«µå ¿ÀºêÁ§Æ® »ı¼º ¹× ¼ÕÆĞ¿¡ ¹èÄ¡
+                // ì‹¤ì œ ì¹´ë“œ ì˜¤ë¸Œì íŠ¸ ìƒì„± ë° ì†íŒ¨ì— ë°°ì¹˜
                 GameObject cardObject = DeckManager.Instance.CreateCardObject(cardData.Value, owner, handZone);
                 if (cardObject != null)
                 {
-                    // NetworkCard ÄÄÆ÷³ÍÆ® Ãß°¡ (³×Æ®¿öÅ© µ¿±âÈ­¸¦ À§ÇÑ °íÀ¯ ID ¼³Á¤)
+                    // NetworkCard ì»´í¬ë„ŒíŠ¸ ì¶”ê°€ (ë„¤íŠ¸ì›Œí¬ ë™ê¸°í™”ë¥¼ ìœ„í•œ ê³ ìœ  ID ë¶€ì—¬)
                     var networkCard = cardObject.GetComponent<NetworkCard>();
                     if (networkCard == null)
                     {
                         networkCard = cardObject.AddComponent<NetworkCard>();
                     }
 
-                    // À§Ä¡ Á¤º¸ ¾÷µ¥ÀÌÆ® (NetworkCard ½Ã½ºÅÛ)
+                    // ìœ„ì¹˜ ì •ë³´ ì—…ë°ì´íŠ¸ (NetworkCard ì‹œìŠ¤í…œ)
                     networkCard.UpdateLocationInfo();
 
                     drawnCount++;
                 }
                 else
                 {
-                    Debug.LogError($"[InGameManager] {owner} Ä«µå ¿ÀºêÁ§Æ® »ı¼º ½ÇÆĞ");
+                    Debug.LogError($"[InGameManager] {owner} ì¹´ë“œ ì˜¤ë¸Œì íŠ¸ ìƒì„± ì‹¤íŒ¨");
                 }
             }
 
-            // ³×Æ®¿öÅ© µ¿±âÈ­ Àü¼Û (½ÇÁ¦·Î µå·Î¿ìµÈ Ä«µå°¡ ÀÖÀ» ¶§¸¸)
+            // ë„¤íŠ¸ì›Œí¬ ë™ê¸°í™” ìˆ˜í–‰ (ì‹¤ì œë¡œ ë“œë¡œìš°ëœ ì¹´ë“œ ìˆ˜ê°€ ìˆì„ ë•Œë§Œ)
             if (drawnCount > 0)
             {
                 if (NetworkGameManager.Instance != null)
@@ -425,31 +431,25 @@ namespace Manager
                 }
                 else
                 {
-                    Debug.LogWarning("[InGameManager] NetworkGameManager ÀÎ½ºÅÏ½º¸¦ Ã£À» ¼ö ¾ø¾î ³×Æ®¿öÅ© µ¿±âÈ­¸¦ °Ç³Ê¶İ´Ï´Ù.");
+                    Debug.LogWarning("[InGameManager] NetworkGameManager ì¸ìŠ¤í„´ìŠ¤ë¥¼ ì°¾ì„ ìˆ˜ ì—†ì–´ ë„¤íŠ¸ì›Œí¬ ë™ê¸°í™”ë¥¼ ê±´ë„ˆëœë‹ˆë‹¤.");
                 }
             }
-
-            // °á°ú ·Î±× Ãâ·Â
-            if (drawnCount > 0)
-                Debug.Log($"[InGameManager] {owner} {drawnCount}Àå µå·Î¿ì ¿Ï·á");
-
-            if (destroyedCount > 0)
-                Debug.Log($"[InGameManager] {owner} {destroyedCount}Àå ¼ÕÆĞ Á¦ÇÑÀ¸·Î ÆÄ±«µÊ");
         }
 
         /// <summary>
-        /// ¼ÕÆĞÀÇ ÇöÀç Ä«µå °³¼ö ¹İÈ¯
+        /// ì§€ì •ëœ ì†íŒ¨ ì¹´ë“œ ê°œìˆ˜ ë°˜í™˜
+        /// Transformì˜ ìì‹ ìˆ˜ë¡œ ì¹´ë“œ ìˆ˜ í™•ì¸
         /// </summary>
         private int GetHandCardCount(CardZone handZone)
         {
             if (handZone == null) return 0;
 
-            // TransformÀÇ ÀÚ½Ä °³¼ö·Î Ä«µå ¼ö È®ÀÎ
             return handZone.transform.childCount;
         }
 
         /// <summary>
-        /// ¼ÕÆĞ Zone Ã£±â
+        /// ì†íŒ¨ Zone ì°¾ê¸°
+        /// AllZonesRootì—ì„œ Ownerì™€ ZoneTypeì´ ì¼ì¹˜í•˜ëŠ” Zone ë°˜í™˜
         /// </summary>
         private CardZone FindHandZone(CardZone.OwnerType owner)
         {
@@ -462,45 +462,54 @@ namespace Manager
         }
 
         /// <summary>
-        /// Ä«µå Á¤º¸ ¹®ÀÚ¿­ »ı¼º
+        /// ì¹´ë“œ íƒ€ì… ë¬¸ìì—´ ë³€í™˜ (ë””ë²„ê·¸ìš©)
         /// </summary>
         private string GetCardDescription(Manager.CardData cardData)
         {
             return cardData.cardType switch
             {
-                CardType.Number => $"¼ıÀÚ({cardData.numberValue})",
-                CardType.Operator => $"¿¬»êÀÚ({cardData.operatorType})",
-                CardType.Joker => "Á¶Ä¿",
-                _ => "¾Ë ¼ö ¾øÀ½"
+                CardType.Number => $"ìˆ«ì({cardData.numberValue})",
+                CardType.Operator => $"ì—°ì‚°ì({cardData.operatorType})",
+                CardType.Joker => "ì¡°ì»¤",
+                _ => "ì•Œ ìˆ˜ ì—†ìŒ"
             };
         }
         #endregion
 
         #region Game End Management
         /// <summary>
-        /// °ÔÀÓ Á¾·á »óÅÂ
+        /// ê²Œì„ ì¢…ë£Œ ì—¬ë¶€
         /// </summary>
         public bool IsGameEnded { get; private set; } = false;
 
         /// <summary>
-        /// ½Â¸®ÇÑ ÇÃ·¹ÀÌ¾î
+        /// ìŠ¹ë¦¬í•œ í”Œë ˆì´ì–´
+        /// Player ë˜ëŠ” Opponent
         /// </summary>
         public CardZone.OwnerType? GameWinner { get; private set; } = null;
 
         /// <summary>
-        /// °ÔÀÓ Á¾·á ÀÌº¥Æ®
+        /// ê²Œì„ ì¢…ë£Œ ì´ë²¤íŠ¸
+        /// TurnManagerê°€ êµ¬ë…í•˜ì—¬ ê²Œì„ ìƒíƒœ í”Œë˜ê·¸ í•´ì œ
         /// </summary>
         public static event Action<CardZone.OwnerType> OnGameEnded;
 
         /// <summary>
-        /// °ÔÀÓ Á¾·á Ã³¸® (HealthUI¿¡¼­ È£Ãâ)
+        /// ê²Œì„ ì¢…ë£Œ ì²˜ë¦¬ (HealthUIì—ì„œ í˜¸ì¶œ)
+        ///
+        /// ì²˜ë¦¬ ë‚´ìš©:
+        /// 1. ê²Œì„ ì¢…ë£Œ í”Œë˜ê·¸ ì„¤ì •
+        /// 2. ìŠ¹ì ê²°ì •
+        /// 3. ëª¨ë“  í”„ë¡œì„¸ìŠ¤ ê°•ì œ ì¢…ë£Œ
+        /// 4. ê²Œì„ ì¢…ë£Œ ì´ë²¤íŠ¸ ë°œìƒ (TurnManagerì— ì•Œë¦¼)
+        /// 5. ê²Œì„ ê²°ê³¼ UI í‘œì‹œ
         /// </summary>
-        /// <param name="defeatedPlayer">ÆĞ¹èÇÑ ÇÃ·¹ÀÌ¾î</param>
+        /// <param name="defeatedPlayer">íŒ¨ë°°í•œ í”Œë ˆì´ì–´</param>
         public void OnGameEnd(CardZone.OwnerType defeatedPlayer)
         {
             if (IsGameEnded)
             {
-                Debug.LogWarning("[InGameManager] °ÔÀÓÀÌ ÀÌ¹Ì Á¾·áµÇ¾ú½À´Ï´Ù.");
+                Debug.LogWarning("[InGameManager] ê²Œì„ì´ ì´ë¯¸ ì¢…ë£Œë˜ì—ˆìŠµë‹ˆë‹¤.");
                 return;
             }
 
@@ -509,99 +518,84 @@ namespace Manager
                 ? CardZone.OwnerType.Opponent
                 : CardZone.OwnerType.Player;
 
-            Debug.Log($"[InGameManager] °ÔÀÓ Á¾·á! ½ÂÀÚ: {GameWinner}, ÆĞÀÚ: {defeatedPlayer}");
-
-            // ¸ğµç ÇÁ·Î¼¼½º °­Á¦ Á¾·á
+            // ëª¨ë“  í”„ë¡œì„¸ìŠ¤ ê°•ì œ ì¢…ë£Œ
             ForceEndAllProcesses();
 
-            // °ÔÀÓ Á¾·á ÀÌº¥Æ® ¹ß»ı
+            // ê²Œì„ ì¢…ë£Œ ì´ë²¤íŠ¸ ë°œìƒ
             OnGameEnded?.Invoke(GameWinner.Value);
 
-            // °ÔÀÓ Á¾·á UI Ç¥½Ã (ÃßÈÄ ±¸Çö)
+            // ê²Œì„ ê²°ê³¼ UI í‘œì‹œ (ì§€ì—° ì—†ì´)
             ShowGameEndUI(GameWinner.Value, defeatedPlayer);
         }
 
         /// <summary>
-        /// ¸ğµç ÁøÇà ÁßÀÎ ÇÁ·Î¼¼½º °­Á¦ Á¾·á
+        /// ëª¨ë“  ì§„í–‰ ì¤‘ì¸ í”„ë¡œì„¸ìŠ¤ ê°•ì œ ì¢…ë£Œ
+        ///
+        /// ì¢…ë£Œ ëŒ€ìƒ:
+        /// - í˜„ì¬ í”„ë¡œì„¸ìŠ¤
+        /// - ê³µê²© ìƒíƒœ
+        /// - ì—°ì‚°ì ëª¨ë“œ
+        /// - ì¡°ì»¤ UI
+        /// - ExpressionZone
         /// </summary>
         private void ForceEndAllProcesses()
         {
-            Debug.Log("[InGameManager] ¸ğµç ÇÁ·Î¼¼½º °­Á¦ Á¾·á");
-
-            // ÇöÀç ÇÁ·Î¼¼½º Á¾·á
+            // í˜„ì¬ í”„ë¡œì„¸ìŠ¤ ì¢…ë£Œ
             if (IsProcessing)
             {
                 EndProcess();
             }
 
-            // °ø°İ »óÅÂ ÃÊ±âÈ­
+            // ê³µê²© ìƒíƒœ ì´ˆê¸°í™”
             var attackManager = FindAnyObjectByType<FieldAttackManager>();
             if (attackManager != null)
             {
                 attackManager.ForceResetAttackState();
             }
 
-            // ¿¬»êÀÚ ¸ğµå Ãë¼Ò
+            // ì—°ì‚°ì ëª¨ë“œ ì·¨ì†Œ
             if (OperatorManager.Instance != null && OperatorManager.Instance.IsInOperatorMode)
             {
                 OperatorManager.Instance.CancelOperatorMode();
             }
 
-            // Á¶Ä¿ UI ¼û±â±â
+            // ì¡°ì»¤ UI ë‹«ê¸°
             if (JokerModeSelector.Instance != null)
             {
                 JokerModeSelector.Instance.Hide();
             }
 
-            // ExpressionZone ÃÊ±âÈ­
+            // ExpressionZone ì´ˆê¸°í™”
             if (ExpressionZoneManager.Instance != null)
             {
                 ExpressionZoneManager.Instance.ResetAllSlots();
             }
         }
 
-        #region Game End Management
         /// <summary>
-        /// °ÔÀÓ Á¾·á UI Ç¥½Ã
+        /// ê²Œì„ ê²°ê³¼ UI í‘œì‹œ
+        ///
+        /// ì¤‘ìš”: GameWinnerëŠ” ê° í´ë¼ì´ì–¸íŠ¸ ê´€ì ì—ì„œ ë‹¤ë¦„
+        /// - Playerê°€ ìŠ¹ìë©´ ë¡œì»¬ í”Œë ˆì´ì–´ ìŠ¹ë¦¬
+        /// - Opponentê°€ ìŠ¹ìë©´ ë¡œì»¬ í”Œë ˆì´ì–´ íŒ¨ë°°
         /// </summary>
-        /// <param name="winner">½Â¸®ÇÑ ÇÃ·¹ÀÌ¾î</param>
-        /// <param name="loser">ÆĞ¹èÇÑ ÇÃ·¹ÀÌ¾î</param>
+        /// <param name="winner">ìŠ¹ë¦¬í•œ í”Œë ˆì´ì–´</param>
+        /// <param name="loser">íŒ¨ë°°í•œ í”Œë ˆì´ì–´</param>
         private void ShowGameEndUI(CardZone.OwnerType winner, CardZone.OwnerType loser)
         {
-            // ÇÙ½É: GameWinner´Â OnGameEnd¿¡¼­ ÀÌ¹Ì °¢ Å¬¶óÀÌ¾ğÆ® °üÁ¡À¸·Î ¼³Á¤µÊ
-            // Player°¡ ½ÂÀÚ¸é ·ÎÄÃ ÇÃ·¹ÀÌ¾î ½Â¸®, Opponent°¡ ½ÂÀÚ¸é ·ÎÄÃ ÇÃ·¹ÀÌ¾î ÆĞ¹è
+            // ë¡œì»¬ í”Œë ˆì´ì–´ ìŠ¹íŒ¨ íŒì •
             bool localPlayerWon = (winner == CardZone.OwnerType.Player);
 
-            Debug.Log($"[InGameManager] °ÔÀÓ °á°ú: {(localPlayerWon ? "WIN" : "LOSE")} (winner={winner}, loser={loser})");
-
-            // InGameUIManager¿¡ °á°ú Àü´Ş
+            // InGameUIManagerì— ê²°ê³¼ ì „ë‹¬
             if (InGameUIManager.Instance != null)
             {
                 InGameUIManager.Instance.ShowGameResult(localPlayerWon);
             }
         }
-        #endregion
 
         /// <summary>
-        /// Àç½ÃÀÛ ¿É¼Ç Ç¥½Ã (ÀÓ½Ã)
-        /// </summary>
-        private System.Collections.IEnumerator ShowRestartOption()
-        {
-            yield return new WaitForSeconds(3f);
-
-            Debug.Log("[InGameManager] °ÔÀÓÀ» Àç½ÃÀÛÇÏ½Ã°Ú½À´Ï±î? (RÅ°¸¦ ´­·¯ Àç½ÃÀÛ)");
-
-            // °£´ÜÇÑ Å° ÀÔ·Â ´ë±â (ÀÓ½Ã)
-            while (!Input.GetKeyDown(KeyCode.R))
-            {
-                yield return null;
-            }
-
-            RestartGame();
-        }
-
-        /// <summary>
-        /// ÇöÀç °ÔÀÓÀÌ ÇÃ·¹ÀÌ °¡´ÉÇÑ »óÅÂÀÎÁö È®ÀÎ
+        /// ê²Œì„ í”Œë ˆì´ ê°€ëŠ¥ ì—¬ë¶€ í™•ì¸
+        /// ê²Œì„ì´ ì¢…ë£Œë˜ì§€ ì•Šì•˜ê³  HPê°€ ë‚¨ì•„ìˆëŠ”ì§€ ì²´í¬
         /// </summary>
         public bool CanPlayGame()
         {
