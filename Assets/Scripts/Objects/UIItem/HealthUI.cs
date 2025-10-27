@@ -1,53 +1,53 @@
+using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using DG.Tweening;
 using Objects;
 using Manager;
-using System.Collections;
 
 namespace Objects
 {
     /// <summary>
-    /// Ã¼·Â UI Ç¥½Ã ¹× ¾Ö´Ï¸ŞÀÌ¼ÇÀ» ´ã´çÇÏ´Â ÄÄÆ÷³ÍÆ®
-    /// ImageÀÇ fillAmount¸¦ »ç¿ëÇÏ¿© Ã¼·Â¹Ù¸¦ Ç¥Çö
-    /// HealthManagerÀÇ ÀÌº¥Æ®¸¦ ±¸µ¶ÇÏ¿© UI¸¦ ¾÷µ¥ÀÌÆ®
+    /// ì²´ë ¥ UI í‘œì‹œ ë° ì• ë‹ˆë©”ì´ì…˜ì„ ë‹´ë‹¹í•˜ëŠ” ì»´í¬ë„ŒíŠ¸
+    /// Imageì˜ fillAmountë¥¼ ì‚¬ìš©í•˜ì—¬ ì²´ë ¥ë°”ë¥¼ í‘œì‹œ
+    /// HealthManagerì˜ ì´ë²¤íŠ¸ë¥¼ êµ¬ë…í•˜ì—¬ UIë¥¼ ì—…ë°ì´íŠ¸
     /// </summary>
     public class HealthUI : MonoBehaviour
     {
-        [Header("ÇÃ·¹ÀÌ¾î HP UI")]
+        #region Fields and Properties
+        [Header("í”Œë ˆì´ì–´ HP UI")]
         [SerializeField] private Image playerHealthFill;
         [SerializeField] private Image playerHealthBorder;
         [SerializeField] private TextMeshProUGUI playerHealthText;
         [SerializeField] private RectTransform playerHPBar;
 
-        [Header("»ó´ë HP UI")]
+        [Header("ìƒëŒ€ HP UI")]
         [SerializeField] private Image opponentHealthFill;
         [SerializeField] private Image opponentHealthBorder;
         [SerializeField] private TextMeshProUGUI opponentHealthText;
         [SerializeField] private RectTransform opponentHPBar;
 
-        [Header("¾Ö´Ï¸ŞÀÌ¼Ç ¼³Á¤")]
+        [Header("ì• ë‹ˆë©”ì´ì…˜ ì„¤ì •")]
         [SerializeField] private float hpBarAnimDuration = 1.2f;
         [SerializeField] private float damageShakeDuration = 0.3f;
         [SerializeField] private float damageShakeStrength = 10f;
         [SerializeField] private Color damageFlashColor = Color.red;
         [SerializeField] private Ease hpBarEaseType = Ease.OutCubic;
 
-        [Header("±Û·Î¿ì È¿°ú ¼³Á¤")]
+        [Header("ê¸€ë¡œìš° íš¨ê³¼ ì„¤ì •")]
         [SerializeField] private Color borderGlowColor = Color.yellow;
         [SerializeField] private float glowDuration = 0.8f;
         [SerializeField] private float glowIntensity = 1.5f;
         [SerializeField] private int glowPulseCount = 2;
 
-        [Header("µğ¹ö±× ¼³Á¤")]
-        [SerializeField] private bool enableDebugLog = false;
-
-        // ¿øº» »ö»ó ÀúÀå¿ë
+        // ì›ë³¸ ìƒ‰ìƒ ì €ì¥ìš©
         private Color originalPlayerFillColor;
         private Color originalOpponentFillColor;
         private Color originalPlayerBorderColor;
         private Color originalOpponentBorderColor;
+        #endregion
 
         #region Unity Lifecycle
         private void Start()
@@ -64,30 +64,27 @@ namespace Objects
 
         #region Initialization
         /// <summary>
-        /// UI ÃÊ±âÈ­
+        /// UI ì´ˆê¸°í™”
         /// </summary>
         private void InitializeUI()
         {
-            // Fill Amount ÃÊ±â ¼³Á¤ (1.0 = 100% Ã¼·Â)
+            // Fill Amount ì´ˆê¸° ì„¤ì • (1.0 = 100% ì²´ë ¥)
             if (playerHealthFill != null)
                 playerHealthFill.fillAmount = 1.0f;
 
             if (opponentHealthFill != null)
                 opponentHealthFill.fillAmount = 1.0f;
 
-            // ¿øº» »ö»ó ÀúÀå
+            // ì›ë³¸ ìƒ‰ìƒ ì €ì¥
             StoreOriginalColors();
 
-            // ÃÊ±â ÅØ½ºÆ® ¼³Á¤
+            // ì´ˆê¸° í…ìŠ¤íŠ¸ ì„¤ì •
             UpdateHealthText(CardZone.OwnerType.Player);
             UpdateHealthText(CardZone.OwnerType.Opponent);
-
-            if (enableDebugLog)
-                Debug.Log("[HealthUI] UI ÃÊ±âÈ­ ¿Ï·á");
         }
 
         /// <summary>
-        /// ¿øº» »ö»ó ÀúÀå
+        /// ì›ë³¸ ìƒ‰ìƒ ì €ì¥
         /// </summary>
         private void StoreOriginalColors()
         {
@@ -107,7 +104,7 @@ namespace Objects
 
         #region Event Subscription
         /// <summary>
-        /// HealthManager ÀÌº¥Æ® ±¸µ¶
+        /// HealthManager ì´ë²¤íŠ¸ êµ¬ë…
         /// </summary>
         private void SubscribeToEvents()
         {
@@ -116,7 +113,7 @@ namespace Objects
         }
 
         /// <summary>
-        /// HealthManager ÀÌº¥Æ® ±¸µ¶ ÇØÁ¦
+        /// HealthManager ì´ë²¤íŠ¸ êµ¬ë… í•´ì œ
         /// </summary>
         private void UnsubscribeFromEvents()
         {
@@ -127,23 +124,17 @@ namespace Objects
 
         #region Event Handlers
         /// <summary>
-        /// Ã¼·Â º¯°æ ÀÌº¥Æ® Ã³¸®
+        /// ì²´ë ¥ ë³€ê²½ ì´ë²¤íŠ¸ ì²˜ë¦¬
         /// </summary>
-        /// <param name="player">Ã¼·ÂÀÌ º¯°æµÈ ÇÃ·¹ÀÌ¾î</param>
-        /// <param name="oldHP">ÀÌÀü Ã¼·Â</param>
-        /// <param name="newHP">»õ·Î¿î Ã¼·Â</param>
         private void OnHealthChanged(CardZone.OwnerType player, int oldHP, int newHP)
         {
-            if (enableDebugLog)
-                Debug.Log($"[HealthUI] {player} Ã¼·Â º¯°æ: {oldHP} ¡æ {newHP}");
-
-            // HP ¹Ù ¾Ö´Ï¸ŞÀÌ¼Ç
+            // HP ë°” ì• ë‹ˆë©”ì´ì…˜
             AnimateHealthBar(player, newHP);
 
-            // ÅØ½ºÆ® ¾÷µ¥ÀÌÆ®
+            // í…ìŠ¤íŠ¸ ì—…ë°ì´íŠ¸
             UpdateHealthText(player);
 
-            // µ¥¹ÌÁö¸¦ ¹Ş¾Ò´Ù¸é µ¥¹ÌÁö ÀÌÆåÆ® Àç»ı
+            // ë°ë¯¸ì§€ë¥¼ ë°›ì•˜ë‹¤ë©´ ë°ë¯¸ì§€ ì´í™íŠ¸ ì¬ìƒ
             if (newHP < oldHP)
             {
                 PlayDamageEffect(player);
@@ -151,33 +142,29 @@ namespace Objects
         }
 
         /// <summary>
-        /// ÇÃ·¹ÀÌ¾î ÆĞ¹è ÀÌº¥Æ® Ã³¸®
+        /// í”Œë ˆì´ì–´ íŒ¨ë°° ì´ë²¤íŠ¸ ì²˜ë¦¬
         /// </summary>
-        /// <param name="defeatedPlayer">ÆĞ¹èÇÑ ÇÃ·¹ÀÌ¾î</param>
         private void OnPlayerDefeated(CardZone.OwnerType defeatedPlayer)
         {
-            if (enableDebugLog)
-                Debug.Log($"[HealthUI] {defeatedPlayer} ÆĞ¹è Ã³¸®");
-
-            // ÆĞ¹è ÀÌÆåÆ® Àç»ı
+            // íŒ¨ë°° ì´í™íŠ¸ ì¬ìƒ
             PlayDefeatEffect(defeatedPlayer);
 
-            // ÇÙ½É: HP ¹Ù ¾Ö´Ï¸ŞÀÌ¼ÇÀÌ ¿Ï·áµÉ ¶§±îÁö ´ë±â ÈÄ °ÔÀÓ Á¾·á
+            // HP ë°” ì• ë‹ˆë©”ì´ì…˜ì´ ì™„ë£Œë  ë•Œê¹Œì§€ ëŒ€ê¸° í›„ ê²Œì„ ì¢…ë£Œ
             StartCoroutine(WaitForAnimationThenEndGame(defeatedPlayer));
         }
 
         /// <summary>
-        /// HP ¹Ù ¾Ö´Ï¸ŞÀÌ¼Ç ¿Ï·á ´ë±â ÈÄ °ÔÀÓ Á¾·á
+        /// HP ë°” ì• ë‹ˆë©”ì´ì…˜ ì™„ë£Œ ëŒ€ê¸° í›„ ê²Œì„ ì¢…ë£Œ
         /// </summary>
         private IEnumerator WaitForAnimationThenEndGame(CardZone.OwnerType defeatedPlayer)
         {
-            // HP ¹Ù ¾Ö´Ï¸ŞÀÌ¼Ç ½Ã°£¸¸Å­ ´ë±â
+            // HP ë°” ì• ë‹ˆë©”ì´ì…˜ ì‹œê°„ë§Œí¼ ëŒ€ê¸°
             yield return new WaitForSeconds(hpBarAnimDuration);
 
-            // Ãß°¡·Î ÆĞ¹è ÀÌÆåÆ® ½Ã°£¸¸Å­ ´ë±â
+            // ì¶”ê°€ì ì¸ íŒ¨ë°° ì´í™íŠ¸ ì‹œê°„ë§Œí¼ ëŒ€ê¸°
             yield return new WaitForSeconds(0.5f);
 
-            // ÀÌÁ¦ °ÔÀÓ Á¾·á Ã³¸®
+            // ê²Œì„ ì¢…ë£Œ ë¡œì§ ì²˜ë¦¬
             if (InGameManager.Instance != null)
             {
                 InGameManager.Instance.OnGameEnd(defeatedPlayer);
@@ -187,47 +174,36 @@ namespace Objects
 
         #region UI Updates
         /// <summary>
-        /// HP ¹Ù ¾Ö´Ï¸ŞÀÌ¼Ç (Image.fillAmount »ç¿ë)
+        /// HP ë°” ì• ë‹ˆë©”ì´ì…˜ (Image.fillAmount ë³´ê°„)
         /// </summary>
-        /// <param name="player">¾÷µ¥ÀÌÆ®ÇÒ ÇÃ·¹ÀÌ¾î</param>
-        /// <param name="newHP">»õ·Î¿î Ã¼·Â</param>
         private void AnimateHealthBar(CardZone.OwnerType player, int newHP)
         {
             Image targetFillImage = GetFillImageByPlayer(player);
             if (targetFillImage == null) return;
 
-            // Ã¼·Â ºñÀ² °è»ê (0.0 ~ 1.0)
+            // ì²´ë ¥ ë¹„ìœ¨ ê³„ì‚° (0.0 ~ 1.0)
             float targetFillAmount = (float)newHP / HealthManager.Instance.GetMaxHP();
             float currentFillAmount = targetFillImage.fillAmount;
 
-            // ÀÌ¹Ì °°Àº °ªÀÌ¸é ¾Ö´Ï¸ŞÀÌ¼Ç ½ºÅµ
+            // ì´ë¯¸ ê°™ì€ ê°’ì´ë©´ ì• ë‹ˆë©”ì´ì…˜ ìŠ¤í‚µ
             if (Mathf.Approximately(currentFillAmount, targetFillAmount))
                 return;
 
-            // Ã¼·ÂÀÌ °¨¼ÒÇÏ´Â °æ¿ì ´õ ºÎµå·¯¿î ¾Ö´Ï¸ŞÀÌ¼Ç
+            // ì²´ë ¥ì´ ê°ì†Œí•˜ëŠ” ê²½ìš° ë” ëŠë¦¬ê³  ë¶€ë“œëŸ¬ìš´ ì• ë‹ˆë©”ì´ì…˜
             bool isDecreasing = targetFillAmount < currentFillAmount;
 
-            // °¨¼Ò ½Ã ´õ ±ä ½Ã°£°ú ºÎµå·¯¿î ÀÌÂ¡ Àû¿ë
+            // ê°ì†Œ í•  ë•Œ ë” ê¸´ ì‹œê°„ê³¼ ëŠë¦¬ê³  ë¶€ë“œëŸ¬ìš´ ê³¡ì„  ì‚¬ìš©
             float animDuration = isDecreasing ? hpBarAnimDuration : hpBarAnimDuration * 0.7f;
             Ease easeType = isDecreasing ? hpBarEaseType : Ease.OutQuart;
 
-            // DOTweenÀ¸·Î ºÎµå·¯¿î fillAmount ¾Ö´Ï¸ŞÀÌ¼Ç
+            // DOTweenìœ¼ë¡œ ë¶€ë“œëŸ¬ìš´ fillAmount ì• ë‹ˆë©”ì´ì…˜
             targetFillImage.DOFillAmount(targetFillAmount, animDuration)
-                .SetEase(easeType)
-                .OnStart(() => {
-                    if (enableDebugLog)
-                        Debug.Log($"[HealthUI] {player} HP ¹Ù ¾Ö´Ï¸ŞÀÌ¼Ç ½ÃÀÛ: {currentFillAmount:F2} ¡æ {targetFillAmount:F2}");
-                })
-                .OnComplete(() => {
-                    if (enableDebugLog)
-                        Debug.Log($"[HealthUI] {player} HP ¹Ù ¾Ö´Ï¸ŞÀÌ¼Ç ¿Ï·á");
-                });
+                .SetEase(easeType);
         }
 
         /// <summary>
-        /// Ã¼·Â ÅØ½ºÆ® ¾÷µ¥ÀÌÆ®
+        /// ì²´ë ¥ í…ìŠ¤íŠ¸ ì—…ë°ì´íŠ¸
         /// </summary>
-        /// <param name="player">¾÷µ¥ÀÌÆ®ÇÒ ÇÃ·¹ÀÌ¾î</param>
         private void UpdateHealthText(CardZone.OwnerType player)
         {
             TextMeshProUGUI targetText = GetTextByPlayer(player);
@@ -242,28 +218,26 @@ namespace Objects
 
         #region Damage Effects
         /// <summary>
-        /// µ¥¹ÌÁö ÀÌÆåÆ® Àç»ı
+        /// ë°ë¯¸ì§€ ì´í™íŠ¸ ì¬ìƒ
         /// </summary>
-        /// <param name="player">µ¥¹ÌÁö¸¦ ¹ŞÀº ÇÃ·¹ÀÌ¾î</param>
         private void PlayDamageEffect(CardZone.OwnerType player)
         {
             RectTransform targetBar = GetBarByPlayer(player);
             if (targetBar == null) return;
 
-            // Èçµé¸² È¿°ú
+            // í”ë“¤ë¦¼ íš¨ê³¼
             targetBar.DOShakePosition(damageShakeDuration, damageShakeStrength, 10, 90f, false, true);
 
-            // »ö»ó ÇÃ·¡½Ã È¿°ú
+            // ìƒ‰ìƒ í”Œë˜ì‹œ íš¨ê³¼
             PlayColorFlash(player);
 
-            // Å×µÎ¸® ±Û·Î¿ì È¿°ú (»õ·Î Ãß°¡)
+            // í…Œë‘ë¦¬ ê¸€ë¡œìš° íš¨ê³¼
             PlayBorderGlow(player);
         }
 
         /// <summary>
-        /// »ö»ó ÇÃ·¡½Ã È¿°ú
+        /// ìƒ‰ìƒ í”Œë˜ì‹œ íš¨ê³¼
         /// </summary>
-        /// <param name="player">ÀÌÆåÆ®¸¦ Àû¿ëÇÒ ÇÃ·¹ÀÌ¾î</param>
         private void PlayColorFlash(CardZone.OwnerType player)
         {
             Image targetFillImage = GetFillImageByPlayer(player);
@@ -273,21 +247,20 @@ namespace Objects
                 ? originalPlayerFillColor
                 : originalOpponentFillColor;
 
-            // HP ¹Ù ¾Ö´Ï¸ŞÀÌ¼Ç°ú µ¿½Ã¿¡ ½ÇÇàµÇµµ·Ï Å¸ÀÌ¹Ö Á¶Á¤
+            // HP ë°” ì• ë‹ˆë©”ì´ì…˜ê³¼ ë™ì‹œì— ì§„í–‰ë˜ë„ë¡ íƒ€ì´ë° ì¡°ì •
             Sequence flashSequence = DOTween.Sequence();
 
-            // Áï½Ã µ¥¹ÌÁö »ö»óÀ¸·Î º¯°æ
+            // ë¹ ë¥¸ ì†ë„ë¡œ ë°ë¯¸ì§€ ìƒ‰ìƒìœ¼ë¡œ ë³€ê²½
             flashSequence.Append(targetFillImage.DOColor(damageFlashColor, 0.15f));
 
-            // HP ¹Ù ¾Ö´Ï¸ŞÀÌ¼Ç°ú ÇÔ²² ¼­¼­È÷ ¿ø·¡ »ö»óÀ¸·Î º¹±Í
+            // HP ë°” ì• ë‹ˆë©”ì´ì…˜ê³¼ í•¨ê»˜ ì„œì„œíˆ ì›ë˜ ìƒ‰ìƒìœ¼ë¡œ ë³µê·€
             flashSequence.Append(targetFillImage.DOColor(originalColor, hpBarAnimDuration * 0.8f)
                 .SetEase(Ease.OutCubic));
         }
 
         /// <summary>
-        /// Å×µÎ¸® ±Û·Î¿ì È¿°ú
+        /// í…Œë‘ë¦¬ ê¸€ë¡œìš° íš¨ê³¼
         /// </summary>
-        /// <param name="player">±Û·Î¿ì È¿°ú¸¦ Àû¿ëÇÒ ÇÃ·¹ÀÌ¾î</param>
         private void PlayBorderGlow(CardZone.OwnerType player)
         {
             Image targetBorderImage = GetBorderImageByPlayer(player);
@@ -297,78 +270,59 @@ namespace Objects
                 ? originalPlayerBorderColor
                 : originalOpponentBorderColor;
 
-            // ±Û·Î¿ì »ö»ó ÁØºñ (¿øº» »ö»ó + ±Û·Î¿ì »ö»ó È¥ÇÕ)
+            // ê¸€ë¡œìš° ìƒ‰ìƒ ì¤€ë¹„ (ì›ë³¸ ìƒ‰ìƒ + ê¸€ë¡œìš° ìƒ‰ìƒ í˜¼í•©)
             Color glowColor = Color.Lerp(originalBorderColor, borderGlowColor, glowIntensity);
-            glowColor.a = Mathf.Clamp01(originalBorderColor.a + 0.8f); // Åõ¸íµµ Áõ°¡
+            glowColor.a = Mathf.Clamp01(originalBorderColor.a + 0.8f);
 
-            // ±Û·Î¿ì ½ÃÄö½º »ı¼º
+            // ê¸€ë¡œìš° í„ìŠ¤ ì‹œí€€ìŠ¤ ìƒì„±
             Sequence glowSequence = DOTween.Sequence();
 
-            // ÆŞ½º È¿°ú (¿©·¯ ¹ø ±ôºıÀÌ±â)
+            // í„ìŠ¤ íš¨ê³¼ (ì—¬ëŸ¬ ë²ˆ ê¹œë¹¡ì´ê¸°)
             for (int i = 0; i < glowPulseCount; i++)
             {
-                // ±Û·Î¿ì »ö»óÀ¸·Î ºü¸£°Ô º¯°æ
+                // ê¸€ë¡œìš° ìƒ‰ìƒìœ¼ë¡œ ë¹ ë¥´ê²Œ ë³€ê²½
                 glowSequence.Append(targetBorderImage.DOColor(glowColor, glowDuration / (glowPulseCount * 4))
                     .SetEase(Ease.OutQuad));
 
-                // ¿øº» »ö»óÀ¸·Î ºü¸£°Ô º¹±Í
+                // ì›ë³¸ ìƒ‰ìƒìœ¼ë¡œ ë¹ ë¥´ê²Œ ë³µê·€
                 glowSequence.Append(targetBorderImage.DOColor(originalBorderColor, glowDuration / (glowPulseCount * 4))
                     .SetEase(Ease.InQuad));
             }
 
-            // ÃÖÁ¾ÀûÀ¸·Î ¿øº» »ö»óÀ¸·Î ¿ÏÀüÈ÷ º¹±Í
+            // ìµœì¢…ì ìœ¼ë¡œ ì›ë³¸ ìƒ‰ìƒìœ¼ë¡œ ë³µê·€ í™•ì •
             glowSequence.Append(targetBorderImage.DOColor(originalBorderColor, glowDuration / 4)
                 .SetEase(Ease.OutCubic));
-
-            if (enableDebugLog)
-                Debug.Log($"[HealthUI] {player} Å×µÎ¸® ±Û·Î¿ì È¿°ú Àç»ı ({glowPulseCount}È¸ ÆŞ½º)");
         }
 
         /// <summary>
-        /// ÆĞ¹è ÀÌÆåÆ® Àç»ı
+        /// íŒ¨ë°° ì´í™íŠ¸ ì¬ìƒ
         /// </summary>
-        /// <param name="player">ÆĞ¹èÇÑ ÇÃ·¹ÀÌ¾î</param>
         private void PlayDefeatEffect(CardZone.OwnerType player)
         {
             Image targetFillImage = GetFillImageByPlayer(player);
-            RectTransform targetBar = GetBarByPlayer(player);
-
             if (targetFillImage != null)
             {
-                // ÆĞ¹è ½Ã ¾îµÎ¿î »ö»óÀ¸·Î º¯°æ
                 targetFillImage.DOColor(Color.black, 0.5f);
             }
         }
         #endregion
 
         #region Utility Methods
-        /// <summary>
-        /// ÇÃ·¹ÀÌ¾îº° Fill Image ¹İÈ¯
-        /// </summary>
         private Image GetFillImageByPlayer(CardZone.OwnerType player)
         {
             return player == CardZone.OwnerType.Player ? playerHealthFill : opponentHealthFill;
         }
 
-        /// <summary>
-        /// ÇÃ·¹ÀÌ¾îº° Border Image ¹İÈ¯
-        /// </summary>
         private Image GetBorderImageByPlayer(CardZone.OwnerType player)
         {
             return player == CardZone.OwnerType.Player ? playerHealthBorder : opponentHealthBorder;
         }
 
-        /// <summary>
-        /// ÇÃ·¹ÀÌ¾îº° ÅØ½ºÆ® ¹İÈ¯
-        /// </summary>
         private TextMeshProUGUI GetTextByPlayer(CardZone.OwnerType player)
         {
             return player == CardZone.OwnerType.Player ? playerHealthText : opponentHealthText;
         }
 
-        /// <summary>
-        /// ÇÃ·¹ÀÌ¾îº° HP ¹Ù RectTransform ¹İÈ¯
-        /// </summary>
         private RectTransform GetBarByPlayer(CardZone.OwnerType player)
         {
             return player == CardZone.OwnerType.Player ? playerHPBar : opponentHPBar;
@@ -377,9 +331,8 @@ namespace Objects
 
         #region Public Methods
         /// <summary>
-        /// Ã¼·Â¹Ù¸¦ ¼öµ¿À¸·Î ¾÷µ¥ÀÌÆ® (¿ÜºÎ¿¡¼­ È£Ãâ °¡´É)
+        /// ì²´ë ¥ë°”ë¥¼ ê°•ì œë¡œ ì—…ë°ì´íŠ¸ (ì™¸ë¶€ì—ì„œ í˜¸ì¶œ ê°€ëŠ¥)
         /// </summary>
-        /// <param name="player">¾÷µ¥ÀÌÆ®ÇÒ ÇÃ·¹ÀÌ¾î</param>
         public void RefreshHealthUI(CardZone.OwnerType player)
         {
             if (HealthManager.Instance == null) return;
@@ -390,126 +343,20 @@ namespace Objects
         }
 
         /// <summary>
-        /// ¸ğµç Ã¼·Â UI »õ·Î°íÄ§
+        /// ëª¨ë“  ì²´ë ¥ UI ìƒˆë¡œê³ ì¹¨
         /// </summary>
         public void RefreshAllHealthUI()
         {
             RefreshHealthUI(CardZone.OwnerType.Player);
             RefreshHealthUI(CardZone.OwnerType.Opponent);
         }
-        #endregion
-
-        #region Debug Methods
-        /// <summary>
-        /// µğ¹ö±×¿ë Ã¼·Â º¯°æ Å×½ºÆ®
-        /// </summary>
-        [System.Diagnostics.Conditional("UNITY_EDITOR")]
-        public void DebugTestDamage(CardZone.OwnerType player, int damage)
-        {
-            if (HealthManager.Instance != null)
-            {
-                HealthManager.Instance.ApplyDamage(damage, player);
-            }
-        }
 
         /// <summary>
-        /// µğ¹ö±×¿ë Fill Amount Á÷Á¢ ¼³Á¤
-        /// </summary>
-        [System.Diagnostics.Conditional("UNITY_EDITOR")]
-        public void DebugSetFillAmount(CardZone.OwnerType player, float fillAmount)
-        {
-            Image targetFillImage = GetFillImageByPlayer(player);
-            if (targetFillImage != null)
-            {
-                targetFillImage.fillAmount = Mathf.Clamp01(fillAmount);
-                Debug.Log($"[HealthUI] DEBUG: {player} Fill Amount ¼³Á¤ ¡æ {fillAmount}");
-            }
-        }
-
-        /// <summary>
-        /// µğ¹ö±×¿ë ¾Ö´Ï¸ŞÀÌ¼Ç Å×½ºÆ® (Á¡ÁøÀû µ¥¹ÌÁö)
-        /// </summary>
-        [System.Diagnostics.Conditional("UNITY_EDITOR")]
-        public void DebugTestGradualDamage(CardZone.OwnerType player, int totalDamage, int steps)
-        {
-            if (HealthManager.Instance == null) return;
-
-            StartCoroutine(DebugGradualDamageCoroutine(player, totalDamage, steps));
-        }
-
-        /// <summary>
-        /// Á¡ÁøÀû µ¥¹ÌÁö Å×½ºÆ® ÄÚ·çÆ¾
-        /// </summary>
-        private System.Collections.IEnumerator DebugGradualDamageCoroutine(CardZone.OwnerType player, int totalDamage, int steps)
-        {
-            int damagePerStep = Mathf.Max(1, totalDamage / steps);
-
-            for (int i = 0; i < steps; i++)
-            {
-                HealthManager.Instance.ApplyDamage(damagePerStep, player);
-                yield return new WaitForSeconds(0.5f);
-            }
-
-            Debug.Log($"[HealthUI] DEBUG: {player}¿¡°Ô {steps}´Ü°è·Î ÃÑ {totalDamage} µ¥¹ÌÁö Å×½ºÆ® ¿Ï·á");
-        }
-
-        /// <summary>
-        /// ¾Ö´Ï¸ŞÀÌ¼Ç ¼³Á¤ ·±Å¸ÀÓ º¯°æ (Å×½ºÆ®¿ë)
-        /// </summary>
-        [System.Diagnostics.Conditional("UNITY_EDITOR")]
-        public void DebugSetAnimationSettings(float duration, Ease easeType)
-        {
-            hpBarAnimDuration = duration;
-            hpBarEaseType = easeType;
-            Debug.Log($"[HealthUI] DEBUG: ¾Ö´Ï¸ŞÀÌ¼Ç ¼³Á¤ º¯°æ - ½Ã°£: {duration}ÃÊ, ÀÌÂ¡: {easeType}");
-        }
-
-        /// <summary>
-        /// µğ¹ö±×¿ë ±Û·Î¿ì È¿°ú Å×½ºÆ®
-        /// </summary>
-        [System.Diagnostics.Conditional("UNITY_EDITOR")]
-        public void DebugTestGlowEffect(CardZone.OwnerType player)
-        {
-            PlayBorderGlow(player);
-            Debug.Log($"[HealthUI] DEBUG: {player} ±Û·Î¿ì È¿°ú Å×½ºÆ®");
-        }
-
-        /// <summary>
-        /// µğ¹ö±×¿ë ÀüÃ¼ µ¥¹ÌÁö ÀÌÆåÆ® Å×½ºÆ®
-        /// </summary>
-        [System.Diagnostics.Conditional("UNITY_EDITOR")]
-        public void DebugTestFullDamageEffect(CardZone.OwnerType player)
-        {
-            PlayDamageEffect(player);
-            Debug.Log($"[HealthUI] DEBUG: {player} ÀüÃ¼ µ¥¹ÌÁö ÀÌÆåÆ® Å×½ºÆ®");
-        }
-
-        /// <summary>
-        /// ±Û·Î¿ì ¼³Á¤ ·±Å¸ÀÓ º¯°æ (Å×½ºÆ®¿ë)
-        /// </summary>
-        [System.Diagnostics.Conditional("UNITY_EDITOR")]
-        public void DebugSetGlowSettings(Color glowColor, float duration, float intensity, int pulseCount)
-        {
-            borderGlowColor = glowColor;
-            glowDuration = duration;
-            glowIntensity = intensity;
-            glowPulseCount = pulseCount;
-            Debug.Log($"[HealthUI] DEBUG: ±Û·Î¿ì ¼³Á¤ º¯°æ - »ö»ó: {glowColor}, ½Ã°£: {duration}, °­µµ: {intensity}, ÆŞ½º: {pulseCount}");
-        }
-
-        /// <summary>
-        /// µğ¹ö±× ·Î±× È°¼ºÈ­/ºñÈ°¼ºÈ­
-        /// </summary>
-        public void SetDebugMode(bool enable) => enableDebugLog = enable;
-        #endregion
-
-        #region Public Methods
-        /// <summary>
-        /// UI ¿ÏÀü ÃÊ±âÈ­ (°ÔÀÓ Àç½ÃÀÛ ½Ã »ç¿ë)
+        /// UI ì™„ì „ ì´ˆê¸°í™” (ê²Œì„ ì¬ì‹œì‘ ì‹œ ì‚¬ìš©)
         /// </summary>
         public void ResetUI()
         {
-            // ÁøÇà ÁßÀÎ ¸ğµç DOTween ¾Ö´Ï¸ŞÀÌ¼Ç ÁßÁö
+            // ì§„í–‰ ì¤‘ì¸ ëª¨ë“  DOTween ì• ë‹ˆë©”ì´ì…˜ ì •ì§€
             if (playerHealthFill != null)
                 playerHealthFill.DOKill();
             if (opponentHealthFill != null)
@@ -523,13 +370,13 @@ namespace Objects
             if (opponentHPBar != null)
                 opponentHPBar.DOKill();
 
-            // Fill Amount ÃÊ±âÈ­
+            // Fill Amount ì´ˆê¸°í™”
             if (playerHealthFill != null)
                 playerHealthFill.fillAmount = 1.0f;
             if (opponentHealthFill != null)
                 opponentHealthFill.fillAmount = 1.0f;
 
-            // »ö»ó ÃÊ±âÈ­
+            // ìƒ‰ìƒ ì´ˆê¸°í™”
             if (playerHealthFill != null)
                 playerHealthFill.color = originalPlayerFillColor;
             if (opponentHealthFill != null)
@@ -539,12 +386,9 @@ namespace Objects
             if (opponentHealthBorder != null)
                 opponentHealthBorder.color = originalOpponentBorderColor;
 
-            // ÅØ½ºÆ® ¾÷µ¥ÀÌÆ®
+            // í…ìŠ¤íŠ¸ ì—…ë°ì´íŠ¸
             UpdateHealthText(CardZone.OwnerType.Player);
             UpdateHealthText(CardZone.OwnerType.Opponent);
-
-            if (enableDebugLog)
-                Debug.Log("[HealthUI] UI ¿ÏÀü ÃÊ±âÈ­ ¿Ï·á");
         }
         #endregion
     }

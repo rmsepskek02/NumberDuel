@@ -5,56 +5,59 @@ using UnityEngine.InputSystem;
 namespace Objects
 {
     /// <summary>
-    /// ¸¶¿ì½º(¶Ç´Â ÅÍÄ¡) ÀÔ·ÂÀ» °¨ÁöÇÏ¿© Ä«µåÀÇ ÀÎÅÍ·¢¼Ç »óÅÂ¸¦ °ü¸®ÇÏ´Â ÄÄÆ÷³ÍÆ®
-    /// - Hover ÁøÀÔ/ÀÌÅ» °¨Áö
-    /// - Å¬¸¯ ¹× Åä±Û µ¿ÀÛ
-    /// - µå·¡±× ½ÃÀÛ/Á¾·á °¨Áö ¹× ¿¬µ¿
-    /// - µå·¡±× Áß È¸Àü Á¦ÇÑ
-    /// - ¹°¸®Àû ÀÎÅÍ·¢¼ÇÀº Ç×»ó Çã¿ë, ÇÁ·Î¼¼½º Â÷´ÜÀº Card.cs¿¡¼­ Ã³¸®
-    /// CardMotion µî¿¡¼­ ÀÌº¥Æ® ±¸µ¶ÇÏ¿© ½Ã°¢Àû ¿¬Ãâ Ã³¸®
+    /// ë§ˆìš°ìŠ¤(ë˜ëŠ” í„°ì¹˜) ì…ë ¥ì„ ê°ì§€í•˜ì—¬ ì¹´ë“œì˜ ì¸í„°ë™ì…˜ ìƒíƒœë¥¼ ê´€ë¦¬í•˜ëŠ” ì»´í¬ë„ŒíŠ¸
+    /// - Hover ì§„ì…/íƒˆì¶œ ê°ì§€
+    /// - í´ë¦­ ë° í† ê¸€ ê°ì§€
+    /// - ë“œë˜ê·¸ ì‹œì‘/ì¢…ë£Œ ê°ì§€ ë° ì¶”ì 
+    /// - ë“œë˜ê·¸ ì¤‘ íšŒì „ ì œì–´
+    /// - ì‹¤ì œë¡œ ì¸í„°ë™ì…˜ì€ í•­ìƒ ê°€ëŠ¥, í”„ë¡œì„¸ìŠ¤ ì¤‘ì¸ì§€ëŠ” Card.csì—ì„œ ì²˜ë¦¬
+    /// CardMotion ë“±ê³¼ ì´ë²¤íŠ¸ ì—°ë™í•˜ì—¬ ì‹œê°ì  íš¨ê³¼ ì²˜ë¦¬
     /// </summary>
     public class ObjectMouseEvent : MonoBehaviour
     {
+        #region Fields and Properties
         [Header("Input Settings")]
-        [Tooltip("ÀÔ·Â Ã³¸®¸¦ À§ÇÑ ¸ŞÀÎ Ä«¸Ş¶ó")]
+        [Tooltip("ì…ë ¥ ì²˜ë¦¬ì— ì‚¬ìš© ë˜ëŠ” ì¹´ë©”ë¼")]
         [SerializeField] private Camera mainCamera;
 
-        [Tooltip("µå·¡±×·Î ÆÇÁ¤ÇÒ ÃÖ¼Ò °Å¸®")]
+        [Tooltip("ë“œë˜ê·¸ë¡œ ê°„ì£¼ë  ìµœì†Œ ê±°ë¦¬")]
         [SerializeField] private float dragThreshold = 5f;
 
         [Header("Interaction Control")]
-        [Tooltip("µå·¡±× °¡´É ¿©ºÎ")]
+        [Tooltip("ë“œë˜ê·¸ ê°€ëŠ¥ ì—¬ë¶€")]
         public bool isDraggable = true;
 
-        [Tooltip("Å¬¸¯ °¡´É ¿©ºÎ")]
+        [Tooltip("í´ë¦­ ê°€ëŠ¥ ì—¬ë¶€")]
         public bool isClickable = true;
 
         [Header("Events")]
-        public UnityAction OnHoverEnter;              // Hover ÁøÀÔ ½Ã È£Ãâ
-        public UnityAction OnHoverExit;               // Hover Á¾·á ½Ã È£Ãâ
-        public UnityAction OnClickPressed;            // Å¬¸¯ ½ÃÀÛ ½Ã È£Ãâ
-        public UnityAction OnClickReleased;           // Å¬¸¯ ³¡³µÀ» ¶§ È£Ãâ
-        public UnityAction OnBeginDrag;               // µå·¡±× ½ÃÀÛ ½Ã È£Ãâ
-        public UnityAction OnEndDrag;                 // µå·¡±× Á¾·á ½Ã È£Ãâ
-        public UnityAction<bool> OnToggleChanged;     // Å¬¸¯À¸·Î »óÅÂ Åä±Û ½Ã È£Ãâ (Åä±Û »óÅÂ Àü´Ş)
+        public UnityAction OnHoverEnter;              // Hover ì§„ì… ì‹œ í˜¸ì¶œ
+        public UnityAction OnHoverExit;               // Hover ì¢…ë£Œ ì‹œ í˜¸ì¶œ
+        public UnityAction OnClickPressed;            // í´ë¦­ ì‹œì‘ ì‹œ í˜¸ì¶œ
+        public UnityAction OnClickReleased;           // í´ë¦­ ë¦´ë¦¬ì¦ˆ ì‹œ í˜¸ì¶œ
+        public UnityAction OnBeginDrag;               // ë“œë˜ê·¸ ì‹œì‘ ì‹œ í˜¸ì¶œ
+        public UnityAction OnEndDrag;                 // ë“œë˜ê·¸ ì¢…ë£Œ ì‹œ í˜¸ì¶œ
+        public UnityAction<bool> OnToggleChanged;     // í´ë¦­ìœ¼ë¡œ í† ê¸€ ëª¨ë“œ ì‹œ í˜¸ì¶œ (íšŒì „ ì œì–´ ë“±ì—)
+
+        private bool isHovered;            // Hover ìƒíƒœ ì €ì¥
+        private bool isDragging;           // í˜„ì¬ ë“œë˜ê·¸ ì¤‘ì¸ì§€ ìƒíƒœ
+        private bool wasDragged;           // ì´ë²ˆ ë“œë˜ê·¸ë¡œ ì´ë™ë˜ì—ˆëŠ”ì§€ ì—¬ë¶€
+        private bool clickRequested;       // í´ë¦­ ì‹œì‘ í›„ Release ì‹œì— ë°œìƒë  ì—¬ë¶€
+        private bool isToggleOn;           // í´ë¦­ í† ê¸€ ìƒíƒœ
+        private bool interactionBlocked;   // ì™¸ë¶€ ì ê¸ˆì‹œ ìƒí˜¸ì‘ìš© ì°¨ë‹¨
+
+        private Vector2 dragStartPos;      // ë“œë˜ê·¸ ì‹œì‘ ì¢Œí‘œ
+
+        private DragHandler dragHandler;   // ì‹¤ì œ Transform ì´ë™ì„ ë‹´ë‹¹í•˜ëŠ” í•¸ë“¤ëŸ¬
+        private Transform rootTransform;   // ì¹´ë“œ ë£¨íŠ¸ (íšŒì „ ì²˜ë¦¬ìš©)
 
         /// <summary>
-        /// ÇöÀç ¸¶¿ì½º(¶Ç´Â ¼Õ°¡¶ô)°¡ Ä«µå À§¿¡ ÀÖ´ÂÁö ¿©ºÎ
+        /// í˜„ì¬ ë§ˆìš°ìŠ¤(ë˜ëŠ” í„°ì¹˜í¬ì¸íŠ¸)ê°€ ì¹´ë“œ ìœ„ì— ìˆëŠ”ì§€ ì—¬ë¶€
         /// </summary>
         public bool IsHovered => isHovered;
+        #endregion
 
-        private bool isHovered;            // Hover »óÅÂ ÃßÀû
-        private bool isDragging;           // ÇöÀç µå·¡±× ÁßÀÎÁö ¿©ºÎ
-        private bool wasDragged;           // ½ÇÁ¦ µå·¡±×·Î ÆÇÁ¤µÇ¾ú´ÂÁö ¿©ºÎ
-        private bool clickRequested;       // Å¬¸¯ ½ÃÀÛ ÈÄ Release ´ë±â ÁßÀÎÁö ¿©ºÎ
-        private bool isToggleOn;           // Å¬¸¯ Åä±Û »óÅÂ
-        private bool interactionBlocked;   // ¿ÜºÎ Á¦¾î·Î »óÈ£ÀÛ¿ë Â÷´Ü
-
-        private Vector2 dragStartPos;      // µå·¡±× ½ÃÀÛ ÁöÁ¡
-
-        private DragHandler dragHandler;   // ½ÇÁ¦ Transform ÀÌµ¿À» ´ã´çÇÏ´Â ÇÚµé·¯
-        private Transform rootTransform;   // Ä«µå ·çÆ® (È¸Àü Ã³¸®¿ë)
-
+        #region Unity Lifecycle
         private void Awake()
         {
             if (mainCamera == null)
@@ -63,7 +66,7 @@ namespace Objects
             rootTransform = transform.parent ?? transform;
             dragHandler = rootTransform.GetComponent<DragHandler>();
 
-            // DragHandler°¡ ¾øÀ¸¸é µå·¡±× ºÒ°¡´É Ã³¸®
+            // DragHandlerê°€ ì—†ìœ¼ë©´ ë“œë˜ê·¸ ë¶ˆê°€ëŠ¥ ì²˜ë¦¬
             if (dragHandler == null)
                 isDraggable = false;
         }
@@ -72,10 +75,10 @@ namespace Objects
         {
             Vector2 inputPos = GetInputPosition();
 
-            // Hover °¨Áö´Â Ç×»ó Ã³¸®
+            // Hover ê°ì§€ëŠ” í•­ìƒ ì²˜ë¦¬
             HandleHoverRaycast(inputPos);
 
-            // ¿ÜºÎ Â÷´Ü ½Ã¿¡¸¸ ÀÔ·Â Ã³¸® Áß´Ü (ÇÁ·Î¼¼½º Â÷´ÜÀº Card.cs¿¡¼­ Ã³¸®)
+            // ì™¸ë¶€ ì ê¸ˆ ìƒí™©ì—ì„  ì…ë ¥ ì²˜ë¦¬ ì¤‘ë‹¨ (í”„ë¡œì„¸ìŠ¤ ì¤‘ì¸ì§€ëŠ” Card.csì—ì„œ ì²˜ë¦¬)
             if (interactionBlocked) return;
 
             HandleInputPress(inputPos, GetInputPressed());
@@ -85,23 +88,25 @@ namespace Objects
 
         private void LateUpdate()
         {
-            // µå·¡±× ÁßÀÌ ¾Æ´Ï¸é Å¬¸¯ ¿äÃ» »óÅÂ ÃÊ±âÈ­
+            // ë“œë˜ê·¸ ì¤‘ì´ ì•„ë‹ˆë©´ í´ë¦­ ìš”ì²­ ìƒíƒœ ì´ˆê¸°í™”
             if (!isDragging)
                 clickRequested = false;
         }
+        #endregion
 
+        #region Hover Detection
         /// <summary>
-        /// Raycast¸¦ »ç¿ëÇØ ¸¶¿ì½º(ÅÍÄ¡)°¡ Ä«µå À§¿¡ ÀÖ´ÂÁö °¨Áö
-        /// Hover »óÅÂ ÀüÈ¯ ÀÌº¥Æ® ¹ß»ı
+        /// Raycastë¥¼ ì´ìš©í•´ ë§ˆìš°ìŠ¤(í„°ì¹˜)ê°€ ì¹´ë“œ ìœ„ì— ìˆëŠ”ì§€ ê°ì§€
+        /// Hover ìƒíƒœ ì „í™˜ ì´ë²¤íŠ¸ ë°œìƒ
         /// </summary>
         private void HandleHoverRaycast(Vector2 inputPos)
         {
             Ray ray = mainCamera.ScreenPointToRay(inputPos);
 
-            // Detector ·¹ÀÌ¾î Á¦¿ÜÇÑ ¸ğµç ·¹ÀÌ¾î ¸¶½ºÅ© ¸¸µé±â
+            // Detector ë ˆì´ì–´ ê°ì§€ëŠ” ì œì™¸ ë ˆì´ì–´ ë§ˆìŠ¤í¬ ì‚¬ìš©í•¨
             int detectorLayer = LayerMask.NameToLayer("Detector");
             int detectorLayerMask = 1 << detectorLayer;
-            int everythingExceptDetector = ~detectorLayerMask; // Detector¸¸ Á¦¿Ü!
+            int everythingExceptDetector = ~detectorLayerMask; // DetectorëŠ” ì œì™¸!
 
             if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, everythingExceptDetector))
             {
@@ -119,10 +124,12 @@ namespace Objects
                 }
             }
         }
+        #endregion
 
+        #region Input Handling
         /// <summary>
-        /// Å¬¸¯ ½ÃÀÛ Ã³¸®
-        /// Å¬¸¯ Á¶°Ç: Ä«µå À§ + Å¬¸¯ °¡´É ¼³Á¤
+        /// í´ë¦­ ì‹œì‘ ì²˜ë¦¬
+        /// í´ë¦­ ì¡°ê±´: ì¹´ë“œ ìœ„ + í´ë¦­ ê°€ëŠ¥ ìƒíƒœ
         /// </summary>
         private void HandleInputPress(Vector2 inputPos, bool pressed)
         {
@@ -137,8 +144,8 @@ namespace Objects
         }
 
         /// <summary>
-        /// µå·¡±× °Å¸® ÃøÁ¤ ¹× µå·¡±× ½ÃÀÛ Ã³¸®
-        /// µå·¡±× ÁßÀÏ ¶§´Â Ä«µå È¸Àü Y¸¦ 0À¸·Î °íÁ¤
+        /// ë“œë˜ê·¸ ê±°ë¦¬ í™•ì¸ í›„ ë“œë˜ê·¸ ëª¨ë“œ ì²˜ë¦¬
+        /// ë“œë˜ê·¸ ì¤‘ì¸ ê²½ìš° ì¹´ë“œ íšŒì „ Yì¶• 0ë„ë¡œ ê³ ì •
         /// </summary>
         private void HandleDragUpdate(Vector2 inputPos, bool isHeld)
         {
@@ -146,7 +153,7 @@ namespace Objects
 
             float dragDistance = Vector2.Distance(inputPos, dragStartPos);
 
-            // µå·¡±× °Å¸® Á¶°Ç ÃæÁ·
+            // ë“œë˜ê·¸ ê±°ë¦¬ ì„ê³„ ë„ë‹¬
             if (!wasDragged && dragDistance > dragThreshold)
             {
                 wasDragged = true;
@@ -159,7 +166,7 @@ namespace Objects
                 }
                 else
                 {
-                    // µå·¡±× ºÒ°¡ Ä«µåÀÏ °æ¿ì¿¡µµ Å¬¸¯À¸·Î ÀÎ½ÄµÇÁö ¾Êµµ·Ï Ã³¸®
+                    // ë“œë˜ê·¸ ë¶ˆê°€ ì¹´ë“œì¸ ê²½ìš°ì—ëŠ” í´ë¦­ìœ¼ë¡œë„ ì¸ì‹ë˜ì§€ ì•Šë„ë¡ ì²˜ë¦¬
                     isDragging = false;
                 }
             }
@@ -173,8 +180,8 @@ namespace Objects
         }
 
         /// <summary>
-        /// Å¬¸¯ ¶Ç´Â µå·¡±× Á¾·á Ã³¸®
-        /// Å¬¸¯ ¿äÃ» »óÅÂ¿´°í µå·¡±×°¡ ¾Æ´Ï¸é Å¬¸¯ Release·Î °£ÁÖ
+        /// í´ë¦­ ë˜ëŠ” ë“œë˜ê·¸ ì¢…ë£Œ ì²˜ë¦¬
+        /// í´ë¦­ ìš”ì²­ ìƒíƒœì˜€ê³  ë“œë˜ê·¸ê°€ ì•„ë‹ˆë©´ í´ë¦­ Releaseë¡œ ë°œìƒ
         /// </summary>
         private void HandleInputRelease(bool released)
         {
@@ -195,10 +202,12 @@ namespace Objects
                 OnClickReleased?.Invoke();
             }
         }
+        #endregion
 
+        #region Public Control
         /// <summary>
-        /// ¿ÜºÎ¿¡¼­ ÀÔ·Â Â÷´Ü Á¦¾î
-        /// (ex. µå·¡±× º¹±Í Áß¿£ ÀÔ·Â ¸·±â À§ÇÔ)
+        /// ì™¸ë¶€ì—ì„œ ì…ë ¥ ì ê¸ˆ ì„¤ì •
+        /// (ex. ë“œë˜ê·¸ ë³µê·€ ì¤‘ì— ì…ë ¥ ì²˜ë¦¬ ì°¨ë‹¨)
         /// </summary>
         public void SetInteractionBlocked(bool blocked)
         {
@@ -206,15 +215,17 @@ namespace Objects
         }
 
         /// <summary>
-        /// Toggle »óÅÂ °­Á¦ ÃÊ±âÈ­ (HoverExit µî¿¡¼­ »ç¿ë)
+        /// Toggle ìƒíƒœ ê°•ì œ ì´ˆê¸°í™” (HoverExit ì‹œì— ì‚¬ìš©)
         /// </summary>
         public void ForceResetToggle()
         {
             isToggleOn = false;
         }
+        #endregion
 
+        #region Event Registration
         /// <summary>
-        /// ÀÌº¥Æ® ¸®½º³Ê µî·Ï
+        /// ì´ë²¤íŠ¸ ë¦¬ìŠ¤ë„ˆ ë“±ë¡
         /// </summary>
         public void RegisterListeners(
             UnityAction onHoverEnter,
@@ -235,7 +246,7 @@ namespace Objects
         }
 
         /// <summary>
-        /// ÀÌº¥Æ® ¸®½º³Ê ÇØÁ¦
+        /// ì´ë²¤íŠ¸ ë¦¬ìŠ¤ë„ˆ í•´ì œ
         /// </summary>
         public void UnregisterListeners(
             UnityAction onHoverEnter,
@@ -254,9 +265,11 @@ namespace Objects
             OnEndDrag -= onEndDrag;
             OnToggleChanged -= onToggleChanged;
         }
+        #endregion
 
+        #region Platform Input Abstraction
         /// <summary>
-        /// ÇöÀç ÀÔ·Â À§Ä¡¸¦ ¹İÈ¯ (¿¡µğÅÍ/¸ğ¹ÙÀÏ ´ëÀÀ)
+        /// í˜„ì¬ ì…ë ¥ ìœ„ì¹˜ë¥¼ ë°˜í™˜ (ë°ìŠ¤í¬í†±/ëª¨ë°”ì¼ ëŒ€ì‘)
         /// </summary>
         private Vector2 GetInputPosition()
         {
@@ -293,5 +306,6 @@ namespace Objects
             return Touchscreen.current.primaryTouch.press.isPressed;
 #endif
         }
+        #endregion
     }
 }

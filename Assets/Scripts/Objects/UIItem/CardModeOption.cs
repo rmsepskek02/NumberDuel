@@ -3,18 +3,21 @@ using UnityEngine;
 namespace Objects
 {
     /// <summary>
-    /// Ä«µå Á¦Ãâ ¹æ½Ä(Open ¶Ç´Â Secret)À» ¼±ÅÃÇÏ´Â ÇÏ³ªÀÇ ¿É¼Ç Ç×¸ñ.
-    /// Å¬¸¯ ½Ã »óÀ§ CardModeSelector¿¡ ¼±ÅÃ °á°ú¸¦ Àü´ŞÇÑ´Ù.
+    /// ì¹´ë“œ ë°°ì¹˜ ëª¨ë“œ(Open ë˜ëŠ” Secret)ë¥¼ ì„ íƒí•˜ëŠ” í•˜ë‚˜ì˜ ì˜µì…˜ ê·¸ë¦¼.
+    /// í´ë¦­ ì‹œ ìƒìœ„ CardModeSelectorì— ì„ íƒ ê²°ê³¼ë¥¼ ì „ë‹¬í•œë‹¤.
     /// </summary>
     [RequireComponent(typeof(ObjectMouseEvent))]
     public class CardModeOption : MonoBehaviour
     {
-        [Tooltip("ÀÌ Ç×¸ñÀÌ ³ªÅ¸³»´Â Ä«µå ¸ğµå (Open ¶Ç´Â Secret)")]
+        #region Fields and Properties
+        [Tooltip("ì´ ê·¸ë¦¼ì´ ë‚˜íƒ€ë‚´ëŠ” ì¹´ë“œ ëª¨ë“œ (Open ë˜ëŠ” Secret)")]
         [SerializeField] private CardModeType modeType;
 
         private ObjectMouseEvent mouseEvent;
         private CardModeSelector selector;
+        #endregion
 
+        #region Unity Lifecycle
         private void Awake()
         {
             mouseEvent = GetComponent<ObjectMouseEvent>();
@@ -29,22 +32,27 @@ namespace Objects
         {
             mouseEvent.OnClickReleased -= HandleClick;
         }
+        #endregion
 
+        #region Public Methods
         /// <summary>
-        /// ¿ÜºÎ¿¡¼­ »óÀ§ ¼¿·ºÅÍ¸¦ ¿¬°áÇÑ´Ù.
+        /// ì™¸ë¶€ì—ì„œ ìƒìœ„ ì…€ë ‰í„°ë¥¼ ì„¤ì •í•œë‹¤.
         /// </summary>
         public void SetSelector(CardModeSelector selector)
         {
             this.selector = selector;
         }
+        #endregion
 
+        #region Event Handlers
         /// <summary>
-        /// ÀÌ Ç×¸ñÀÌ Å¬¸¯µÇ¾úÀ» ¶§ È£ÃâµÊ.
-        /// ¼±ÅÃµÈ ¸ğµå¸¦ »óÀ§ ¼¿·ºÅÍ¿¡ Àü´ŞÇÑ´Ù.
+        /// ì´ ê·¸ë¦¼ì´ í´ë¦­ë˜ì—ˆì„ ë•Œ í˜¸ì¶œë¨.
+        /// ì„ íƒëœ ëª¨ë“œë¥¼ ìƒìœ„ ì…€ë ‰í„°ì— ì „ë‹¬í•œë‹¤.
         /// </summary>
         private void HandleClick()
         {
             selector?.OnCardModeSelected(modeType);
         }
+        #endregion
     }
 }

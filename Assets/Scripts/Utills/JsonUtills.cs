@@ -4,27 +4,40 @@ using UnityEngine;
 
 namespace Utills
 {
+    /// <summary>
+    /// JSON ì§ë ¬í™” ë° íŒŒì¼ ì…ì¶œë ¥ì„ ë‹´ë‹¹í•˜ëŠ” ìœ í‹¸ë¦¬í‹° í´ë˜ìŠ¤
+    /// Unityì˜ JsonUtilityë¥¼ ì‚¬ìš©í•˜ì—¬ ë°ì´í„° ì§ë ¬í™”/ì—­ì§ë ¬í™” ìˆ˜í–‰
+    /// í´ë¼ì´ì–¸íŠ¸ í´ë” ë‹¨ìœ„ë¡œ ì„¤ì • íŒŒì¼ ì €ì¥/ë¡œë“œ ì§€ì›
+    /// </summary>
     public static class JsonUtils
     {
-        // °´Ã¼¸¦ JSON ¹®ÀÚ¿­·Î º¯È¯ (Á¦³×¸¯ Å¸ÀÔ Áö¿ø)
+        #region Serialization
+        /// <summary>
+        /// ê°ì²´ë¥¼ JSON ë¬¸ìì—´ë¡œ ë³€í™˜ (ì œë„¤ë¦­ íƒ€ì… ì‚¬ìš©)
+        /// </summary>
         public static string SerializeToJson<T>(T data)
         {
-            return JsonUtility.ToJson(data, true); // true´Â º¸±â ÁÁÀº JSON Æ÷¸Ë
+            return JsonUtility.ToJson(data, true);
         }
 
-        // JSON ¹®ÀÚ¿­À» °´Ã¼·Î º¯È¯ (Á¦³×¸¯ Å¸ÀÔ Áö¿ø)
+        /// <summary>
+        /// JSON ë¬¸ìì—´ì„ ê°ì²´ë¡œ ë³€í™˜ (ì œë„¤ë¦­ íƒ€ì… ì‚¬ìš©)
+        /// </summary>
         public static T DeserializeFromJson<T>(string json)
         {
             return JsonUtility.FromJson<T>(json);
         }
+        #endregion
 
-        // JSON µ¥ÀÌÅÍ¸¦ Å¬¶óÀÌ¾ğÆ®º° Æú´õ¿¡ ÀúÀå (ÆÄÀÏ ÀÌ¸§ ÁöÁ¤ °¡´É)
+        #region File Operations
+        /// <summary>
+        /// JSON ë°ì´í„°ë¥¼ í´ë¼ì´ì–¸íŠ¸ë³„ í´ë”ì— ì €ì¥ (íŒŒì¼ ì´ë¦„ ì§€ì • ê°€ëŠ¥)
+        /// </summary>
         public static void SaveToFile<T>(T data, string clientFolder, string fileName)
         {
             string filePath = Path.Combine("Builds", clientFolder, fileName);
             string json = SerializeToJson(data);
 
-            // µğ·ºÅä¸®°¡ ¾øÀ¸¸é »ı¼º
             string directory = Path.GetDirectoryName(filePath);
             if (!Directory.Exists(directory))
             {
@@ -32,10 +45,11 @@ namespace Utills
             }
 
             File.WriteAllText(filePath, json);
-            Debug.Log($"Data saved to: {filePath}");
         }
 
-        // Å¬¶óÀÌ¾ğÆ®º° Æú´õ¿¡¼­ JSON µ¥ÀÌÅÍ¸¦ ·Îµå (ÆÄÀÏÀÌ ¾øÀ¸¸é ±âº» ÀÎ½ºÅÏ½º ¹İÈ¯)
+        /// <summary>
+        /// í´ë¼ì´ì–¸íŠ¸ë³„ í´ë”ì—ì„œ JSON ë°ì´í„°ë¥¼ ë¡œë“œ (íŒŒì¼ì´ ì—†ìœ¼ë©´ ê¸°ë³¸ ì¸ìŠ¤í„´ìŠ¤ ë°˜í™˜)
+        /// </summary>
         public static T LoadFromFile<T>(string clientFolder, string fileName) where T : new()
         {
             string filePath = Path.Combine("Builds", clientFolder, fileName);
@@ -46,8 +60,8 @@ namespace Utills
                 return DeserializeFromJson<T>(json);
             }
 
-            Debug.LogWarning($"File not found: {filePath}, returning default instance.");
-            return new T(); // ±âº» »ı¼ºÀÚ·Î ÃÊ±âÈ­
+            return new T();
         }
+        #endregion
     }
 }

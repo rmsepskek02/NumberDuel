@@ -5,14 +5,22 @@ using UnityEngine;
 namespace Utills
 {
     /// <summary>
-    /// Unity¿¡¼­ Dictionary¸¦ Á÷·ÄÈ­ÇÏ±â À§ÇÑ SerializableDictionary
+    /// Unityì—ì„œ Dictionaryë¥¼ ì§ë ¬í™”í•˜ê¸° ìœ„í•œ SerializableDictionary
+    /// Inspectorì—ì„œ í¸ì§‘ ê°€ëŠ¥í•˜ë„ë¡ List ê¸°ë°˜ ì§ë ¬í™” êµ¬í˜„
+    /// ISerializationCallbackReceiverë¥¼ í†µí•´ ì§ë ¬í™”/ì—­ì§ë ¬í™” ì²˜ë¦¬
     /// </summary>
     [Serializable]
     public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>, ISerializationCallbackReceiver
     {
+        #region Fields and Properties
         [SerializeField] private List<TKey> keys = new List<TKey>();
         [SerializeField] private List<TValue> values = new List<TValue>();
+        #endregion
 
+        #region Serialization
+        /// <summary>
+        /// ì§ë ¬í™” ì „ì— Dictionaryë¥¼ Listë¡œ ë³€í™˜
+        /// </summary>
         public void OnBeforeSerialize()
         {
             keys.Clear();
@@ -24,18 +32,22 @@ namespace Utills
             }
         }
 
+        /// <summary>
+        /// ì—­ì§ë ¬í™” í›„ì— Listë¥¼ Dictionaryë¡œ ë³€í™˜
+        /// </summary>
         public void OnAfterDeserialize()
         {
             this.Clear();
             if (keys.Count != values.Count)
             {
-                Debug.LogError($"Dictionary Á÷·ÄÈ­ ¿À·ù: {keys.Count} Å°¿Í {values.Count} °ªÀÇ °³¼ö°¡ ´Ù¸§!");
                 return;
             }
+
             for (int i = 0; i < keys.Count; i++)
             {
                 this[keys[i]] = values[i];
             }
         }
+        #endregion
     }
 }

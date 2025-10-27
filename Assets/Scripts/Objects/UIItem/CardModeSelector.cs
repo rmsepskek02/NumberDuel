@@ -5,39 +5,42 @@ using TMPro;
 using DG.Tweening;
 
 /// <summary>
-/// »ç¿ëÀÚ°¡ Ä«µå¸¦ µå·¡±×ÇØ ÇÊµå·Î °¡Á®¿À¸é,
-/// ¾î¶² ¹æ½Ä(Open/Secret)À¸·Î ³¾Áö¸¦ ¼±ÅÃÇÏ´Â UI¸¦ Á¦¾îÇÑ´Ù.
+/// ì‚¬ìš©ìê°€ ì¹´ë“œë¥¼ ë“œë˜ê·¸í•´ í•„ë“œì— ë°°ì¹˜í•˜ë ¤í• ë•Œ,
+/// ì–´ë–¤ ëª¨ë“œ(Open/Secret)ë¡œ ë†“ì„ì§€ ì„ íƒí•˜ëŠ” UIë¥¼ ê´€ë¦¬í•œë‹¤.
 /// </summary>
 public class CardModeSelector : MonoBehaviour
 {
-    [Header("¿¬°áÇÒ ¿ÀºêÁ§Æ®")]
+    #region Fields and Properties
+    [Header("UI ì»´í¬ë„ŒíŠ¸")]
     [SerializeField] private GameObject dimBackground;
     [SerializeField] private GameObject cancelButton;
     [SerializeField] private CardModeOption openOption;
     [SerializeField] private CardModeOption secretOption;
-    [SerializeField] private TextMeshPro openValueText;
+    [SerializeField] private TextMeshProUGUI openValueText;
 
     private Transform pendingCard;
     private CardZone targetZone;
     private ObjectMouseEvent bgClick;
 
-    [Header("¾Ö´Ï¸ŞÀÌ¼Ç ¼³Á¤")]
+    [Header("ì• ë‹ˆë©”ì´ì…˜ ì„¤ì •")]
     [SerializeField] private float maxScale = 30f;
     [SerializeField] private float animDuration = 0.2f;
 
     private bool isSpritesSet = false;
+    #endregion
 
+    #region Unity Lifecycle
     private void Start()
     {
         openOption.SetSelector(this);
         secretOption.SetSelector(this);
 
-        // ¹è°æ Å¬¸¯ ½Ã Cancel Ã³¸®
+        // ë°°ê²½ í´ë¦­ ì‹œ Cancel ì²˜ë¦¬
         bgClick = dimBackground.GetComponent<ObjectMouseEvent>();
         if (bgClick != null)
             bgClick.OnClickReleased += OnCancelPressed;
 
-        // ½ºÇÁ¶óÀÌÆ® ¼³Á¤Àº Show() ½ÃÁ¡¿¡¼­ ¼öÇà (»ö»ó µ¿±âÈ­ ¿Ï·á ÈÄ)
+        // ìŠ¤í”„ë¼ì´íŠ¸ ì„¤ì •ì€ Show() í˜¸ì¶œì‹œê¹Œì§€ ëŒ€ê¸° (ìƒ‰ìƒ ë™ê¸°í™” ì™„ë£Œ í›„)
         SetUIActive(false);
     }
 
@@ -53,22 +56,26 @@ public class CardModeSelector : MonoBehaviour
         if (bgClick != null)
             bgClick.OnClickReleased -= OnCancelPressed;
     }
+    #endregion
 
+    #region Event Handlers
     private void HandleCardPlayRequested(Transform card, CardZone zone)
     {
         Show(card, zone);
     }
+    #endregion
 
+    #region UI Display
     /// <summary>
-    /// Ä«µå°¡ Á¦ÃâµÉ ÁØºñ°¡ µÇ¾úÀ» ¶§ UI¸¦ Ç¥½ÃÇÏ°í
-    /// ¼±ÅÃÇÒ ¼ö ÀÖµµ·Ï ±¸¼ºÇÑ´Ù.
+    /// ì¹´ë“œê°€ ë°°ì¹˜ë  ì¤€ë¹„ ë˜ì—ˆì„ ë•Œ UIë¥¼ í‘œì‹œí•˜ê³ 
+    /// ì‚¬ìš©ìê°€ ì„ íƒí•  ìˆ˜ ìˆë„ë¡ ëŒ€ê¸°í•œë‹¤.
     /// </summary>
     public void Show(Transform card, CardZone zone)
     {
         pendingCard = card;
         targetZone = zone;
 
-        // Ã¹ Show() È£Ãâ ½Ã¿¡¸¸ ½ºÇÁ¶óÀÌÆ® ¼³Á¤
+        // ì²« Show() í˜¸ì¶œ ìƒí™©ì—ì„œ ìŠ¤í”„ë¼ì´íŠ¸ ì„¤ì •
         if (!isSpritesSet)
         {
             SetOpenOptionSprite();
@@ -77,18 +84,18 @@ public class CardModeSelector : MonoBehaviour
 
         SetUIActive(true);
 
-        // ÃÊ±â ½ºÄÉÀÏ ¼³Á¤
+        // ì´ˆê¸° ìŠ¤ì¼€ì¼ ë¦¬ì…‹
         openOption.transform.localScale = Vector3.zero;
         secretOption.transform.localScale = Vector3.zero;
 
-        // Ä«µå ÅØ½ºÆ® ¼³Á¤
+        // ì¹´ë“œ í…ìŠ¤íŠ¸ í‘œì‹œ
         var cardText = card.GetComponentInChildren<CardText>();
         if (cardText != null && openValueText != null)
         {
             openValueText.text = "Open\n" + cardText.TextValue;
         }
 
-        // DOTween ¾Ö´Ï¸ŞÀÌ¼Ç ½ÇÇà
+        // DOTween ì• ë‹ˆë©”ì´ì…˜ ì¬ìƒ
         Ease easeType = Ease.OutBack;
 
         openOption.transform
@@ -101,7 +108,7 @@ public class CardModeSelector : MonoBehaviour
     }
 
     /// <summary>
-    /// ¸ğµå ¼±ÅÃ UI¸¦ ¼û±â°í ³»ºÎ »óÅÂ¸¦ ÃÊ±âÈ­ÇÑ´Ù.
+    /// ì„ íƒ ì°½ì„ UIë¥¼ ìˆ¨ê¸°ê³  ëŒ€ê¸° ìƒíƒœë¥¼ ì´ˆê¸°í™”í•œë‹¤.
     /// </summary>
     public void Hide()
     {
@@ -113,21 +120,22 @@ public class CardModeSelector : MonoBehaviour
 
         SetUIActive(false);
     }
+    #endregion
 
+    #region Sprite Setup
     /// <summary>
-    /// Open ¿É¼Ç¿¡ ÇöÀç ÇÃ·¹ÀÌ¾î »ö»óÀÇ empty ½ºÇÁ¶óÀÌÆ® ¼³Á¤
-    /// Ã¹ Show() È£Ãâ ½Ã¿¡¸¸ ½ÇÇàµÇ¸ç ÀÌÈÄ Àç»ç¿ë
+    /// Open ì˜µì…˜ì— í˜„ì¬ í”Œë ˆì´ì–´ ìƒ‰ìƒì˜ empty ìŠ¤í”„ë¼ì´íŠ¸ ì„¤ì •
+    /// ì²« Show() í˜¸ì¶œ ìƒí™©ì—ì„œ ì‹¤í–‰ë˜ë©° ì´í›„ ì¬ì‚¬ìš©
     /// </summary>
     private void SetOpenOptionSprite()
     {
         SpriteRenderer openSr = openOption.GetComponentInChildren<SpriteRenderer>();
         if (openSr == null)
         {
-            Debug.LogError("[CardModeSelector] Open ¿É¼ÇÀÇ SpriteRenderer¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù.");
             return;
         }
 
-        // ResourcesManager¿¡¼­ ÇöÀç ÇÃ·¹ÀÌ¾î »ö»ó ½ºÇÁ¶óÀÌÆ® °¡Á®¿À±â
+        // ResourcesManagerì—ì„œ í˜„ì¬ í”Œë ˆì´ì–´ ìƒ‰ìƒ ìŠ¤í”„ë¼ì´íŠ¸ ê°€ì ¸ì˜¤ê¸°
         if (ResourcesManager.Instance != null)
         {
             Sprite playerSprite = ResourcesManager.Instance.GetPlayerSprite();
@@ -135,20 +143,14 @@ public class CardModeSelector : MonoBehaviour
             {
                 openSr.sprite = playerSprite;
             }
-            else
-            {
-                Debug.LogError("[CardModeSelector] ÇÃ·¹ÀÌ¾î ½ºÇÁ¶óÀÌÆ®¸¦ °¡Á®¿Ã ¼ö ¾ø½À´Ï´Ù.");
-            }
-        }
-        else
-        {
-            Debug.LogError("[CardModeSelector] ResourcesManager ÀÎ½ºÅÏ½º°¡ ¾ø½À´Ï´Ù.");
         }
     }
+    #endregion
 
+    #region Mode Selection
     /// <summary>
-    /// »ç¿ëÀÚ°¡ Open ¶Ç´Â Secret Áß ÇÏ³ª¸¦ ¼±ÅÃÇßÀ» ¶§ È£ÃâµÊ (¿ÏÀü ¼öÁ¤µÊ)
-    /// ¼±ÅÃµÈ Ä«µå°¡ ÁöÁ¤µÈ Zone¿¡ Ãß°¡µÈ´Ù.
+    /// ì‚¬ìš©ìê°€ Open ë˜ëŠ” Secret ì¤‘ í•˜ë‚˜ë¥¼ ì„ íƒí–ˆì„ ë•Œ í˜¸ì¶œë¨ (ì˜µì…˜ ë²„íŠ¼ì—ì„œ)
+    /// ì„ íƒëœ ì¹´ë“œê°€ ëŒ€ìƒìœ¼ë¡œ Zoneì— ì¶”ê°€ëœë‹¤.
     /// </summary>
     public void OnCardModeSelected(CardModeType mode)
     {
@@ -158,14 +160,13 @@ public class CardModeSelector : MonoBehaviour
         Card cardComponent = pendingCard.GetComponentInChildren<Card>();
         if (cardComponent == null)
         {
-            Debug.LogError("[CardModeSelector] Card ÄÄÆ÷³ÍÆ®¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù.");
             return;
         }
 
-        // ±âÁ¸ Zone¿¡¼­ Á¦°Å
+        // í˜„ì¬ Zoneì—ì„œ ì œê±°
         RemoveCardFromCurrentZone(cardComponent);
 
-        // Open/Secret »óÅÂ ¼³Á¤ (GLOW °ü·Ã ÄÚµå Á¦°Å!)
+        // Open/Secret ìƒíƒœ ì„¤ì • (GLOW ìƒíƒœ ìë™ ì œê±°!)
         if (mode == CardModeType.Secret)
         {
             cardComponent.SetSecret(true);
@@ -175,17 +176,17 @@ public class CardModeSelector : MonoBehaviour
             cardComponent.SetSecret(false);
         }
 
-        // µå·¡±× °ü·Ã ÄÄÆ÷³ÍÆ® Á¦°Å
+        // ë“œë˜ê·¸ ê´€ë ¨ ì»´í¬ë„ŒíŠ¸ ì œê±°
         RemoveDragComponents();
 
-        // Zone¿¡ Ä«µå Ãß°¡ (Card.cs°¡ ¾Ë¾Æ¼­ GLOW °ü¸®)
+        // Zoneì— ì¹´ë“œ ì¶”ê°€ (Card.csê°€ ì•Œì•„ì„œ GLOW ì œê±°)
         targetZone.AddCard(pendingCard);
 
         Hide();
     }
 
     /// <summary>
-    /// Ä«µå¸¦ ÇöÀç Zone¿¡¼­ Á¦°Å (¼öÁ¤µÊ)
+    /// ì¹´ë“œë¥¼ í˜„ì¬ Zoneì—ì„œ ì œê±° (ì†íŒ¨ì—ì„œ)
     /// </summary>
     private void RemoveCardFromCurrentZone(Card cardComponent)
     {
@@ -203,7 +204,7 @@ public class CardModeSelector : MonoBehaviour
     }
 
     /// <summary>
-    /// µå·¡±× °ü·Ã ÄÄÆ÷³ÍÆ® Á¦°Å (ºĞ¸®µÊ)
+    /// ë“œë˜ê·¸ ê´€ë ¨ ì»´í¬ë„ŒíŠ¸ ì œê±° (ë¶„ë¦¬ë¨)
     /// </summary>
     private void RemoveDragComponents()
     {
@@ -215,15 +216,17 @@ public class CardModeSelector : MonoBehaviour
     }
 
     /// <summary>
-    /// Ãë¼Ò ¹öÆ° Å¬¸¯ ½Ã È£ÃâµÊ.
+    /// ì·¨ì†Œ ë²„íŠ¼ í´ë¦­ ì‹œ í˜¸ì¶œë¨.
     /// </summary>
     public void OnCancelPressed()
     {
         Hide();
     }
+    #endregion
 
+    #region UI Management
     /// <summary>
-    /// ÇÏÀ§ UI ¿ÀºêÁ§Æ®µéÀ» ÀÏ°ı·Î ÄÑ°Å³ª ²ö´Ù.
+    /// ì „ì²´ UI ì˜¤ë¸Œì íŠ¸ë“¤ì„ ì¼œê±°ë‚˜ ëˆë‹¤.
     /// </summary>
     private void SetUIActive(bool active)
     {
@@ -232,4 +235,5 @@ public class CardModeSelector : MonoBehaviour
         if (openOption != null) openOption.gameObject.SetActive(active);
         if (secretOption != null) secretOption.gameObject.SetActive(active);
     }
+    #endregion
 }

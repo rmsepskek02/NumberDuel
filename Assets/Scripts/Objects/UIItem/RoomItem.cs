@@ -1,30 +1,30 @@
-using Photon.Realtime;
 using System;
+using Photon.Realtime;
 using TMPro;
 using UnityEngine;
 
 namespace Objects
 {
     /// <summary>
-    /// Lobby¿¡ »ç¿ëµÇ´Â ¹æ ¸®½ºÆ® UI
+    /// Lobbyì— í‘œì‹œë˜ëŠ” ë°© ë¦¬ìŠ¤íŠ¸ UI
     /// </summary>
     public class RoomItem : MonoBehaviour
     {
-        #region Variables
+        #region Fields and Properties
         public TextMeshProUGUI roomInfo;
         public Action<string> OnClickAction;
         private string roomName;
         #endregion
 
+        #region Public Methods
         public void SetInfo(RoomInfo info)
         {
             if (info == null)
             {
-                Debug.LogError("[RoomItem] RoomInfo°¡ nullÀÔ´Ï´Ù.");
                 return;
             }
 
-            // ¹æ ÀÌ¸§À» °¡Á®¿ÀµÇ, CustomProperties¸¦ ¸ÕÀú È®ÀÎ ÈÄ roomInfo.NameÀ» »ç¿ë
+            // ë°© ì´ë¦„ì€ ìš°ì„ ìˆœìœ„ë¡œ, CustomPropertiesì— ìˆìœ¼ë©´ í™•ì¸ í›„ roomInfo.Nameì„ ì‚¬ìš©
             if (info.CustomProperties.ContainsKey("roomName"))
             {
                 roomName = info.CustomProperties["roomName"].ToString();
@@ -34,10 +34,9 @@ namespace Objects
                 roomName = info.Name;
             }
 
-            // UI¿¡ ¹æ ÀÌ¸§ ¼³Á¤
+            // UIì— ë°© ì´ë¦„ í‘œì‹œ
             name = roomName;
             roomInfo.text = roomName;
-            Debug.Log($"[RoomItem] ¹æ Á¤º¸ ¼³Á¤µÊ: {roomName}");
         }
 
         public void OnClickRoomList()
@@ -47,5 +46,6 @@ namespace Objects
                 OnClickAction(roomName);
             }
         }
+        #endregion
     }
 }
