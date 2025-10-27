@@ -1,27 +1,31 @@
-using UnityEngine;
+using Expression;
 using Objects;
 using System.Linq;
-using Expression;
+using UnityEngine;
 using Utills;
 
 namespace Manager
 {
     /// <summary>
-    /// ExpressionZone�� 5�� ������ �����Ͽ� ������ �ð������� ǥ���ϴ� �Ŵ���
-    /// ���� ����: [0:��ī��] [1:������] [2:���ī��] [3:��ȣ] [4:���]
+    /// ExpressionZone의 5개 슬롯을 관리하여 연산식 시각화를 표현하는 매니저
+    /// 슬롯 구조: [0:좌카드] [1:연산자] [2:우카드] [3:등호] [4:결과]
     /// </summary>
     public class ExpressionZoneManager : Singleton<ExpressionZoneManager>
     {
-        [Header("Expression Zone ����")]
+        #region Fields and Properties
+        [Header("Expression Zone 설정")]
         [SerializeField] private CardZone expressionZone;
         [SerializeField] private bool enableDebugLog = false;
 
         private ExpressionCard[] slots;
         private Sprite neutralSprite;
 
-        // ���� ����ȭ�� ĳ��
+        /// <summary>
+        /// 성능 최적화용 캐시
+        /// </summary>
         private readonly Color[] cachedColors = new Color[5];
         private readonly bool[] cachedActiveStates = new bool[5];
+        #endregion
 
         #region Unity Lifecycle
         private void Start()
@@ -53,9 +57,6 @@ namespace Manager
             expressionZone.UpdateLayout();
 
             CacheNeutralSprite();
-
-            if (enableDebugLog)
-                Debug.Log($"[ExpressionZoneManager] �ʱ�ȭ �Ϸ� - ���� ��: {slots.Length}");
         }
 
         private void CacheNeutralSprite()
@@ -78,17 +79,17 @@ namespace Manager
 
         #region Core Slot Management
         /// <summary>
-        /// ���� ������Ʈ (��������� ���� ���� ���� ������Ʈ)
+        /// 슬롯 업데이트 (변경사항이 있을 경우 최소 업데이트)
         /// </summary>
         private void UpdateSlot(int index, string text, Sprite sprite, bool showText, bool canCancel = false)
         {
-            if (!IsValidSlotIndex(index) || index == 3) return; // 3�� ���� ��ȣ
+            if (!IsValidSlotIndex(index) || index == 3) return; // 3번 슬롯은 등호
 
             var slot = slots[index];
             var targetSprite = sprite ?? neutralSprite;
             var targetColor = Global.GetColorByName(targetSprite.name);
 
-            // ������� Ȯ�� �� �ʿ�ÿ��� ������Ʈ
+            // 변경점만 확인 후 필요할때만 업데이트
             bool needsUpdate = false;
 
             if (slot.GetComponentInChildren<SpriteRenderer>().sprite != targetSprite)
@@ -112,23 +113,20 @@ namespace Manager
                 needsUpdate = true;
             }
 
-            // ��� ���� ���� ����
+            // 취소 가능 여부 설정
             if (canCancel) slot.SetCancelable(true);
             else slot.ClearGlow();
-
-            if (enableDebugLog && needsUpdate)
-                Debug.Log($"[ExpressionZoneManager] ���� {index} ������Ʈ: '{text}'");
         }
 
         /// <summary>
-        /// 3�� ���� (��ȣ) ���� ����
+        /// 3번 슬롯 (등호) 고정 설정
         /// </summary>
         private void FixEqualSlot()
         {
             const int equalIndex = 3;
             var slot = slots[equalIndex];
 
-            // �̹� �ùٸ� �������� Ȯ��
+            // 이미 올바른 상태인지 확인
             if (slot.CurrentText == "=" && slot.GetComponentInChildren<SpriteRenderer>().sprite == neutralSprite)
                 return;
 
@@ -143,14 +141,14 @@ namespace Manager
         }
 
         /// <summary>
-        /// ��ȿ�� ���� �ε������� Ȯ��
+        /// 유효한 슬롯 인덱스인지 확인
         /// </summary>
         private bool IsValidSlotIndex(int index) => index >= 0 && index < slots.Length;
         #endregion
 
         #region Public Interface
         /// <summary>
-        /// ������ ī�带 0�� ���Կ� ����
+        /// 공격자 카드를 0번 슬롯에 배치
         /// </summary>
         public void SetAttackerCard(Card card)
         {
@@ -158,7 +156,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ������ ī�带 2�� ���Կ� ����
+        /// 방어자 카드를 2번 슬롯에 배치
         /// </summary>
         public void SetDefenderCard(Card card)
         {
@@ -166,7 +164,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ù ��° ���� ����� 0�� ���Կ� ����
+        /// 첫 번째 연산 피연산자 0번 슬롯에 배치
         /// </summary>
         public void SetFirstOperand(Card card)
         {
@@ -174,7 +172,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// �� ��° ���� ����� 2�� ���Կ� ����
+        /// 두 번째 연산 피연산자 2번 슬롯에 배치
         /// </summary>
         public void SetSecondOperand(Card card)
         {
@@ -182,19 +180,18 @@ namespace Manager
         }
 
         /// <summary>
-        /// �����ڸ� 1�� ���Կ� ����
+        /// 연산자를 1번 슬롯에 배치
         /// </summary>
         public void SetOperator(Card operatorCard)
         {
             if (operatorCard?.CardType != CardType.Operator)
             {
-                Debug.LogError("[ExpressionZoneManager] ��ȿ���� ���� ������ ī��");
                 return;
             }
 
             string symbol = GetOperatorSymbol(operatorCard.OperatorType);
 
-            // �ƴ��� ���ܽ�Ű�� ���� ��������Ʈ ã��
+            // 아이콘이 아닌 스프라이트를 가진 스프라이트 찾기
             Sprite sprite = null;
             var allRenderers = operatorCard.GetComponentsInChildren<SpriteRenderer>(true);
             foreach (var renderer in allRenderers)
@@ -210,7 +207,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ���ݿ� ���� ��ȣ�� 1�� ���Կ� ����
+        /// 공격에 대한 빼기 기호를 1번 슬롯에 설정
         /// </summary>
         public void SetAttackOperator()
         {
@@ -218,7 +215,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ���� ����� 4�� ���Կ� ǥ��
+        /// 연산 결과를 4번 슬롯에 표시
         /// </summary>
         public void ShowResult(float a, float b, OperatorType? operatorType = null)
         {
@@ -227,15 +224,12 @@ namespace Manager
             Sprite resultSprite = GetResultSprite(result, operatorType);
 
             UpdateSlot(4, resultText, resultSprite, true);
-
-            if (enableDebugLog)
-                Debug.Log($"[ExpressionZoneManager] ��� ǥ��: {a} {GetOperatorSymbol(operatorType)} {b} = {result}");
         }
         #endregion
 
         #region Process Control
         /// <summary>
-        /// ���� ���μ����� �ʱ�ȭ
+        /// 공격 프로세스용 초기화
         /// </summary>
         public void InitForAttack()
         {
@@ -247,7 +241,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ���� ���μ����� �ʱ�ȭ
+        /// 연산 프로세스용 초기화
         /// </summary>
         public void InitForOperation()
         {
@@ -259,7 +253,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ��� ���� �ʱ�ȭ
+        /// 모든 슬롯 초기화
         /// </summary>
         public void ResetAllSlots()
         {
@@ -272,7 +266,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ù ��° ���ø� �ʱ�ȭ (���� �� �缱�ÿ�)
+        /// 첫 번째 슬롯만 초기화 (연산 시 재선택용)
         /// </summary>
         public void ResetFirstSelection()
         {
@@ -282,7 +276,7 @@ namespace Manager
 
         #region Cancellation System
         /// <summary>
-        /// ������ ���Ե��� ��� �����ϰ� ����
+        /// 지정한 슬롯들만 취소 가능하게 설정
         /// </summary>
         public void EnableCancellation(params int[] slotIndices)
         {
@@ -298,7 +292,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ��� ������ ��� ��� ��Ȱ��ȭ
+        /// 모든 슬롯의 취소 가능 비활성화
         /// </summary>
         public void ClearAllCancelable()
         {
@@ -307,7 +301,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ���� Ŭ�� �̺�Ʈ ó��
+        /// 슬롯 클릭 이벤트 처리
         /// </summary>
         private void HandleSlotClicked(ExpressionCard clickedSlot)
         {
@@ -323,11 +317,11 @@ namespace Manager
         }
 
         /// <summary>
-        /// ���� ��� ó��
+        /// 공격 취소 처리
         /// </summary>
         private void HandleAttackCancellation(int slotIndex)
         {
-            if (slotIndex == 0) // ������ ���� Ŭ���� ���� ���
+            if (slotIndex == 0) // 공격자 슬롯 클릭시 공격 취소
             {
                 var attackManager = FindAnyObjectByType<FieldAttackManager>();
                 attackManager?.ForceResetAttackState();
@@ -336,7 +330,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ���� ��� ó��
+        /// 연산 취소 처리
         /// </summary>
         private void HandleOperationCancellation(int slotIndex)
         {
@@ -345,11 +339,11 @@ namespace Manager
 
             switch (slotIndex)
             {
-                case 0: // ù ��° ���� �缳��
+                case 0: // 첫 번째 피연산자 재선택
                     operatorManager.ResetFirstCardSelection();
                     EnableCancellation(1);
                     break;
-                case 1: // ���� ���� ���
+                case 1: // 연산 모드 취소
                     operatorManager.CancelOperatorMode();
                     break;
             }
@@ -362,34 +356,31 @@ namespace Manager
         public void UpdateOperationFirstSelected() => EnableCancellation(0, 1);
         #endregion
 
+        #region Empty Field Attack Support
         /// <summary>
-        /// �� �ʵ� ���ݿ� - slot 2���� ���� ������ "0" ǥ��
-        /// ���� ī�尡 �ƴ� ������ ���� �ð������� ǥ��
+        /// 빈 필드 공격용 - slot 2번에 상대 스프라이트 "0" 표시
+        /// 실제 카드가 아닌 빈필드 방어를 시각적으로 표시
         /// </summary>
-        /// <param name="opponentType">���� Ÿ�� (Player �Ǵ� Opponent)</param>
+        /// <param name="opponentType">상대 타입 (Player 또는 Opponent)</param>
         public void SetEmptyFieldDefender(CardZone.OwnerType opponentType)
         {
-            // ���� ���� ��������Ʈ ��������
+            // 상대 색상 스프라이트 가져오기
             Sprite opponentSprite = GetSpriteByOwnerType(opponentType);
 
             if (opponentSprite == null)
             {
-                Debug.LogWarning("[ExpressionZoneManager] ���� ��������Ʈ�� ã�� �� �����ϴ�. �⺻ ��������Ʈ ���");
                 opponentSprite = neutralSprite;
             }
 
-            // slot 2���� "0" �ؽ�Ʈ�� ���� �������� ����
+            // slot 2번에 "0" 텍스트와 상대 스프라이트 설정
             UpdateSlot(2, "0", opponentSprite, true);
-
-            if (enableDebugLog)
-                Debug.Log($"[ExpressionZoneManager] �� �ʵ� ����� ����: {opponentType} �������� '0' ǥ��");
         }
 
         /// <summary>
-        /// ������ Ÿ�Կ� ���� ��������Ʈ ��ȯ
+        /// 소유자 타입에 따른 스프라이트 반환
         /// </summary>
-        /// <param name="ownerType">ī�� ������ Ÿ��</param>
-        /// <returns>�ش� �������� ��������Ʈ</returns>
+        /// <param name="ownerType">카드 소유자 타입</param>
+        /// <returns>해당 플레이어 스프라이트</returns>
         private Sprite GetSpriteByOwnerType(CardZone.OwnerType ownerType)
         {
             return ownerType switch
@@ -401,40 +392,38 @@ namespace Manager
         }
 
         /// <summary>
-        /// �� �ʵ� ���� ��� ǥ�� (������ ���� �״�� �������� ��)
+        /// 빈 필드 공격 결과 표시 (공격값 - 0 = 공격값을 그대로 표시)
         /// </summary>
-        /// <param name="attackerValue">������ ī�� ��</param>
+        /// <param name="attackerValue">공격자 카드 값</param>
         public void ShowEmptyFieldResult(float attackerValue)
         {
-            // �� �ʵ� ����: ������ �� - 0 = ������ ��
+            // 빈 필드 방어: 공격자 값 - 0 = 공격자 값
             float result = attackerValue;
             string resultText = Mathf.FloorToInt(result).ToString();
 
-            // ����� ������ �������� ǥ�� (����̹Ƿ�)
+            // 결과는 공격자 스프라이트로 표시 (승리이므로)
             Sprite resultSprite = slots[0].GetComponentInChildren<SpriteRenderer>().sprite;
 
             UpdateSlot(4, resultText, resultSprite, true);
-
-            if (enableDebugLog)
-                Debug.Log($"[ExpressionZoneManager] �� �ʵ� ���� ���: {attackerValue} - 0 = {result}");
         }
+        #endregion
 
         #region Utility Methods
         /// <summary>
-        /// ī�� ������ ���Կ� �����ϴ� ���� �޼ҵ�
+        /// 카드 정보를 슬롯에 설정하는 통합 메서드
         /// </summary>
         private void SetCardToSlot(Card card, int slotIndex, string methodName)
         {
             var cardText = card?.GetComponentInChildren<CardText>();
 
-            // �ƴ��� ���ܽ�Ű�� ���� ī�� ��������Ʈ���� SpriteRenderer ã��
+            // 아이콘이 아닌 실제 카드 오브젝트에서 SpriteRenderer 찾기
             SpriteRenderer spriteRenderer = null;
             if (card != null)
             {
                 var allRenderers = card.GetComponentsInChildren<SpriteRenderer>(true);
                 foreach (var renderer in allRenderers)
                 {
-                    // "Icon"�� ���Ե� GameObject�� ����
+                    // "Icon"이 포함된 GameObject는 제외
                     if (!renderer.gameObject.name.Contains("Icon"))
                     {
                         spriteRenderer = renderer;
@@ -445,7 +434,6 @@ namespace Manager
 
             if (cardText?.TextValue == null || spriteRenderer?.sprite == null)
             {
-                Debug.LogError($"[ExpressionZoneManager] {methodName} - ī�� �����Ͱ� ��ȿ���� ����");
                 return;
             }
 
@@ -453,7 +441,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ���� ��� ���
+        /// 결과 값 계산
         /// </summary>
         private float CalculateResult(float a, float b, OperatorType? operatorType)
         {
@@ -462,32 +450,32 @@ namespace Manager
                 OperatorType.Plus => a + b,
                 OperatorType.Minus => a - b,
                 OperatorType.Multiply => a * b,
-                OperatorType.Divide => b != 0 ? Mathf.Floor(a / b) : 0, // �� ��ȯ
-                _ => a - b // ���� (�⺻ ����)
+                OperatorType.Divide => b != 0 ? Mathf.Floor(a / b) : 0, // 몫 반환
+                _ => a - b // 전투 (기본 빼기)
             };
         }
 
         /// <summary>
-        /// ��� �ؽ�Ʈ ������
+        /// 결과 텍스트 포맷팅
         /// </summary>
         private string FormatResultText(float result, OperatorType? operatorType)
         {
             return operatorType switch
             {
-                null => Mathf.Abs(Mathf.FloorToInt(result)).ToString(), // ������ ������ ���� �κ�
-                OperatorType.Minus => Mathf.FloorToInt(result).ToString(), // ����� ���� �κ� (���� ����)
-                _ => Mathf.FloorToInt(result).ToString() // �������� ���� �κ�
+                null => Mathf.Abs(Mathf.FloorToInt(result)).ToString(), // 전투는 절대값 정수 부분
+                OperatorType.Minus => Mathf.FloorToInt(result).ToString(), // 빼기는 음수 정수 부분 (음수 가능)
+                _ => Mathf.FloorToInt(result).ToString() // 나머지는 정수 부분
             };
         }
 
         /// <summary>
-        /// ����� �´� ��������Ʈ ��ȯ
+        /// 결과에 맞는 스프라이트 반환
         /// </summary>
         private Sprite GetResultSprite(float result, OperatorType? operatorType)
         {
             if (result == 0) return neutralSprite;
 
-            if (operatorType == null) // ���� ���μ���
+            if (operatorType == null) // 전투 프로세스
             {
                 return result > 0
                     ? slots[0].GetComponentInChildren<SpriteRenderer>().sprite
@@ -498,7 +486,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ������ Ÿ���� ��ȣ�� ��ȯ
+        /// 연산자 타입을 기호로 반환
         /// </summary>
         private string GetOperatorSymbol(OperatorType? operatorType)
         {
@@ -506,30 +494,29 @@ namespace Manager
             {
                 OperatorType.Plus => "+",
                 OperatorType.Minus => "-",
-                OperatorType.Multiply => "��",
-                OperatorType.Divide => "��",
+                OperatorType.Multiply => "×",
+                OperatorType.Divide => "÷",
                 _ => "?"
             };
         }
 
         /// <summary>
-        /// ����� �α� Ȱ��ȭ/��Ȱ��ȭ
+        /// 디버그 로그 활성화/비활성화
         /// </summary>
         public void SetDebugMode(bool enable) => enableDebugLog = enable;
         #endregion
 
+        #region Network Synchronization Support
         /// <summary>
-        /// ������ Ÿ������ ���� ���� (��Ʈ��ũ ����ȭ��)
-        /// ������ ī�� ��ü ���� Ÿ�Ը����� ������ ��ȣ�� ǥ��
+        /// 연산자 타입으로만 연산 기호 설정 (네트워크 동기화용)
+        /// 연산자 카드 객체 없이 타입만으로도 연산 기호를 표시
         /// </summary>
-        /// <param name="operatorType">ǥ���� ������ Ÿ��</param>
+        /// <param name="operatorType">표시할 연산자 타입</param>
         public void SetOperatorByType(OperatorType operatorType)
         {
             string symbol = GetOperatorSymbol(operatorType);
             UpdateSlot(1, symbol, neutralSprite, true);
-
-            if (enableDebugLog)
-                Debug.Log($"[ExpressionZoneManager] ������ Ÿ�� ����: {operatorType} ({symbol})");
         }
+        #endregion
     }
 }

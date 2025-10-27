@@ -47,7 +47,8 @@ namespace Manager
         }
         #endregion
 
-        #region Fields
+        #region Fields and Properties
+        // 턴 시스템 설정
         [Header("턴 시스템 설정")]
         [SerializeField] private bool enableDebugLog = true;
         [SerializeField] private float turnTimeLimit = 60f; // 턴 제한 시간 (초)
@@ -64,9 +65,6 @@ namespace Manager
         // 프로세스 플래그
         private bool isProcessingTurn = false; // 턴 전환 처리 중
         private float lastTurnChangeTime = 0f; // 마지막 턴 변경 시간
-        #endregion
-
-        #region Properties
         /// <summary>
         /// 게임이 시작되었는지 여부
         /// </summary>
@@ -369,7 +367,7 @@ namespace Manager
         private int DetermineFirstPlayer()
         {
             Player[] players = PhotonNetwork.PlayerList;
-            int randomIndex = Random.Range(0, players.Length);
+            int randomIndex = UnityEngine.Random.Range(0, players.Length);
             return players[randomIndex].ActorNumber;
         }
 
@@ -674,19 +672,6 @@ namespace Manager
             {
                 InGameUIManager.Instance.ResetUI();
             }
-        }
-        #endregion
-
-        #region Debug & Utility
-        /// <summary>
-        /// 현재 게임 상태를 로그로 출력 (에디터 전용)
-        /// 디버깅 목적으로 턴 관리 시스템의 상태 확인 가능
-        /// </summary>
-        [System.Diagnostics.Conditional("UNITY_EDITOR")]
-        public void DebugPrintState()
-        {
-            Debug.Log($"[TurnManager] 게임시작: {isGameStarted}, 턴: {currentTurn}, " +
-                     $"첫라운드: {isFirstRound}, 내턴: {IsLocalPlayerTurn}, 역할: {LocalPlayerRole}");
         }
         #endregion
     }

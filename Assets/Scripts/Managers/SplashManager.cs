@@ -1,27 +1,19 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace Manager
 {
     /// <summary>
-    /// Splash È­¸éÀ» °ü¸®ÇÏ´Â ¸Å´ÏÀú
+    /// Splash í™”ë©´ì„ ê´€ë¦¬í•˜ëŠ” ë§¤ë‹ˆì €
+    /// ê²Œì„ ì‹œì‘ ì‹œ ìë™ìœ¼ë¡œ JoinSceneìœ¼ë¡œ ì´ë™
     /// </summary>
-    public class SplahManager : MonoBehaviour
+    public class SplashManager : MonoBehaviour
     {
-        #region Variables
-        #endregion
-        // Start is called before the first frame update
+        #region Unity Lifecycle
         void Start()
         {
             SceneManager.LoadScene("JoinScene");
         }
-
-        // Update is called once per frame
-        void Update()
-        {
-
-        }
+        #endregion
     }
 }

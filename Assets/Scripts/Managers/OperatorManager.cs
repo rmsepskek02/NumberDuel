@@ -8,12 +8,15 @@ using System.Collections.Generic;
 namespace Manager
 {
     /// <summary>
-    /// ¿¬»êÀÚ Ä«µå¸¦ »ç¿ëÇÑ µÎ Ä«µå °£ ¿¬»ê Ã³¸® ¸Å´ÏÀú
-    /// ¿¬»êÀÚº° Ã¹ Ä«µå ¼±ÅÃ Á¦ÇÑ, ¿¬»ê ½ÇÇà, °á°ú Àû¿ëÀ» ´ã´ç
+    /// ì—°ì‚°ì ì¹´ë“œë¥¼ ì‚¬ìš©í•  ë•Œ ì¹´ë“œ ê°„ ì—°ì‚° ì²˜ë¦¬ ë§¤ë‹ˆì €
+    /// ì—°ì‚°ìë³„ ì²« ì¹´ë“œ ì„ íƒ ê·œì¹™, ì—°ì‚° ì²˜ë¦¬, ê²°ê³¼ ì ìš©ì„ ë‹´ë‹¹
     /// </summary>
     public class OperatorManager : Singleton<OperatorManager>
     {
-        #region States
+        #region Fields and Properties
+        /// <summary>
+        /// ì—°ì‚° ì§„í–‰ ìƒíƒœ
+        /// </summary>
         private enum State
         {
             Idle,
@@ -21,9 +24,7 @@ namespace Manager
             FirstCardSelected,
             Processing
         }
-        #endregion
 
-        #region Fields
         [SerializeField] private bool enableDebugLog = false;
 
         private State currentState = State.Idle;
@@ -32,11 +33,14 @@ namespace Manager
         private Card firstCard;
         private Card secondCard;
 
-        // ¼º´É ÃÖÀûÈ­¿ë Ä³½Ã
+        /// <summary>
+        /// í•„ë“œ ìµœì í™”ìš© ìºì‹œ
+        /// </summary>
         private readonly List<Card> fieldCardsCache = new List<Card>();
-        #endregion
 
-        #region Properties
+        /// <summary>
+        /// í˜„ì¬ ì—°ì‚°ì ëª¨ë“œ í™œì„±í™” ì—¬ë¶€
+        /// </summary>
         public bool IsInOperatorMode => currentState != State.Idle;
         #endregion
 
@@ -55,14 +59,14 @@ namespace Manager
 
         #region Public Interface
         /// <summary>
-        /// ¿¬»êÀÚ Ä«µå·Î ¿¬»ê ¸ğµå ½ÃÀÛ
+        /// ì—°ì‚°ì ì¹´ë“œë¥¼ ì‚¬ìš©í•œ ì—°ì‚° ì‹œì‘
         /// </summary>
         public void StartOperation(Card operatorCard)
         {
-            // »õ·Î Ãß°¡: ÅÏ °ËÁõ
+            // í„´ ê²€ì¦: ë‚´ í„´ì¸ì§€ í™•ì¸
             if (!TurnManager.Instance.IsLocalPlayerTurn)
             {
-                Debug.Log("[OperatorManager] ³» ÅÏÀÌ ¾Æ´Õ´Ï´Ù.");
+                Debug.Log("[OperatorManager] ë‚´ í„´ì´ ì•„ë‹™ë‹ˆë‹¤.");
                 return;
             }
 
@@ -72,11 +76,11 @@ namespace Manager
             SetupFirstCardSelection();
 
             if (enableDebugLog)
-                Debug.Log($"[OperatorManager] ¿¬»ê ½ÃÀÛ: {currentOperator}");
+                Debug.Log($"[OperatorManager] ì—°ì‚° ì‹œì‘: {currentOperator}");
         }
 
         /// <summary>
-        /// Ã¹ ¹øÂ° Ä«µå ¼±ÅÃÀ» Ãë¼ÒÇÏ°í Àç¼±ÅÃ °¡´ÉÇÏ°Ô ¼³Á¤
+        /// ì²« ë²ˆì§¸ ì¹´ë“œ ì„ íƒì„ ì·¨ì†Œí•˜ê³  ì¬ì„ íƒ ê°€ëŠ¥í•˜ê²Œ ë³µê·€
         /// </summary>
         public void ResetFirstCardSelection()
         {
@@ -89,11 +93,11 @@ namespace Manager
             SetupFirstCardSelection();
 
             if (enableDebugLog)
-                Debug.Log("[OperatorManager] Ã¹ ¹øÂ° Ä«µå ¼±ÅÃ Ãë¼Ò");
+                Debug.Log("[OperatorManager] ì²« ë²ˆì§¸ ì¹´ë“œ ì„ íƒ ì·¨ì†Œ");
         }
 
         /// <summary>
-        /// ¿¬»ê ¸ğµå ¿ÏÀü Ãë¼Ò
+        /// ì—°ì‚° ëª¨ë“œ ì™„ì „ ì·¨ì†Œ
         /// </summary>
         public void CancelOperatorMode()
         {
@@ -102,13 +106,13 @@ namespace Manager
             ResetOperationState();
 
             if (enableDebugLog)
-                Debug.Log("[OperatorManager] ¿¬»ê ¸ğµå Ãë¼Ò");
+                Debug.Log("[OperatorManager] ì—°ì‚° ëª¨ë“œ ì·¨ì†Œ");
         }
         #endregion
 
         #region Card Selection Flow
         /// <summary>
-        /// Ä«µå Å¬¸¯ ÀÌº¥Æ® Ã³¸®
+        /// ì¹´ë“œ í´ë¦­ ì´ë²¤íŠ¸ ì²˜ë¦¬
         /// </summary>
         private void HandleCardClick(Card card)
         {
@@ -126,7 +130,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// Ã¹ ¹øÂ° Ä«µå ¼±ÅÃ Ã³¸®
+        /// ì²« ë²ˆì§¸ ì¹´ë“œ ì„ íƒ ì²˜ë¦¬
         /// </summary>
         private void HandleFirstCardSelection(Card card)
         {
@@ -142,7 +146,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// µÎ ¹øÂ° Ä«µå ¼±ÅÃ ÈÄ ¿¬»ê ½ÇÇà
+        /// ë‘ ë²ˆì§¸ ì¹´ë“œ ì„ íƒ ë° ì—°ì‚° ì‹¤í–‰
         /// </summary>
         private void HandleSecondCardSelection(Card card)
         {
@@ -154,13 +158,13 @@ namespace Manager
 
         #region Operation Execution
         /// <summary>
-        /// ¿¬»ê ½ÇÇà ½ÃÄö½º
+        /// ì—°ì‚° ì²˜ë¦¬ ì½”ë£¨í‹´
         /// </summary>
         private IEnumerator ExecuteOperation()
         {
             ExpressionZoneManager.Instance.ClearAllCancelable();
 
-            // ¼ö½Ä ½Ã°¢È­
+            // ì—°ì‚° ì‹œê°í™”
             var ezManager = ExpressionZoneManager.Instance;
             ezManager.SetFirstOperand(firstCard);
             ezManager.SetOperator(operatorCard);
@@ -168,13 +172,13 @@ namespace Manager
 
             yield return new WaitForSeconds(1.2f);
 
-            // Ä«µå °ª º¯°æ BEFORE¿¡ ¿øº» °ª ÀúÀå!
+            // ì¹´ë“œ ê°’ ê°€ì ¸ì˜¤ê¸° BEFOREë¡œ ì˜®ê¸´ ê²ƒ ì£¼ì˜!
             var (first, second) = GetCardValues();
             ezManager.ShowResult(first, second, currentOperator);
 
             yield return new WaitForSeconds(0.6f);
 
-            // ³×Æ®¿öÅ© µ¿±âÈ­¸¦ Ä«µå °ª º¯°æ BEFORE¿¡ Àü¼Û!
+            // ë„¤íŠ¸ì›Œí¬ ë™ê¸°í™”ëŠ” ì¹´ë“œ ê°’ ê°€ì ¸ì˜¨ BEFOREì— í˜¸ì¶œ!
             float result = CalculateResult(first, second);
             if (NetworkGameManager.Instance != null)
             {
@@ -183,19 +187,19 @@ namespace Manager
                 );
             }
 
-            // °á°ú Àû¿ë (°ª º¯°æ)
+            // ê²°ê³¼ ì ìš© (ë¡œì»¬ ì‹¤í–‰)
             ApplyOperationResult(first, second);
 
-            // ¿¬»êÀÚ Ä«µå Á¦°Å
+            // ì—°ì‚°ì ì¹´ë“œ ì œê±°
             yield return StartCoroutine(RemoveOperatorCard());
 
-            // »óÅÂ º¹¿ø
+            // ìƒíƒœ ë³µê·€
             RestoreDefaultGlowStates();
             ResetOperationState();
         }
 
         /// <summary>
-        /// ¿¬»ê °á°ú Àû¿ë
+        /// ì—°ì‚° ê²°ê³¼ ì ìš©
         /// </summary>
         private void ApplyOperationResult(float first, float second)
         {
@@ -223,11 +227,11 @@ namespace Manager
             }
 
             if (enableDebugLog)
-                Debug.Log($"[OperatorManager] ¿¬»ê ¿Ï·á: {first} {GetOperatorSymbol()} {second} = {result}");
+                Debug.Log($"[OperatorManager] ì—°ì‚° ì™„ë£Œ: {first} {GetOperatorSymbol()} {second} = {result}");
         }
 
         /// <summary>
-        /// ¿¬»ê °á°ú °è»ê
+        /// ì—°ì‚° ê²°ê³¼ ê³„ì‚°
         /// </summary>
         private float CalculateResult(float first, float second)
         {
@@ -236,7 +240,7 @@ namespace Manager
                 OperatorType.Plus => first + second,
                 OperatorType.Minus => first - second,
                 OperatorType.Multiply => first * second,
-                OperatorType.Divide => second != 0 ? Mathf.Floor(first / second) : 0, // ¸ò¸¸ ¹İÈ¯
+                OperatorType.Divide => second != 0 ? Mathf.Floor(first / second) : 0, // ëª« ë°˜í™˜
                 _ => 0
             };
         }
@@ -244,7 +248,7 @@ namespace Manager
 
         #region Card Management
         /// <summary>
-        /// ¿¬»êÀÚ Ä«µå Á¦°Å
+        /// ì—°ì‚°ì ì¹´ë“œ ì œê±°
         /// </summary>
         private IEnumerator RemoveOperatorCard()
         {
@@ -259,7 +263,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// Ä«µå °ª ¾÷µ¥ÀÌÆ®
+        /// ì¹´ë“œ ê°’ ì—…ë°ì´íŠ¸
         /// </summary>
         private void UpdateCardValue(Card card, float newValue)
         {
@@ -268,7 +272,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// Ä«µå ÆÄ±«
+        /// ì¹´ë“œ íŒŒê´´
         /// </summary>
         private void DestroyCard(Card card)
         {
@@ -278,7 +282,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ³ª¸ÓÁö °ªÀ¸·Î »õ Ä«µå »ı¼º
+        /// ë‚˜ëˆ—ì…ˆ ë‚˜ë¨¸ì§€ìš© ìƒˆ ì¹´ë“œ ìƒì„±
         /// </summary>
         private void CreateRemainderCard(float value)
         {
@@ -290,22 +294,22 @@ namespace Manager
 
             var newCard = Instantiate(template);
 
-            // float ³ª¸ÓÁö¸¦ Á¤¼ö·Î º¯È¯
+            // float ê°’ì´ì§€ë§Œ ì •ìˆ˜ë¡œ ë³€í™˜
             int intValue = Mathf.FloorToInt(value);
             newCard.name = $"RemainderCard_{intValue}";
             newCard.SetActive(true);
 
             var cardComponent = newCard.GetComponent<Card>();
-            cardComponent?.InitializeAsNumber(intValue); // Á¤¼ö °ªÀ¸·Î ÃÊ±âÈ­
+            cardComponent?.InitializeAsNumber(intValue); // ì •ìˆ˜ ê°’ìœ¼ë¡œ ì´ˆê¸°í™”
             cardComponent?.SetWasModifiedThisTurn(true);
 
             playerField.AddCard(newCard.transform);
         }
         #endregion
 
-        #region GLOW Management (¼öÁ¤µÊ)
+        #region GLOW Management (ì„ íƒê°€ëŠ¥)
         /// <summary>
-        /// Ã¹ ¹øÂ° Ä«µå ¼±ÅÃÀ» À§ÇÑ GLOW ¼³Á¤ (¼öÁ¤µÊ)
+        /// ì²« ë²ˆì§¸ ì¹´ë“œ ì„ íƒì„ ìœ„í•œ GLOW ì„¤ì • (ì„ íƒê°€ëŠ¥)
         /// </summary>
         private void SetupFirstCardSelection()
         {
@@ -314,26 +318,26 @@ namespace Manager
             foreach (var card in fieldCardsCache)
             {
                 bool canSelect = IsValidFirstCard(card);
-                // ¿¬»ê ÇÁ·Î¼¼½º ÁßÀÌ¹Ç·Î GLOW °­Á¦ ¼³Á¤
+                // ì—°ì‚° í”„ë¡œì„¸ìŠ¤ ì¤‘ì´ë¯€ë¡œ GLOW ê°•ì œ ì„¤ì •
                 card.SetGlowOverride(canSelect, canSelect ? Global.GlowGreen : null);
             }
         }
 
         /// <summary>
-        /// µÎ ¹øÂ° Ä«µå ¼±ÅÃÀ» À§ÇÑ GLOW ¼³Á¤ (¼öÁ¤µÊ)
+        /// ë‘ ë²ˆì§¸ ì¹´ë“œ ì„ íƒì„ ìœ„í•œ GLOW ì„¤ì • (ì„ íƒê°€ëŠ¥)
         /// </summary>
         private void SetupSecondCardSelection()
         {
             foreach (var card in fieldCardsCache)
             {
                 bool canSelect = card != firstCard;
-                // ¿¬»ê ÇÁ·Î¼¼½º ÁßÀÌ¹Ç·Î GLOW °­Á¦ ¼³Á¤
+                // ì—°ì‚° í”„ë¡œì„¸ìŠ¤ ì¤‘ì´ë¯€ë¡œ GLOW ê°•ì œ ì„¤ì •
                 card.SetGlowOverride(canSelect, canSelect ? Global.GlowGreen : null);
             }
         }
 
         /// <summary>
-        /// ±âº» GLOW »óÅÂ·Î º¹¿ø (¼öÁ¤µÊ)
+        /// ê¸°ë³¸ GLOW ìƒíƒœë¡œ ë³µê·€ (ì„ íƒê°€ëŠ¥)
         /// </summary>
         private void RestoreDefaultGlowStates()
         {
@@ -341,13 +345,13 @@ namespace Manager
 
             foreach (var card in fieldCardsCache)
             {
-                // ¿¬»ê ÇÁ·Î¼¼½º Á¾·á - GLOW °­Á¦ ¼³Á¤ ÇØÁ¦
+                // ì—°ì‚° í”„ë¡œì„¸ìŠ¤ ì¢…ë£Œ - GLOW ê°•ì œ ì„¤ì • í•´ì œ
                 card.ClearGlowOverride();
             }
         }
 
         /// <summary>
-        /// ÇÊµå Ä«µå Ä³½Ã ¾÷µ¥ÀÌÆ®
+        /// í•„ë“œ ì¹´ë“œ ìºì‹œ ì—…ë°ì´íŠ¸
         /// </summary>
         private void UpdateFieldCache()
         {
@@ -358,7 +362,7 @@ namespace Manager
 
         #region Validation
         /// <summary>
-        /// ¿¬»ê ½ÃÀÛ °¡´É ¿©ºÎ È®ÀÎ
+        /// ì—°ì‚° ì‹œì‘ ê°€ëŠ¥ ì—¬ë¶€ í™•ì¸
         /// </summary>
         private bool CanStartOperation(Card card)
         {
@@ -370,7 +374,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ¿¬»êÀÚº° »ç¿ë Á¶°Ç È®ÀÎ
+        /// ì—°ì‚°ìë³„ ì‹¤í–‰ ê°€ëŠ¥ í™•ì¸
         /// </summary>
         private bool HasValidOperationConditions(OperatorType operatorType)
         {
@@ -389,7 +393,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// Ä«µå Å¬¸¯ Ã³¸® °¡´É ¿©ºÎ È®ÀÎ
+        /// ì¹´ë“œ í´ë¦­ ì²˜ë¦¬ ê°€ëŠ¥ ì—¬ë¶€ í™•ì¸
         /// </summary>
         private bool CanProcessClick(Card card)
         {
@@ -402,7 +406,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// Ã¹ ¹øÂ° Ä«µå·Î À¯È¿ÇÑÁö È®ÀÎ
+        /// ì²« ë²ˆì§¸ ì¹´ë“œì˜ ìœ íš¨ì„± í™•ì¸
         /// </summary>
         private bool IsValidFirstCard(Card card)
         {
@@ -417,7 +421,7 @@ namespace Manager
 
         #region Utility
         /// <summary>
-        /// ¿¬»ê ¸ğµå ÃÊ±âÈ­
+        /// ì—°ì‚° ëª¨ë“œ ì´ˆê¸°í™”
         /// </summary>
         private void InitializeOperation(Card card)
         {
@@ -432,7 +436,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ¿¬»ê »óÅÂ ÃÊ±âÈ­
+        /// ì—°ì‚° ìƒíƒœ ì´ˆê¸°í™”
         /// </summary>
         private void ResetOperationState()
         {
@@ -444,7 +448,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// Ä«µå °ªµé ¹İÈ¯
+        /// ì¹´ë“œ ê°’ë“¤ ë°˜í™˜
         /// </summary>
         private (float first, float second) GetCardValues()
         {
@@ -454,7 +458,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ÇÃ·¹ÀÌ¾î ÇÊµå Zone Ã£±â
+        /// í”Œë ˆì´ì–´ í•„ë“œ Zone ì°¾ê¸°
         /// </summary>
         private CardZone FindPlayerFieldZone()
         {
@@ -465,7 +469,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ¿¬»êÀÚ ±âÈ£ ¹İÈ¯
+        /// ì—°ì‚°ì ê¸°í˜¸ ë°˜í™˜
         /// </summary>
         private string GetOperatorSymbol()
         {
@@ -473,14 +477,14 @@ namespace Manager
             {
                 OperatorType.Plus => "+",
                 OperatorType.Minus => "-",
-                OperatorType.Multiply => "¡¿",
-                OperatorType.Divide => "¡À",
+                OperatorType.Multiply => "Ã—",
+                OperatorType.Divide => "Ã·",
                 _ => "?"
             };
         }
 
         /// <summary>
-        /// µğ¹ö±× ·Î±× È°¼ºÈ­/ºñÈ°¼ºÈ­
+        /// ë””ë²„ê·¸ ë¡œê·¸ í™œì„±í™”/ë¹„í™œì„±í™”
         /// </summary>
         public void SetDebugMode(bool enable) => enableDebugLog = enable;
         #endregion

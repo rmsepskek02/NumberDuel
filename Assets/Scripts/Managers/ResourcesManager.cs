@@ -1,4 +1,3 @@
-using NUnit.Framework;
 using Objects;
 using System;
 using System.Collections.Generic;
@@ -8,11 +7,12 @@ using Utills;
 namespace Manager
 {
     /// <summary>
-    /// °ÔÀÓÀÇ Resource¸¦ °ü¸®ÇÏ´Â ¸Å´ÏÀú
-    /// ±âº» ÃÊ±âÈ­´Â Áï½Ã ½ÇÇà, ³×Æ®¿öÅ© »ö»ó µ¿±âÈ­´Â º°µµ Ã³¸®
+    /// ê²Œì„ì˜ Resourceë¥¼ ê´€ë¦¬í•˜ëŠ” ë§¤ë‹ˆì €
+    /// ê¸°ë³¸ ì´ˆê¸°í™”ì™€ ìƒ‰ìƒ ê´€ë¦¬, ë„¤íŠ¸ì›Œí¬ ìƒ‰ìƒ ë™ê¸°í™”ë¥¼ ë¶„ë¦¬ ì²˜ë¦¬
     /// </summary>
     public class ResourcesManager : Singleton<ResourcesManager>
     {
+        #region Fields and Properties
         [SerializeField]
         private SerializableDictionary<string, GameObject> prefabCache = new SerializableDictionary<string, GameObject>();
 
@@ -25,99 +25,100 @@ namespace Manager
         private GameObject opponentCardTemplate;
 
         /// <summary>
-        /// »ö»ó µ¿±âÈ­ ¿Ï·á ¿©ºÎ (NetworkGameManager¿¡¼­ ¼³Á¤)
+        /// ìƒ‰ìƒ ë™ê¸°í™” ì™„ë£Œ ì—¬ë¶€ (NetworkGameManagerì—ì„œ ì‚¬ìš©)
         /// </summary>
         private bool isColorSynchronized = false;
 
         /// <summary>
-        /// ±âº» ÃÊ±âÈ­ ¿Ï·á ¿©ºÎ
+        /// ê¸°ë³¸ ì´ˆê¸°í™” ì™„ë£Œ ì—¬ë¶€
         /// </summary>
         private bool isBasicInitialized = false;
 
         /// <summary>
-        /// ¿ÜºÎ¿¡¼­ Player¿ë ÂüÁ¶
+        /// ì™¸ë¶€ì—ì„œ Playerí…œ ì ‘ê·¼
         /// </summary>
         public GameObject GetPlayerCardTemplate() => playerCardTemplate;
         public Sprite GetPlayerSprite() => playerSprite;
 
         /// <summary>
-        /// ¿ÜºÎ¿¡¼­ Opponent¿ë ÂüÁ¶
+        /// ì™¸ë¶€ì—ì„œ Opponentí…œ ì ‘ê·¼
         /// </summary>
         public GameObject GetOpponentCardTemplate() => opponentCardTemplate;
         public Sprite GetOpponentSprite() => opponentSprite;
 
         /// <summary>
-        /// »ö»ó µ¿±âÈ­ ¿Ï·á ¿©ºÎ È®ÀÎ
+        /// ìƒ‰ìƒ ë™ê¸°í™” ì™„ë£Œ ì—¬ë¶€ í™•ì¸
         /// </summary>
         public bool IsColorSynchronized => isColorSynchronized;
 
         /// <summary>
-        /// ±âº» ÃÊ±âÈ­ ¿Ï·á ¿©ºÎ È®ÀÎ
+        /// ê¸°ë³¸ ì´ˆê¸°í™” ì™„ë£Œ ì—¬ë¶€ í™•ì¸
         /// </summary>
         public bool IsBasicInitialized => isBasicInitialized;
+        #endregion
 
+        #region Unity Lifecycle
         protected override void Awake()
         {
             base.Awake();
 
-            // ±âº» ¸®¼Ò½º ·Îµù (Áï½Ã ½ÇÇà)
+            // ê¸°ë³¸ ë¦¬ì†ŒìŠ¤ ë¡œë“œ (ìƒ‰ìƒ ë¬´ê´€)
             LoadAllPrefabs(Global.Card);
             LoadAllSprites(Global.Card);
             LoadAllSprites(Global.Joker);
 
-            // ±âº» Ä«µå ÅÛÇÃ¸´ »ı¼º (»ö»óÀº ³ªÁß¿¡ ¼³Á¤)
+            // ê¸°ë³¸ ì¹´ë“œ í…œí”Œë¦¿ ìƒì„± (ìƒ‰ìƒì€ ë‚˜ì¤‘ì— ì ìš©)
             CreateBasicCardTemplates();
 
             isBasicInitialized = true;
-            Debug.Log("[ResourcesManager] ±âº» ÃÊ±âÈ­ ¿Ï·á");
         }
 
         private void OnDestroy()
         {
             ClearCache();
         }
+        #endregion
 
-        #region Basic Initialization (Áï½Ã ½ÇÇà)
+        #region Basic Initialization (ìƒ‰ìƒ ë¬´ê´€)
         /// <summary>
-        /// ±âº» Ä«µå ÅÛÇÃ¸´ »ı¼º
-        /// »ö»óÀº ±âº»°ªÀ¸·Î ¼³Á¤ÇÏ°í, ³ªÁß¿¡ ³×Æ®¿öÅ© µ¿±âÈ­·Î º¯°æ
+        /// ê¸°ë³¸ ì¹´ë“œ í…œí”Œë¦¿ ìƒì„±
+        /// ìƒ‰ìƒì€ ê¸°ë³¸ê°’ìœ¼ë¡œ ì„¤ì •í•˜ê³ , ë‚˜ì¤‘ì— ë„¤íŠ¸ì›Œí¬ ë™ê¸°í™”ë¡œ ë³€ê²½
         /// </summary>
         private void CreateBasicCardTemplates()
         {
-            // ±âÁ¸ ÅÛÇÃ¸´ Á¤¸®
+            // ê¸°ì¡´ í…œí”Œë¦¿ ì œê±°
             if (playerCardTemplate != null)
                 DestroyImmediate(playerCardTemplate);
             if (opponentCardTemplate != null)
                 DestroyImmediate(opponentCardTemplate);
 
-            // ÇÁ¸®ÆÕ °¡Á®¿À±â
+            // í”„ë¦¬íŒ¹ ê°€ì ¸ì˜¤ê¸°
             var playerPrefab = GetPrefab(Global.Card, "Player_Card");
             var opponentPrefab = GetPrefab(Global.Card, "Opponent_Card");
 
             if (playerPrefab == null || opponentPrefab == null)
             {
-                Debug.LogError("[ResourcesManager] Player_Card ¶Ç´Â Opponent_Card ÇÁ¸®ÆÕÀ» Ã£À» ¼ö ¾ø½À´Ï´Ù.");
                 return;
             }
 
-            // ÅÛÇÃ¸´ ÀÎ½ºÅÏ½º »ı¼º
+            // í…œí”Œë¦¿ ì¸ìŠ¤í„´ìŠ¤ ìƒì„±
             playerCardTemplate = Instantiate(playerPrefab);
             opponentCardTemplate = Instantiate(opponentPrefab);
 
-            // ÀÌ¸§ ¼³Á¤
+            // ì´ë¦„ ì„¤ì •
             playerCardTemplate.name = "PlayerCardTemplate";
             opponentCardTemplate.name = "OpponentCardTemplate";
 
-            // ±âº» ½ºÇÁ¶óÀÌÆ® ¼³Á¤ (Ã¹ ¹øÂ° »ç¿ë °¡´ÉÇÑ ½ºÇÁ¶óÀÌÆ®)
+            // ê¸°ë³¸ ìŠ¤í”„ë¼ì´íŠ¸ ì„¤ì • (ì²« ë²ˆì§¸ ìƒ‰ìƒ ìŠ¤í”„ë¼ì´íŠ¸)
             SetDefaultSprites();
 
-            // ÅÛÇÃ¸´Àº ºñÈ°¼ºÈ­ »óÅÂ·Î À¯Áö
+            // í…œí”Œë¦¿ì„ ë¹„í™œì„±í™” ìƒíƒœë¡œ ìœ ì§€
             playerCardTemplate.SetActive(false);
             opponentCardTemplate.SetActive(false);
         }
 
         /// <summary>
-        /// ±âº» ½ºÇÁ¶óÀÌÆ® ¼³Á¤ (¹æÀåÀÎ °æ¿ì ÀÌ¹Ì ¼³Á¤µÊ, ¾Æ´Ñ °æ¿ì ¹æ ¼Ó¼º¿¡¼­ ÀĞ±â)
+        /// ê¸°ë³¸ ìŠ¤í”„ë¼ì´íŠ¸ ì„¤ì • (ë§ˆìŠ¤í„° ìƒ‰ìƒ ì´ë¯¸ ìˆë‹¤ë©´, ì•„ë‹Œ ê²½ìš° ì²« ë²ˆì§¸ì—ì„œ ì½ê¸°)
         /// </summary>
         private void SetDefaultSprites()
         {
@@ -125,7 +126,7 @@ namespace Manager
 
             if (availableSprites.Count >= 2)
             {
-                // ¹æÀåÀÌ ¾Æ´Ñ °æ¿ì ¹æ ¼Ó¼º¿¡¼­ »ö»ó ÀĞ±â ½Ãµµ
+                // ë§ˆìŠ¤í„°ê°€ ì•„ë‹Œ ê²½ìš° ì²« ë²ˆì§¸ì—ì„œ ë£¸ ì†ì„±ê°’ ì½ê¸° ì‹œë„
                 if (!Photon.Pun.PhotonNetwork.IsMasterClient && Photon.Pun.PhotonNetwork.InRoom)
                 {
                     var roomProperties = Photon.Pun.PhotonNetwork.CurrentRoom.CustomProperties;
@@ -136,59 +137,43 @@ namespace Manager
                         string masterColorName = masterColor.ToString();
                         string guestColorName = guestColor.ToString();
 
-                        // ºñ¹æÀå °üÁ¡¿¡¼­ »ö»ó ¹İ´ë Àû¿ë
+                        // ê²ŒìŠ¤íŠ¸ í”Œë ˆì´ì–´ëŠ” ë°˜ëŒ€ ìƒ‰ìƒ
                         SetPlayerColors(guestColorName, masterColorName);
-                        Debug.Log($"[ResourcesManager] ºñ¹æÀå - ¹æ ¼Ó¼º »ö»ó Àû¿ë: Player={guestColorName}, Opponent={masterColorName}");
                         return;
-                    }
-                    else
-                    {
-                        Debug.Log("[ResourcesManager] ºñ¹æÀå - ¹æ ¼Ó¼º¿¡ »ö»ó ¾øÀ½, ±âº» »ö»ó »ç¿ë");
                     }
                 }
 
-                // ¹æÀåÀÌ°Å³ª ¹æ ¼Ó¼º¿¡ »ö»óÀÌ ¾ø´Â °æ¿ì ±âº» »ö»ó »ç¿ë
+                // ë§ˆìŠ¤í„°ì´ê±°ë‚˜ ë£¸ ì†ì„±ì´ ì—†ëŠ” ê²½ìš° ê¸°ë³¸ ìƒ‰ìƒ ì„¤ì •
                 playerSprite = availableSprites[0];
                 opponentSprite = availableSprites[1];
 
                 ApplyVisual(playerCardTemplate, playerSprite);
                 ApplyVisual(opponentCardTemplate, opponentSprite);
-
-                string role = Photon.Pun.PhotonNetwork.IsMasterClient ? "¹æÀå" : "ºñ¹æÀå";
-                Debug.Log($"[ResourcesManager] {role} - ±âº» »ö»ó »ç¿ë: Player={playerSprite.name}, Opponent={opponentSprite.name}");
-            }
-            else
-            {
-                Debug.LogError("[ResourcesManager] »ç¿ë °¡´ÉÇÑ ½ºÇÁ¶óÀÌÆ®°¡ ºÎÁ·ÇÕ´Ï´Ù.");
             }
         }
         #endregion
 
-        #region Network Color Synchronization (º°µµ ½ÇÇà)
+        #region Network Color Synchronization (ìƒ‰ìƒ ê´€ë¦¬)
         /// <summary>
-        /// ³×Æ®¿öÅ© µ¿±âÈ­µÈ ÇÃ·¹ÀÌ¾î »ö»ó ¼³Á¤
-        /// NetworkGameManager¿¡¼­ È£ÃâÇÏ¿© ¸ğµç Å¬¶óÀÌ¾ğÆ®°¡ µ¿ÀÏÇÑ »ö»ó »ç¿ë
+        /// ë„¤íŠ¸ì›Œí¬ ë™ê¸°í™”ë¡œ í”Œë ˆì´ì–´ ìƒ‰ìƒ ì„¤ì •
+        /// NetworkGameManagerì—ì„œ í˜¸ì¶œí•˜ì—¬ ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ê°€ ë™ì¼í•œ ìƒ‰ìƒ ì„¤ì •
         /// </summary>
-        /// <param name="playerSpriteName">ÇÃ·¹ÀÌ¾î Ä«µå ½ºÇÁ¶óÀÌÆ® ÀÌ¸§</param>
-        /// <param name="opponentSpriteName">»ó´ë¹æ Ä«µå ½ºÇÁ¶óÀÌÆ® ÀÌ¸§</param>
+        /// <param name="playerSpriteName">í”Œë ˆì´ì–´ ì¹´ë“œ ìŠ¤í”„ë¼ì´íŠ¸ ì´ë¦„</param>
+        /// <param name="opponentSpriteName">ìƒëŒ€ ì¹´ë“œ ìŠ¤í”„ë¼ì´íŠ¸ ì´ë¦„</param>
         public void SetPlayerColors(string playerSpriteName, string opponentSpriteName)
         {
             if (!isBasicInitialized)
             {
-                Debug.LogWarning("[ResourcesManager] ±âº» ÃÊ±âÈ­°¡ ¿Ï·áµÇÁö ¾Ê¾Ò½À´Ï´Ù.");
                 return;
             }
 
-            Debug.Log($"[ResourcesManager] »ö»ó µ¿±âÈ­ Àû¿ë ½ÃÀÛ: Player={playerSpriteName}, Opponent={opponentSpriteName}");
-
-            // ½ºÇÁ¶óÀÌÆ® ÀÌ¸§À¸·Î ½ÇÁ¦ ½ºÇÁ¶óÀÌÆ® Ã£±â
+            // ìŠ¤í”„ë¼ì´íŠ¸ ì´ë¦„ìœ¼ë¡œ ì‹¤ì œ ìŠ¤í”„ë¼ì´íŠ¸ ì°¾ê¸°
             if (spriteCache.TryGetValue(playerSpriteName, out Sprite foundPlayerSprite))
             {
                 playerSprite = foundPlayerSprite;
             }
             else
             {
-                Debug.LogError($"[ResourcesManager] Player ½ºÇÁ¶óÀÌÆ®¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù: {playerSpriteName}");
                 return;
             }
 
@@ -198,39 +183,35 @@ namespace Manager
             }
             else
             {
-                Debug.LogError($"[ResourcesManager] Opponent ½ºÇÁ¶óÀÌÆ®¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù: {opponentSpriteName}");
                 return;
             }
 
-            // ±âÁ¸ ÅÛÇÃ¸´¿¡ »õ·Î¿î »ö»ó Àû¿ë
+            // ê¸°ì¡´ í…œí”Œë¦¿ì— ìƒˆë¡œìš´ ìƒ‰ìƒ ì ìš©
             ApplyVisual(playerCardTemplate, playerSprite);
             ApplyVisual(opponentCardTemplate, opponentSprite);
 
-            // ÀÌ¹Ì »ı¼ºµÈ DeckStackerµéµµ »ö»ó ¾÷µ¥ÀÌÆ®
+            // ì´ë¯¸ ìƒì„±ëœ DeckStackerë“¤ë„ ìƒ‰ìƒ ì—…ë°ì´íŠ¸
             UpdateExistingDeckStackers();
 
-            // »ö»ó µ¿±âÈ­ ¿Ï·á Ç¥½Ã
+            // ìƒ‰ìƒ ë™ê¸°í™” ì™„ë£Œ í‘œì‹œ
             isColorSynchronized = true;
-
-            Debug.Log("[ResourcesManager] ³×Æ®¿öÅ© »ö»ó µ¿±âÈ­ ¿Ï·á");
         }
 
         /// <summary>
-        /// ¹æÀå¿ë: ·£´ı »ö»ó ¼±ÅÃ ÈÄ ÀÌ¸§ ¹İÈ¯
-        /// NetworkGameManager¿¡¼­ È£ÃâÇÏ¿© RPC·Î Àü¼ÛÇÒ µ¥ÀÌÅÍ »ı¼º
+        /// ë§ˆìŠ¤í„°: ëœë¤ ìƒ‰ìƒ ì„ íƒ í›„ ì´ë¦„ ë°˜í™˜
+        /// NetworkGameManagerì—ì„œ í˜¸ì¶œí•˜ì—¬ RPCë¡œ ë¸Œë¡œë“œìºìŠ¤íŠ¸ ìƒ‰ìƒ ì „ë‹¬
         /// </summary>
-        /// <returns>¼±ÅÃµÈ ½ºÇÁ¶óÀÌÆ® ÀÌ¸§µé (player, opponent)</returns>
+        /// <returns>ì„ íƒëœ ìŠ¤í”„ë¼ì´íŠ¸ ì´ë¦„ë“¤ (player, opponent)</returns>
         public (string playerSpriteName, string opponentSpriteName) SelectRandomColors()
         {
             List<Sprite> availableSprites = GetAvailableColorSprites();
 
             if (availableSprites.Count < 2)
             {
-                Debug.LogError("[ResourcesManager] »ç¿ëÇÒ ¼ö ÀÖ´Â »ö»ó ½ºÇÁ¶óÀÌÆ®°¡ 2°³ ÀÌ»ó ÇÊ¿äÇÕ´Ï´Ù.");
                 return ("", "");
             }
 
-            // ·£´ı ¼±ÅÃ (Áßº¹ ¾øÀÌ)
+            // ëœë¤ ì„ íƒ (ì¤‘ë³µ ë°©ì§€)
             int index1 = UnityEngine.Random.Range(0, availableSprites.Count);
             int index2;
             do
@@ -241,15 +222,13 @@ namespace Manager
             string playerSpriteName = availableSprites[index1].name;
             string opponentSpriteName = availableSprites[index2].name;
 
-            Debug.Log($"[ResourcesManager] ·£´ı »ö»ó ¼±ÅÃ: Player={playerSpriteName}, Opponent={opponentSpriteName}");
-
             return (playerSpriteName, opponentSpriteName);
         }
 
         /// <summary>
-        /// »ç¿ë °¡´ÉÇÑ »ö»ó ½ºÇÁ¶óÀÌÆ® ¸ñ·Ï ¹İÈ¯
+        /// ëª¨ë“  ì‚¬ìš©í•  ìƒ‰ìƒ ìŠ¤í”„ë¼ì´íŠ¸ ëª©ë¡ ë°˜í™˜
         /// </summary>
-        /// <returns>ÇÊÅÍ¸µµÈ ½ºÇÁ¶óÀÌÆ® ¸ñ·Ï</returns>
+        /// <returns>í•„í„°ë§ëœ ìŠ¤í”„ë¼ì´íŠ¸ ëª©ë¡</returns>
         private List<Sprite> GetAvailableColorSprites()
         {
             List<Sprite> availableSprites = new List<Sprite>();
@@ -258,68 +237,63 @@ namespace Manager
             {
                 string spriteName = kvp.Key.ToLower();
 
-                // µŞ¸é Ä«µå°¡ ¾Æ´Ï°í ºó Ä«µåÀÎ ½ºÇÁ¶óÀÌÆ®¸¸ ¼±ÅÃ
+                // ë’·ë©´ ì¹´ë“œê°€ ì•„ë‹ˆê³  ë¹ˆ ì¹´ë“œì¸ ìŠ¤í”„ë¼ì´íŠ¸ë§Œ í¬í•¨
                 if (!spriteName.Contains("color_back") && spriteName.Contains("empty"))
                 {
                     availableSprites.Add(kvp.Value);
                 }
             }
 
-            Debug.Log($"[ResourcesManager] »ç¿ë °¡´ÉÇÑ »ö»ó ½ºÇÁ¶óÀÌÆ®: {availableSprites.Count}°³");
             return availableSprites;
         }
         #endregion
 
         #region Existing Objects Update
         /// <summary>
-        /// ÀÌ¹Ì »ı¼ºµÈ DeckStackerµéÀÇ »ö»ó ¾÷µ¥ÀÌÆ®
-        /// »ö»ó µ¿±âÈ­ ½Ã ±âÁ¸¿¡ »ı¼ºµÈ µ¦µéµµ ÇÔ²² ¾÷µ¥ÀÌÆ®
+        /// ì´ë¯¸ ìƒì„±ëœ DeckStackerë“¤ì˜ ìƒ‰ìƒ ì—…ë°ì´íŠ¸
+        /// ìƒ‰ìƒ ë™ê¸°í™” í›„ ê²Œì„ì— ìƒì„±ëœ ë±ë“¤ë„ í•¨ê»˜ ì—…ë°ì´íŠ¸
         /// </summary>
         private void UpdateExistingDeckStackers()
         {
-            // ¾À¿¡ ÀÖ´Â ¸ğµç DeckStacker Ã£±â
+            // í˜„ì¬ ìˆëŠ” ëª¨ë“  DeckStacker ì°¾ê¸°
             DeckStacker[] deckStackers = FindObjectsByType<DeckStacker>(FindObjectsSortMode.None);
 
             foreach (var stacker in deckStackers)
             {
-                // ÇÃ·¹ÀÌ¾î µ¦ÀÎÁö »ó´ë µ¦ÀÎÁö È®ÀÎ
+                // í”Œë ˆì´ì–´ ë±ì¸ì§€ ìƒëŒ€ ë±ì¸ì§€ í™•ì¸
                 bool isPlayerDeck = stacker.IsMyDeck;
                 Sprite targetSprite = isPlayerDeck ? playerSprite : opponentSprite;
 
-                // DeckStackerÀÇ ½Ã°¢Àû ¿ä¼Ò ¾÷µ¥ÀÌÆ®
+                // DeckStackerì˜ ì‹œê°ì  ìƒ‰ìƒ ì—…ë°ì´íŠ¸
                 UpdateDeckStackerVisual(stacker, targetSprite);
             }
-
-            Debug.Log("[ResourcesManager] ±âÁ¸ DeckStackerµé »ö»ó ¾÷µ¥ÀÌÆ® ¿Ï·á");
         }
 
         /// <summary>
-        /// °³º° DeckStackerÀÇ ½Ã°¢Àû ¿ä¼Ò ¾÷µ¥ÀÌÆ®
+        /// ë‹¨ì¼ DeckStackerì˜ ì‹œê°ì  ìƒ‰ìƒ ì—…ë°ì´íŠ¸
         /// </summary>
-        /// <param name="stacker">¾÷µ¥ÀÌÆ®ÇÒ DeckStacker</param>
-        /// <param name="sprite">Àû¿ëÇÒ ½ºÇÁ¶óÀÌÆ®</param>
+        /// <param name="stacker">ì—…ë°ì´íŠ¸í•  DeckStacker</param>
+        /// <param name="sprite">ì ìš©í•  ìŠ¤í”„ë¼ì´íŠ¸</param>
         private void UpdateDeckStackerVisual(DeckStacker stacker, Sprite sprite)
         {
             if (stacker == null || sprite == null) return;
 
-            // DeckStackerÀÇ ÀÚ½Ä ¿ÀºêÁ§Æ®µé¿¡¼­ SpriteRenderer Ã£±â
+            // DeckStackerì˜ ìì‹ ì˜¤ë¸Œì íŠ¸ë“¤ì—ì„œ SpriteRenderer ì°¾ê¸°
             SpriteRenderer[] spriteRenderers = stacker.GetComponentsInChildren<SpriteRenderer>();
 
             foreach (var spriteRenderer in spriteRenderers)
             {
-                // Ä«µå °ü·Ã SpriteRenderer¸¸ ¾÷µ¥ÀÌÆ® (¹è°æ µîÀº Á¦¿Ü)
+                // ì¹´ë“œ ê´€ë ¨ SpriteRendererë§Œ ì—…ë°ì´íŠ¸ (ì•„ì´ì½˜ ì œì™¸)
                 if (spriteRenderer.gameObject.name.Contains("Card") ||
                     spriteRenderer.gameObject.name.Contains("Deck"))
                 {
                     spriteRenderer.sprite = sprite;
 
-                    // Material Property BlockÀ» »ç¿ëÇÑ ÅØ½ºÃ³ ¼³Á¤
+                    // Material Property Blockì„ ì‚¬ìš©í•´ í…ìŠ¤ì²˜ ë³€ê²½
                     var propertyBlock = new MaterialPropertyBlock();
                     spriteRenderer.GetPropertyBlock(propertyBlock);
                     propertyBlock.SetTexture("_MainTex", sprite.texture);
                     spriteRenderer.SetPropertyBlock(propertyBlock);
-
-                    Debug.Log($"[ResourcesManager] DeckStacker »ö»ó ¾÷µ¥ÀÌÆ®: {spriteRenderer.gameObject.name} -> {sprite.name}");
                 }
             }
         }
@@ -327,54 +301,45 @@ namespace Manager
 
         #region Visual Application
         /// <summary>
-        /// Ä«µå ¿ÀºêÁ§Æ®¿¡ ½Ã°¢Àû ¼³Á¤ Àû¿ë
-        /// ½ºÇÁ¶óÀÌÆ® ¹× ÅØ½ºÆ® »ö»ó ¼³Á¤
+        /// ì¹´ë“œ ì˜¤ë¸Œì íŠ¸ì— ì‹œê°ì  ì •ë³´ ì ìš©
+        /// ìŠ¤í”„ë¼ì´íŠ¸ ë° í…ìŠ¤íŠ¸ ìƒ‰ìƒ ë³€ê²½
         /// </summary>
-        /// <param name="card">¼³Á¤ÇÒ Ä«µå ¿ÀºêÁ§Æ®</param>
-        /// <param name="sprite">Àû¿ëÇÒ ½ºÇÁ¶óÀÌÆ®</param>
+        /// <param name="card">ëŒ€ìƒ ì¹´ë“œ ì˜¤ë¸Œì íŠ¸</param>
+        /// <param name="sprite">ì ìš©í•  ìŠ¤í”„ë¼ì´íŠ¸</param>
         private void ApplyVisual(GameObject card, Sprite sprite)
         {
             if (card == null || sprite == null)
             {
-                Debug.LogWarning("[ResourcesManager] ApplyVisual: card ¶Ç´Â sprite°¡ nullÀÔ´Ï´Ù.");
                 return;
             }
 
-            // SpriteRenderer¿¡ ½ºÇÁ¶óÀÌÆ® Àû¿ë
+            // SpriteRendererì— ìŠ¤í”„ë¼ì´íŠ¸ ì ìš©
             var spriteRenderer = card.GetComponentInChildren<SpriteRenderer>();
             if (spriteRenderer != null)
             {
                 spriteRenderer.sprite = sprite;
 
-                // Material Property BlockÀ» »ç¿ëÇÑ ÅØ½ºÃ³ ¼³Á¤
+                // Material Property Blockì„ ì‚¬ìš©í•´ í…ìŠ¤ì²˜ ë³€ê²½
                 var propertyBlock = new MaterialPropertyBlock();
                 spriteRenderer.GetPropertyBlock(propertyBlock);
                 propertyBlock.SetTexture("_MainTex", sprite.texture);
                 spriteRenderer.SetPropertyBlock(propertyBlock);
             }
-            else
-            {
-                Debug.LogWarning($"[ResourcesManager] SpriteRenderer¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù: {card.name}");
-            }
 
-            // ÅØ½ºÆ® »ö»ó ¼³Á¤ (½ºÇÁ¶óÀÌÆ® ÀÌ¸§ ±â¹İ)
+            // í…ìŠ¤íŠ¸ ìƒ‰ìƒ ë§¤ì¹­ (ìŠ¤í”„ë¼ì´íŠ¸ ì´ë¦„ ê¸°ë°˜)
             var textMeshPro = card.GetComponentInChildren<TMPro.TextMeshPro>();
             if (textMeshPro != null)
             {
                 Color textColor = MatchColorFromSprite(sprite.name);
                 textMeshPro.color = textColor;
             }
-            else
-            {
-                Debug.LogWarning($"[ResourcesManager] TextMeshPro¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù: {card.name}");
-            }
         }
 
         /// <summary>
-        /// ½ºÇÁ¶óÀÌÆ® ÀÌ¸§¿¡ µû¶ó ÀûÀıÇÑ ÅØ½ºÆ® »ö»ó °áÁ¤
+        /// ìŠ¤í”„ë¼ì´íŠ¸ ì´ë¦„ì— ë”°ë¼ ëŒ€ì‘í•˜ëŠ” í…ìŠ¤íŠ¸ ìƒ‰ìƒ ë°˜í™˜
         /// </summary>
-        /// <param name="spriteName">½ºÇÁ¶óÀÌÆ® ÀÌ¸§</param>
-        /// <returns>¸ÅÄªµÈ »ö»ó</returns>
+        /// <param name="spriteName">ìŠ¤í”„ë¼ì´íŠ¸ ì´ë¦„</param>
+        /// <returns>ë§¤ì¹­ëœ ìƒ‰ìƒ</returns>
         public Color MatchColorFromSprite(string spriteName)
         {
             if (string.IsNullOrEmpty(spriteName))
@@ -387,21 +352,21 @@ namespace Manager
             if (lowerName.Contains("yellow")) return Global.Yellow;
             if (lowerName.Contains("purple")) return Global.Purple;
 
-            // ±âº»°ª: Èò»ö
+            // ê¸°ë³¸ê°’: í°ìƒ‰
             return Color.white;
         }
         #endregion
 
         #region Cache Management
         /// <summary>
-        /// ¸ğµç Ä³½Ã Á¦°Å (¸Ş¸ğ¸® ÃÖÀûÈ­)
+        /// ëª¨ë“  ìºì‹œ ì •ë¦¬ (ë©”ëª¨ë¦¬ ìµœì í™”)
         /// </summary>
         public void ClearCache()
         {
             prefabCache.Clear();
             spriteCache.Clear();
 
-            // ÅÛÇÃ¸´ Á¦°Å
+            // í…œí”Œë¦¿ ì œê±°
             if (playerCardTemplate != null)
             {
                 if (Application.isPlaying)
@@ -427,9 +392,9 @@ namespace Manager
 
         #region Resource Loading
         /// <summary>
-        /// Æ¯Á¤ Æú´õ ³» ¸ğµç ÇÁ¸®ÆÕÀ» ÇÑ ¹ø¿¡ ·Îµå
+        /// íŠ¹ì • ê²½ë¡œ ë‚´ ëª¨ë“  í”„ë¦¬íŒ¹ì„ í•œ ë²ˆì— ë¡œë“œ
         /// </summary>
-        /// <param name="path">·ÎµåÇÒ Æú´õ °æ·Î</param>
+        /// <param name="path">ë¡œë“œí•  ê²½ë¡œ ì´ë¦„</param>
         private void LoadAllPrefabs(string path)
         {
             try
@@ -441,22 +406,17 @@ namespace Manager
                     if (prefab != null)
                         prefabCache[prefab.name] = prefab;
                 }
-
-                if (prefabs.Length == 0)
-                {
-                    Debug.LogError($"[ResourcesManager] ÇÁ¸®ÆÕÀ» Ã£À» ¼ö ¾ø½À´Ï´Ù: Prefabs/{path}");
-                }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                Debug.LogError($"[ResourcesManager] ÇÁ¸®ÆÕ ·Îµå Áß ¿À·ù: {ex.Message}");
+                Debug.LogError($"[ResourcesManager] í”„ë¦¬íŒ¹ ë¡œë“œ ì¤‘ ì˜¤ë¥˜: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// Æ¯Á¤ Æú´õ ³» ¸ğµç Sprite¸¦ ÇÑ ¹ø¿¡ ·Îµå
+        /// íŠ¹ì • ê²½ë¡œ ë‚´ ëª¨ë“  Spriteë¥¼ í•œ ë²ˆì— ë¡œë“œ
         /// </summary>
-        /// <param name="path">·ÎµåÇÒ Æú´õ °æ·Î</param>
+        /// <param name="path">ë¡œë“œí•  ê²½ë¡œ ì´ë¦„</param>
         private void LoadAllSprites(string path)
         {
             try
@@ -468,29 +428,23 @@ namespace Manager
                     if (sprite != null)
                         spriteCache[sprite.name] = sprite;
                 }
-
-                if (sprites.Length == 0)
-                {
-                    Debug.LogError($"[ResourcesManager] ½ºÇÁ¶óÀÌÆ®¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù: Image/{path}");
-                }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                Debug.LogError($"[ResourcesManager] ½ºÇÁ¶óÀÌÆ® ·Îµå Áß ¿À·ù: {ex.Message}");
+                Debug.LogError($"[ResourcesManager] ìŠ¤í”„ë¼ì´íŠ¸ ë¡œë“œ ì¤‘ ì˜¤ë¥˜: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// PrefabÀ» ·ÎµåÇÏ°í Ä³½Ì (Resources Æú´õ ³»¿¡¼­ ·Îµå)
+        /// Prefabì„ ë¡œë“œí•˜ê³  ìºì‹œ (Resources ê²½ë¡œ í•˜ìœ„ë¶€í„° ë¡œë“œ)
         /// </summary>
-        /// <param name="path">Æú´õ °æ·Î</param>
-        /// <param name="prefabName">ÇÁ¸®ÆÕ ÀÌ¸§</param>
-        /// <returns>·ÎµåµÈ ÇÁ¸®ÆÕ ¶Ç´Â null</returns>
+        /// <param name="path">ê²½ë¡œ ì´ë¦„</param>
+        /// <param name="prefabName">í”„ë¦¬íŒ¹ ì´ë¦„</param>
+        /// <returns>ë¡œë“œëœ í”„ë¦¬íŒ¹ ë˜ëŠ” null</returns>
         public GameObject GetPrefab(string path, string prefabName)
         {
             if (string.IsNullOrEmpty(prefabName))
             {
-                Debug.LogError("[ResourcesManager] GetPrefab: prefabNameÀÌ ºñ¾îÀÖ½À´Ï´Ù.");
                 return null;
             }
 
@@ -505,13 +459,12 @@ namespace Manager
                     }
                     else
                     {
-                        Debug.LogError($"[ResourcesManager] Prefab '{prefabName}'À» °æ·Î 'Prefabs/{path}/'¿¡¼­ Ã£À» ¼ö ¾ø½À´Ï´Ù.");
                         return null;
                     }
                 }
-                catch (System.Exception ex)
+                catch (Exception ex)
                 {
-                    Debug.LogError($"[ResourcesManager] ÇÁ¸®ÆÕ ·Îµå Áß ¿À·ù: {ex.Message}");
+                    Debug.LogError($"[ResourcesManager] í”„ë¦¬íŒ¹ ë¡œë“œ ì¤‘ ì˜¤ë¥˜: {ex.Message}");
                     return null;
                 }
             }
@@ -519,16 +472,15 @@ namespace Manager
         }
 
         /// <summary>
-        /// Sprite¸¦ ·ÎµåÇÏ°í Ä³½Ì (Resources Æú´õ ³»¿¡¼­ ·Îµå)
+        /// Spriteë¥¼ ë¡œë“œí•˜ê³  ìºì‹œ (Resources ê²½ë¡œ í•˜ìœ„ë¶€í„° ë¡œë“œ)
         /// </summary>
-        /// <param name="path">Æú´õ °æ·Î</param>
-        /// <param name="spriteName">½ºÇÁ¶óÀÌÆ® ÀÌ¸§</param>
-        /// <returns>·ÎµåµÈ ½ºÇÁ¶óÀÌÆ® ¶Ç´Â null</returns>
+        /// <param name="path">ê²½ë¡œ ì´ë¦„</param>
+        /// <param name="spriteName">ìŠ¤í”„ë¼ì´íŠ¸ ì´ë¦„</param>
+        /// <returns>ë¡œë“œëœ ìŠ¤í”„ë¼ì´íŠ¸ ë˜ëŠ” null</returns>
         public Sprite GetSprite(string path, string spriteName)
         {
             if (string.IsNullOrEmpty(spriteName))
             {
-                Debug.LogError("[ResourcesManager] GetSprite: spriteNameÀÌ ºñ¾îÀÖ½À´Ï´Ù.");
                 return null;
             }
 
@@ -543,13 +495,12 @@ namespace Manager
                     }
                     else
                     {
-                        Debug.LogError($"[ResourcesManager] Sprite '{spriteName}'À» °æ·Î 'Image/{path}/'¿¡¼­ Ã£À» ¼ö ¾ø½À´Ï´Ù.");
                         return null;
                     }
                 }
-                catch (System.Exception ex)
+                catch (Exception ex)
                 {
-                    Debug.LogError($"[ResourcesManager] ½ºÇÁ¶óÀÌÆ® ·Îµå Áß ¿À·ù: {ex.Message}");
+                    Debug.LogError($"[ResourcesManager] ìŠ¤í”„ë¼ì´íŠ¸ ë¡œë“œ ì¤‘ ì˜¤ë¥˜: {ex.Message}");
                     return null;
                 }
             }
@@ -557,13 +508,13 @@ namespace Manager
         }
 
         /// <summary>
-        /// PrefabÀ» ÀÎ½ºÅÏ½ºÈ­ÇÏ¿© »ı¼º
+        /// Prefabì„ ì¸ìŠ¤í„´ìŠ¤í™”í•˜ì—¬ ë°˜í™˜
         /// </summary>
-        /// <param name="prefabName">ÇÁ¸®ÆÕ ÀÌ¸§</param>
-        /// <param name="position">»ı¼º À§Ä¡</param>
-        /// <param name="rotation">»ı¼º È¸Àü</param>
-        /// <param name="parent">ºÎ¸ğ Transform</param>
-        /// <returns>»ı¼ºµÈ ÀÎ½ºÅÏ½º ¶Ç´Â null</returns>
+        /// <param name="prefabName">í”„ë¦¬íŒ¹ ì´ë¦„</param>
+        /// <param name="position">ìƒì„± ìœ„ì¹˜</param>
+        /// <param name="rotation">ìƒì„± íšŒì „</param>
+        /// <param name="parent">ë¶€ëª¨ Transform</param>
+        /// <returns>ìƒì„±ëœ ì¸ìŠ¤í„´ìŠ¤ ë˜ëŠ” null</returns>
         public GameObject InstantiatePrefab(string prefabName, Vector3 position, Quaternion rotation, Transform parent = null)
         {
             if (prefabCache.TryGetValue(prefabName, out GameObject prefab))
@@ -573,34 +524,14 @@ namespace Manager
                     GameObject instance = Instantiate(prefab, position, rotation, parent);
                     return instance;
                 }
-                catch (System.Exception ex)
+                catch (Exception ex)
                 {
-                    Debug.LogError($"[ResourcesManager] ÇÁ¸®ÆÕ ÀÎ½ºÅÏ½º »ı¼º Áß ¿À·ù: {ex.Message}");
+                    Debug.LogError($"[ResourcesManager] í”„ë¦¬íŒ¹ ì¸ìŠ¤í„´ìŠ¤ ìƒì„± ì¤‘ ì˜¤ë¥˜: {ex.Message}");
                     return null;
                 }
             }
 
-            Debug.LogError($"[ResourcesManager] '{prefabName}' ÇÁ¸®ÆÕÀ» Ä³½Ã¿¡¼­ Ã£À» ¼ö ¾ø½À´Ï´Ù.");
             return null;
-        }
-        #endregion
-
-        #region Debug & Validation
-        /// <summary>
-        /// ÇöÀç »óÅÂ µğ¹ö±× Ãâ·Â
-        /// </summary>
-        [System.Diagnostics.Conditional("UNITY_EDITOR")]
-        public void DebugPrintStatus()
-        {
-            Debug.Log($"[ResourcesManager] »óÅÂ: " +
-                     $"±âº»ÃÊ±âÈ­={isBasicInitialized}, " +
-                     $"»ö»óµ¿±âÈ­={isColorSynchronized}, " +
-                     $"Player½ºÇÁ¶óÀÌÆ®={playerSprite?.name}, " +
-                     $"Opponent½ºÇÁ¶óÀÌÆ®={opponentSprite?.name}, " +
-                     $"PlayerÅÛÇÃ¸´={playerCardTemplate?.name}, " +
-                     $"OpponentÅÛÇÃ¸´={opponentCardTemplate?.name}, " +
-                     $"ÇÁ¸®ÆÕÄ³½Ã={prefabCache.Count}°³, " +
-                     $"½ºÇÁ¶óÀÌÆ®Ä³½Ã={spriteCache.Count}°³");
         }
         #endregion
     }

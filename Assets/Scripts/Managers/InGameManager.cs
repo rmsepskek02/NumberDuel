@@ -21,42 +21,13 @@ namespace Manager
     /// </summary>
     public class InGameManager : Singleton<InGameManager>
     {
-        #region Variables
-        public List<int> playerList = new List<int>();
-        public List<string> playerADeck;
-        public List<string> playerBDeck;
-        public List<string> playerAHand;
-        public List<string> playerBHand;
-        public GameObject myHandCardList;
-        public GameObject myFieldCardList;
-        public GameObject yourHandCardList;
-        public GameObject yourFieldCardList;
-        public bool isStart;
-        public GameObject uiInGame;
-        public GameObject choice;
-        public GameObject joker;
-        public int clickedMyCardIdx;
-        public string clickedMyCardNumber;
-        public int clickedYourCardIdx;
-        public string clickedYourCardNumber;
-        public string firstCardNumber = "";
-        public Transform firstCard;
-        public string secondCardNumber = "";
-        public bool isCopy;
-        public bool isDelete;
-        public bool isPlus;
-        public bool isMinus;
-        public bool isMultiple;
-        public bool isDivision;
-
+        #region Fields and Properties
         /// <summary>
         /// 현재 필드에 배치된 모든 카드 리스트
         /// RegisterFieldCard/UnregisterFieldCard로 관리
         /// </summary>
         private readonly List<Card> fieldCards = new List<Card>();
-        #endregion
 
-        #region Process Management
         /// <summary>
         /// 현재 진행 중인 프로세스
         /// 동시 액션 방지를 위한 상태 플래그
@@ -74,6 +45,32 @@ namespace Manager
         /// </summary>
         public bool IsProcessing => currentProcess != GameProcessState.Idle;
 
+        /// <summary>
+        /// 게임 종료 여부
+        /// </summary>
+        public bool IsGameEnded { get; private set; } = false;
+
+        /// <summary>
+        /// 승리한 플레이어
+        /// Player 또는 Opponent
+        /// </summary>
+        public CardZone.OwnerType? GameWinner { get; private set; } = null;
+
+        /// <summary>
+        /// 게임 종료 이벤트
+        /// TurnManager가 구독하여 게임 상태 플래그 해제
+        /// </summary>
+        public static event Action<CardZone.OwnerType> OnGameEnded;
+        #endregion
+
+        #region Unity Lifecycle
+        private void Start()
+        {
+            // 필요시 초기화 로직 추가
+        }
+        #endregion
+
+        #region Process Management
         /// <summary>
         /// 프로세스 시작
         /// 이미 다른 프로세스가 진행 중이면 false 반환
@@ -111,22 +108,7 @@ namespace Manager
         }
         #endregion
 
-        #region Unity Lifecycle
-        private void Start()
-        {
-            // 필요시 초기화 로직 추가
-        }
-        #endregion
-
         #region UI Event Handlers
-        /// <summary>
-        /// 게임을 시작하는 버튼 클릭 이벤트
-        /// </summary>
-        public void OnClickStart()
-        {
-            isStart = true;
-        }
-
         /// <summary>
         /// 턴 종료 버튼 클릭 이벤트
         /// TurnManager를 통해 턴 종료 처리
@@ -231,14 +213,12 @@ namespace Manager
         /// </summary>
         public void RestartGame()
         {
-            // 권한 체크
             if (!Photon.Pun.PhotonNetwork.IsMasterClient)
             {
                 Debug.LogWarning("[InGameManager] 마스터 클라이언트만 재시작할 수 있습니다.");
                 return;
             }
 
-            // TurnManager를 통한 게임 재시작 (RPC로 모든 클라이언트 초기화)
             if (TurnManager.Instance != null)
             {
                 TurnManager.Instance.RestartGame();
@@ -477,23 +457,6 @@ namespace Manager
         #endregion
 
         #region Game End Management
-        /// <summary>
-        /// 게임 종료 여부
-        /// </summary>
-        public bool IsGameEnded { get; private set; } = false;
-
-        /// <summary>
-        /// 승리한 플레이어
-        /// Player 또는 Opponent
-        /// </summary>
-        public CardZone.OwnerType? GameWinner { get; private set; } = null;
-
-        /// <summary>
-        /// 게임 종료 이벤트
-        /// TurnManager가 구독하여 게임 상태 플래그 해제
-        /// </summary>
-        public static event Action<CardZone.OwnerType> OnGameEnded;
-
         /// <summary>
         /// 게임 종료 처리 (HealthUI에서 호출)
         ///

@@ -1,75 +1,76 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
-using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace Manager
 {
     /// <summary>
-    /// Login È­¸éÀ» °ü¸®ÇÏ´Â ¸Å´ÏÀú
+    /// Login í™”ë©´ì„ ê´€ë¦¬í•˜ëŠ” ë§¤ë‹ˆì €
+    /// Photon ë„¤íŠ¸ì›Œí¬ ì—°ê²° ë° ë‹‰ë„¤ì„ ì„¤ì • ë‹´ë‹¹
     /// </summary>
     public class JoinManager : MonoBehaviourPunCallbacks
     {
-        #region Variables
+        #region Fields and Properties
         public Button joinButton;
         public TMP_InputField inputId;
         public TMP_InputField inputPassword;
-        public TextMeshProUGUI txtPath;
         #endregion
-        // Start is called before the first frame update
+
+        #region Unity Lifecycle
         void Start()
         {
-            // ¼­¹ö Áö¿ª ¼³Á¤
+            // í•œêµ­ ë¦¬ì „ ì„¤ì •
             PhotonNetwork.PhotonServerSettings.AppSettings.FixedRegion = "kr";
-            // ¼­¹ö Á¢¼Ó
-            // AppId, Áö¿ª, ¼­¹ö¿¡ ¿äÃ»
-            // ¿äÃ»ÇÏ°í ¹Ş¾Æ¾ß ÇÔ
+
+            // ì„œë²„ ì—°ê²° (AppId, ë²„ì „, ì„œë²„ì— ìš”ì²­)
             PhotonNetwork.ConnectUsingSettings();
+
             inputId.text = GameManager.Instance.clinetSettings.ClientID;
         }
+        #endregion
 
-        // Update is called once per frame
-        void Update()
-        {
-
-        }
-
-        // ¸¶½ºÅÍ ¼­¹ö Á¢¼Ó ¼º°ø½Ã È£Ãâ (Lobby¿¡ ÁøÀÔÇÒ ¼ö ¾ø´Â »óÅÂ)
+        #region Photon Callbacks
+        /// <summary>
+        /// ì„œë²„ ì—°ê²° ì™„ë£Œ ì‹œì ì— í˜¸ì¶œ (Lobbyì— ì§„ì…í•œ í›„ ê°€ëŠ¥ ìƒí™©)
+        /// </summary>
         public override void OnConnected()
         {
             base.OnConnected();
-            //Debug.Log(System.Reflection.MethodBase.GetCurrentMethod().Name);
         }
 
-        // ¸¶½ºÅÍ ¼­¹ö Á¢¼Ó ¼º°ø½Ã È£Ãâ (Lobby¿¡ ÁøÀÔÇÒ ¼ö ÀÖ´Â »óÅÂ ÀÏ ¶§ È£Ãâ°¡´É)
+        /// <summary>
+        /// ì„œë²„ì™€ ë§ˆìŠ¤í„° ì—°ê²° ì„±ê³µ ì‹œì ì— í˜¸ì¶œ (Lobbyì— ì§„ì…í•  ìˆ˜ ìˆëŠ” ìƒí™© í›„ ì²« í˜¸ì¶œê°€ëŠ¥)
+        /// </summary>
         public override void OnConnectedToMaster()
         {
             base.OnConnectedToMaster();
-            //Debug.Log(System.Reflection.MethodBase.GetCurrentMethod().Name);
-
-
         }
 
-        // ·Îºñ ÁøÀÔ ¼º°ø½Ã È£Ãâ
+        /// <summary>
+        /// ë¡œë¹„ ì§„ì… ì„±ê³µ ì‹œì ì— í˜¸ì¶œ
+        /// </summary>
         public override void OnJoinedLobby()
         {
             base.OnJoinedLobby();
-            Debug.Log(System.Reflection.MethodBase.GetCurrentMethod().Name);
 
             PhotonNetwork.NickName = inputId.text;
-            //Debug.Log("TEXT = " + inputId.text);
-            // ·Îºñ·Î ÀÌµ¿
+
+            // ë¡œë¹„ë¡œ ì´ë™
             PhotonNetwork.LoadLevel("LobbyScene");
         }
+        #endregion
 
+        #region Button Events
+        /// <summary>
+        /// ë¡œë¹„ ì§„ì… ë²„íŠ¼ í´ë¦­
+        /// </summary>
         public void OnClickButton()
         {
-            // ·Îºñ ÁøÀÔ ¿äÃ»
+            // ë¡œë¹„ ì§„ì… ìš”ì²­
             PhotonNetwork.JoinLobby();
         }
+        #endregion
     }
 }

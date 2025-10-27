@@ -1,71 +1,68 @@
-using UnityEngine;
-using System.IO;
-using Utills;
 using Manager;
+using System.IO;
+using UnityEngine;
+using Utills;
 
 namespace Manager
 {
+    /// <summary>
+    /// í´ë¼ì´ì–¸íŠ¸ë³„ ì„¤ì •ì„ ê´€ë¦¬í•˜ëŠ” ë§¤ë‹ˆì €
+    /// ê° í´ë¼ì´ì–¸íŠ¸ì˜ í™”ë©´ í•´ìƒë„ ì •ë³´ë¥¼ ì €ì¥ ë° ë³µì›
+    /// </summary>
     public class GameManager : SingletonDontDestroy<GameManager>
     {
+        #region Fields and Properties
         private string clientFolder;
-        private string settingsFile = "ClientSettings.txt"; // JSON ÀúÀå ÆÄÀÏ¸í
+        private string settingsFile = "ClientSettings.txt";
         public ClientSettings clinetSettings;
+        #endregion
 
+        #region Unity Lifecycle
         protected override void Awake()
         {
             base.Awake();
-            // Å¬¶óÀÌ¾ğÆ® Æú´õ¸í °áÁ¤ (ºôµåµÈ Å¬¶óÀÌ¾ğÆ®ÀÎÁö È®ÀÎ)
             clientFolder = GetClientFolderName();
             LoadClientSettings();
         }
 
-        private void Start()
-        {
-
-        }
-
-        // ¾Û Á¾·á½Ã
         private void OnApplicationQuit()
         {
-            // ÇöÀç ÇØ»óµµ¸¦ ÀúÀå
             SaveClientSettings();
         }
+        #endregion
 
-        // ClientId ·Îµå
+        #region Client Settings Management
+        /// <summary>
+        /// ClientId ë¡œë“œ
+        /// </summary>
         private void LoadClientSettings()
         {
-            // ±âÁ¸ ¼³Á¤ ºÒ·¯¿À±â (ClientID À¯Áö)
             clinetSettings = JsonUtils.LoadFromFile<ClientSettings>(clientFolder, settingsFile);
         }
 
-        // ÇöÀç ½ÇÇà ÁßÀÎ Å¬¶óÀÌ¾ğÆ® Æú´õ ÀÌ¸§ °¡Á®¿À±â
+        /// <summary>
+        /// í˜„ì¬ ì‹¤í–‰ ì¤‘ì¸ í´ë¼ì´ì–¸íŠ¸ í´ë” ì´ë¦„ ê°€ì ¸ì˜¤ê¸°
+        /// </summary>
         private string GetClientFolderName()
         {
-            // ½ÇÇà ÆÄÀÏÀÌ À§Ä¡ÇÑ Æú´õ °¡Á®¿À±â
             string exeFolder = Path.GetDirectoryName(Application.dataPath);
-
-            // ½ÇÇà ÆÄÀÏ ÀÌ¸§ °¡Á®¿À±â (¿¹: Client1.exe -> Client1)
             string exeName = Path.GetFileNameWithoutExtension(exeFolder);
-
-            // ÃÖÁ¾ÀûÀ¸·Î Client1\Client1_Data Çü½ÄÀÇ Æú´õ °æ·Î ¹İÈ¯
             return exeName;
         }
 
         /// <summary>
-        /// ÇöÀç ÇØ»óµµ¸¦ ÀúÀåÇÏ¿© ClientSettings.txt ¾÷µ¥ÀÌÆ®
+        /// í˜„ì¬ í•´ìƒë„ë¥¼ ì €ì¥í•˜ì—¬ ClientSettings.txt ì—…ë°ì´íŠ¸
         /// </summary>
         private void SaveClientSettings()
         {
-            // ÇöÀç ÇØ»óµµ °¡Á®¿À±â
             int width = Screen.width;
             int height = Screen.height;
 
             clinetSettings.ScreenWidth = width;
             clinetSettings.ScreenHeight = height;
 
-            // ÀúÀå
             JsonUtils.SaveToFile(clinetSettings, clientFolder, settingsFile);
-            Debug.Log($"Updated Resolution Saved: {width} x {height} in {clientFolder}");
         }
+        #endregion
     }
 }

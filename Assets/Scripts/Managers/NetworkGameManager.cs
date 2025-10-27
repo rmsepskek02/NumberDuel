@@ -1,8 +1,8 @@
 using Objects;
 using Photon.Pun;
-using System.Collections.Generic;
-using System.Collections;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Manager
@@ -45,6 +45,13 @@ namespace Manager
         }
         #endregion
 
+        #region Fields and Properties
+        /// <summary>
+        /// 등록된 NetworkCard 딕셔너리 (고유 ID 기반 관리)
+        /// </summary>
+        private Dictionary<string, NetworkCard> registeredCards = new Dictionary<string, NetworkCard>();
+        #endregion
+
         #region Card Color Synchronization System
         /// <summary>
         /// 카드 색상 동기화 데이터
@@ -78,27 +85,16 @@ namespace Manager
         public void SyncCardColors()
         {
             if (!PhotonNetwork.IsMasterClient)
-            {
-                Debug.LogWarning("[NetworkGameManager] 방장만 카드 색상을 설정할 수 있습니다.");
                 return;
-            }
 
             if (ResourcesManager.Instance == null)
-            {
-                Debug.LogError("[NetworkGameManager] ResourcesManager 인스턴스를 찾을 수 없습니다.");
                 return;
-            }
-
-            Debug.Log("[NetworkGameManager] 카드 색상 동기화 시작");
 
             // 방장이 랜덤 색상 선택
             var (playerSpriteName, opponentSpriteName) = ResourcesManager.Instance.SelectRandomColors();
 
             if (string.IsNullOrEmpty(playerSpriteName) || string.IsNullOrEmpty(opponentSpriteName))
-            {
-                Debug.LogError("[NetworkGameManager] 카드 색상 선택에 실패했습니다.");
                 return;
-            }
 
             // 방장 자신도 색상 적용
             ResourcesManager.Instance.SetPlayerColors(playerSpriteName, opponentSpriteName);
@@ -108,8 +104,6 @@ namespace Manager
             string jsonData = JsonUtility.ToJson(colorData);
 
             photonView.RPC("RPC_SyncCardColors", RpcTarget.Others, jsonData);
-
-            Debug.Log("[NetworkGameManager] 카드 색상 동기화 RPC 전송 완료");
         }
 
         /// <summary>
@@ -120,26 +114,16 @@ namespace Manager
         public void SyncStoredColors(string senderColor, string receiverColor)
         {
             if (!PhotonNetwork.IsMasterClient)
-            {
-                Debug.LogWarning("[NetworkGameManager] 방장만 색상 동기화를 할 수 있습니다.");
                 return;
-            }
 
             if (string.IsNullOrEmpty(senderColor) || string.IsNullOrEmpty(receiverColor))
-            {
-                Debug.LogError("[NetworkGameManager] 색상 정보가 유효하지 않습니다.");
                 return;
-            }
-
-            Debug.Log($"[NetworkGameManager] 색상 동기화 전송: 보내는사람={senderColor}, 받는사람={receiverColor}");
 
             // RPC로 새로 들어온 플레이어에게 색상 정보 전송
             var colorData = new CardColorData(receiverColor, senderColor); // 순서 주의!
             string jsonData = JsonUtility.ToJson(colorData);
 
             photonView.RPC("RPC_SyncCardColors", RpcTarget.Others, jsonData);
-
-            Debug.Log("[NetworkGameManager] 색상 동기화 RPC 전송 완료");
         }
 
         /// <summary>
@@ -155,8 +139,6 @@ namespace Manager
                 colorData.playerSpriteName,    // 내 색상
                 colorData.opponentSpriteName   // 상대방 색상
             );
-
-            Debug.Log($"[NetworkGameManager] 색상 적용 완료: 내색상={colorData.playerSpriteName}, 상대색상={colorData.opponentSpriteName}");
         }
         #endregion
 
@@ -291,42 +273,29 @@ namespace Manager
         #endregion
 
         #region NetworkCard Registry System
-        private Dictionary<string, NetworkCard> registeredCards = new Dictionary<string, NetworkCard>();
-
         /// <summary>
         /// NetworkCard를 등록하여 중앙에서 관리
         /// </summary>
         public void RegisterNetworkCard(NetworkCard card)
         {
             if (card == null)
-            {
-                Debug.LogWarning("[NetworkGameManager] 등록할 카드가 null입니다.");
                 return;
-            }
 
             string uniqueId = card.UniqueId;
 
             if (string.IsNullOrEmpty(uniqueId))
-            {
-                Debug.LogWarning($"[NetworkGameManager] 카드 {card.name}의 ID가 비어있어 등록할 수 없습니다.");
                 return;
-            }
 
             if (registeredCards.ContainsKey(uniqueId))
             {
                 if (registeredCards[uniqueId] == card)
-                {
-                    Debug.Log($"[NetworkGameManager] 카드 {card.name} (ID: {uniqueId})는 이미 등록되어 있습니다.");
                     return;
-                }
 
-                Debug.LogWarning($"[NetworkGameManager] ID 충돌 감지! 기존 카드를 새 카드로 교체합니다. ID: {uniqueId}");
                 registeredCards[uniqueId] = card;
             }
             else
             {
                 registeredCards.Add(uniqueId, card);
-                Debug.Log($"[NetworkGameManager] 카드 등록 완료: {card.name} (ID: {uniqueId}) - 총 {registeredCards.Count}장");
             }
         }
 
@@ -336,20 +305,11 @@ namespace Manager
         public void UnregisterNetworkCard(string uniqueId)
         {
             if (string.IsNullOrEmpty(uniqueId))
-            {
-                Debug.LogWarning("[NetworkGameManager] 등록 해제할 ID가 비어있습니다.");
                 return;
-            }
 
             if (registeredCards.ContainsKey(uniqueId))
             {
-                var card = registeredCards[uniqueId];
                 registeredCards.Remove(uniqueId);
-                Debug.Log($"[NetworkGameManager] 카드 등록 해제: {(card != null ? card.name : "null")} (ID: {uniqueId}) - 남은 카드: {registeredCards.Count}장");
-            }
-            else
-            {
-                Debug.LogWarning($"[NetworkGameManager] 등록되지 않은 카드 ID입니다: {uniqueId}");
             }
         }
 
@@ -359,41 +319,20 @@ namespace Manager
         public NetworkCard FindNetworkCard(string uniqueId)
         {
             if (string.IsNullOrEmpty(uniqueId))
-            {
                 return null;
-            }
 
             if (registeredCards.TryGetValue(uniqueId, out NetworkCard card))
             {
                 if (card != null)
-                {
                     return card;
-                }
                 else
                 {
-                    Debug.LogWarning($"[NetworkGameManager] 카드가 파괴되었으나 등록은 남아있습니다. ID: {uniqueId}");
                     registeredCards.Remove(uniqueId);
                     return null;
                 }
             }
 
-            Debug.LogWarning($"[NetworkGameManager] ID를 찾을 수 없습니다: {uniqueId}");
             return null;
-        }
-
-        /// <summary>
-        /// 등록된 모든 카드 정보 출력 (디버깅용)
-        /// </summary>
-        public void PrintRegisteredCards()
-        {
-            Debug.Log($"[NetworkGameManager] === 등록된 카드 목록 ({registeredCards.Count}장) ===");
-
-            foreach (var kvp in registeredCards)
-            {
-                string cardName = kvp.Value != null ? kvp.Value.name : "null";
-                string cardInfo = kvp.Value != null ? $"IsValid: {kvp.Value != null}" : "Destroyed";
-                Debug.Log($"  - ID: {kvp.Key}, Name: {cardName}, {cardInfo}");
-            }
         }
 
         /// <summary>
@@ -401,9 +340,7 @@ namespace Manager
         /// </summary>
         public void ClearAllRegisteredCards()
         {
-            int count = registeredCards.Count;
             registeredCards.Clear();
-            Debug.Log($"[NetworkGameManager] 모든 카드 등록 해제 완료 ({count}장)");
         }
         #endregion
 
@@ -417,17 +354,11 @@ namespace Manager
         {
             // 기본 네트워크 연결 확인
             if (!PhotonNetwork.InRoom)
-            {
-                Debug.LogWarning("[NetworkGameManager] 방에 접속되어 있지 않습니다.");
                 return false;
-            }
 
             // TurnManager 상태 확인
             if (TurnManager.Instance == null)
-            {
-                Debug.LogWarning("[NetworkGameManager] TurnManager 인스턴스를 찾을 수 없습니다.");
                 return false;
-            }
 
             // 수정: 초기 드로우는 게임 시작 전에도 허용 (IsGameStarted 체크 제거)
             // 플레이어가 2명이면 드로우 동기화 허용
@@ -443,19 +374,12 @@ namespace Manager
         public void SyncCardDraw(CardZone.OwnerType owner, int count)
         {
             if (!CanPerformNetworkAction())
-            {
-                Debug.LogWarning("[NetworkGameManager] 네트워크 액션 수행이 불가능합니다.");
                 return;
-            }
-
-            Debug.Log($"[NetworkGameManager] 카드 드로우 동기화 시작: {owner} {count}장");
 
             var drawData = new CardDrawData(owner, count);
             string jsonData = JsonUtility.ToJson(drawData);
 
             photonView.RPC("RPC_SyncCardDraw", RpcTarget.Others, jsonData);
-
-            Debug.Log($"[NetworkGameManager] 카드 드로우 동기화 RPC 전송 완료: {owner} {count}장");
         }
 
         /// <summary>
@@ -471,9 +395,9 @@ namespace Manager
                 var drawData = JsonUtility.FromJson<CardDrawData>(jsonData);
                 ApplyRemoteCardDraw(drawData);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Debug.LogError($"[NetworkGameManager] 카드 드로우 동기화 오류: {ex.Message}");
+                // 오류 처리
             }
         }
 
@@ -530,10 +454,7 @@ namespace Manager
                 : ResourcesManager.Instance.GetOpponentCardTemplate();
 
             if (template == null)
-            {
-                Debug.LogError($"[NetworkGameManager] {owner}의 카드 템플릿을 찾을 수 없습니다.");
                 return;
-            }
 
             // 뒷면 카드 오브젝트 생성
             GameObject backCard = Instantiate(template);
@@ -545,7 +466,6 @@ namespace Manager
             if (card != null)
             {
                 card.InitializeAsNumber(0); // 임시 값으로 초기화
-                Debug.Log($"[NetworkGameManager] 뒷면 카드 생성 완료: {backCard.name}");
             }
 
             // CardText 오브젝트만 비활성화 (뒷면처럼 보이도록)
@@ -602,27 +522,17 @@ namespace Manager
         public void SyncCardPlacement(Manager.CardData cardData, CardZone.OwnerType owner,
                                      CardZone.ZoneType zoneType, bool isSecret, string uniqueId)
         {
-            Debug.Log($"[NetworkGameManager] SyncCardPlacement 호출됨: {cardData.cardType} to {owner} {zoneType} (ID: {uniqueId})");
-
             if (!CanPerformNetworkAction())
-            {
-                Debug.LogWarning($"[NetworkGameManager] 네트워크 액션 수행 불가 - 동기화 중단");
                 return;
-            }
 
             // uniqueId 검증
             if (string.IsNullOrEmpty(uniqueId))
-            {
-                Debug.LogError("[NetworkGameManager] uniqueId가 비어있어 동기화를 중단합니다.");
                 return;
-            }
 
             var placementData = new CardPlacementData(cardData, owner, zoneType, isSecret, uniqueId);
             string jsonData = JsonUtility.ToJson(placementData);
 
-            Debug.Log($"[NetworkGameManager] RPC 전송 시작: {jsonData}");
             photonView.RPC("RPC_SyncCardPlacement", RpcTarget.Others, jsonData);
-            Debug.Log($"[NetworkGameManager] RPC 전송 완료");
         }
 
         /// <summary>
@@ -633,19 +543,14 @@ namespace Manager
         [PunRPC]
         private void RPC_SyncCardPlacement(string jsonData)
         {
-            Debug.Log($"[NetworkGameManager] RPC_SyncCardPlacement 수신됨: {jsonData}");
-
             try
             {
                 var placementData = JsonUtility.FromJson<CardPlacementData>(jsonData);
-                Debug.Log($"[NetworkGameManager] 카드 배치 데이터 파싱 성공: {placementData.cardType} to {(CardZone.OwnerType)placementData.ownerType} {(CardZone.ZoneType)placementData.zoneType}");
-
                 ApplyRemoteCardPlacement(placementData);
-                Debug.Log($"[NetworkGameManager] 원격 카드 배치 적용 완료");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Debug.LogError($"[NetworkGameManager] 카드 배치 동기화 오류: {ex.Message}");
+                // 오류 처리
             }
         }
 
@@ -660,44 +565,27 @@ namespace Manager
             CardZone.OwnerType originalOwner = (CardZone.OwnerType)placementData.ownerType;
             CardZone.ZoneType zoneType = (CardZone.ZoneType)placementData.zoneType;
 
-            Debug.Log($"[NetworkGameManager] ApplyRemoteCardPlacement 시작: 원본 소유자={originalOwner} {zoneType}");
-
             // 핵심: 상대방 관점에서 소유자 변환
             CardZone.OwnerType displayOwner = originalOwner == CardZone.OwnerType.Player
                 ? CardZone.OwnerType.Opponent
                 : CardZone.OwnerType.Player;
 
-            Debug.Log($"[NetworkGameManager] 소유자 변환 완료: {originalOwner} → {displayOwner}");
-
             // 1단계: 대상 Zone 찾기 및 검증 (변환된 소유자 사용)
             var targetZone = FindZone(displayOwner, zoneType);
             if (targetZone == null)
-            {
-                Debug.LogError($"[NetworkGameManager] Zone을 찾을 수 없음: {displayOwner} {zoneType}");
                 return;
-            }
-            Debug.Log($"[NetworkGameManager] 1단계 완료: 대상 Zone 찾기 성공 ({displayOwner} {zoneType})");
 
             // 2단계: Zone 용량 체크
             if (!targetZone.CanAddCard())
-            {
-                Debug.LogWarning($"[NetworkGameManager] Zone이 가득참: {displayOwner} {zoneType}");
                 return;
-            }
-            Debug.Log($"[NetworkGameManager] 2단계 완료: Zone 용량 체크 통과");
 
             // 3단계: 카드 데이터 복원
             var cardData = placementData.ToCardData();
-            Debug.Log($"[NetworkGameManager] 3단계 완료: 카드 데이터 복원 ({cardData.cardType})");
 
             // 4단계: 카드 오브젝트 생성 (변환된 소유자 사용)
             GameObject cardObject = DeckManager.Instance.CreateCardObject(cardData, displayOwner, targetZone);
             if (cardObject == null)
-            {
-                Debug.LogError("[NetworkGameManager] 카드 오브젝트 생성 실패");
                 return;
-            }
-            Debug.Log($"[NetworkGameManager] 4단계 완료: 카드 오브젝트 생성 성공 ({cardObject.name})");
 
             // 5단계: NetworkCard 설정
             var networkCard = cardObject.GetComponent<NetworkCard>();
@@ -706,7 +594,6 @@ namespace Manager
                 networkCard = cardObject.AddComponent<NetworkCard>();
             }
             networkCard.SetUniqueId(placementData.uniqueId);
-            Debug.Log($"[NetworkGameManager] 5단계 완료: NetworkCard 설정 (ID: {placementData.uniqueId})");
 
             // 6단계: Secret 모드 설정
             var card = cardObject.GetComponent<Card>();
@@ -714,17 +601,12 @@ namespace Manager
             {
                 card.SetSecret(true);
             }
-            Debug.Log($"[NetworkGameManager] 6단계 완료: Secret 모드 설정 (isSecret: {placementData.isSecret})");
 
             // 7단계: 손패에서 뒷면 카드 제거 (필드 배치인 경우만, 변환된 소유자 사용)
             if (zoneType == CardZone.ZoneType.Field)
             {
-                Debug.Log($"[NetworkGameManager] 7단계 시작: 손패에서 뒷면 카드 제거 ({displayOwner})");
                 RemoveBackCardFromHand(displayOwner);
-                Debug.Log($"[NetworkGameManager] 7단계 완료: 뒷면 카드 제거 완료");
             }
-
-            Debug.Log($"[NetworkGameManager] ApplyRemoteCardPlacement 완료! {originalOwner} → {displayOwner} {zoneType}");
         }
 
         /// <summary>
@@ -742,7 +624,6 @@ namespace Manager
                 var child = handZone.transform.GetChild(0);
                 handZone.RemoveCard(child);
                 Destroy(child.gameObject);
-                Debug.Log($"[NetworkGameManager] {owner} 손패에서 카드 1장 제거 완료");
             }
         }
         #endregion
@@ -807,16 +688,10 @@ namespace Manager
                                      float defenderValue, int damageAmount)
         {
             if (attacker == null)
-            {
-                Debug.LogWarning("[NetworkGameManager] SyncCombatAction: attacker가 null입니다.");
                 return;
-            }
 
             if (!CanPerformNetworkAction())
-            {
-                Debug.LogWarning("[NetworkGameManager] 네트워크 액션 수행 불가");
                 return;
-            }
 
             // 공격자 정보
             var attackerNetworkCard = attacker.GetComponent<NetworkCard>();
@@ -860,8 +735,6 @@ namespace Manager
             }
             // 빈 필드 공격은 카드 파괴 없음
 
-            Debug.Log($"[NetworkGameManager] 전투 액션 동기화: Attacker={attackerCardId}, Defender={defenderCardId}, Damage={damageAmount}, DestroyAtt={destroyAttacker}, DestroyDef={destroyDefender}, NewAttVal={newAttackerValue}, NewDefVal={newDefenderValue}");
-
             var combatData = new CombatActionData(
                 attackerCardId, defenderCardId,
                 attackerValue, defenderValue,
@@ -878,23 +751,19 @@ namespace Manager
         [PunRPC]
         private void RPC_SyncCombatAction(string jsonData)
         {
-            Debug.Log($"[NetworkGameManager] RPC_SyncCombatAction 수신");
-
             try
             {
                 var combatData = JsonUtility.FromJson<CombatActionData>(jsonData);
                 ApplyRemoteCombatAction(combatData);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Debug.LogError($"[NetworkGameManager] 전투 동기화 오류: {ex.Message}");
+                // 오류 처리
             }
         }
 
         private void ApplyRemoteCombatAction(CombatActionData combatData)
         {
-            Debug.Log("[NetworkGameManager] 원격 전투 액션 적용 시작");
-
             // 1. 공격자/방어자 카드 찾기
             Card attackerCard = FindCardByNetworkId(combatData.attackerCardId);
             Card defenderCard = !string.IsNullOrEmpty(combatData.defenderCardId)
@@ -902,22 +771,17 @@ namespace Manager
                 : null;
 
             if (attackerCard == null)
-            {
-                Debug.LogError($"[NetworkGameManager] 공격자 찾을 수 없음: {combatData.attackerCardId}");
                 return;
-            }
 
             // 2. Secret 해제
             if (combatData.attackerWasSecret)
             {
                 attackerCard.RevealSecret();
-                Debug.Log($"[NetworkGameManager] 공격자 Secret 해제: {attackerCard.name}");
             }
 
             if (defenderCard != null && combatData.defenderWasSecret)
             {
                 defenderCard.RevealSecret();
-                Debug.Log($"[NetworkGameManager] 방어자 Secret 해제: {defenderCard.name}");
             }
 
             // 3. 전투 아이콘 표시
@@ -970,7 +834,6 @@ namespace Manager
             if (data.damageToOpponent > 0 && HealthManager.Instance != null)
             {
                 HealthManager.Instance.ApplyDamage(data.damageToOpponent, CardZone.OwnerType.Player);
-                Debug.Log($"[NetworkGameManager] HP 감소 적용: {data.damageToOpponent}");
             }
 
             yield return new WaitForSeconds(0.5f);
@@ -982,7 +845,6 @@ namespace Manager
                 if (attackerText != null)
                 {
                     attackerText.SetRawValue(data.newAttackerValue);
-                    Debug.Log($"[NetworkGameManager] 공격자 값 업데이트: {data.newAttackerValue}");
                 }
             }
 
@@ -992,14 +854,12 @@ namespace Manager
                 if (defenderText != null)
                 {
                     defenderText.SetRawValue(data.newDefenderValue);
-                    Debug.Log($"[NetworkGameManager] 방어자 값 업데이트: {data.newDefenderValue}");
                 }
             }
 
             // 카드 제거 처리
             if (data.destroyAttacker && attacker != null)
             {
-                Debug.Log($"[NetworkGameManager] 공격자 카드 제거: {attacker.name}");
                 var zone = attacker.GetComponentInParent<CardZone>();
                 zone?.RemoveCard(attacker.transform);
                 Destroy(attacker.gameObject);
@@ -1007,7 +867,6 @@ namespace Manager
 
             if (data.destroyDefender && defender != null)
             {
-                Debug.Log($"[NetworkGameManager] 방어자 카드 제거: {defender.name}");
                 var zone = defender.GetComponentInParent<CardZone>();
                 zone?.RemoveCard(defender.transform);
                 Destroy(defender.gameObject);
@@ -1025,10 +884,8 @@ namespace Manager
             {
                 defender.HideAllIcons();
             }
-
-            // ExpressionZone은 다음 공격 시작 시 InitForAttack()에서 초기화됨
-            Debug.Log("[NetworkGameManager] 원격 전투 액션 완료");
         }
+
         /// <summary>
         /// NetworkCard ID로 Card 컴포넌트 찾기
         /// </summary>
@@ -1045,7 +902,6 @@ namespace Manager
                 }
             }
 
-            Debug.LogWarning($"[NetworkGameManager] NetworkCard ID {cardId}를 찾을 수 없습니다.");
             return null;
         }
 
@@ -1106,10 +962,7 @@ namespace Manager
         private CardZone FindZone(CardZone.OwnerType owner, CardZone.ZoneType zoneType)
         {
             if (CardZone.AllZonesRoot == null)
-            {
-                Debug.LogError("[NetworkGameManager] CardZone.AllZonesRoot가 설정되지 않았습니다.");
                 return null;
-            }
 
             var zones = CardZone.AllZonesRoot.GetComponentsInChildren<CardZone>();
             foreach (var zone in zones)
@@ -1187,10 +1040,7 @@ namespace Manager
             string secondId = secondNetworkCard?.UniqueId ?? "";
 
             if (string.IsNullOrEmpty(firstId) || string.IsNullOrEmpty(secondId))
-            {
-                Debug.LogWarning("[NetworkGameManager] 연산 카드 ID를 찾을 수 없습니다.");
                 return;
-            }
 
             // 카드 값 추출
             float firstValue = firstCard.GetComponentInChildren<CardText>()?.RawValue ?? 0;
@@ -1213,8 +1063,6 @@ namespace Manager
 
             string jsonData = JsonUtility.ToJson(opData);
             photonView.RPC("RPC_SyncOperation", RpcTarget.Others, jsonData);
-
-            Debug.Log($"[NetworkGameManager] 연산 결과 동기화: {operatorType} = {result}");
         }
 
         /// <summary>
@@ -1228,9 +1076,9 @@ namespace Manager
                 var opData = JsonUtility.FromJson<OperationData>(jsonData);
                 StartCoroutine(ApplyRemoteOperation(opData));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Debug.LogError($"[NetworkGameManager] 연산 동기화 오류: {ex.Message}");
+                // 오류 처리
             }
         }
 
@@ -1240,17 +1088,13 @@ namespace Manager
         private IEnumerator ApplyRemoteOperation(OperationData data)
         {
             OperatorType opType = (OperatorType)data.operatorType;
-            Debug.Log($"[NetworkGameManager] 원격 연산 적용 시작: {opType}");
 
             // 카드 찾기 (소유자 변환 적용)
             var firstCard = FindCardByNetworkId(data.firstCardId);
             var secondCard = FindCardByNetworkId(data.secondCardId);
 
             if (firstCard == null || secondCard == null)
-            {
-                Debug.LogError($"[NetworkGameManager] 연산 대상 카드를 찾을 수 없습니다.");
                 yield break;
-            }
 
             // ExpressionZone에 수식 표시
             var ezManager = ExpressionZoneManager.Instance;
@@ -1299,8 +1143,6 @@ namespace Manager
             }
 
             RemoveBackCardFromHand(CardZone.OwnerType.Opponent);
-
-            Debug.Log($"[NetworkGameManager] 원격 연산 완료: {opType}");
         }
 
         /// <summary>
@@ -1332,8 +1174,6 @@ namespace Manager
             var jokerData = new JokerData(effectType, targetIds, cardValues);
             string jsonData = JsonUtility.ToJson(jokerData);
             photonView.RPC("RPC_SyncJoker", RpcTarget.Others, jsonData);
-
-            Debug.Log($"[NetworkGameManager] 조커 효과 동기화: {effectType}");
         }
 
         /// <summary>
@@ -1347,9 +1187,9 @@ namespace Manager
                 var jokerData = JsonUtility.FromJson<JokerData>(jsonData);
                 StartCoroutine(ApplyRemoteJoker(jokerData));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Debug.LogError($"[NetworkGameManager] 조커 동기화 오류: {ex.Message}");
+                // 오류 처리
             }
         }
 
@@ -1359,7 +1199,6 @@ namespace Manager
         private IEnumerator ApplyRemoteJoker(JokerData data)
         {
             JokerEffectType effectType = (JokerEffectType)data.effectType;
-            Debug.Log($"[NetworkGameManager] 원격 조커 효과 적용: {effectType}");
 
             switch (effectType)
             {
@@ -1375,8 +1214,6 @@ namespace Manager
                     yield return ApplyRemoteSwap(data);
                     break;
             }
-
-            Debug.Log($"[NetworkGameManager] 원격 조커 효과 완료: {effectType}");
         }
 
         /// <summary>
@@ -1384,8 +1221,6 @@ namespace Manager
         /// </summary>
         private IEnumerator ApplyRemoteDraw()
         {
-            Debug.Log("[NetworkGameManager] 원격 Draw 효과: 조커 카드 제거");
-
             // DrawCardsToHand 내부에서 이미 SyncCardDraw를 호출하여
             // 상대방 화면에 뒷면 카드 2장이 생성되었음
 
@@ -1393,10 +1228,6 @@ namespace Manager
             // 조커 사용 후 해당 뒷면 카드를 제거해야 함
             yield return new WaitForSeconds(0.1f);
             RemoveBackCardFromHand(CardZone.OwnerType.Opponent);
-
-            Debug.Log("[NetworkGameManager] 원격 Draw 효과 완료: 조커 뒷면 카드 제거됨");
-
-            yield break;
         }
 
         /// <summary>
@@ -1411,10 +1242,7 @@ namespace Manager
             var targetCard = FindCardByNetworkId(targetId);
 
             if (targetCard == null)
-            {
-                Debug.LogWarning($"[NetworkGameManager] 삭제 대상 카드를 찾을 수 없습니다: {targetId}");
                 yield break;
-            }
 
             yield return new WaitForSeconds(0.5f);
 
@@ -1434,10 +1262,7 @@ namespace Manager
             var secondCard = FindCardByNetworkId(data.targetCardIds[1]);
 
             if (firstCard == null || secondCard == null)
-            {
-                Debug.LogWarning("[NetworkGameManager] 교환 대상 카드를 찾을 수 없습니다.");
                 yield break;
-            }
 
             yield return new WaitForSeconds(0.5f);
 
@@ -1466,7 +1291,6 @@ namespace Manager
             if (cardText != null)
             {
                 cardText.SetRawValue(newValue);
-                Debug.Log($"[NetworkGameManager] 카드 값 업데이트: {card.name} = {newValue}");
             }
         }
 
@@ -1478,7 +1302,6 @@ namespace Manager
             var zone = card.GetComponentInParent<CardZone>();
             zone?.RemoveCard(card.transform);
             Destroy(card.gameObject);
-            Debug.Log($"[NetworkGameManager] 카드 삭제: {card.name}");
         }
 
         /// <summary>
@@ -1493,10 +1316,7 @@ namespace Manager
 
             var fieldZone = FindZone(displayOwner, CardZone.ZoneType.Field);
             if (fieldZone == null || !fieldZone.CanAddCard())
-            {
-                Debug.LogWarning($"[NetworkGameManager] 나머지 카드를 생성할 수 없습니다.");
                 return;
-            }
 
             var template = displayOwner == CardZone.OwnerType.Player
                 ? ResourcesManager.Instance.GetPlayerCardTemplate()
@@ -1513,7 +1333,6 @@ namespace Manager
             cardComponent?.InitializeAsNumber(intValue);
 
             fieldZone.AddCard(newCard.transform);
-            Debug.Log($"[NetworkGameManager] 나머지 카드 생성: {intValue}");
         }
         #endregion
     }

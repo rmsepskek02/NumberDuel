@@ -1,20 +1,19 @@
 using DG.Tweening;
-using Objects;
 using Photon.Pun;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Manager
 {
     /// <summary>
-    /// ÀÎ °ÔÀÓ¿¡¼­ UI¸¦ °ü¸®ÇÏ´Â ¸Å´ÏÀú
-    /// TurnManager Áß½ÉÀÇ °ÔÀÓ ÇÃ·Î¿ì °ü¸®
+    /// ì¸ ê²Œì„ì—ì„œ UIë¥¼ ê´€ë¦¬í•˜ëŠ” ë§¤ë‹ˆì €
+    /// TurnManager ì¤‘ì‹¬ì˜ ê²Œì„ í”Œë¡œìš° ê´€ë¦¬
     /// </summary>
     public class InGameUIManager : Utills.Singleton<InGameUIManager>
     {
-        [Header("UI ÄÄÆ÷³ÍÆ®")]
+        #region Fields and Properties
+        [Header("UI ì»´í¬ë„ŒíŠ¸")]
         public Button startButton;
         public Button endButton;
         public Button leaveButton;
@@ -22,16 +21,16 @@ namespace Manager
         public TextMeshProUGUI playerText;
         public TextMeshProUGUI opponentText;
 
-        [Header("¹öÆ° ½ºÇÁ¶óÀÌÆ®")]
+        [Header("ë²„íŠ¼ ìŠ¤í”„ë¼ì´íŠ¸")]
         public Sprite enabledStartSprite;
         public Sprite enabledLeaveSprite;
         public Sprite enabledEndSprite;
         public Sprite disabledSprite;
 
-        [Header("°ÔÀÓ »óÅÂ")]
+        [Header("ê²Œì„ ìƒíƒœ")]
         public bool isStart;
 
-        [Header("¾Ö´Ï¸ŞÀÌ¼Ç ¼³Á¤")]
+        [Header("ì• ë‹ˆë©”ì´ì…˜ ì„¤ì •")]
         [SerializeField] private float fadeInDuration = 0.5f;
         [SerializeField] private float scaleUpDuration = 0.6f;
         [SerializeField] private float pulseScale = 1.2f;
@@ -40,10 +39,12 @@ namespace Manager
         [SerializeField] private Ease scaleEase = Ease.OutBack;
 
         private PhotonManager pm;
+
         [SerializeField] private string winText = "WIN";
         [SerializeField] private string loseText = "LOSE";
         [SerializeField] private Color winColor = Color.green;
         [SerializeField] private Color loseColor = Color.red;
+        #endregion
 
         #region Unity Lifecycle
         void Start()
@@ -61,23 +62,23 @@ namespace Manager
 
         #region Initialization
         /// <summary>
-        /// ¹öÆ° ÃÊ±âÈ­ ¹× ÀÌº¥Æ® µî·Ï
+        /// ë²„íŠ¼ ì´ˆê¸°í™” ë° ì´ë²¤íŠ¸ ë“±ë¡
         /// </summary>
         private void InitializeButtons()
         {
-            // ¹öÆ° ÀÌº¥Æ® µî·Ï
+            // ë²„íŠ¼ ì´ë²¤íŠ¸ ë“±ë¡
             startButton.onClick.AddListener(OnClickStart);
             endButton.onClick.AddListener(OnClickEnd);
             leaveButton.onClick.AddListener(OnClickLeave);
 
-            // ÃÊ±â ¹öÆ° »óÅÂ ¼³Á¤
+            // ì´ˆê¸° ë²„íŠ¼ ìƒíƒœ ì„¤ì •
             SetButtonState(leaveButton, true, enabledLeaveSprite);
             SetButtonState(endButton, false, disabledSprite);
-            SetButtonState(startButton, false, enabledStartSprite, false); // ºñÈ°¼ºÈ­ »óÅÂ·Î ½ÃÀÛ
+            SetButtonState(startButton, false, enabledStartSprite, false);
         }
 
         /// <summary>
-        /// ÅÏ Ç¥½Ã ¾÷µ¥ÀÌÆ®
+        /// í„´ í‘œì‹œ ì—…ë°ì´íŠ¸
         /// </summary>
         private void UpdateTurnDisplay()
         {
@@ -87,14 +88,14 @@ namespace Manager
             }
             else
             {
-                turn.text = "´ë±â Áß";
+                turn.text = "ëŒ€ê¸° ì¤‘";
             }
         }
         #endregion
 
         #region PhotonManager Integration
         /// <summary>
-        /// PhotonManager¿¡¼­ UI ÀÌº¥Æ® µî·Ï
+        /// PhotonManagerì—ê²Œ UI ì´ë²¤íŠ¸ ë“±ë¡
         /// </summary>
         public void RegisterPhotonManager(PhotonManager photonManager)
         {
@@ -106,35 +107,26 @@ namespace Manager
         }
 
         /// <summary>
-        /// ³» ÅÏÀÏ ¶§ ÅÏ Á¾·á ¹öÆ° È°¼ºÈ­
+        /// ë‚´ í„´ì¼ ë•Œ í„´ ì¢…ë£Œ ë²„íŠ¼ í™œì„±í™”
         /// </summary>
         private void EnableEndTurnButton()
         {
-            Debug.Log("[InGameUIManager] EnableEndTurnButton È£ÃâµÊ");
-
             if (TurnManager.Instance != null && TurnManager.Instance.IsGameStarted)
             {
                 SetButtonState(endButton, true, enabledEndSprite);
-                Debug.Log("[InGameUIManager] End ¹öÆ° È°¼ºÈ­ ¿Ï·á");
-            }
-            else
-            {
-                Debug.LogWarning("[InGameUIManager] TurnManager°¡ ¾ø°Å³ª °ÔÀÓÀÌ ½ÃÀÛµÇÁö ¾ÊÀ½");
             }
         }
 
         /// <summary>
-        /// »ó´ë ÅÏÀÏ ¶§ ÅÏ Á¾·á ¹öÆ° ºñÈ°¼ºÈ­
+        /// ìƒëŒ€ í„´ì¼ ë•Œ í„´ ì¢…ë£Œ ë²„íŠ¼ ë¹„í™œì„±í™”
         /// </summary>
         private void DisableEndTurnButton()
         {
-            Debug.Log("[InGameUIManager] DisableEndTurnButton È£ÃâµÊ");
             SetButtonState(endButton, false, enabledEndSprite);
-            Debug.Log("[InGameUIManager] End ¹öÆ° ºñÈ°¼ºÈ­ ¿Ï·á");
         }
 
         /// <summary>
-        /// ÇÃ·¹ÀÌ¾î ÀÔÀå ½Ã UI ¾÷µ¥ÀÌÆ®
+        /// í”Œë ˆì´ì–´ ì…ì¥ ì‹œ UI ì—…ë°ì´íŠ¸
         /// </summary>
         private void OnPlayerEnter()
         {
@@ -142,13 +134,13 @@ namespace Manager
         }
 
         /// <summary>
-        /// ÇÃ·¹ÀÌ¾î ÅğÀå ½Ã UI ¾÷µ¥ÀÌÆ®
+        /// í”Œë ˆì´ì–´ í‡´ì¥ ì‹œ UI ì—…ë°ì´íŠ¸
         /// </summary>
         private void OnPlayerLeave()
         {
             UpdateButtons(PhotonNetwork.CurrentRoom?.PlayerCount ?? 0);
 
-            // °ÔÀÓ ÁßÀÌ¾ú´Ù¸é °ÔÀÓ Á¾·á Ã³¸®
+            // ê²Œì„ ì¤‘ì´ì—ˆë‹¤ë©´ ê²Œì„ ì¢…ë£Œ ì²˜ë¦¬
             if (isStart && TurnManager.Instance != null)
             {
                 ResetUI();
@@ -156,85 +148,73 @@ namespace Manager
         }
 
         /// <summary>
-        /// ÀÎ¿ø ¼ö¿¡ µû¸¥ Start ¹öÆ° È°¼ºÈ­
+        /// ì¸ì› í™•ì¸ í›„ì— Start ë²„íŠ¼ í™œì„±í™”
         /// </summary>
         private void UpdateButtons(int playerCount)
         {
             bool canStart = playerCount == 2 && PhotonNetwork.IsMasterClient && !isStart;
-            bool shouldShowStart = PhotonNetwork.IsMasterClient && !isStart; // ¹æÀåÀÌ°í °ÔÀÓÀÌ ½ÃÀÛµÇÁö ¾Ê¾ÒÀ» ¶§¸¸ º¸ÀÌ±â
+            bool shouldShowStart = PhotonNetwork.IsMasterClient && !isStart;
 
             SetButtonState(startButton, canStart, enabledStartSprite, shouldShowStart);
-
-            Debug.Log($"[InGameUIManager] ÇÃ·¹ÀÌ¾î ¼ö: {playerCount}, Start ¹öÆ° È°¼ºÈ­: {canStart}, Start ¹öÆ° Ç¥½Ã: {shouldShowStart}");
         }
         #endregion
 
         #region Button Click Events
         /// <summary>
-        /// °ÔÀÓ ½ÃÀÛ ¹öÆ° Å¬¸¯
+        /// ê²Œì„ ì‹œì‘ ë²„íŠ¼ í´ë¦­
         /// </summary>
         public void OnClickStart()
         {
             if (!PhotonNetwork.IsMasterClient)
             {
-                Debug.LogWarning("[InGameUIManager] ¹æÀå¸¸ °ÔÀÓÀ» ½ÃÀÛÇÒ ¼ö ÀÖ½À´Ï´Ù.");
                 return;
             }
 
             if (PhotonNetwork.CurrentRoom?.PlayerCount != 2)
             {
-                Debug.LogWarning("[InGameUIManager] 2¸íÀÇ ÇÃ·¹ÀÌ¾î°¡ ÇÊ¿äÇÕ´Ï´Ù.");
                 return;
             }
 
-            Debug.Log("[InGameUIManager] START ¹öÆ° Å¬¸¯");
             startButton.gameObject.SetActive(false);
 
-            // °ÔÀÓÀÌ Á¾·áµÈ »óÅÂÀÎÁö È®ÀÎ
+            // ê²Œì„ì´ ì¢…ë£Œëœ ìƒíƒœì¸ì§€ í™•ì¸
             if (InGameManager.Instance != null && InGameManager.Instance.IsGameEnded)
             {
-                // °ÔÀÓ Àç½ÃÀÛ
-                Debug.Log("[InGameUIManager] °ÔÀÓ Àç½ÃÀÛ ½ÇÇà");
+                // ê²Œì„ ì¬ì‹œì‘
                 isStart = true;
                 InGameManager.Instance.RestartGame();
             }
             else
             {
-                // »õ °ÔÀÓ ½ÃÀÛ
-                Debug.Log("[InGameUIManager] »õ °ÔÀÓ ½ÃÀÛ");
+                // ìƒˆ ê²Œì„ ì‹œì‘
                 isStart = true;
                 StartGame();
             }
         }
 
         /// <summary>
-        /// ÅÏ Á¾·á ¹öÆ° Å¬¸¯
+        /// í„´ ì¢…ë£Œ ë²„íŠ¼ í´ë¦­
         /// </summary>
         public void OnClickEnd()
         {
             if (TurnManager.Instance == null)
             {
-                Debug.LogError("[InGameUIManager] TurnManager¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù!");
                 return;
             }
 
             if (!TurnManager.Instance.IsLocalPlayerTurn)
             {
-                Debug.LogWarning("[InGameUIManager] ³» ÅÏÀÌ ¾Æ´Õ´Ï´Ù.");
                 return;
             }
 
-            Debug.Log("[InGameUIManager] ÅÏ Á¾·á ¹öÆ° Å¬¸¯");
             TurnManager.Instance.EndTurn();
         }
 
         /// <summary>
-        /// ¹æ ³ª°¡±â ¹öÆ° Å¬¸¯
+        /// ë£¸ ë‚˜ê°€ê¸° ë²„íŠ¼ í´ë¦­
         /// </summary>
         public void OnClickLeave()
         {
-            Debug.Log("[InGameUIManager] ¹æ ³ª°¡±â ¹öÆ° Å¬¸¯");
-
             if (pm != null)
             {
                 pm.OnLeaveRoom();
@@ -248,59 +228,49 @@ namespace Manager
 
         #region Game Flow Management
         /// <summary>
-        /// °ÔÀÓ ½ÃÀÛ Ã³¸® (TurnManager ¿¬µ¿)
+        /// ê²Œì„ ì‹œì‘ ì²˜ë¦¬ (TurnManager ì´ìš©)
         /// </summary>
         private void StartGame()
         {
             if (PhotonNetwork.IsMasterClient)
             {
-                // TurnManager¸¦ ÅëÇÑ °ÔÀÓ ½ÃÀÛ
+                // TurnManagerì— ê²Œì„ ì‹œì‘ ëª…ë ¹
                 if (TurnManager.Instance != null)
                 {
-                    Debug.Log("[InGameUIManager] TurnManager.StartGame() È£Ãâ");
                     TurnManager.Instance.StartGame();
                 }
                 else
                 {
-                    Debug.LogError("[InGameUIManager] TurnManager¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù!");
-                    ResetUI(); // ½ÇÆĞ ½Ã UI º¹¿ø
+                    ResetUI();
                 }
-            }
-            else
-            {
-                Debug.Log("[InGameUIManager] ¹æÀåÀÇ °ÔÀÓ ½ÃÀÛÀ» ´ë±â Áß...");
             }
         }
 
         /// <summary>
-        /// UI ¸®¼Â (°ÔÀÓ Á¾·á ¶Ç´Â ½ÇÆĞ ½Ã)
+        /// UI ë¦¬ì…‹ (ê²Œì„ ì¢…ë£Œ ë˜ëŠ” ì¬ì‹œì‘ ì‹œ)
         /// </summary>
         public void ResetUI()
         {
-            Debug.Log("[InGameUIManager] UI ¸®¼Â");
-
-            // °ÔÀÓ »óÅÂ ÃÊ±âÈ­
+            // ê²Œì„ ìƒíƒœ ì´ˆê¸°í™”
             isStart = false;
 
-            // Start ¹öÆ° ´Ù½Ã Ç¥½Ã ¹× »óÅÂ ¼³Á¤
+            // Start ë²„íŠ¼ ë‹¤ì‹œ í‘œì‹œ ë° ìƒíƒœ ì„¤ì •
             int playerCount = PhotonNetwork.CurrentRoom?.PlayerCount ?? 0;
             UpdateButtons(playerCount);
 
-            // ÅÏ Á¾·á ¹öÆ° ºñÈ°¼ºÈ­
+            // í„´ ì¢…ë£Œ ë²„íŠ¼ ë¹„í™œì„±í™”
             SetButtonState(endButton, false, enabledEndSprite);
 
-            // ÅÏ Ç¥½Ã ÃÊ±âÈ­
-            turn.text = "´ë±â Áß";
+            // í„´ í‘œì‹œ ì´ˆê¸°í™”
+            turn.text = "ëŒ€ê¸° ì¤‘";
         }
 
         /// <summary>
-        /// °ÔÀÓ °á°ú Ç¥½Ã (¾Ö´Ï¸ŞÀÌ¼Ç Æ÷ÇÔ)
+        /// ê²Œì„ ê²°ê³¼ í‘œì‹œ (ì• ë‹ˆë©”ì´ì…˜ í¬í•¨)
         /// </summary>
-        /// <param name="isWin">·ÎÄÃ ÇÃ·¹ÀÌ¾î°¡ ½Â¸®Çß´ÂÁö ¿©ºÎ</param>
+        /// <param name="isWin">ë¡œì»¬ í”Œë ˆì´ì–´ê°€ ìŠ¹ë¦¬í–ˆëŠ”ì§€ ì—¬ë¶€</param>
         public void ShowGameResult(bool isWin)
         {
-            Debug.Log($"[InGameUIManager] °ÔÀÓ °á°ú Ç¥½Ã: {(isWin ? "WIN" : "LOSE")}");
-
             if (isWin)
             {
                 ShowWinResult();
@@ -312,11 +282,11 @@ namespace Manager
         }
 
         /// <summary>
-        /// ½Â¸® °á°ú Ç¥½Ã
+        /// ìŠ¹ë¦¬ ê²°ê³¼ í‘œì‹œ
         /// </summary>
         private void ShowWinResult()
         {
-            // ÇÃ·¹ÀÌ¾î ÅØ½ºÆ®: WIN
+            // í”Œë ˆì´ì–´ í…ìŠ¤íŠ¸: WIN
             if (playerText != null)
             {
                 playerText.text = winText;
@@ -325,7 +295,7 @@ namespace Manager
                 PlayResultAnimation(playerText, true);
             }
 
-            // »ó´ë ÅØ½ºÆ®: LOSE
+            // ìƒëŒ€ í…ìŠ¤íŠ¸: LOSE
             if (opponentText != null)
             {
                 opponentText.text = loseText;
@@ -336,11 +306,11 @@ namespace Manager
         }
 
         /// <summary>
-        /// ÆĞ¹è °á°ú Ç¥½Ã
+        /// íŒ¨ë°° ê²°ê³¼ í‘œì‹œ
         /// </summary>
         private void ShowLoseResult()
         {
-            // ÇÃ·¹ÀÌ¾î ÅØ½ºÆ®: LOSE
+            // í”Œë ˆì´ì–´ í…ìŠ¤íŠ¸: LOSE
             if (playerText != null)
             {
                 playerText.text = loseText;
@@ -349,7 +319,7 @@ namespace Manager
                 PlayResultAnimation(playerText, false);
             }
 
-            // »ó´ë ÅØ½ºÆ®: WIN
+            // ìƒëŒ€ í…ìŠ¤íŠ¸: WIN
             if (opponentText != null)
             {
                 opponentText.text = winText;
@@ -360,28 +330,28 @@ namespace Manager
         }
 
         /// <summary>
-        /// °á°ú ÅØ½ºÆ® ¾Ö´Ï¸ŞÀÌ¼Ç Àç»ı
+        /// ê²°ê³¼ í…ìŠ¤íŠ¸ ì• ë‹ˆë©”ì´ì…˜ ì¬ìƒ
         /// </summary>
-        /// <param name="textMesh">¾Ö´Ï¸ŞÀÌ¼ÇÀ» Àû¿ëÇÒ ÅØ½ºÆ®</param>
-        /// <param name="isWin">½Â¸® ÅØ½ºÆ®ÀÎÁö ¿©ºÎ</param>
+        /// <param name="textMesh">ì• ë‹ˆë©”ì´ì…˜ì„ ì ìš©í•  í…ìŠ¤íŠ¸</param>
+        /// <param name="isWin">ìŠ¹ë¦¬ í…ìŠ¤íŠ¸ì¸ì§€ ì—¬ë¶€</param>
         private void PlayResultAnimation(TextMeshProUGUI textMesh, bool isWin)
         {
-            // ÃÊ±â »óÅÂ ¼³Á¤
+            // ì´ˆê¸° ìƒíƒœ ì„¤ì •
             textMesh.alpha = 0f;
             textMesh.transform.localScale = Vector3.zero;
 
-            DG.Tweening.Sequence animSequence = DOTween.Sequence();
+            Sequence animSequence = DOTween.Sequence();
 
-            // 1´Ü°è: ÆäÀÌµå ÀÎ + ½ºÄÉÀÏ ¾÷
+            // 1ë‹¨ê³„: í˜ì´ë“œ ì¸ + ìŠ¤ì¼€ì¼ ì—…
             animSequence.Append(textMesh.DOFade(1f, fadeInDuration).SetEase(Ease.OutQuad));
             animSequence.Join(textMesh.transform.DOScale(Vector3.one, scaleUpDuration).SetEase(scaleEase));
 
-            // 2´Ü°è: ½Â¸® ÅØ½ºÆ®´Â ÆŞ½º È¿°ú Ãß°¡
+            // 2ë‹¨ê³„: ìŠ¹ë¦¬ í…ìŠ¤íŠ¸ì— í„ìŠ¤ íš¨ê³¼ ì¶”ê°€
             if (isWin)
             {
-                animSequence.AppendInterval(0.2f); // ÂªÀº ´ë±â
+                animSequence.AppendInterval(0.2f);
 
-                // ÆŞ½º È¿°ú (¿©·¯ ¹ø ¹İº¹)
+                // í„ìŠ¤ íš¨ê³¼ (ì»¤ì§ í›„ ë°˜ë³µ)
                 for (int i = 0; i < pulseCount; i++)
                 {
                     animSequence.Append(textMesh.transform.DOScale(Vector3.one * pulseScale, pulseDuration / 2)
@@ -392,7 +362,7 @@ namespace Manager
             }
             else
             {
-                // ÆĞ¹è ÅØ½ºÆ®´Â ¾à°£ ¾îµÎ¿öÁö´Â È¿°ú
+                // íŒ¨ë°° í…ìŠ¤íŠ¸ì— ì•½ê°„ ì–´ë‘ì›Œì§€ëŠ” íš¨ê³¼
                 animSequence.AppendInterval(0.3f);
                 Color darkenedColor = textMesh.color * 0.7f;
                 darkenedColor.a = 1f;
@@ -401,13 +371,13 @@ namespace Manager
         }
 
         /// <summary>
-        /// °ÔÀÓ °á°ú ÅØ½ºÆ® ¼û±è (°ÔÀÓ Àç½ÃÀÛ ½Ã »ç¿ë)
+        /// ê²Œì„ ê²°ê³¼ í…ìŠ¤íŠ¸ ìˆ¨ê¹€ (ê²Œì„ ì¬ì‹œì‘ ì‹œ í˜¸ì¶œ)
         /// </summary>
         public void HideGameResultTexts()
         {
             if (playerText != null)
             {
-                playerText.DOKill(); // ÁøÇà ÁßÀÎ ¾Ö´Ï¸ŞÀÌ¼Ç ÁßÁö
+                playerText.DOKill();
                 playerText.gameObject.SetActive(false);
                 playerText.alpha = 0f;
                 playerText.transform.localScale = Vector3.zero;
@@ -415,24 +385,22 @@ namespace Manager
 
             if (opponentText != null)
             {
-                opponentText.DOKill(); // ÁøÇà ÁßÀÎ ¾Ö´Ï¸ŞÀÌ¼Ç ÁßÁö
+                opponentText.DOKill();
                 opponentText.gameObject.SetActive(false);
                 opponentText.alpha = 0f;
                 opponentText.transform.localScale = Vector3.zero;
             }
-
-            Debug.Log("[InGameUIManager] °ÔÀÓ °á°ú ÅØ½ºÆ® ¼û±è ¿Ï·á");
         }
         #endregion
 
         #region Utility Methods
         /// <summary>
-        /// ¹öÆ° »óÅÂ ¼³Á¤ (ÅëÇÕ ¸Ş¼­µå)
+        /// ë²„íŠ¼ ìƒíƒœ ì„¤ì • (í†µí•© ë©”ì„œë“œ)
         /// </summary>
-        /// <param name="button">´ë»ó ¹öÆ°</param>
-        /// <param name="isInteractable">»óÈ£ÀÛ¿ë °¡´É ¿©ºÎ</param>
-        /// <param name="enabledSprite">È°¼ºÈ­ ½ºÇÁ¶óÀÌÆ®</param>
-        /// <param name="isActive">GameObject È°¼ºÈ­ ¿©ºÎ</param>
+        /// <param name="button">ëŒ€ìƒ ë²„íŠ¼</param>
+        /// <param name="isInteractable">ì¸í„°ë™íŠ¸ ê°€ëŠ¥ ì—¬ë¶€</param>
+        /// <param name="enabledSprite">í™œì„±í™” ìŠ¤í”„ë¼ì´íŠ¸</param>
+        /// <param name="isActive">GameObject í™œì„±í™” ì—¬ë¶€</param>
         public void SetButtonState(Button button, bool isInteractable, Sprite enabledSprite, bool isActive = true)
         {
             if (button == null) return;
@@ -446,23 +414,12 @@ namespace Manager
                 image.sprite = isInteractable ? enabledSprite : disabledSprite;
             }
         }
-
-        /// <summary>
-        /// ÇöÀç °ÔÀÓ »óÅÂ µğ¹ö±× Ãâ·Â
-        /// </summary>
-        [System.Diagnostics.Conditional("UNITY_EDITOR")]
-        public void DebugPrintState()
-        {
-            Debug.Log($"[InGameUIManager] °ÔÀÓ½ÃÀÛ: {isStart}, " +
-                     $"ÇÃ·¹ÀÌ¾î¼ö: {PhotonNetwork.CurrentRoom?.PlayerCount}, " +
-                     $"¹æÀå: {PhotonNetwork.IsMasterClient}");
-        }
         #endregion
 
         #region Event Subscriptions
         private void OnDestroy()
         {
-            // ¹öÆ° ÀÌº¥Æ® ÇØÁ¦
+            // ë²„íŠ¼ ì´ë²¤íŠ¸ í•´ì œ
             if (startButton != null) startButton.onClick.RemoveListener(OnClickStart);
             if (endButton != null) endButton.onClick.RemoveListener(OnClickEnd);
             if (leaveButton != null) leaveButton.onClick.RemoveListener(OnClickLeave);

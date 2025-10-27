@@ -15,37 +15,86 @@ namespace Objects
     /// </summary>
     public class Card : MonoBehaviourPun, ICard
     {
+        #region Fields and Properties
         private TextMeshPro cardTMP;
         private CardText cardText;
         private SpriteRenderer spriteRenderer;
 
-        // Combat Icon References
+        /// <summary>
+        /// 전투 아이콘 참조
+        /// </summary>
         [SerializeField] private GameObject swordIcon;
         [SerializeField] private GameObject shieldIcon;
 
+        /// <summary>
+        /// 카드 클릭 이벤트
+        /// </summary>
         public static event Action<Card> onClicked;
+
+        /// <summary>
+        /// 카드 드롭 이벤트
+        /// </summary>
         public static event Action<Transform> OnCardDropped;
 
+        /// <summary>
+        /// 현재 카드가 위치한 Zone 타입
+        /// </summary>
         public CardZone.ZoneType CurrentZoneType { get; private set; }
+
+        /// <summary>
+        /// 현재 카드 소유자 타입
+        /// </summary>
         public CardZone.OwnerType CurrentOwnerType { get; private set; }
+
+        /// <summary>
+        /// 카드 타입 (Number, Operator, Joker)
+        /// </summary>
         public CardType CardType { get; private set; } = CardType.Number;
+
+        /// <summary>
+        /// 연산자 타입 (Plus, Minus, Multiply, Divide)
+        /// </summary>
         public OperatorType OperatorType { get; private set; }
+
+        /// <summary>
+        /// Secret 상태 여부
+        /// </summary>
         public bool IsSecret { get; private set; }
+
+        /// <summary>
+        /// 공격 가능 상태 여부
+        /// </summary>
         public bool CanAttack { get; private set; } = false;
 
-        // 턴별 상태 관리
+        /// <summary>
+        /// 이번 턴에 수정되었는지 여부
+        /// </summary>
         public bool WasModifiedThisTurn { get; private set; } = false;
+
+        /// <summary>
+        /// 이번 턴에 배치되었는지 여부
+        /// </summary>
         public bool WasPlayedThisTurn { get; private set; } = false;
+
+        /// <summary>
+        /// 이번 턴에 공격했는지 여부
+        /// </summary>
         public bool HasAttackedThisTurn { get; private set; } = false;
 
-        // GLOW 강제 설정
+        /// <summary>
+        /// GLOW 효과 강제 설정 여부
+        /// </summary>
         private bool isGlowOverridden = false;
         private bool overrideGlowState = false;
         private Color? overrideGlowColor = null;
 
+        /// <summary>
+        /// 카드가 공개 상태인지 여부 (Secret의 반대)
+        /// </summary>
         public bool IsOpen => !IsSecret;
 
         private ObjectMouseEvent mouseEvent;
+        #endregion
 
         #region Unity Lifecycle
         private void Awake()

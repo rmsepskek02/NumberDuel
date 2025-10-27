@@ -3,13 +3,15 @@ using UnityEngine;
 namespace Manager
 {
     /// <summary>
-    /// ÇØ»óµµ °ü¸®ÇÏ´Â ¸Å´ÏÀú
+    /// í™”ë©´ í•´ìƒë„ë¥¼ ê´€ë¦¬í•˜ëŠ” ë§¤ë‹ˆì €
+    /// PlayerPrefsë¥¼ ì‚¬ìš©í•˜ì—¬ í•´ìƒë„ ì €ì¥ ë° ë³µì›
     /// </summary>
     public class ScreenManager : MonoBehaviour
     {
+        #region Unity Lifecycle
         void Start()
         {
-            // ÀúÀåµÈ ÇØ»óµµ°¡ ÀÖÀ¸¸é ºÒ·¯¿À±â
+            // ì €ì¥ëœ í•´ìƒë„ê°’ì„ ë¶ˆëŸ¬ì™€ì„œ ì„¤ì •
             int width = PlayerPrefs.GetInt("ScreenWidth", 1280);
             int height = PlayerPrefs.GetInt("ScreenHeight", 720);
             Screen.SetResolution(width, height, false);
@@ -17,7 +19,7 @@ namespace Manager
 
         void Update()
         {
-            // »ç¿ëÀÚ°¡ Ã¢ Å©±â¸¦ º¯°æÇÏ¸é ÀúÀå
+            // ì‚¬ìš©ìê°€ ì°½ í¬ê¸°ë¥¼ ë³€ê²½í•˜ë©´ ì €ì¥
             if (Screen.width != PlayerPrefs.GetInt("ScreenWidth") || Screen.height != PlayerPrefs.GetInt("ScreenHeight"))
             {
                 PlayerPrefs.SetInt("ScreenWidth", Screen.width);
@@ -25,5 +27,6 @@ namespace Manager
                 PlayerPrefs.Save();
             }
         }
+        #endregion
     }
 }

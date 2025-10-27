@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Objects;
@@ -6,24 +7,24 @@ using Utills;
 namespace Manager
 {
     /// <summary>
-    /// Ä«µå Á¤º¸¸¦ ÀúÀåÇÏ´Â µ¥ÀÌÅÍ ±¸Á¶Ã¼
+    /// ì¹´ë“œ ë°ì´í„°ë¥¼ ì €ì¥í•˜ëŠ” ë°ì´í„° êµ¬ì¡°ì²´
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public struct CardData
     {
         public CardType cardType;
-        public long numberValue;      // ¼ıÀÚ Ä«µåÀÏ ¶§ »ç¿ë
-        public OperatorType operatorType; // ¿¬»êÀÚ Ä«µåÀÏ ¶§ »ç¿ë
+        public long numberValue;      // ìˆ«ì ì¹´ë“œì¼ ë•Œ ì‚¬ìš©
+        public OperatorType operatorType; // ì—°ì‚°ì ì¹´ë“œì¼ ë•Œ ì‚¬ìš©
 
-        // ¼ıÀÚ Ä«µå »ı¼ºÀÚ
+        // ìˆ«ì ì¹´ë“œ ìƒì„±ì
         public CardData(long value)
         {
             cardType = CardType.Number;
             numberValue = value;
-            operatorType = OperatorType.Plus; // ±âº»°ª
+            operatorType = OperatorType.Plus; // ê¸°ë³¸ê°’
         }
 
-        // ¿¬»êÀÚ Ä«µå »ı¼ºÀÚ
+        // ì—°ì‚°ì ì¹´ë“œ ìƒì„±ì
         public CardData(OperatorType op)
         {
             cardType = CardType.Operator;
@@ -31,61 +32,59 @@ namespace Manager
             operatorType = op;
         }
 
-        // Á¶Ä¿ Ä«µå »ı¼ºÀÚ
+        // ì¡°ì»¤ ì¹´ë“œ ìƒì„±ì
         public static CardData CreateJoker()
         {
             return new CardData
             {
                 cardType = CardType.Joker,
                 numberValue = 0,
-                operatorType = OperatorType.Plus // ±âº»°ª
+                operatorType = OperatorType.Plus // ê¸°ë³¸ê°’
             };
         }
     }
 
     /// <summary>
-    /// µ¦ µ¥ÀÌÅÍ °ü¸® ¸Å´ÏÀú
-    /// DeckStacker¿Í ¿¬µ¿ÇÏ¿© ½ÇÁ¦ Ä«µå µ¥ÀÌÅÍ¸¦ °ü¸®ÇÏ°í µå·Î¿ì ±â´ÉÀ» Á¦°ø
+    /// ë± ê´€ë¦¬ë¥¼ ë‹´ë‹¹ ë§¤ë‹ˆì €
+    /// DeckStackerì™€ ì—°ë™í•˜ì—¬ ì‹¤ì œ ì¹´ë“œ ë°ì´í„°ë¥¼ ê´€ë¦¬í•˜ê³  ë“œë¡œìš° ë¡œì§ ì²˜ë¦¬
     /// </summary>
     public class DeckManager : Singleton<DeckManager>
     {
-        #region Private Fields
-        [Header("µ¦ ¼³Á¤")]
+        #region Fields and Properties
+        [Header("ë± ì„¤ì •")]
         [SerializeField] private bool enableLogging = true;
 
-        // ÇÃ·¹ÀÌ¾îº° µ¦ µ¥ÀÌÅÍ
+        // í”Œë ˆì´ì–´ ë± ë°ì´í„°
         private List<CardData> playerDeck = new List<CardData>();
         private List<CardData> opponentDeck = new List<CardData>();
 
-        // DeckStacker ÂüÁ¶ (½Ã°¢Àû µ¦°ú ¿¬µ¿)
+        // DeckStacker ì°¸ì¡° (ì‹œê°ì  ë± í‘œì‹œ)
         private DeckStacker playerDeckStacker;
         private DeckStacker opponentDeckStacker;
 
-        // µ¦ ±¸¼º Á¤º¸
+        // ë± êµ¬ì„± ìƒìˆ˜
         private const int DECK_SIZE = 30;
-        private const int NUMBER_CARDS_PER_VALUE = 4; // °¢ ¼ıÀÚº° 4Àå
-        private const int OPERATOR_CARDS_PER_TYPE = 2; // °¢ ¿¬»êÀÚº° 2Àå
-        private const int JOKER_CARDS = 2; // Á¶Ä¿ 2Àå
-        #endregion
+        private const int NUMBER_CARDS_PER_VALUE = 4; // ê° ìˆ«ìë‹¹ 4ì¥
+        private const int OPERATOR_CARDS_PER_TYPE = 2; // ê° ì—°ì‚°ìë‹¹ 2ì¥
+        private const int JOKER_CARDS = 2; // ì¡°ì»¤ 2ì¥
 
-        #region Properties
         /// <summary>
-        /// ÇÃ·¹ÀÌ¾î µ¦ÀÇ ³²Àº Ä«µå ¼ö
+        /// í”Œë ˆì´ì–´ ë±ì— ë‚¨ì€ ì¹´ë“œ ìˆ˜
         /// </summary>
         public int PlayerDeckCount => playerDeck.Count;
 
         /// <summary>
-        /// »ó´ë µ¦ÀÇ ³²Àº Ä«µå ¼ö
+        /// ìƒëŒ€ ë±ì— ë‚¨ì€ ì¹´ë“œ ìˆ˜
         /// </summary>
         public int OpponentDeckCount => opponentDeck.Count;
 
         /// <summary>
-        /// ÇÃ·¹ÀÌ¾î µ¦ÀÌ ºñ¾îÀÖ´ÂÁö È®ÀÎ
+        /// í”Œë ˆì´ì–´ ë±ì´ ë¹„ì—ˆëŠ”ì§€ í™•ì¸
         /// </summary>
         public bool IsPlayerDeckEmpty => playerDeck.Count == 0;
 
         /// <summary>
-        /// »ó´ë µ¦ÀÌ ºñ¾îÀÖ´ÂÁö È®ÀÎ
+        /// ìƒëŒ€ ë±ì´ ë¹„ì—ˆëŠ”ì§€ í™•ì¸
         /// </summary>
         public bool IsOpponentDeckEmpty => opponentDeck.Count == 0;
         #endregion
@@ -93,14 +92,14 @@ namespace Manager
         #region Unity Lifecycle
         private void Start()
         {
-            // DeckStacker Ã£±â (¾À¿¡ ¹èÄ¡µÈ DeckStackerµéÀ» ÀÚµ¿ °¨Áö)
+            // DeckStacker ì°¾ê¸° (ì”¬ì— ë°°ì¹˜ëœ DeckStackerë“¤ì„ ìë™ ì—°ê²°)
             FindDeckStackers();
         }
         #endregion
 
         #region Public Interface
         /// <summary>
-        /// °ÔÀÓ ½ÃÀÛ ½Ã ¾çÂÊ ÇÃ·¹ÀÌ¾îÀÇ µ¦À» »ı¼ºÇÏ°í ¼¯±â
+        /// ê²Œì„ ì‹œì‘ ì‹œ ì–‘ìª½ í”Œë ˆì´ì–´ì˜ ë±ì„ ìƒì„±í•˜ê³  ì„ìŒ
         /// </summary>
         public void InitializeDecks()
         {
@@ -110,17 +109,17 @@ namespace Manager
             ShuffleDeck(playerDeck);
             ShuffleDeck(opponentDeck);
 
-            Debug.Log($"[DeckManager] µ¦ ÃÊ±âÈ­ ¿Ï·á - ÇÃ·¹ÀÌ¾î: {playerDeck.Count}Àå, »ó´ë: {opponentDeck.Count}Àå");
+            Debug.Log($"[DeckManager] ë± ì´ˆê¸°í™” ì™„ë£Œ - í”Œë ˆì´ì–´: {playerDeck.Count}ì¥, ìƒëŒ€: {opponentDeck.Count}ì¥");
         }
 
         /// <summary>
-        /// ÇÃ·¹ÀÌ¾î µ¦¿¡¼­ Ä«µå 1Àå µå·Î¿ì (½Ã°¢Àû µ¦°ú ¿¬µ¿)
+        /// í”Œë ˆì´ì–´ ë±ì—ì„œ ì¹´ë“œ 1ì¥ ë“œë¡œìš° (ì‹œê°ì  ë±ë„ ê°±ì‹ )
         /// </summary>
         public CardData? DrawPlayerCard()
         {
-            CardData? cardData = DrawCard(playerDeck, "ÇÃ·¹ÀÌ¾î");
+            CardData? cardData = DrawCard(playerDeck, "í”Œë ˆì´ì–´");
 
-            // ½Ã°¢Àû µ¦¿¡¼­µµ Ä«µå Á¦°Å
+            // ì‹œê°ì  ë±ì—ì„œ ì¹´ë“œ ì œê±°
             if (cardData.HasValue && playerDeckStacker != null)
             {
                 playerDeckStacker.RemoveTopCard();
@@ -130,13 +129,13 @@ namespace Manager
         }
 
         /// <summary>
-        /// »ó´ë µ¦¿¡¼­ Ä«µå 1Àå µå·Î¿ì (½Ã°¢Àû µ¦°ú ¿¬µ¿)
+        /// ìƒëŒ€ ë±ì—ì„œ ì¹´ë“œ 1ì¥ ë“œë¡œìš° (ì‹œê°ì  ë±ë„ ê°±ì‹ )
         /// </summary>
         public CardData? DrawOpponentCard()
         {
-            CardData? cardData = DrawCard(opponentDeck, "»ó´ë");
+            CardData? cardData = DrawCard(opponentDeck, "ìƒëŒ€");
 
-            // ½Ã°¢Àû µ¦¿¡¼­µµ Ä«µå Á¦°Å
+            // ì‹œê°ì  ë±ì—ì„œ ì¹´ë“œ ì œê±°
             if (cardData.HasValue && opponentDeckStacker != null)
             {
                 opponentDeckStacker.RemoveTopCard();
@@ -146,7 +145,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// ÇÃ·¹ÀÌ¾î µ¦¿¡¼­ ¿©·¯ Àå µå·Î¿ì
+        /// í”Œë ˆì´ì–´ ë±ì—ì„œ ì—¬ëŸ¬ ì¥ ë“œë¡œìš°
         /// </summary>
         public List<CardData> DrawPlayerCards(int count)
         {
@@ -163,7 +162,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// »ó´ë µ¦¿¡¼­ ¿©·¯ Àå µå·Î¿ì
+        /// ìƒëŒ€ ë±ì—ì„œ ì—¬ëŸ¬ ì¥ ë“œë¡œìš°
         /// </summary>
         public List<CardData> DrawOpponentCards(int count)
         {
@@ -180,40 +179,40 @@ namespace Manager
         }
 
         /// <summary>
-        /// CardData¸¦ ½ÇÁ¦ GameObject·Î »ı¼ºÇÏ¿© ÁöÁ¤µÈ Zone¿¡ ¹èÄ¡
-        /// NetworkCard ÄÄÆ÷³ÍÆ® ÀÚµ¿ Ãß°¡ ¹× ÃÊ±âÈ­ Æ÷ÇÔ
+        /// CardDataë¥¼ ê¸°ë°˜ GameObjectë¥¼ ìƒì„±í•˜ì—¬ ì§€ì •ëœ Zoneì— ë°°ì¹˜
+        /// NetworkCard ì»´í¬ë„ŒíŠ¸ ìë™ ì¶”ê°€ ë° ì´ˆê¸°í™” í¬í•¨
         /// </summary>
-        /// <param name="cardData">»ı¼ºÇÒ Ä«µå µ¥ÀÌÅÍ</param>
-        /// <param name="owner">Ä«µå ¼ÒÀ¯ÀÚ</param>
-        /// <param name="targetZone">¹èÄ¡ÇÒ Zone (nullÀÌ¸é ¹èÄ¡ÇÏÁö ¾ÊÀ½)</param>
-        /// <returns>»ı¼ºµÈ Ä«µå GameObject ¶Ç´Â null (½ÇÆĞ½Ã)</returns>
+        /// <param name="cardData">ìƒì„±í•  ì¹´ë“œ ë°ì´í„°</param>
+        /// <param name="owner">ì¹´ë“œ ì†Œìœ ì</param>
+        /// <param name="targetZone">ë°°ì¹˜í•  Zone (nullì´ë©´ ë°°ì¹˜í•˜ì§€ ì•ŠìŒ)</param>
+        /// <returns>ìƒì„±ëœ ì¹´ë“œ GameObject ë˜ëŠ” null (ì‹¤íŒ¨ì‹œ)</returns>
         public GameObject CreateCardObject(CardData cardData, CardZone.OwnerType owner, CardZone targetZone = null)
         {
-            // Ä«µå ÅÛÇÃ¸´ °¡Á®¿À±â
+            // ì¹´ë“œ í…œí”Œë¦¿ ê°€ì ¸ì˜¤ê¸°
             GameObject template = owner == CardZone.OwnerType.Player
                 ? ResourcesManager.Instance.GetPlayerCardTemplate()
                 : ResourcesManager.Instance.GetOpponentCardTemplate();
 
             if (template == null)
             {
-                Debug.LogError($"[DeckManager] {owner} Ä«µå ÅÛÇÃ¸´À» Ã£À» ¼ö ¾ø½À´Ï´Ù.");
+                Debug.LogError($"[DeckManager] {owner} ì¹´ë“œ í…œí”Œë¦¿ì„ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
                 return null;
             }
 
-            // Ä«µå ¿ÀºêÁ§Æ® »ı¼º
+            // ì¹´ë“œ ì˜¤ë¸Œì íŠ¸ ìƒì„±
             GameObject cardObject = Instantiate(template);
             if (cardObject == null)
             {
-                Debug.LogError("[DeckManager] Ä«µå ¿ÀºêÁ§Æ® »ı¼º¿¡ ½ÇÆĞÇß½À´Ï´Ù.");
+                Debug.LogError("[DeckManager] ì¹´ë“œ ì˜¤ë¸Œì íŠ¸ ìƒì„±ì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤.");
                 return null;
             }
 
-            // ±âº» ¼³Á¤
+            // ê¸°ë³¸ ì„¤ì •
             cardObject.SetActive(true);
             cardObject.transform.localPosition = Vector3.zero;
             cardObject.transform.localRotation = Quaternion.identity;
 
-            // Card ÄÄÆ÷³ÍÆ® ÃÊ±âÈ­
+            // Card ì»´í¬ë„ŒíŠ¸ ì´ˆê¸°í™”
             var cardComponent = cardObject.GetComponent<Card>();
             if (cardComponent != null)
             {
@@ -222,24 +221,24 @@ namespace Manager
             }
             else
             {
-                Debug.LogError("[DeckManager] Card ÄÄÆ÷³ÍÆ®¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù.");
+                Debug.LogError("[DeckManager] Card ì»´í¬ë„ŒíŠ¸ë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
                 Destroy(cardObject);
                 return null;
             }
 
-            // NetworkCard ÄÄÆ÷³ÍÆ® Ãß°¡ ¹× ÃÊ±âÈ­
+            // NetworkCard ì»´í¬ë„ŒíŠ¸ ì¶”ê°€ ë° ì´ˆê¸°í™”
             var networkCard = cardObject.GetComponent<NetworkCard>();
             if (networkCard == null)
             {
                 networkCard = cardObject.AddComponent<NetworkCard>();
             }
 
-            // Zone¿¡ Ãß°¡ (¿É¼Ç)
+            // Zoneì— ì¶”ê°€ (ì˜µì…˜)
             if (targetZone != null)
             {
                 targetZone.AddCard(cardObject.transform);
 
-                // Zone Ãß°¡ ÈÄ NetworkCard À§Ä¡ Á¤º¸ ¾÷µ¥ÀÌÆ®
+                // Zone ì¶”ê°€ í›„ NetworkCard ìœ„ì¹˜ ì •ë³´ ì—…ë°ì´íŠ¸
                 networkCard.UpdateLocationInfo();
             }
 
@@ -247,26 +246,26 @@ namespace Manager
         }
 
         /// <summary>
-        /// µ¦ »óÅÂ ¸®¼Â (°ÔÀÓ Àç½ÃÀÛ ½Ã »ç¿ë)
+        /// ë± ë°ì´í„° ì´ˆê¸°í™” (ê²Œì„ ì¬ì‹œì‘ ì‹œ ì‚¬ìš©)
         /// </summary>
         public void ResetDecks()
         {
             playerDeck.Clear();
             opponentDeck.Clear();
 
-            // ½Ã°¢Àû µ¦µµ ¸®¼Â
+            // ì‹œê°ì  ë±ë„ ì´ˆê¸°í™”
             if (playerDeckStacker != null)
                 playerDeckStacker.ResetDeck();
             if (opponentDeckStacker != null)
                 opponentDeckStacker.ResetDeck();
 
-            Debug.Log("[DeckManager] µ¦ ¸®¼Â ¿Ï·á");
+            Debug.Log("[DeckManager] ë± ë¦¬ì…‹ ì™„ë£Œ");
         }
         #endregion
 
         #region DeckStacker Integration
         /// <summary>
-        /// ¾À¿¡¼­ DeckStackerµéÀ» Ã£¾Æ ¿¬°á
+        /// ì”¬ì—ì„œ DeckStackerë“¤ì„ ì°¾ì•„ ì—°ê²°
         /// </summary>
         private void FindDeckStackers()
         {
@@ -286,7 +285,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// DeckStacker ¼öµ¿ µî·Ï (ÇÊ¿ä½Ã »ç¿ë)
+        /// DeckStacker ìˆ˜ë™ ë“±ë¡ (í•„ìš”ì‹œ ì‚¬ìš©)
         /// </summary>
         public void RegisterDeckStacker(DeckStacker stacker, bool isPlayer)
         {
@@ -299,7 +298,7 @@ namespace Manager
 
         #region Deck Creation
         /// <summary>
-        /// ÇÃ·¹ÀÌ¾î µ¦ »ı¼º (30Àå)
+        /// í”Œë ˆì´ì–´ ë± ìƒì„± (30ì¥)
         /// </summary>
         private void CreatePlayerDeck()
         {
@@ -308,7 +307,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// »ó´ë µ¦ »ı¼º (30Àå)
+        /// ìƒëŒ€ ë± ìƒì„± (30ì¥)
         /// </summary>
         private void CreateOpponentDeck()
         {
@@ -317,11 +316,11 @@ namespace Manager
         }
 
         /// <summary>
-        /// Ç¥ÁØ µ¦ ±¸¼º Ãß°¡ (¼ıÀÚ + ¿¬»êÀÚ + Á¶Ä¿)
+        /// í‘œì¤€ ë± êµ¬ì„± ì¶”ê°€ (ìˆ«ì + ì—°ì‚°ì + ì¡°ì»¤)
         /// </summary>
         private void AddStandardCards(List<CardData> deck)
         {
-            // 1. ¼ıÀÚ Ä«µå Ãß°¡ (1~5, °¢ 4Àå) = 20Àå
+            // 1. ìˆ«ì ì¹´ë“œ ì¶”ê°€ (1~5, ê° 4ì¥) = 20ì¥
             for (int value = 1; value <= 5; value++)
             {
                 for (int count = 0; count < NUMBER_CARDS_PER_VALUE; count++)
@@ -330,7 +329,7 @@ namespace Manager
                 }
             }
 
-            // 2. ¿¬»êÀÚ Ä«µå Ãß°¡ (°¢ 2Àå) = 8Àå
+            // 2. ì—°ì‚°ì ì¹´ë“œ ì¶”ê°€ (ê° 2ì¥) = 8ì¥
             OperatorType[] operators = { OperatorType.Plus, OperatorType.Minus, OperatorType.Multiply, OperatorType.Divide };
             foreach (var op in operators)
             {
@@ -340,41 +339,41 @@ namespace Manager
                 }
             }
 
-            // 3. Á¶Ä¿ Ä«µå Ãß°¡ = 2Àå
+            // 3. ì¡°ì»¤ ì¹´ë“œ ì¶”ê°€ = 2ì¥
             for (int count = 0; count < JOKER_CARDS; count++)
             {
                 deck.Add(CardData.CreateJoker());
             }
 
-            // ÃÑ 30Àå È®ÀÎ
+            // ì´ 30ì¥ í™•ì¸
             if (deck.Count != DECK_SIZE)
             {
-                Debug.LogError($"[DeckManager] µ¦ Å©±â ¿À·ù: {deck.Count}Àå (¿¹»ó: {DECK_SIZE}Àå)");
+                Debug.LogError($"[DeckManager] ë± í¬ê¸° ì˜¤ë¥˜: {deck.Count}ì¥ (ì˜ˆìƒ: {DECK_SIZE}ì¥)");
             }
         }
         #endregion
 
         #region Deck Operations
         /// <summary>
-        /// µ¦ ¼¯±â (Fisher-Yates ¾Ë°í¸®Áò)
+        /// ë± ì„ê¸° (Fisher-Yates ì•Œê³ ë¦¬ì¦˜)
         /// </summary>
         private void ShuffleDeck(List<CardData> deck)
         {
             for (int i = deck.Count - 1; i > 0; i--)
             {
-                int randomIndex = Random.Range(0, i + 1);
+                int randomIndex = UnityEngine.Random.Range(0, i + 1);
                 (deck[i], deck[randomIndex]) = (deck[randomIndex], deck[i]);
             }
         }
 
         /// <summary>
-        /// µ¦¿¡¼­ Ä«µå 1Àå µå·Î¿ì (³»ºÎ ·ÎÁ÷)
+        /// ì§€ì •ëœ ì¹´ë“œ 1ì¥ ë“œë¡œìš° (ë‚´ë¶€ ë¡œì§)
         /// </summary>
         private CardData? DrawCard(List<CardData> deck, string playerName)
         {
             if (deck.Count == 0)
             {
-                Debug.LogWarning($"[DeckManager] {playerName} µ¦ÀÌ ºñ¾îÀÖ¾î µå·Î¿ìÇÒ ¼ö ¾ø½À´Ï´Ù.");
+                Debug.LogWarning($"[DeckManager] {playerName} ë±ì´ ë¹„ì–´ìˆì–´ ë“œë¡œìš°í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
                 return null;
             }
 
@@ -387,7 +386,7 @@ namespace Manager
 
         #region Card Management
         /// <summary>
-        /// CardData·Î Card ÄÄÆ÷³ÍÆ® ÃÊ±âÈ­
+        /// CardDataë¡œ Card ì»´í¬ë„ŒíŠ¸ ì´ˆê¸°í™”
         /// </summary>
         private void InitializeCardComponent(Card cardComponent, CardData cardData)
         {
@@ -406,7 +405,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// Ä«µå ÀÌ¸§ ¼³Á¤
+        /// ì¹´ë“œ ì´ë¦„ ì„¤ì •
         /// </summary>
         private void SetCardName(GameObject cardObject, CardData cardData)
         {
@@ -423,21 +422,21 @@ namespace Manager
 
         #region Utility & Debug
         /// <summary>
-        /// Ä«µå ¼³¸í ¹®ÀÚ¿­ »ı¼º
+        /// ì¹´ë“œ íƒ€ì… ë¬¸ìì—´ ë³€í™˜
         /// </summary>
         private string GetCardDescription(CardData cardData)
         {
             return cardData.cardType switch
             {
-                CardType.Number => $"¼ıÀÚ({cardData.numberValue})",
-                CardType.Operator => $"¿¬»êÀÚ({cardData.operatorType})",
-                CardType.Joker => "Á¶Ä¿",
-                _ => "¾Ë ¼ö ¾øÀ½"
+                CardType.Number => $"ìˆ«ì({cardData.numberValue})",
+                CardType.Operator => $"ì—°ì‚°ì({cardData.operatorType})",
+                CardType.Joker => "ì¡°ì»¤",
+                _ => "ì•Œ ìˆ˜ ì—†ìŒ"
             };
         }
 
         /// <summary>
-        /// µ¦ ±¸¼º ·Î±× Ãâ·Â
+        /// ë± êµ¬ì„± ë¡œê·¸ ì¶œë ¥
         /// </summary>
         private void LogDeckComposition(List<CardData> deck, string playerName)
         {
@@ -453,7 +452,7 @@ namespace Manager
                 }
             }
 
-            Debug.Log($"[DeckManager] {playerName} µ¦ ±¸¼º: ¼ıÀÚ {numberCards}Àå, ¿¬»êÀÚ {operatorCards}Àå, Á¶Ä¿ {jokerCards}Àå");
+            Debug.Log($"[DeckManager] {playerName} ë± êµ¬ì„±: ìˆ«ì {numberCards}ì¥, ì—°ì‚°ì {operatorCards}ì¥, ì¡°ì»¤ {jokerCards}ì¥");
         }
         #endregion
     }

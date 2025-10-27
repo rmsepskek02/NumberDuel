@@ -8,11 +8,12 @@ using UnityEngine;
 namespace Manager
 {
     /// <summary>
-    /// Lobby∏¶ ∞¸∏Æ«œ¥¬ ∏≈¥œ¿˙
+    /// LobbyÎ•º Í¥ÄÎ¶¨ÌïòÎäî Îß§ÎãàÏ†Ä
+    /// Î∞© ÏÉùÏÑ±, Î∞© Ï∞∏Í∞Ä, Î∞© Î™©Î°ù Í¥ÄÎ¶¨ Îã¥Îãπ
     /// </summary>
     public class LobbyManager : MonoBehaviourPunCallbacks
     {
-        #region Variables
+        #region Fields and Properties
         public TextMeshProUGUI width;
         public TextMeshProUGUI height;
         public TMP_InputField roomNameInputField;
@@ -23,11 +24,12 @@ namespace Manager
         public Sprite fullRoomListSprite;
         public Sprite lockRoomListSprite;
 
-        Dictionary<string, RoomInfo> roomCache = new Dictionary<string, RoomInfo>();
-        string roomNameText;
-        string roomPasswordText;
+        private Dictionary<string, RoomInfo> roomCache = new Dictionary<string, RoomInfo>();
+        private string roomNameText;
+        private string roomPasswordText;
         #endregion
 
+        #region Unity Lifecycle
         void Start()
         {
             OnConnectedToMaster();
@@ -38,12 +40,16 @@ namespace Manager
             roomNameText = roomNameInputField.text;
             roomPasswordText = roomPasswordInputField.text;
 
-            // »≠∏È ≈©±‚ «•Ω√
+            // ÌôîÎ©¥ ÌÅ¨Í∏∞ ÌëúÏãú
             width.text = $"{Screen.width}";
             height.text = $"{Screen.height}";
         }
+        #endregion
 
-        // πÊ ª˝º∫
+        #region Room Management
+        /// <summary>
+        /// Î∞© ÏÉùÏÑ±
+        /// </summary>
         public void CreateRoom(string roomName, string roomPassword)
         {
             RoomOptions roomOptions = new RoomOptions
@@ -52,115 +58,96 @@ namespace Manager
                 IsVisible = true,
                 IsOpen = true,
                 CustomRoomProperties = new ExitGames.Client.Photon.Hashtable
-        {
-            { "roomName", roomName },
-            { "roomPassword", roomPassword },
-            { "currentPlayers", 1 } // πÊ¿Â ∆˜«‘ 1∏Ì¿∏∑Œ √ ±‚»≠
-        },
-                CustomRoomPropertiesForLobby = new[] { "roomName", "roomPassword", "currentPlayers" } // ∑Œ∫Òø°º≠µµ »Æ¿Œ ∞°¥…«œµµ∑œ º≥¡§
+                {
+                    { "roomName", roomName },
+                    { "roomPassword", roomPassword },
+                    { "currentPlayers", 1 }
+                },
+                CustomRoomPropertiesForLobby = new[] { "roomName", "roomPassword", "currentPlayers" }
             };
 
             PhotonNetwork.CreateRoom(roomName, roomOptions);
         }
 
+        /// <summary>
+        /// Î∞© Ï∞∏Í∞Ä
+        /// </summary>
+        public void JoinRoom(string roomName, string password)
+        {
+            PhotonNetwork.JoinRoom(roomName);
+        }
+        #endregion
 
+        #region Photon Callbacks
         public override void OnCreatedRoom()
         {
             base.OnCreatedRoom();
-            Debug.Log($"πÊ ª˝º∫ øœ∑·: {PhotonNetwork.CurrentRoom.Name}, IsVisible: {PhotonNetwork.CurrentRoom.IsVisible}");
         }
 
         public override void OnCreateRoomFailed(short returnCode, string message)
         {
             base.OnCreateRoomFailed(returnCode, message);
-            Debug.LogError($"πÊ ª˝º∫ Ω«∆–: {message}");
-        }
-
-        // πÊ ¬¸∞°
-        public void JoinRoom(string roomName, string password)
-        {
-            PhotonNetwork.JoinRoom(roomName);
         }
 
         public override void OnJoinedRoom()
         {
             base.OnJoinedRoom();
-            Debug.Log($"πÊ ¬¸∞° º∫∞¯: {PhotonNetwork.CurrentRoom.Name}");
             PhotonNetwork.LoadLevel("GameScene");
         }
 
         public override void OnJoinRoomFailed(short returnCode, string message)
         {
             base.OnJoinRoomFailed(returnCode, message);
-            Debug.LogError($"πÊ ¬¸∞° Ω«∆–: {message}");
         }
 
         public override void OnRoomListUpdate(List<RoomInfo> roomList)
         {
             base.OnRoomListUpdate(roomList);
-            Debug.Log($"πÊ ∏Ò∑œ æ˜µ•¿Ã∆Æ ({roomList.Count}∞≥)");
 
             foreach (RoomInfo room in roomList)
             {
                 if (room.RemovedFromList)
                 {
-                    roomCache.Remove(room.Name); // ªË¡¶µ» πÊ ¡¶∞≈
+                    roomCache.Remove(room.Name);
                 }
                 else
                 {
-                    // Custom Propertiesø°º≠ «ˆ¿Á ¿Œø¯ ∞°¡Æø¿±‚
-                    int currentPlayers = room.CustomProperties.ContainsKey("currentPlayers") ? (int)room.CustomProperties["currentPlayers"] : 0;
-                    int maxPlayers = room.MaxPlayers;
-
-                    // πÊ¿Ã ∞°µÊ √°∞≈≥™ ∫Òπ–π¯»£∞° ¿÷æÓµµ ¡¶∞≈«œ¡ˆ æ ¿Ω
                     roomCache[room.Name] = room;
-                    Debug.Log($"πÊ √ﬂ∞°µ : {room.Name}, ¿Œø¯ {currentPlayers}/{maxPlayers}");
-
-                    //// Custom Propertiesø°º≠ «ˆ¿Á ¿Œø¯ ∞°¡Æø¿±‚
-                    //int currentPlayers = room.CustomProperties.ContainsKey("currentPlayers") ? (int)room.CustomProperties["currentPlayers"] : 0;
-                    //int maxPlayers = room.MaxPlayers;
-
-                    //// √÷¥Î ¿Œø¯¿Ã √°¿∏∏È ∏Ò∑œø°º≠ ¡¶∞≈
-                    //if (currentPlayers >= maxPlayers)
-                    //{
-                    //    if (roomCache.ContainsKey(room.Name))
-                    //    {
-                    //        roomCache.Remove(room.Name);
-                    //        Debug.Log($"πÊ {room.Name}¿Ã ∞°µÊ ¬˜º≠ ∏Ò∑œø°º≠ ¡¶ø‹µ .");
-                    //    }
-                    //}
-                    //else
-                    //{
-                    //    // ¿Œø¯¿Ã ¡ŸæÓµÈ∏È ¥ŸΩ√ ∏Ò∑œø° √ﬂ∞°
-                    //    roomCache[room.Name] = room;
-                    //    Debug.Log($"πÊ {room.Name}ø° ¿⁄∏Æ∞° ª˝∞‹ ¥ŸΩ√ ∏Ò∑œø° √ﬂ∞°µ .");
-                    //}
                 }
             }
 
-            UpdateRoomListUI(); // UI æ˜µ•¿Ã∆Æ
+            UpdateRoomListUI();
         }
 
+        public override void OnConnectedToMaster()
+        {
+            PhotonNetwork.JoinLobby();
+        }
+        #endregion
+
+        #region UI Management
+        /// <summary>
+        /// Î∞© Î™©Î°ù UI ÏóÖÎç∞Ïù¥Ìä∏
+        /// </summary>
         void UpdateRoomListUI()
         {
-            // ±‚¡∏ πÊ ∏Ò∑œ UI √ ±‚»≠
+            // Í∏∞Ï°¥ Î∞© Î™©Î°ù UI Ï¥àÍ∏∞Ìôî
             foreach (Transform child in roomListContent)
             {
                 Destroy(child.gameObject);
             }
 
-            // πÊ ∏Ò∑œ UI æ˜µ•¿Ã∆Æ
+            // Î∞© Î™©Î°ù UI ÏóÖÎç∞Ïù¥Ìä∏
             foreach (RoomInfo roomInfo in roomCache.Values)
             {
-                Debug.Log($"πÊ ¡§∫∏ ∑ŒµÂ: {roomInfo.Name}");
-
                 GameObject roomItem = Instantiate(roomItemFactory, roomListContent);
                 RoomItem itemComponent = roomItem.GetComponent<RoomItem>();
 
                 if (itemComponent != null)
                 {
                     itemComponent.SetInfo(roomInfo);
-                    // πÊ ªÛ≈¬ø° µ˚∂Û Ω∫«¡∂Û¿Ã∆Æ ∫Ø∞Ê
+
+                    // Î∞© ÏÉÅÌÉúÏóê Îî∞Îùº Ïä§ÌîÑÎùºÏù¥Ìä∏ ÏÑ§Ï†ï
                     int currentPlayers = roomInfo.CustomProperties.ContainsKey("currentPlayers") ? (int)roomInfo.CustomProperties["currentPlayers"] : 0;
                     int maxPlayers = roomInfo.MaxPlayers;
                     bool hasPassword = roomInfo.CustomProperties.ContainsKey("roomPassword") && !string.IsNullOrEmpty((string)roomInfo.CustomProperties["roomPassword"]);
@@ -169,51 +156,34 @@ namespace Manager
 
                     if (currentPlayers >= maxPlayers)
                     {
-                        selectedSprite = fullRoomListSprite; // ¿Œø¯ ∞°µÊ ¬˘ πÊ
+                        selectedSprite = fullRoomListSprite;
                     }
                     else if (hasPassword)
                     {
-                        selectedSprite = lockRoomListSprite; // ∫Òπ–π¯»£ ¿÷¥¬ πÊ
+                        selectedSprite = lockRoomListSprite;
                     }
                     else
                     {
-                        selectedSprite = enableRoomListSprite; // ¡¢º” ∞°¥…«— πÊ
+                        selectedSprite = enableRoomListSprite;
                     }
 
-                    // RoomItem¿« Image ƒƒ∆˜≥Õ∆Æ ∫Ø∞Ê
+                    // RoomItemÏùò Image Ïª¥Ìè¨ÎÑåÌä∏ ÏÑ§Ï†ï
                     if (itemComponent.TryGetComponent(out UnityEngine.UI.Image roomImage))
                     {
                         roomImage.sprite = selectedSprite;
                     }
-                    else
-                    {
-                        Debug.LogWarning("RoomItem «¡∏Æ∆’ø° Image ƒƒ∆˜≥Õ∆Æ∞° æ¯Ω¿¥œ¥Ÿ!");
-                    }
 
-                    // πÊ¿ª º±≈√«“ ∂ß √≥∏Æ«“ ∑Œ¡˜
+                    // Î∞© ÌÅ¥Î¶≠ Ïãú Ï≤òÎ¶¨ ÏÑ§Ï†ï
                     itemComponent.OnClickAction = (string roomName) =>
                     {
                         roomNameInputField.text = roomName;
                     };
                 }
-                else
-                {
-                    Debug.LogError("RoomItem ƒƒ∆˜≥Õ∆Æ∏¶ √£¿ª ºˆ æ¯Ω¿¥œ¥Ÿ!");
-                }
-                // πÊ¿ª º±≈√«“ ∂ß √≥∏Æ«“ ∑Œ¡˜
-                itemComponent.OnClickAction = (string roomName) =>
-                {
-                    roomNameInputField.text = roomName;
-                };
             }
         }
+        #endregion
 
-        public override void OnConnectedToMaster()
-        {
-            PhotonNetwork.JoinLobby();
-            Debug.Log("∏∂Ω∫≈Õ º≠πˆ ø¨∞·µ , ∑Œ∫Ò ¡¯¿‘ Ω√µµ");
-        }
-
+        #region Button Events
         public void OnClickCreate()
         {
             CreateRoom(roomNameText, roomPasswordText);
@@ -229,11 +199,9 @@ namespace Manager
             if (!PhotonNetwork.InLobby)
             {
                 PhotonNetwork.JoinLobby();
-                Debug.Log("∑Œ∫Òø° ¥ŸΩ√ ¿‘¿Â«œø© πÊ ∏Ò∑œ ªı∑Œ∞Ìƒß");
             }
             else
             {
-                Debug.Log("¿ÃπÃ ∑Œ∫Òø° ¿÷¿Ω. ∞≠¡¶ πÊ ∏Ò∑œ ∞ªΩ≈");
                 UpdateRoomListUI();
             }
         }
@@ -241,10 +209,10 @@ namespace Manager
         public void OnClickQuit()
         {
 #if UNITY_EDITOR
-            Debug.Log("CLICK QUIT");
             UnityEditor.EditorApplication.isPlaying = false;
 #endif
             Application.Quit();
         }
+        #endregion
     }
 }

@@ -1,27 +1,35 @@
-using UnityEngine;
 using System;
+using UnityEngine;
 using Objects;
 using Utills;
 
 namespace Manager
 {
     /// <summary>
-    /// ÇÃ·¹ÀÌ¾îº° Ã¼·ÂÀ» °ü¸®ÇÏ´Â ¸Å´ÏÀú
-    /// µ¥¹ÌÁö Àû¿ë, °ÔÀÓ Á¾·á Á¶°Ç Ã¼Å©, UI ÀÌº¥Æ® ¹ß»ı
+    /// í”Œë ˆì´ì–´ ì²´ë ¥ì„ ê´€ë¦¬í•˜ëŠ” ë§¤ë‹ˆì €
+    /// ë°ë¯¸ì§€ ì ìš©, ê²Œì„ ì¢…ë£Œ ìƒíƒœ ì²´í¬, UI ì´ë²¤íŠ¸ ë°œìƒ
     /// </summary>
     public class HealthManager : Singleton<HealthManager>
     {
-        [Header("Ã¼·Â ¼³Á¤")]
+        #region Fields and Properties
+        [Header("ì²´ë ¥ ì„¤ì •")]
         [SerializeField] private int maxHP = 30;
         [SerializeField] private bool enableDebugLog = true;
 
-        // ÇöÀç Ã¼·Â
+        // í˜„ì¬ ì²´ë ¥
         private int playerCurrentHP;
         private int opponentCurrentHP;
 
-        // Ã¼·Â º¯°æ ÀÌº¥Æ®
-        public static event Action<CardZone.OwnerType, int, int> OnHealthChanged; // (ÇÃ·¹ÀÌ¾î, ÀÌÀüHP, ÇöÀçHP)
-        public static event Action<CardZone.OwnerType> OnPlayerDefeated; // (ÆĞ¹èÇÑ ÇÃ·¹ÀÌ¾î)
+        /// <summary>
+        /// ì²´ë ¥ ë³€í™” ì´ë²¤íŠ¸ (í”Œë ˆì´ì–´, ì´ì „HP, í˜„ì¬HP)
+        /// </summary>
+        public static event Action<CardZone.OwnerType, int, int> OnHealthChanged;
+
+        /// <summary>
+        /// í”Œë ˆì´ì–´ íŒ¨ë°° ì´ë²¤íŠ¸ (íŒ¨ë°°í•œ í”Œë ˆì´ì–´)
+        /// </summary>
+        public static event Action<CardZone.OwnerType> OnPlayerDefeated;
+        #endregion
 
         #region Unity Lifecycle
         private void Start()
@@ -32,7 +40,7 @@ namespace Manager
 
         #region Initialization
         /// <summary>
-        /// Ã¼·Â ÃÊ±âÈ­ (°ÔÀÓ ½ÃÀÛ ½Ã)
+        /// ì²´ë ¥ ì´ˆê¸°í™” (ê²Œì„ ì‹œì‘ ì‹œ)
         /// </summary>
         public void InitializeHealth()
         {
@@ -40,9 +48,9 @@ namespace Manager
             opponentCurrentHP = maxHP;
 
             if (enableDebugLog)
-                Debug.Log($"[HealthManager] Ã¼·Â ÃÊ±âÈ­ ¿Ï·á - Player: {playerCurrentHP}, Opponent: {opponentCurrentHP}");
+                Debug.Log($"[HealthManager] ì²´ë ¥ ì´ˆê¸°í™” ì™„ë£Œ - Player: {playerCurrentHP}, Opponent: {opponentCurrentHP}");
 
-            // ÃÊ±â »óÅÂ UI ¾÷µ¥ÀÌÆ®
+            // ì´ˆê¸° ìƒíƒœ UI ì—…ë°ì´íŠ¸
             OnHealthChanged?.Invoke(CardZone.OwnerType.Player, maxHP, playerCurrentHP);
             OnHealthChanged?.Invoke(CardZone.OwnerType.Opponent, maxHP, opponentCurrentHP);
         }
@@ -50,17 +58,17 @@ namespace Manager
 
         #region Public Interface
         /// <summary>
-        /// ÁöÁ¤µÈ ÇÃ·¹ÀÌ¾î¿¡°Ô µ¥¹ÌÁö Àû¿ë
+        /// ì§€ì •ëœ í”Œë ˆì´ì–´ì— ë°ë¯¸ì§€ ì ìš©
         /// </summary>
-        /// <param name="damage">°¡ÇÒ µ¥¹ÌÁö (¾ç¼ö)</param>
-        /// <param name="target">µ¥¹ÌÁö¸¦ ¹ŞÀ» ÇÃ·¹ÀÌ¾î</param>
-        /// <returns>½ÇÁ¦·Î Àû¿ëµÈ µ¥¹ÌÁö</returns>
+        /// <param name="damage">ì…í ë°ë¯¸ì§€ (ì–‘ìˆ˜)</param>
+        /// <param name="target">ë°ë¯¸ì§€ë¥¼ ë°›ì„ í”Œë ˆì´ì–´</param>
+        /// <returns>ì‹¤ì œë¡œ ì ìš©ëœ ë°ë¯¸ì§€</returns>
         public int ApplyDamage(int damage, CardZone.OwnerType target)
         {
             if (damage <= 0)
             {
                 if (enableDebugLog)
-                    Debug.LogWarning($"[HealthManager] Àß¸øµÈ µ¥¹ÌÁö °ª: {damage}");
+                    Debug.LogWarning($"[HealthManager] ì˜ëª»ëœ ë°ë¯¸ì§€ ê°’: {damage}");
                 return 0;
             }
 
@@ -68,20 +76,20 @@ namespace Manager
             int newHP = Mathf.Max(0, previousHP - damage);
             int actualDamage = previousHP - newHP;
 
-            // Ã¼·Â ¾÷µ¥ÀÌÆ®
+            // ì²´ë ¥ ì—…ë°ì´íŠ¸
             SetHP(target, newHP);
 
             if (enableDebugLog)
-                Debug.Log($"[HealthManager] {target}¿¡°Ô {actualDamage} µ¥¹ÌÁö Àû¿ë ({previousHP} ¡æ {newHP})");
+                Debug.Log($"[HealthManager] {target}ì—ê²Œ {actualDamage} ë°ë¯¸ì§€ ì ìš© ({previousHP} â†’ {newHP})");
 
-            // ÀÌº¥Æ® ¹ß»ı
+            // ì´ë²¤íŠ¸ ë°œìƒ
             OnHealthChanged?.Invoke(target, previousHP, newHP);
 
-            // °ÔÀÓ Á¾·á Ã¼Å©
+            // íŒ¨ë°° ìƒíƒœ ì²´í¬
             if (newHP <= 0)
             {
                 if (enableDebugLog)
-                    Debug.Log($"[HealthManager] {target} ÆĞ¹è! HP°¡ 0ÀÌ µÇ¾ú½À´Ï´Ù.");
+                    Debug.Log($"[HealthManager] {target} íŒ¨ë°°! HPê°€ 0ì´ ë˜ì—ˆìŠµë‹ˆë‹¤.");
 
                 OnPlayerDefeated?.Invoke(target);
             }
@@ -90,10 +98,10 @@ namespace Manager
         }
 
         /// <summary>
-        /// ÇöÀç Ã¼·Â ¹İÈ¯
+        /// í˜„ì¬ ì²´ë ¥ ë°˜í™˜
         /// </summary>
-        /// <param name="player">Ã¼·ÂÀ» È®ÀÎÇÒ ÇÃ·¹ÀÌ¾î</param>
-        /// <returns>ÇöÀç Ã¼·Â</returns>
+        /// <param name="player">ì²´ë ¥ì„ í™•ì¸í•  í”Œë ˆì´ì–´</param>
+        /// <returns>í˜„ì¬ ì²´ë ¥</returns>
         public int GetCurrentHP(CardZone.OwnerType player)
         {
             return player switch
@@ -105,23 +113,23 @@ namespace Manager
         }
 
         /// <summary>
-        /// ÃÖ´ë Ã¼·Â ¹İÈ¯
+        /// ìµœëŒ€ ì²´ë ¥ ë°˜í™˜
         /// </summary>
         public int GetMaxHP() => maxHP;
 
         /// <summary>
-        /// °ÔÀÓÀÌ Á¾·áµÇ¾ú´ÂÁö È®ÀÎ
+        /// ê²Œì„ì´ ì¢…ë£Œë˜ì—ˆëŠ”ì§€ í™•ì¸
         /// </summary>
-        /// <returns>¾î´À ÇÑ ÂÊÀÇ HP°¡ 0 ÀÌÇÏ¸é true</returns>
+        /// <returns>ì–´ëŠ í•œ ìª½ì˜ HPê°€ 0 ì´í•˜ë©´ true</returns>
         public bool IsGameOver()
         {
             return playerCurrentHP <= 0 || opponentCurrentHP <= 0;
         }
 
         /// <summary>
-        /// ½Â¸®ÇÑ ÇÃ·¹ÀÌ¾î ¹İÈ¯ (°ÔÀÓÀÌ Á¾·áµÈ °æ¿ì¿¡¸¸)
+        /// ìŠ¹ë¦¬í•œ í”Œë ˆì´ì–´ ë°˜í™˜ (ê²Œì„ì´ ì¢…ë£Œëœ ê²½ìš°ì—ë§Œ)
         /// </summary>
-        /// <returns>½Â¸®ÇÑ ÇÃ·¹ÀÌ¾î, °ÔÀÓÀÌ ÁøÇà ÁßÀÌ¸é null</returns>
+        /// <returns>ìŠ¹ë¦¬í•œ í”Œë ˆì´ì–´, ê²Œì„ì´ ì§„í–‰ ì¤‘ì´ë©´ null</returns>
         public CardZone.OwnerType? GetWinner()
         {
             if (!IsGameOver()) return null;
@@ -129,14 +137,14 @@ namespace Manager
             if (playerCurrentHP <= 0) return CardZone.OwnerType.Opponent;
             if (opponentCurrentHP <= 0) return CardZone.OwnerType.Player;
 
-            return null; // ÀÌ·ĞÀûÀ¸·Î µµ´ŞÇÏÁö ¾ÊÀ½
+            return null; // ì´ë¡ ì ìœ¼ë¡œ ë„ë‹¬í•˜ì§€ ì•ŠìŒ
         }
 
         /// <summary>
-        /// Ã¼·Â ºñÀ² ¹İÈ¯ (UI¿¡¼­ HP ¹Ù ¾÷µ¥ÀÌÆ®¿ë)
+        /// ì²´ë ¥ ë¹„ìœ¨ ë°˜í™˜ (UIì—ì„œ HP ë°” ì—…ë°ì´íŠ¸ìš©)
         /// </summary>
-        /// <param name="player">ºñÀ²À» È®ÀÎÇÒ ÇÃ·¹ÀÌ¾î</param>
-        /// <returns>0.0 ~ 1.0 ºñÀ²</returns>
+        /// <param name="player">ë¹„ìœ¨ì„ í™•ì¸í•  í”Œë ˆì´ì–´</param>
+        /// <returns>0.0 ~ 1.0 ë²”ìœ„</returns>
         public float GetHealthRatio(CardZone.OwnerType player)
         {
             int currentHP = GetCurrentHP(player);
@@ -146,10 +154,10 @@ namespace Manager
 
         #region Private Methods
         /// <summary>
-        /// ÇÃ·¹ÀÌ¾îÀÇ Ã¼·Â Á÷Á¢ ¼³Á¤ (³»ºÎ »ç¿ë)
+        /// í”Œë ˆì´ì–´ì˜ ì²´ë ¥ ì§ì ‘ ì„¤ì • (ë‚´ë¶€ ìš©ë„)
         /// </summary>
-        /// <param name="player">¼³Á¤ÇÒ ÇÃ·¹ÀÌ¾î</param>
-        /// <param name="hp">»õ·Î¿î Ã¼·Â °ª</param>
+        /// <param name="player">ëŒ€ìƒ í”Œë ˆì´ì–´</param>
+        /// <param name="hp">ìƒˆë¡œìš´ ì²´ë ¥ ê°’</param>
         private void SetHP(CardZone.OwnerType player, int hp)
         {
             hp = Mathf.Clamp(hp, 0, maxHP);
@@ -164,35 +172,6 @@ namespace Manager
                     break;
             }
         }
-        #endregion
-
-        #region Debug & Testing
-        /// <summary>
-        /// µğ¹ö±×¿ë Ã¼·Â ¼³Á¤
-        /// </summary>
-        [System.Diagnostics.Conditional("UNITY_EDITOR")]
-        public void DebugSetHP(CardZone.OwnerType player, int hp)
-        {
-            int previousHP = GetCurrentHP(player);
-            SetHP(player, hp);
-            OnHealthChanged?.Invoke(player, previousHP, hp);
-
-            Debug.Log($"[HealthManager] DEBUG: {player} Ã¼·Â °­Á¦ ¼³Á¤ ({previousHP} ¡æ {hp})");
-        }
-
-        /// <summary>
-        /// ÇöÀç »óÅÂ ·Î±× Ãâ·Â
-        /// </summary>
-        [System.Diagnostics.Conditional("UNITY_EDITOR")]
-        public void DebugPrintStatus()
-        {
-            Debug.Log($"[HealthManager] ÇöÀç »óÅÂ - Player: {playerCurrentHP}/{maxHP}, Opponent: {opponentCurrentHP}/{maxHP}");
-        }
-
-        /// <summary>
-        /// µğ¹ö±× ·Î±× È°¼ºÈ­/ºñÈ°¼ºÈ­
-        /// </summary>
-        public void SetDebugMode(bool enable) => enableDebugLog = enable;
         #endregion
     }
 }
