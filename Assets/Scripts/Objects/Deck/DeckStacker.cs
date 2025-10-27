@@ -1,30 +1,31 @@
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Manager;
 using DG.Tweening;
-using System.Collections;
 
 namespace Objects
 {
     /// <summary>
-    /// Ä«µå µ¦ ¿ÜÇü »ı¼º ¹× °ü¸®¿ë Å¬·¡½º
-    /// DeckManager¿Í ¿¬µ¿ÇÏ¿© ½Ã°¢Àû µ¦ Ç¥Çö°ú ½ÇÁ¦ Ä«µå Á¦°Å¸¦ Ã³¸®
-    /// ResourcesManager ¾ÈÀüÀåÄ¡ Ãß°¡
+    /// ì¹´ë“œ ë± ì‹œê° í‘œí˜„ ë° ê´€ë¦¬ë¥¼ ë‹´ë‹¹í•˜ëŠ” í´ë˜ìŠ¤
+    /// DeckManagerì™€ ì—°ë™í•˜ì—¬ ì‹œê°ì  ë± í‘œí˜„ê³¼ ì¹´ë“œ ê°œìˆ˜ ì• ë‹ˆë©”ì´ì…˜ ì²˜ë¦¬
+    /// ResourcesManager ì˜ì¡´ì„± ì¶”ê°€
     /// </summary>
     public class DeckStacker : MonoBehaviour
     {
         #region Inspector Fields
-        [Header("µ¦ ¼³Á¤")]
-        [SerializeField] private int cardCount = 30; // »ı¼ºÇÒ Ä«µå ¼ö
-        [SerializeField] private float yOffset = 0.02f; // Ä«µå °£ YÃà °£°İ
+        [Header("ë± ì„¤ì •")]
+        [SerializeField] private int cardCount = 30; // ì´ˆê¸°ì— ì¹´ë“œ ìˆ˜
+        [SerializeField] private float yOffset = 0.02f; // ì¹´ë“œ ê°„ Yì¶• ê°„ê²©
 
-        [Header("µ¦ ±âÁØ À§Ä¡")]
+        [Header("ë± ë£¨íŠ¸ ìœ„ì¹˜")]
         [SerializeField] private Transform deckRoot;
 
-        [Header("³» µ¦ÀÎÁö ¿©ºÎ")]
+        [Header("ë± ì†Œìœ ì ì„¤ì •")]
         [SerializeField] private bool isMyDeck = true;
 
-        [Header("¾Ö´Ï¸ŞÀÌ¼Ç ¼³Á¤")]
+        [Header("ì• ë‹ˆë©”ì´ì…˜ ì„¤ì •")]
         [SerializeField] private float removeAnimationDuration = 0.3f;
         [SerializeField] private Vector3 removeDirection = Vector3.right;
         [SerializeField] private float removeDistance = 2f;
@@ -34,28 +35,28 @@ namespace Objects
         private readonly List<GameObject> stackedCards = new List<GameObject>();
         private int currentCardCount;
 
-        /// <summary>µ¦ »ı¼º ¿Ï·á ¿©ºÎ</summary>
+        /// <summary>ë± ìƒì„± ì™„ë£Œ ì—¬ë¶€</summary>
         private bool isDeckCreated = false;
         #endregion
 
         #region Properties
         /// <summary>
-        /// ³» µ¦ÀÎÁö ¿©ºÎ (DeckManager¿¡¼­ ÂüÁ¶)
+        /// ë± ì†Œìœ ì ì—¬ë¶€ (DeckManagerì—ì„œ ì‚¬ìš©)
         /// </summary>
         public bool IsMyDeck => isMyDeck;
 
         /// <summary>
-        /// ÇöÀç µ¦¿¡ ³²Àº Ä«µå ¼ö
+        /// í˜„ì¬ ë‚¨ì•„ ìˆëŠ” ì¹´ë“œ ìˆ˜
         /// </summary>
         public int CurrentCardCount => currentCardCount;
 
         /// <summary>
-        /// µ¦ÀÌ ºñ¾îÀÖ´ÂÁö È®ÀÎ
+        /// ì¹´ë“œê°€ ë¹„ì–´ìˆëŠ”ì§€ í™•ì¸
         /// </summary>
         public bool IsEmpty => currentCardCount <= 0;
 
         /// <summary>
-        /// µ¦ »ı¼º ¿Ï·á ¿©ºÎ
+        /// ë± ìƒì„± ì™„ë£Œ ì—¬ë¶€
         /// </summary>
         public bool IsDeckCreated => isDeckCreated;
         #endregion
@@ -63,27 +64,25 @@ namespace Objects
         #region Unity Lifecycle
         private void Start()
         {
-            // ¾ÈÀüÇÑ µ¦ »ı¼º ½ÃÀÛ
+            // ì•ˆì „í•œ ë± ìƒì„± ì‹œì‘
             StartCoroutine(SafeCreateDeckVisual());
         }
 
         private void OnDestroy()
         {
-            // DOTween Á¤¸®
+            // DOTween ì •ë¦¬
             transform.DOKill();
         }
         #endregion
 
         #region Safe Initialization
         /// <summary>
-        /// ¾ÈÀüÇÑ µ¦ ½Ã°¢È­ »ı¼º
-        /// ResourcesManager ÁØºñ ¿Ï·á ¹× »ö»ó µ¿±âÈ­±îÁö ´ë±â ÈÄ µ¦ »ı¼º
+        /// ì•ˆì „í•œ ë± ì‹œê°í™” ì´ˆê¸°í™”
+        /// ResourcesManager ì¤€ë¹„ ì™„ë£Œ í›„ ë±ì„ ì´ˆê¸°í™”í•˜ì—¬ ì—ëŸ¬ ë°©ì§€ ê°€ëŠ¥
         /// </summary>
         private IEnumerator SafeCreateDeckVisual()
         {
-            Debug.Log($"[DeckStacker] µ¦ »ı¼º ÁØºñ Áß... (IsMyDeck: {isMyDeck})");
-
-            // ResourcesManager ±âº» ÃÊ±âÈ­ ¿Ï·á ´ë±â
+            // ResourcesManager ê¸°ë³¸ ì´ˆê¸°í™” ì™„ë£Œ ëŒ€ê¸°
             float timeout = 10f;
             float elapsed = 0f;
 
@@ -91,7 +90,6 @@ namespace Objects
             {
                 if (ResourcesManager.Instance != null && ResourcesManager.Instance.IsBasicInitialized)
                 {
-                    Debug.Log("[DeckStacker] ResourcesManager ÁØºñ ¿Ï·á");
                     break;
                 }
 
@@ -101,71 +99,56 @@ namespace Objects
 
             if (elapsed >= timeout)
             {
-                Debug.LogError("[DeckStacker] ResourcesManager ´ë±â ½Ã°£ ÃÊ°ú, µ¦ »ı¼º ½ÇÆĞ");
                 yield break;
             }
 
-            // ºñ¹æÀåÀÎ °æ¿ì »ö»ó µ¿±âÈ­ ¿Ï·á±îÁö Ãß°¡ ´ë±â
+            // ê²ŒìŠ¤íŠ¸ì¸ ê²½ìš° ìƒ‰ìƒ ë™ê¸°í™” ì™„ë£Œê¹Œì§€ ì¶”ê°€ ëŒ€ê¸°
             if (!Photon.Pun.PhotonNetwork.IsMasterClient)
             {
-                Debug.Log("[DeckStacker] ºñ¹æÀå - »ö»ó µ¿±âÈ­ ´ë±â Áß...");
                 elapsed = 0f;
-                while (elapsed < 5f) // 5ÃÊ Ãß°¡ ´ë±â
+                while (elapsed < 5f) // 5ì´ˆ ì¶”ê°€ ëŒ€ê¸°
                 {
                     if (ResourcesManager.Instance != null && ResourcesManager.Instance.IsColorSynchronized)
                     {
-                        Debug.Log("[DeckStacker] »ö»ó µ¿±âÈ­ ¿Ï·á, µ¦ »ı¼º ½ÃÀÛ");
                         break;
                     }
                     yield return new WaitForSeconds(0.1f);
                     elapsed += 0.1f;
                 }
-
-                if (elapsed >= 5f)
-                {
-                    Debug.Log("[DeckStacker] »ö»ó µ¿±âÈ­ ´ë±â ½Ã°£ ÃÊ°ú, ±âº» »ö»óÀ¸·Î ÁøÇà");
-                }
-            }
-            else
-            {
-                Debug.Log("[DeckStacker] ¹æÀå - Áï½Ã µ¦ »ı¼º ÁøÇà");
             }
 
-            // ¾ÈÀüÇÑ µ¦ »ı¼º ½ÇÇà
+            // ì‹¤ì œë¡œ ë± ìƒì„± ì‹œì‘
             try
             {
                 CreateDeckVisual();
                 RegisterToDeckManager();
                 isDeckCreated = true;
-                Debug.Log($"[DeckStacker] µ¦ »ı¼º ¿Ï·á (IsMyDeck: {isMyDeck}, Ä«µå ¼ö: {currentCardCount})");
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                Debug.LogError($"[DeckStacker] µ¦ »ı¼º Áß ¿À·ù: {ex.Message}");
+                UnityEngine.Debug.LogError($"[DeckStacker] ë± ìƒì„± ì¤‘ ì˜¤ë¥˜: {ex.Message}");
             }
         }
         #endregion
 
         #region Deck Visual Management
         /// <summary>
-        /// Ä«µå ÇÁ¸®ÆÕÀ» »ı¼ºÇÏ°í ½Ã°¢ÀûÀ¸·Î µ¦Ã³·³ ½×±â (¾ÈÀüÀåÄ¡ Ãß°¡)
+        /// ì¹´ë“œ í”„ë¦¬íŒ¹ì„ ìƒì„±í•˜ê³  ì‹œê°ì ìœ¼ë¡œ ìŒ“ì•„ ì˜¬ë¦¬ê¸° (ì•ˆì „ì„± ì¶”ê°€)
         /// </summary>
         private void CreateDeckVisual()
         {
             if (deckRoot == null)
             {
-                Debug.LogWarning("[DeckStacker] DeckRoot°¡ ÁöÁ¤µÇÁö ¾Ê¾Ò½À´Ï´Ù.");
                 return;
             }
 
-            // ResourcesManager ¾ÈÀü¼º ÀçÈ®ÀÎ
+            // ResourcesManager ì¡´ì¬ í™•ì¸
             if (ResourcesManager.Instance == null)
             {
-                Debug.LogError("[DeckStacker] ResourcesManager ÀÎ½ºÅÏ½º°¡ ¾ø½À´Ï´Ù.");
                 return;
             }
 
-            // Ä«µå ÅÛÇÃ¸´ °¡Á®¿À±â (null Ã¼Å© Æ÷ÇÔ)
+            // ì¹´ë“œ í…œí”Œë¦¿ ê°€ì ¸ì˜¤ê¸° (null ì²´í¬ í¬í•¨)
             GameObject template = null;
             try
             {
@@ -173,22 +156,21 @@ namespace Objects
                     ? ResourcesManager.Instance.GetPlayerCardTemplate()
                     : ResourcesManager.Instance.GetOpponentCardTemplate();
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                Debug.LogError($"[DeckStacker] Ä«µå ÅÛÇÃ¸´ °¡Á®¿À±â Áß ¿À·ù: {ex.Message}");
+                UnityEngine.Debug.LogError($"[DeckStacker] ì¹´ë“œ í…œí”Œë¦¿ ê°€ì ¸ì˜¤ê¸° ì¤‘ ì˜¤ë¥˜: {ex.Message}");
                 return;
             }
 
             if (template == null)
             {
-                Debug.LogError($"[DeckStacker] Ä«µå ÅÛÇÃ¸´ÀÌ nullÀÔ´Ï´Ù. (IsMyDeck: {isMyDeck})");
                 return;
             }
 
-            // ±âÁ¸ Ä«µåµé Á¤¸®
+            // ê¸°ì¡´ ì¹´ë“œë“¤ ì‚­ì œ
             ClearExistingCards();
 
-            // Ä«µå »ı¼º
+            // ì¹´ë“œ ìƒì„±
             int successCount = 0;
             for (int i = 0; i < cardCount; i++)
             {
@@ -201,30 +183,27 @@ namespace Objects
                         successCount++;
                     }
                 }
-                catch (System.Exception ex)
+                catch (Exception ex)
                 {
-                    Debug.LogError($"[DeckStacker] Ä«µå {i} »ı¼º Áß ¿À·ù: {ex.Message}");
+                    UnityEngine.Debug.LogError($"[DeckStacker] ì¹´ë“œ {i} ìƒì„± ì¤‘ ì˜¤ë¥˜: {ex.Message}");
                 }
             }
 
             currentCardCount = successCount;
-            Debug.Log($"[DeckStacker] {(isMyDeck ? "ÇÃ·¹ÀÌ¾î" : "»ó´ë")} µ¦ »ı¼º ¿Ï·á: {successCount}/{cardCount}Àå");
         }
 
         /// <summary>
-        /// °³º° ½×ÀÎ Ä«µå »ı¼º (¾ÈÀüÀåÄ¡ Ãß°¡)
+        /// ê°œë³„ ìŠ¤íƒ ì¹´ë“œ ìƒì„± (ì•ˆì „ì„± ì¶”ê°€)
         /// </summary>
         private GameObject CreateStackedCard(GameObject template, int index)
         {
             if (template == null)
             {
-                Debug.LogError($"[DeckStacker] CreateStackedCard: templateÀÌ nullÀÔ´Ï´Ù. (index: {index})");
                 return null;
             }
 
             if (deckRoot == null)
             {
-                Debug.LogError($"[DeckStacker] CreateStackedCard: deckRoot°¡ nullÀÔ´Ï´Ù. (index: {index})");
                 return null;
             }
 
@@ -233,7 +212,6 @@ namespace Objects
                 GameObject card = Instantiate(template, deckRoot);
                 if (card == null)
                 {
-                    Debug.LogError($"[DeckStacker] Ä«µå ÀÎ½ºÅÏ½ºÈ­ ½ÇÆĞ (index: {index})");
                     return null;
                 }
 
@@ -242,59 +220,58 @@ namespace Objects
                 card.transform.localPosition = new Vector3(0, index * yOffset, 0);
                 card.transform.localRotation = Quaternion.identity;
 
-                // »óÈ£ÀÛ¿ë ºñÈ°¼ºÈ­
+                // ìƒí˜¸ì‘ìš© ë¹„í™œì„±í™”
                 DisableCardInteraction(card);
 
                 return card;
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                Debug.LogError($"[DeckStacker] CreateStackedCard ¿À·ù (index: {index}): {ex.Message}");
+                UnityEngine.Debug.LogError($"[DeckStacker] CreateStackedCard ì˜¤ë¥˜ (index: {index}): {ex.Message}");
                 return null;
             }
         }
 
         /// <summary>
-        /// Ä«µåÀÇ »óÈ£ÀÛ¿ë ±â´Éµé ºñÈ°¼ºÈ­ (¾ÈÀüÀåÄ¡ Ãß°¡)
+        /// ì¹´ë“œì˜ ìƒí˜¸ì‘ìš© ê´€ë ¨ ì»´í¬ë„ŒíŠ¸ ë¹„í™œì„±í™” (ì•ˆì „ì„± ì¶”ê°€)
         /// </summary>
         private void DisableCardInteraction(GameObject card)
         {
             if (card == null)
             {
-                Debug.LogWarning("[DeckStacker] DisableCardInteraction: card°¡ nullÀÔ´Ï´Ù.");
                 return;
             }
 
             try
             {
-                // ÅØ½ºÆ® ºñÈ°¼ºÈ­
+                // í…ìŠ¤íŠ¸ ë¹„í™œì„±í™”
                 var tmp = card.GetComponentInChildren<TMPro.TextMeshPro>();
                 if (tmp != null)
                     tmp.gameObject.SetActive(false);
 
-                // µå·¡±× ±â´É Á¦°Å
+                // ë“œë˜ê·¸ ê´€ë ¨ ì œê±°
                 var drag = card.GetComponentInChildren<DragHandler>();
                 if (drag != null)
                     Destroy(drag);
 
-                // Glow È¿°ú Á¦°Å
+                // Glow íš¨ê³¼ ì œê±°
                 var glow = card.GetComponentInChildren<CardEffect>();
                 if (glow != null)
                     Destroy(glow);
 
-                // ¸¶¿ì½º ÀÌº¥Æ® Á¦°Å (Å¬¸¯ ¹æÁö)
+                // ë§ˆìš°ìŠ¤ ì´ë²¤íŠ¸ ì œê±° (í´ë¦­ ë“±)
                 var mouseEvent = card.GetComponentInChildren<ObjectMouseEvent>();
                 if (mouseEvent != null)
                     Destroy(mouseEvent);
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                Debug.LogError($"[DeckStacker] DisableCardInteraction ¿À·ù: {ex.Message}");
+                UnityEngine.Debug.LogError($"[DeckStacker] DisableCardInteraction ì˜¤ë¥˜: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// ±âÁ¸ Ä«µåµé Á¤¸® (¾ÈÀüÀåÄ¡ Ãß°¡)
+        /// ê¸°ì¡´ ì¹´ë“œë“¤ ì‚­ì œ (ì•ˆì „ì„± ì¶”ê°€)
         /// </summary>
         private void ClearExistingCards()
         {
@@ -306,19 +283,18 @@ namespace Objects
                         Destroy(card);
                 }
                 stackedCards.Clear();
-                Debug.Log("[DeckStacker] ±âÁ¸ Ä«µå Á¤¸® ¿Ï·á");
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                Debug.LogError($"[DeckStacker] ±âÁ¸ Ä«µå Á¤¸® Áß ¿À·ù: {ex.Message}");
-                stackedCards.Clear(); // ¿¡·¯°¡ ³ªµµ ¸®½ºÆ®´Â Á¤¸®
+                UnityEngine.Debug.LogError($"[DeckStacker] ê¸°ì¡´ ì¹´ë“œ ì‚­ì œ ì¤‘ ì˜¤ë¥˜: {ex.Message}");
+                stackedCards.Clear(); // ì—ëŸ¬ë‚˜ë„ ë¦¬ìŠ¤íŠ¸ëŠ” ì´ˆê¸°í™”
             }
         }
         #endregion
 
         #region DeckManager Integration
         /// <summary>
-        /// DeckManager¿¡ ÀÚµ¿ µî·Ï (¾ÈÀüÀåÄ¡ Ãß°¡)
+        /// DeckManagerì— ìë™ ë“±ë¡ (ì•ˆì „ì„± ì¶”ê°€)
         /// </summary>
         private void RegisterToDeckManager()
         {
@@ -327,37 +303,30 @@ namespace Objects
                 if (DeckManager.Instance != null)
                 {
                     DeckManager.Instance.RegisterDeckStacker(this, isMyDeck);
-                    Debug.Log($"[DeckStacker] DeckManager µî·Ï ¿Ï·á (IsMyDeck: {isMyDeck})");
-                }
-                else
-                {
-                    Debug.LogWarning("[DeckStacker] DeckManager ÀÎ½ºÅÏ½º¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù.");
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                Debug.LogError($"[DeckStacker] DeckManager µî·Ï Áß ¿À·ù: {ex.Message}");
+                UnityEngine.Debug.LogError($"[DeckStacker] DeckManager ë“±ë¡ ì¤‘ ì˜¤ë¥˜: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// ¸Ç À§ Ä«µå¸¦ ¾Ö´Ï¸ŞÀÌ¼Ç°ú ÇÔ²² Á¦°Å (µå·Î¿ì ½Ã È£Ãâ)
+        /// ë± ë§¨ ìœ„ ì¹´ë“œë¥¼ ì• ë‹ˆë©”ì´ì…˜ê³¼ í•¨ê»˜ ì œê±° (ì™¸ë¶€ì—ì„œ í˜¸ì¶œ)
         /// </summary>
         public void RemoveTopCard()
         {
             if (!isDeckCreated)
             {
-                Debug.LogWarning("[DeckStacker] µ¦ÀÌ ¾ÆÁ÷ »ı¼ºµÇÁö ¾Ê¾Ò½À´Ï´Ù.");
                 return;
             }
 
             if (IsEmpty)
             {
-                Debug.LogWarning($"[DeckStacker] {(isMyDeck ? "ÇÃ·¹ÀÌ¾î" : "»ó´ë")} µ¦ÀÌ ºñ¾îÀÖ¾î Ä«µå¸¦ Á¦°ÅÇÒ ¼ö ¾ø½À´Ï´Ù.");
                 return;
             }
 
-            // ¸Ç À§ Ä«µå °¡Á®¿À±â (°¡Àå ³ªÁß¿¡ Ãß°¡µÈ Ä«µå)
+            // ë± ë§¨ ìœ„ ì¹´ë“œ ê°€ì ¸ì˜¤ê¸° (ê°€ì¥ ìµœê·¼ì— ì¶”ê°€ëœ ì¹´ë“œ)
             int topIndex = currentCardCount - 1;
             if (topIndex >= 0 && topIndex < stackedCards.Count)
             {
@@ -368,41 +337,35 @@ namespace Objects
                 }
 
                 currentCardCount--;
-                Debug.Log($"[DeckStacker] {(isMyDeck ? "ÇÃ·¹ÀÌ¾î" : "»ó´ë")} µ¦¿¡¼­ Ä«µå Á¦°Å (³²Àº ¼ö: {currentCardCount})");
-            }
-            else
-            {
-                Debug.LogError($"[DeckStacker] Àß¸øµÈ Ä«µå ÀÎµ¦½º: {topIndex}, ½ºÅÃ Å©±â: {stackedCards.Count}");
             }
         }
 
         /// <summary>
-        /// Ä«µå Á¦°Å ¾Ö´Ï¸ŞÀÌ¼Ç (¾ÈÀüÀåÄ¡ Ãß°¡)
+        /// ì¹´ë“œ ì œê±° ì• ë‹ˆë©”ì´ì…˜ (ì•ˆì „ì„± ì¶”ê°€)
         /// </summary>
         private IEnumerator AnimateCardRemoval(GameObject card)
         {
             if (card == null)
             {
-                Debug.LogWarning("[DeckStacker] AnimateCardRemoval: card°¡ nullÀÔ´Ï´Ù.");
                 yield break;
             }
 
-            // Á¦°Å ¹æÇâ °è»ê (³» µ¦°ú »ó´ë µ¦¿¡ µû¶ó ´Ù¸¥ ¹æÇâ)
+            // ëª©í‘œ ìœ„ì¹˜ ê³„ì‚° (ë± ë°–ìœ¼ë¡œ ë‚ ì•„ ê°€ë„ë¡ ë‹¤ë¥¸ ë°©í–¥)
             Vector3 targetPosition = card.transform.position + (removeDirection.normalized * removeDistance);
 
-            // DOTween ¾Ö´Ï¸ŞÀÌ¼Ç
+            // DOTween ì• ë‹ˆë©”ì´ì…˜
             var moveTween = card.transform.DOMove(targetPosition, removeAnimationDuration).SetEase(Ease.OutQuart);
             var scaleTween = card.transform.DOScale(Vector3.zero, removeAnimationDuration).SetEase(Ease.InQuart);
 
-            // ¾Ö´Ï¸ŞÀÌ¼Ç ¿Ï·á ´ë±â
+            // ì• ë‹ˆë©”ì´ì…˜ ì™„ë£Œ ëŒ€ê¸°
             yield return moveTween.WaitForCompletion();
 
-            // Ä«µå ÆÄ±«
+            // ì¹´ë“œ íŒŒê´´
             Destroy(card);
         }
 
         /// <summary>
-        /// µ¦À» ¿ø·¡ »óÅÂ·Î ¸®¼Â (°ÔÀÓ Àç½ÃÀÛ ½Ã »ç¿ë)
+        /// ë±ì„ ì´ˆê¸° ìƒíƒœë¡œ ì¬ìƒì„± (ê²Œì„ ì¬ì‹œì‘ ì‹œ ì‚¬ìš©)
         /// </summary>
         public void ResetDeck()
         {
@@ -411,16 +374,15 @@ namespace Objects
                 isDeckCreated = false;
                 CreateDeckVisual();
                 isDeckCreated = true;
-                Debug.Log($"[DeckStacker] {(isMyDeck ? "ÇÃ·¹ÀÌ¾î" : "»ó´ë")} µ¦ ¸®¼Â ¿Ï·á");
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                Debug.LogError($"[DeckStacker] µ¦ ¸®¼Â Áß ¿À·ù: {ex.Message}");
+                UnityEngine.Debug.LogError($"[DeckStacker] ë± ì¬ìƒì„± ì¤‘ ì˜¤ë¥˜: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// µ¦ »óÅÂ Á¤º¸ ¹İÈ¯
+        /// ë± ìƒíƒœ ì •ë³´ ë°˜í™˜
         /// </summary>
         public (int current, int max) GetDeckInfo()
         {
@@ -430,30 +392,30 @@ namespace Objects
 
         #region Debug & Utility
         /// <summary>
-        /// µ¦ »óÅÂ Ãâ·Â (µğ¹ö±ë¿ë)
+        /// ë± ìƒíƒœ ì¶œë ¥ (ë””ë²„ê·¸)
         /// </summary>
-        [ContextMenu("µ¦ »óÅÂ Ãâ·Â")]
+        [ContextMenu("ë± ìƒíƒœ ì¶œë ¥")]
         public void PrintDeckStatus()
         {
-            Debug.Log($"[DeckStacker] {(isMyDeck ? "ÇÃ·¹ÀÌ¾î" : "»ó´ë")} µ¦ »óÅÂ: " +
-                     $"»ı¼º¿Ï·á={isDeckCreated}, " +
-                     $"ÇöÀçÄ«µå¼ö={currentCardCount}/{cardCount}Àå, " +
-                     $"½ºÅÃÅ©±â={stackedCards.Count}");
+            UnityEngine.Debug.Log($"[DeckStacker] {(isMyDeck ? "í”Œë ˆì´ì–´" : "ìƒëŒ€")} ë± ìƒíƒœ: " +
+                     $"ìƒì„±ì™„ë£Œ={isDeckCreated}, " +
+                     $"ë‚¨ì€ì¹´ë“œ={currentCardCount}/{cardCount}ì¥, " +
+                     $"ë¦¬ìŠ¤íŠ¸í¬ê¸°={stackedCards.Count}");
         }
 
         /// <summary>
-        /// Å×½ºÆ®¿ë Ä«µå Á¦°Å (µğ¹ö±ë¿ë)
+        /// í…ŒìŠ¤íŠ¸ìš© ì¹´ë“œ ì œê±° (ë””ë²„ê·¸)
         /// </summary>
-        [ContextMenu("Ä«µå 1Àå Á¦°Å Å×½ºÆ®")]
+        [ContextMenu("ì¹´ë“œ 1ì¥ ì œê±° í…ŒìŠ¤íŠ¸")]
         public void TestRemoveCard()
         {
             RemoveTopCard();
         }
 
         /// <summary>
-        /// °­Á¦ µ¦ Àç»ı¼º (µğ¹ö±ë¿ë)
+        /// ê°•ì œ ë± ì¬ìƒì„± (ë””ë²„ê·¸)
         /// </summary>
-        [ContextMenu("µ¦ °­Á¦ Àç»ı¼º")]
+        [ContextMenu("ë± ê°•ì œ ì¬ìƒì„±")]
         public void ForceRecreateDebug()
         {
             if (Application.isPlaying)

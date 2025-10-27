@@ -1,13 +1,13 @@
 namespace Objects
 {
     /// <summary>
-    /// Ä«µå ¿ÀºêÁ§Æ®°¡ ¹Ýµå½Ã ±¸ÇöÇØ¾ß ÇÏ´Â ÀÎÅÍÆäÀÌ½º
-    /// - Zone¿¡¼­ »óÈ£ÀÛ¿ë ±ÇÇÑ ¼³Á¤ ½Ã »ç¿ë
+    /// ì¹´ë“œ ì»´í¬ë„ŒíŠ¸ê°€ ë°˜ë“œì‹œ êµ¬í˜„í•´ì•¼ í•˜ëŠ” ì¸í„°íŽ˜ì´ìŠ¤
+    /// - Zoneì—ì„œ ìƒí˜¸ìž‘ìš© ê¶Œí•œ ì„¤ì • ì‹œ ì‚¬ìš©
     /// </summary>
     public interface ICard
     {
         /// <summary>
-        /// Ä«µåÀÇ »óÈ£ÀÛ¿ë ±ÇÇÑÀ» ¼³Á¤ÇÑ´Ù
+        /// ì¹´ë“œì˜ ìƒí˜¸ìž‘ìš© ê¶Œí•œì„ ì„¤ì •í•œë‹¤
         /// </summary>
         void SetInteraction(CardZone.ZoneType zoneType, CardZone.OwnerType ownerType);
     }

@@ -1,15 +1,16 @@
+using System;
 using UnityEngine;
 using Objects;
-using System;
 
 namespace Objects
 {
     /// <summary>
-    /// Á¶Ä¿ È¿°úÀÇ ´ë»ó Ä«µå¸¦ ¼±ÅÃÇÏ´Â ±â´ÉÀ» °ü¸®
-    /// Delete¿Í Swap È¿°ú¿¡¼­ »ç¿ëµÊ
+    /// ì¡°ì»¤ íš¨ê³¼ì˜ ëŒ€ìƒ ì¹´ë“œë¥¼ ì„ íƒí•˜ëŠ” ì‹œìŠ¤í…œ ê´€ë¦¬
+    /// Deleteì™€ Swap íš¨ê³¼ì—ì„œ ì‚¬ìš©
     /// </summary>
     public class JokerTargetSelector : MonoBehaviour
     {
+        #region Singleton
         private static JokerTargetSelector instance;
         public static JokerTargetSelector Instance
         {
@@ -20,59 +21,62 @@ namespace Objects
                 return instance;
             }
         }
+        #endregion
 
+        #region Fields and Properties
         private JokerTargetMode currentMode = JokerTargetMode.None;
         private Action<Card> currentCallback;
         private Card firstSelectedCard;
+        #endregion
 
+        #region Unity Lifecycle
         private void OnEnable()
         {
-            // Ä«µå Å¬¸¯ ÀÌº¥Æ® ±¸µ¶
+            // ì¹´ë“œ í´ë¦­ ì´ë²¤íŠ¸ ë“±ë¡
             Card.onClicked += HandleCardClicked;
         }
 
         private void OnDisable()
         {
-            // Ä«µå Å¬¸¯ ÀÌº¥Æ® ±¸µ¶ ÇØÁ¦
+            // ì¹´ë“œ í´ë¦­ ì´ë²¤íŠ¸ êµ¬ë… í•´ì œ
             Card.onClicked -= HandleCardClicked;
         }
+        #endregion
 
+        #region Selection Control
         /// <summary>
-        /// ´ë»ó ¼±ÅÃ ¸ğµå ½ÃÀÛ
+        /// ëŒ€ìƒ ì„ íƒ ëª¨ë“œ ì‹œì‘
         /// </summary>
         public void StartTargetSelection(JokerTargetMode mode, Action<Card> onTargetSelected)
         {
             currentMode = mode;
             currentCallback = onTargetSelected;
             firstSelectedCard = null;
-
-            Debug.Log($"[JokerTargetSelector] {mode} ¸ğµå·Î ´ë»ó ¼±ÅÃ ½ÃÀÛ");
         }
 
         /// <summary>
-        /// ´ë»ó ¼±ÅÃ ¸ğµå Á¾·á
+        /// ëŒ€ìƒ ì„ íƒ ëª¨ë“œ ì¢…ë£Œ
         /// </summary>
         public void EndTargetSelection()
         {
             currentMode = JokerTargetMode.None;
             currentCallback = null;
             firstSelectedCard = null;
-
-            Debug.Log("[JokerTargetSelector] ´ë»ó ¼±ÅÃ ¸ğµå Á¾·á");
         }
+        #endregion
 
+        #region Card Click Handler
         /// <summary>
-        /// Ä«µå°¡ Å¬¸¯µÇ¾úÀ» ¶§ Ã³¸®
+        /// ì¹´ë“œê°€ í´ë¦­ë˜ì—ˆì„ ë•Œ ì²˜ë¦¬
         /// </summary>
         private void HandleCardClicked(Card clickedCard)
         {
             if (currentMode == JokerTargetMode.None || clickedCard == null)
                 return;
 
-            // Á¶Ä¿ Ä«µå´Â ´ë»óÀ¸·Î ¼±ÅÃ ºÒ°¡
+            // ì¡°ì»¤ ì¹´ë“œëŠ” ëŒ€ìƒìœ¼ë¡œ ì„ íƒ ë¶ˆê°€
             if (clickedCard.CardType == CardType.Joker)
             {
-                Debug.Log("[JokerTargetSelector] Á¶Ä¿ Ä«µå´Â ´ë»óÀ¸·Î ¼±ÅÃÇÒ ¼ö ¾ø½À´Ï´Ù.");
                 return;
             }
 
@@ -91,116 +95,106 @@ namespace Objects
                     break;
             }
         }
+        #endregion
 
+        #region Target Handlers
         /// <summary>
-        /// »èÁ¦ ´ë»ó Ã³¸®
+        /// ì‚­ì œ ëŒ€ìƒ ì²˜ë¦¬
         /// </summary>
         private void HandleDeleteTarget(Card target)
         {
-            // »ó´ë ÇÊµå¿¡ ÀÖ´Â Ä«µå¸¸ »èÁ¦ °¡´É
+            // ìƒëŒ€ í•„ë“œì— ìˆëŠ” ì¹´ë“œë§Œ ì‚­ì œ ê°€ëŠ¥
             if (target.CurrentZoneType != CardZone.ZoneType.Field ||
                 target.CurrentOwnerType != CardZone.OwnerType.Opponent)
             {
-                Debug.Log("[JokerTargetSelector] »ó´ë ÇÊµå¿¡ ÀÖ´Â Ä«µå¸¸ »èÁ¦ÇÒ ¼ö ÀÖ½À´Ï´Ù.");
                 return;
             }
 
-            // Glow È¿°ú°¡ ÀÖ´Â Ä«µå¸¸ ¼±ÅÃ °¡´É
+            // Glow íš¨ê³¼ê°€ ìˆëŠ” ì¹´ë“œë§Œ ì„ íƒ ê°€ëŠ¥
             var effect = target.GetComponentInChildren<CardEffect>();
             if (effect == null || !effect.IsGlowing())
             {
-                Debug.Log("[JokerTargetSelector] ¼±ÅÃÇÒ ¼ö ¾ø´Â Ä«µåÀÔ´Ï´Ù.");
                 return;
             }
 
-            Debug.Log($"[JokerTargetSelector] »èÁ¦ ´ë»ó ¼±ÅÃµÊ: {target.name}");
-
-            // Äİ¹é ½ÇÇà ÈÄ ¸ğµå Á¾·á
+            // ì½œë°± ì‹¤í–‰ í›„ ëª¨ë“œ ì¢…ë£Œ
             currentCallback?.Invoke(target);
             EndTargetSelection();
         }
 
         /// <summary>
-        /// ±³È¯ Ã¹ ¹øÂ° ´ë»ó Ã³¸® (³» ÇÊµå Ä«µå)
+        /// êµí™˜ ì²« ë²ˆì§¸ ëŒ€ìƒ ì²˜ë¦¬ (ë‚´ í•„ë“œ ì¹´ë“œ)
         /// </summary>
         private void HandleSwapFirstTarget(Card target)
         {
-            // ³» ÇÊµå Ä«µå¸¸ ¼±ÅÃ °¡´É
+            // ë‚´ í•„ë“œ ì¹´ë“œë§Œ ì„ íƒ ê°€ëŠ¥
             if (target.CurrentZoneType != CardZone.ZoneType.Field ||
                 target.CurrentOwnerType != CardZone.OwnerType.Player)
             {
-                Debug.Log("[JokerTargetSelector] ³» ÇÊµåÀÇ Ä«µå¸¸ ¼±ÅÃÇÒ ¼ö ÀÖ½À´Ï´Ù.");
                 return;
             }
 
-            // Glow È¿°ú°¡ ÀÖ´Â Ä«µå¸¸ ¼±ÅÃ °¡´É
+            // Glow íš¨ê³¼ê°€ ìˆëŠ” ì¹´ë“œë§Œ ì„ íƒ ê°€ëŠ¥
             var effect = target.GetComponentInChildren<CardEffect>();
             if (effect == null || !effect.IsGlowing())
             {
-                Debug.Log("[JokerTargetSelector] ¼±ÅÃÇÒ ¼ö ¾ø´Â Ä«µåÀÔ´Ï´Ù.");
                 return;
             }
 
-            // ¼ıÀÚ Ä«µå¸¸ ±³È¯ °¡´É (¿¬»êÀÚ´Â Á¦¿Ü)
+            // ìˆ«ì ì¹´ë“œë§Œ êµí™˜ ê°€ëŠ¥ (ì—°ì‚°ìëŠ” ì œì™¸)
             if (target.CardType != CardType.Number)
             {
-                Debug.Log("[JokerTargetSelector] ¼ıÀÚ Ä«µå¸¸ ±³È¯ÇÒ ¼ö ÀÖ½À´Ï´Ù.");
                 return;
             }
 
             firstSelectedCard = target;
-            Debug.Log($"[JokerTargetSelector] ±³È¯ Ã¹ ¹øÂ° ´ë»ó ¼±ÅÃµÊ: {target.name}");
 
-            // Äİ¹é ½ÇÇà (JokerModeSelector¿¡¼­ µÎ ¹øÂ° ¼±ÅÃ ÁØºñ)
+            // ì½œë°± ì‹¤í–‰ (JokerModeSelectorì—ì„œ ë‘ ë²ˆì§¸ ë‹¨ê³„ ì¤€ë¹„)
             currentCallback?.Invoke(target);
 
-            // ¸ğµå´Â º¯°æÇÏÁö ¾ÊÀ½ (JokerModeSelector¿¡¼­ SwapSecond·Î º¯°æÇÒ °Í)
+            // ëª¨ë“œ ìœ ì§€í•˜ì§€ ì•ŠìŒ (JokerModeSelectorì—ì„œ SwapSecondë¡œ ì „í™˜ë  ê²ƒ)
         }
 
         /// <summary>
-        /// ±³È¯ µÎ ¹øÂ° ´ë»ó Ã³¸® (»ó´ë ÇÊµå Ä«µå)
+        /// êµí™˜ ë‘ ë²ˆì§¸ ëŒ€ìƒ ì²˜ë¦¬ (ìƒëŒ€ í•„ë“œ ì¹´ë“œ)
         /// </summary>
         private void HandleSwapSecondTarget(Card target)
         {
-            // »ó´ë ÇÊµå Ä«µå¸¸ ¼±ÅÃ °¡´É
+            // ìƒëŒ€ í•„ë“œ ì¹´ë“œë§Œ ì„ íƒ ê°€ëŠ¥
             if (target.CurrentZoneType != CardZone.ZoneType.Field ||
                 target.CurrentOwnerType != CardZone.OwnerType.Opponent)
             {
-                Debug.Log("[JokerTargetSelector] »ó´ë ÇÊµåÀÇ Ä«µå¸¸ ¼±ÅÃÇÒ ¼ö ÀÖ½À´Ï´Ù.");
                 return;
             }
 
-            // Glow È¿°ú°¡ ÀÖ´Â Ä«µå¸¸ ¼±ÅÃ °¡´É
+            // Glow íš¨ê³¼ê°€ ìˆëŠ” ì¹´ë“œë§Œ ì„ íƒ ê°€ëŠ¥
             var effect = target.GetComponentInChildren<CardEffect>();
             if (effect == null || !effect.IsGlowing())
             {
-                Debug.Log("[JokerTargetSelector] ¼±ÅÃÇÒ ¼ö ¾ø´Â Ä«µåÀÔ´Ï´Ù.");
                 return;
             }
 
-            // ¼ıÀÚ Ä«µå¸¸ ±³È¯ °¡´É (¿¬»êÀÚ´Â Á¦¿Ü)
+            // ìˆ«ì ì¹´ë“œë§Œ êµí™˜ ê°€ëŠ¥ (ì—°ì‚°ìëŠ” ì œì™¸)
             if (target.CardType != CardType.Number)
             {
-                Debug.Log("[JokerTargetSelector] ¼ıÀÚ Ä«µå¸¸ ±³È¯ÇÒ ¼ö ÀÖ½À´Ï´Ù.");
                 return;
             }
 
-            // Ã¹ ¹øÂ° Ä«µå¿Í °°Àº Ä«µå´Â ¼±ÅÃ ºÒ°¡ (¾ÈÀüÀåÄ¡)
+            // ì²« ë²ˆì§¸ ì¹´ë“œì™€ ê°™ì€ ì¹´ë“œëŠ” ì„ íƒ ë¶ˆê°€ (ì•ˆì „ì¥ì¹˜)
             if (target == firstSelectedCard)
             {
-                Debug.Log("[JokerTargetSelector] °°Àº Ä«µå´Â ¼±ÅÃÇÒ ¼ö ¾ø½À´Ï´Ù.");
                 return;
             }
 
-            Debug.Log($"[JokerTargetSelector] ±³È¯ µÎ ¹øÂ° ´ë»ó ¼±ÅÃµÊ: {target.name}");
-
-            // Äİ¹é ½ÇÇà ÈÄ ¸ğµå Á¾·á
+            // ì½œë°± ì‹¤í–‰ í›„ ëª¨ë“œ ì¢…ë£Œ
             currentCallback?.Invoke(target);
             EndTargetSelection();
         }
+        #endregion
 
+        #region Public Queries
         /// <summary>
-        /// ÇöÀç ¼±ÅÃ ¸ğµå È®ÀÎ
+        /// í˜„ì¬ ì„ íƒ ëª¨ë“œ í™•ì¸
         /// </summary>
         public bool IsSelecting()
         {
@@ -208,7 +202,7 @@ namespace Objects
         }
 
         /// <summary>
-        /// ÇöÀç ¸ğµå °¡Á®¿À±â
+        /// í˜„ì¬ ëª¨ë“œ ê°€ì ¸ì˜¤ê¸°
         /// </summary>
         public JokerTargetMode GetCurrentMode()
         {
@@ -216,11 +210,12 @@ namespace Objects
         }
 
         /// <summary>
-        /// Ã¹ ¹øÂ° ¼±ÅÃµÈ Ä«µå °¡Á®¿À±â (µğ¹ö±ë¿ë)
+        /// ì²« ë²ˆì§¸ ì„ íƒëœ ì¹´ë“œ ê°€ì ¸ì˜¤ê¸° (ë””ë²„ê·¸)
         /// </summary>
         public Card GetFirstSelectedCard()
         {
             return firstSelectedCard;
         }
+        #endregion
     }
 }

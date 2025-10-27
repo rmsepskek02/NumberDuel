@@ -4,22 +4,24 @@ using UnityEngine;
 namespace Objects
 {
     /// <summary>
-    /// Ä«µå ¹èÄ¡ Àü´ã Å¬·¡½º
-    /// - ¼ÕÆĞ¿ë ºÎÃ¤²Ã Á¤·Ä
-    /// - ÇÊµå¿ë ÀÏ·Ä Á¤·Ä
+    /// ì¹´ë“œ ë°°ì¹˜ ê´€ë¦¬ í´ë˜ìŠ¤
+    /// - ì†íŒ¨ëŠ” ë¶€ì±„ê¼´ ë°°ì¹˜
+    /// - í•„ë“œëŠ” ì¼ë ¬ ë°°ì¹˜
     /// </summary>
     public class CardLayoutHelper : MonoBehaviour
     {
-        [Header("Fan Layout Settings (¼ÕÆĞ¿ë)")]
+        #region Fields and Properties
+        [Header("Fan Layout Settings (ì†íŒ¨)")]
         [SerializeField] private float fanRadius = 5f;
         [SerializeField] private float fanAngle = 30f;
 
-        [Header("Field Layout Settings (ÇÊµå¿ë)")]
+        [Header("Field Layout Settings (í•„ë“œ)")]
         [SerializeField] private float spacing = 2f;
-        [SerializeField] private int maxFieldCards = 5;
+        #endregion
 
+        #region Fan Layout
         /// <summary>
-        /// ¼ÕÆĞ¸¦ ºÎÃ¤²Ã·Î ¹èÄ¡
+        /// ì†íŒ¨ë¥¼ ë¶€ì±„ê¼´ë¡œ ë°°ì¹˜
         /// </summary>
         public void ArrangeFanLayout(List<Transform> cards)
         {
@@ -46,7 +48,7 @@ namespace Objects
                 card.localPosition = position;
                 card.localRotation = rotation;
 
-                // Ãß°¡: Á¤·ÄÀÌ ³¡³­ ÈÄ CardMotionÀÇ »óÅÂ¸¦ »õ·Î ÀúÀå
+                // ì¶”ê°€: ë°°ì¹˜ê°€ ë°”ë€ ë’¤ CardMotionì˜ ìƒíƒœë¥¼ ê°±ì‹  í•„ìš”
                 var motion = card.GetComponentInChildren<CardMotion>();
                 if (motion != null)
                 {
@@ -56,20 +58,20 @@ namespace Objects
         }
 
         /// <summary>
-        /// ÇÊµå¸¦ ÇöÀç Ä«µå ¼ö¿¡ µû¶ó °¡¿îµ¥ Á¤·ÄÇØ¼­ ¹èÄ¡
+        /// í•„ë“œë¥¼ ì¼ë ¬ ì¹´ë“œ ë°°ì¹˜ ì¤‘ì•™ ì •ë ¬í•´ì„œ ë°°ì¹˜
         /// </summary>
         public void ArrangeFieldLayout(List<Transform> cards)
         {
             int count = cards.Count;
             if (count == 0) return;
 
-            // Ä«µå ¼ö¿¡ µû¶ó ÀüÃ¼ Æø °è»ê (°£°İ * (Ä«µå ¼ö - 1))
+            // ì¹´ë“œ ê°„ê²© ê³ ë ¤ ì „ì²´ í­ ê³„ì‚° (ê°„ê²© * (ì¹´ë“œ ìˆ˜ - 1))
             float totalWidth = (count - 1) * spacing;
             float startX = -totalWidth / 2f;
 
             for (int i = 0; i < count; i++)
             {
-                // ÇöÀç Ä«µå À§Ä¡ °è»ê
+                // ì¤‘ì•™ ì¹´ë“œ ìœ„ì¹˜ ê³„ì‚°
                 Vector3 position = new Vector3(startX + i * spacing, 0, 0);
 
                 Transform card = cards[i];
@@ -77,6 +79,6 @@ namespace Objects
                 card.localRotation = Quaternion.identity;
             }
         }
-
+        #endregion
     }
 }

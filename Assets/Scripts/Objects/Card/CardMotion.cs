@@ -1,42 +1,43 @@
-using UnityEngine;
 using DG.Tweening;
 using Manager;
+using UnityEngine;
 
 namespace Objects
 {
     /// <summary>
-    /// Ä«µåÀÇ ½Ã°¢Àû µ¿ÀÛ(¸ğ¼Ç)À» Á¦¾îÇÏ´Â ÄÄÆ÷³ÍÆ®.
-    /// - Hover ½Ã Ä«µå°¡ È®´ëµÇ°í À§·Î µé¸®´Â ¿¬Ãâ Á¦°ø
-    /// - µå·¡±× ÈÄ ¿ø·¡ ÀÚ¸®·Î ºÎµå·´°Ô º¹±Í
-    /// - Å¬¸¯ ½Ã È¸Àü ¿¬Ãâ (Á¤¸é/¿ø·¡ ¹æÇâ)
-    /// ObjectMouseEventÀÇ ÀÔ·Â ÀÌº¥Æ®¿¡ ¹İÀÀÇÔ.
+    /// ì¹´ë“œì˜ ì‹œê°ì  ëª¨ì…˜(ì• ë‹ˆë©”ì´ì…˜)ì„ ë‹´ë‹¹í•˜ëŠ” ì»´í¬ë„ŒíŠ¸.
+    /// - Hover ì‹œ ì¹´ë“œê°€ í™•ëŒ€ë˜ê³  ìœ„ë¡œ ì˜¬ë¼ê°€ëŠ” íš¨ê³¼
+    /// - ë“œë˜ê·¸ ì‹œ ì›ë˜ ìë¦¬ë¡œ ë˜ëŒì•„ê°€ëŠ” íš¨ê³¼
+    /// - í´ë¦­ ì‹œ íšŒì „ íš¨ê³¼ (ì•ë©´/ë’·ë©´ ì „í™˜)
+    /// ObjectMouseEventì˜ ì…ë ¥ ì´ë²¤íŠ¸ë¥¼ ë°›ëŠ”ë‹¤.
     /// </summary>
     public class CardMotion : MonoBehaviour
     {
+        #region Fields and Properties
         [Header("Hover Settings")]
-        [Tooltip("Hover ½Ã Ä«µå°¡ Ä¿Áö´Â ¹èÀ²")]
+        [Tooltip("Hover ì‹œ ì¹´ë“œê°€ ì»¤ì§€ëŠ” ë°°ìœ¨")]
         [SerializeField] private float hoverScale = 1.3f;
 
-        [Tooltip("Hover ½Ã Ä«µå°¡ YÃàÀ¸·Î ¿Ã¶ó°¡´Â ³ôÀÌ")]
+        [Tooltip("Hover ì‹œ ì¹´ë“œê°€ Yë°©í–¥ìœ¼ë¡œ ì˜¬ë¼ê°€ëŠ” ê±°ë¦¬")]
         [SerializeField] private float hoverYOffset = 0.3f;
 
         [Header("Animation Settings")]
-        [Tooltip("À§Ä¡, Å©±â ¾Ö´Ï¸ŞÀÌ¼Ç ½Ã°£")]
+        [Tooltip("ìœ„ì¹˜, í¬ê¸° ì• ë‹ˆë©”ì´ì…˜ ì‹œê°„")]
         [SerializeField] private float moveDuration = 0.3f;
 
-        [Tooltip("È¸Àü ¾Ö´Ï¸ŞÀÌ¼Ç ½Ã°£")]
+        [Tooltip("íšŒì „ ì• ë‹ˆë©”ì´ì…˜ ì‹œê°„")]
         [SerializeField] private float rotateDuration = 0.25f;
 
-        [Tooltip("ÀÌµ¿/½ºÄÉÀÏ ¾Ö´Ï¸ŞÀÌ¼Ç ÀÌÂ¡")]
+        [Tooltip("ì´ë™/ìŠ¤ì¼€ì¼ ì• ë‹ˆë©”ì´ì…˜ ê³¡ì„ ")]
         [SerializeField] private Ease moveEase = Ease.OutQuad;
 
-        [Tooltip("È¸Àü ¾Ö´Ï¸ŞÀÌ¼Ç ÀÌÂ¡")]
+        [Tooltip("íšŒì „ ì• ë‹ˆë©”ì´ì…˜ ê³¡ì„ ")]
         [SerializeField] private Ease rotateEase = Ease.OutCubic;
 
-        private Transform rootTransform; // Ä«µåÀÇ ºÎ¸ğ ¿ÀºêÁ§Æ® (È¸Àü ¹× À§Ä¡ ÀÌµ¿¿ë)
-        private ObjectMouseEvent objectMouseEvent; // ÀÔ·Â ÀÌº¥Æ®¸¦ ¼ö½ÅÇÏ´Â ÄÄÆ÷³ÍÆ®
+        private Transform rootTransform; // ì¹´ë“œì˜ ë¶€ëª¨ íŠ¸ëœìŠ¤í¼ (íšŒì „ ë° ìœ„ì¹˜ ì´ë™ìš©)
+        private ObjectMouseEvent objectMouseEvent; // ì…ë ¥ ì´ë²¤íŠ¸ë¥¼ ê°ì§€í•˜ëŠ” ì»´í¬ë„ŒíŠ¸
 
-        // ÃÊ±â »óÅÂ ÀúÀå¿ë º¯¼öµé
+        // ì´ˆê¸° ìƒíƒœ ì €ì¥ìš© ë³€ìˆ˜ë“¤
         private Vector3 originalLocalPosition;
         private Vector3 originalLocalScale;
         private float originalY;
@@ -44,15 +45,17 @@ namespace Objects
         private Vector3 originalRootPosition;
         private Quaternion originalRootRotation;
 
-        // DOTween Æ®À© Ä³½Ã
+        // DOTween íŠ¸ìœˆ ìºì‹œ
         private Tween moveTween;
         private Tween scaleTween;
         private Tween rootMoveTween;
         private Tween rotateTween;
 
-        private bool isReturning; // ÇöÀç º¹±Í ¾Ö´Ï¸ŞÀÌ¼Ç ÁßÀÎÁö ¿©ºÎ
+        private bool isReturning; // ë³µê·€ ëª¨ì…˜ ì• ë‹ˆë©”ì´ì…˜ ì§„í–‰ì¤‘ ì—¬ë¶€
         private bool isLockedExternally = false;
+        #endregion
 
+        #region Unity Lifecycle
         private void Awake()
         {
             objectMouseEvent = GetComponent<ObjectMouseEvent>();
@@ -61,12 +64,12 @@ namespace Objects
 
         private void OnEnable()
         {
-            // ÀÔ·Â ÀÌº¥Æ® ¸®½º³Ê µî·Ï
+            // ì…ë ¥ ì´ë²¤íŠ¸ ë¦¬ìŠ¤ë„ˆ ë“±ë¡
             objectMouseEvent?.RegisterListeners(
                 HandleHoverEnter,
                 HandleHoverExit,
-                null, // Å¬¸¯ ½ÃÀÛÀº »ç¿ëÇÏÁö ¾ÊÀ½
-                null, // Å¬¸¯ ³¡µµ »ç¿ëÇÏÁö ¾ÊÀ½
+                null, // í´ë¦­ í”„ë ˆìŠ¤ ë¦¬ìŠ¤ë„ˆëŠ” ì‚¬ìš© ì•ˆí•¨
+                null, // í´ë¦­ ë¦´ë¦¬ì¦ˆ ë¦¬ìŠ¤ë„ˆëŠ” ì‚¬ìš© ì•ˆí•¨
                 HandleDragBegin,
                 HandleDragEnd,
                 HandleToggleChanged
@@ -75,7 +78,7 @@ namespace Objects
 
         private void OnDisable()
         {
-            // ÀÌº¥Æ® µî·Ï ÇØÁ¦ ¹× Æ®À© Á¾·á
+            // ì´ë²¤íŠ¸ í•´ì œ ì²˜ë¦¬ ë° íŠ¸ìœˆ ì •ì§€
             objectMouseEvent?.UnregisterListeners(
                 HandleHoverEnter,
                 HandleHoverExit,
@@ -91,7 +94,7 @@ namespace Objects
 
         private void Start()
         {
-            // Ä«µå ÃÊ±â »óÅÂ ÀúÀå
+            // ì¹´ë“œ ì´ˆê¸° ìƒíƒœ ì €ì¥
             originalLocalPosition = transform.localPosition;
             originalLocalScale = transform.localScale;
             originalY = originalLocalPosition.y;
@@ -102,21 +105,23 @@ namespace Objects
                 originalRootRotation = rootTransform.localRotation;
             }
         }
+        #endregion
 
+        #region Event Handlers
         /// <summary>
-        /// ¸¶¿ì½º°¡ Ä«µå À§¿¡ ¿Ã¶ó¿ÔÀ» ¶§ È£ÃâµÊ
-        /// º¹±Í ÁßÀÌ¶óµµ ½ÇÇàµÇ¾î¾ß ÇÏ¹Ç·Î isReturning Ã¼Å© ¾È ÇÔ
+        /// ë§ˆìš°ìŠ¤ê°€ ì¹´ë“œ ìœ„ë¡œ ì˜¬ë¼ì™”ì„ ë•Œ í˜¸ì¶œë¨
+        /// ë³µê·€ ëª¨ì…˜ì´ë¼ë„ ì¤‘ë‹¨ë˜ì–´ì•¼ í•˜ë¯€ë¡œ isReturning ì²´í¬ ì•ˆ í•¨
         /// </summary>
         private void HandleHoverEnter()
         {
-            // Ä«µå°¡ ¸Ç ¾ÕÀ¸·Î ¿Àµµ·Ï ·»´õ ¼ø¼­ Á¶Á¤
+            // ì¹´ë“œê°€ ì œì¼ ì•ìª½ì— ë Œë”ë§ ë˜ë„ë¡ ìˆœì„œ ì¡°ì •
             transform.SetSiblingIndex(transform.parent.childCount - 1);
             AnimateHoverEnter();
         }
 
         /// <summary>
-        /// ¸¶¿ì½º°¡ Ä«µå¿¡¼­ ¹ş¾î³µÀ» ¶§ È£ÃâµÊ
-        /// º¹±Í Áß¿£ ¾Ö´Ï¸ŞÀÌ¼Ç ¹æÇØÇÏÁö ¾Ê±â À§ÇØ ¹«½Ã
+        /// ë§ˆìš°ìŠ¤ê°€ ì¹´ë“œì—ì„œ ë²—ì–´ë‚  ë•Œ í˜¸ì¶œë¨
+        /// ë³µê·€ ì¤‘ì´ì–´ë„ ì• ë‹ˆë©”ì´ì…˜ ì¤‘ë‹¨í•˜ê³  ì´ˆê¸° ìƒíƒœ ë³µê·€
         /// </summary>
         private void HandleHoverExit()
         {
@@ -126,18 +131,18 @@ namespace Objects
         }
 
         /// <summary>
-        /// Ä«µå Åä±Û Å¬¸¯ ½Ã È¸Àü ¹æÇâ ÀüÈ¯
+        /// ì¹´ë“œ ìœ„ì—ì„œ í´ë¦­ ì‹œ íšŒì „ ìƒíƒœ ì „í™˜
         /// </summary>
         private void HandleToggleChanged(bool toFront)
         {
             if (isReturning) return;
 
-            // ¾Õ¸é º¸±â or ¿ø·¡ °¢µµ º¹¿ø
+            // ì•ë©´ ë³´ê¸° or ë’·ë©´ ë³´ê¸° íšŒì „
             AnimateRotation(toFront ? Quaternion.Euler(0f, 0f, 0f) : originalRootRotation);
         }
 
         /// <summary>
-        /// µå·¡±× ½ÃÀÛ ½Ã ±âÁ¸ ¾Ö´Ï¸ŞÀÌ¼Ç ¸ğµÎ Áß´Ü
+        /// ë“œë˜ê·¸ ì‹œì‘ ì‹œ í˜„ì¬ ì• ë‹ˆë©”ì´ì…˜ ëª¨ë‘ ì¤‘ë‹¨
         /// </summary>
         private void HandleDragBegin()
         {
@@ -145,16 +150,18 @@ namespace Objects
         }
 
         /// <summary>
-        /// µå·¡±×°¡ ³¡³ª¸é Ä«µå°¡ ¿ø·¡ À§Ä¡·Î µ¹¾Æ°¨
+        /// ë“œë˜ê·¸ê°€ ëë‚˜ë©´ ì¹´ë“œê°€ ì›ë˜ ìœ„ì¹˜ë¡œ ë³µê·€
         /// </summary>
         private void HandleDragEnd()
         {
             AnimateReturnToOriginal();
         }
+        #endregion
 
+        #region Animation Methods
         /// <summary>
-        /// Hover ÁøÀÔ ½Ã Ä«µå È®´ë ¹× YÃà »ó½Â ¿¬Ãâ
-        /// º¹±Í ÁßÀÌ¶óµµ ±âÁ¸ Æ®À©À» Áß´ÜÇÏÁö ¾Ê°í À§¿¡ µ¡¾º¿ò
+        /// Hover ì§„ì… ì‹œ ì¹´ë“œ í™•ëŒ€ ë° Yì¶• ìœ„ë¡œ ì´ë™
+        /// ë³µê·€ ëª¨ì…˜ì´ë¼ë„ ì´ì „ íŠ¸ìœˆë§Œ ì¤‘ë‹¨ì‹œí‚¤ê³  ìƒˆë¡œ ì‹œì‘í•¨
         /// </summary>
         private void AnimateHoverEnter()
         {
@@ -169,7 +176,7 @@ namespace Objects
         }
 
         /// <summary>
-        /// Hover ÇØÁ¦ ½Ã Ä«µå Å©±â¿Í À§Ä¡ ¿øº¹
+        /// Hover ì¢…ë£Œ ì‹œ ì¹´ë“œ í¬ê¸°ì™€ ìœ„ì¹˜ ë³µê·€
         /// </summary>
         private void AnimateHoverExit()
         {
@@ -184,8 +191,8 @@ namespace Objects
         }
 
         /// <summary>
-        /// Ä«µå È¸Àü ¿¬Ãâ
-        /// Á¤¸é or ¿ø·¡ °¢µµ·Î ºÎµå·´°Ô È¸Àü
+        /// ì¹´ë“œ íšŒì „ íš¨ê³¼
+        /// ì•ë©´ or ë’·ë©´ ì¹´ë“œë¥¼ ë˜ëŒë¦¬ê¸° ìœ„í•œ íšŒì „
         /// </summary>
         private void AnimateRotation(Quaternion target)
         {
@@ -196,30 +203,27 @@ namespace Objects
         }
 
         /// <summary>
-        /// µå·¡±×°¡ ³¡³µÀ» ¶§ Ä«µå°¡ ¿ø·¡ À§Ä¡/Å©±â/È¸ÀüÀ¸·Î º¹±Í (¾ÈÀüÇÑ ¼öÁ¤ ¹öÀü)
-        /// ÇÁ·Î¼¼½º Áß¿¡µµ ¹°¸®Àû º¹±Í´Â Çã¿ëÇÏµÇ, ¿ÜºÎ Àá±İÀº Á¸Áß
+        /// ë“œë˜ê·¸ê°€ ëë‚œ ë’¤ ì¹´ë“œê°€ ì›ë˜ ìœ„ì¹˜/í¬ê¸°/íšŒì „ìƒíƒœë¡œ ë³µê·€ (í”„ë¡œì„¸ìŠ¤ ìƒíƒœ ì˜ˆì™¸ ì²˜ë¦¬)
+        /// í”„ë¡œì„¸ìŠ¤ ì¤‘ì´ë©´ ì™¸ë¶€ì—ì„œ ì ê¸ˆë˜ë”ë¼ë„ ê°•ì œë¡œ ë³µê·€í•¨
         /// </summary>
         private void AnimateReturnToOriginal()
         {
-            // DELETE ÇÁ·Î¼¼½º µî Æ¯Á¤ »óÈ²¿¡¼­´Â Àá±İ ¹«½ÃÇÏ°í º¹±Í
+            // DELETE í”„ë¡œì„¸ìŠ¤ ë“± íŠ¹ì • ìƒí™©ì—ì„œëŠ” ë¬´ì¡°ê±´ ë³µê·€í•˜ë„ë¡ ê°•ì œ
             bool shouldForceReturn = InGameManager.Instance != null &&
                                    InGameManager.Instance.CurrentProcess != GameProcessState.Idle;
 
             if (isLockedExternally && !shouldForceReturn)
-            {
-                Debug.Log("[CardMotion] ¿ÜºÎ Àá±İÀ¸·Î ÀÎÇØ µå·¡±× º¹±Í Â÷´Ü");
                 return;
-            }
 
             isReturning = true;
             objectMouseEvent?.SetInteractionBlocked(true);
 
-            // ±âÁ¸ Æ®À© Á¦°Å
+            // ì§„í–‰ íŠ¸ìœˆ ì •ì§€
             moveTween?.Kill();
             rootMoveTween?.Kill();
             rotateTween?.Kill();
 
-            // À§Ä¡¸¸ º¹±Í
+            // ìœ„ì¹˜ì™€ ë³µê·€
             moveTween = transform.DOLocalMove(originalLocalPosition, moveDuration).SetEase(moveEase);
 
             if (rootTransform != null)
@@ -228,7 +232,7 @@ namespace Objects
                 AnimateRotation(originalRootRotation);
             }
 
-            // º¹±Í ¿Ï·á Ã³¸®
+            // ë³µê·€ ì™„ë£Œ ì²˜ë¦¬
             DOVirtual.DelayedCall(moveDuration, () =>
             {
                 isReturning = false;
@@ -236,13 +240,13 @@ namespace Objects
 
                 if (objectMouseEvent != null && objectMouseEvent.IsHovered)
                 {
-                    AnimateHoverEnter(); // º¹±Í ³¡³­ µÚ Hover Àû¿ë
+                    AnimateHoverEnter(); // ë³µê·€ ì§í›„ Hover ìƒíƒœ
                 }
             });
         }
 
         /// <summary>
-        /// À§Ä¡ ¹× ½ºÄÉÀÏ °ü·Ã Æ®À©¸¸ Á¾·á
+        /// ìœ„ì¹˜ ë° ìŠ¤ì¼€ì¼ ì§„í–‰ íŠ¸ìœˆë§Œ ì •ì§€
         /// </summary>
         private void CancelMoveAndScaleTweens()
         {
@@ -252,16 +256,18 @@ namespace Objects
         }
 
         /// <summary>
-        /// ¸ğµç Æ®À© Á¾·á (È¸Àü Æ÷ÇÔ)
+        /// ëª¨ë“  íŠ¸ìœˆ ì •ì§€ (íšŒì „ í¬í•¨)
         /// </summary>
         private void CancelAllTweens()
         {
             CancelMoveAndScaleTweens();
             rotateTween?.Kill();
         }
+        #endregion
 
+        #region State Management
         /// <summary>
-        /// °­Á¦·Î Transform ¿ø·¡ °ª º¹±¸
+        /// ê°•ì œë¡œ Transform ìƒíƒœ ì¦‰ì‹œ ì´ˆê¸°í™”
         /// </summary>
         private void ForceResetTransform()
         {
@@ -276,8 +282,8 @@ namespace Objects
         }
 
         /// <summary>
-        /// ÇöÀç Transform »óÅÂ¸¦ ¿ø·¡ »óÅÂ·Î ´Ù½Ã ÀúÀå
-        /// (ºÎÃ¤²Ã Àç¹èÄ¡µÈ µÚ È£Ãâ)
+        /// í˜„ì¬ Transform ìƒíƒœë¥¼ ì €ì¥ ìƒíƒœë¡œ ë‹¤ì‹œ ê°±ì‹ 
+        /// (ì¬ë°°ì¹˜ëœ ê²½ìš° ì´í›„ í˜¸ì¶œ)
         /// </summary>
         private void RefreshOriginalState()
         {
@@ -311,10 +317,11 @@ namespace Objects
         private void LockMotion()
         {
             isLockedExternally = true;
-            CancelAllTweens(); // °­Á¦ Killµµ °°ÀÌ ÇØÁÜ
+            CancelAllTweens(); // ì§„í–‰ Killí›„ ì¦‰ì‹œ ì •ì§€
         }
+        #endregion
 
-        // ¿ÜºÎ »ç¿ë ÇÔ¼ö
+        #region Public Methods
         public void ResetReturnMotion()
         {
             RefreshOriginalState();
@@ -325,5 +332,6 @@ namespace Objects
             LockMotion();
             ForceResetTransform();
         }
+        #endregion
     }
 }

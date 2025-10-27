@@ -1,10 +1,10 @@
 /// <summary>
-/// °ÔÀÓ ÀüÃ¼¿¡¼­ »ç¿ëµÇ´Â EnumÀ» °ü¸®ÇÏ´Â ½ºÅ©¸³Æ®
+/// ê²Œì„ ì „ì²´ì—ì„œ ì‚¬ìš©ë˜ëŠ” Enumì„ ì •ì˜í•˜ëŠ” ìŠ¤í¬ë¦½íŠ¸
 /// </summary>
 namespace Objects
 {
     /// <summary>
-    /// Ä«µå Å¸ÀÔ
+    /// ì¹´ë“œ íƒ€ì…
     /// </summary>
     public enum CardType
     {
@@ -14,7 +14,7 @@ namespace Objects
     }
 
     /// <summary>
-    /// ¿¬»êÀÚ Å¸ÀÔ
+    /// ì—°ì‚°ì íƒ€ì…
     /// </summary>
     public enum OperatorType
     {
@@ -25,7 +25,7 @@ namespace Objects
     }
 
     /// <summary>
-    /// Á¶Ä¿ È¿°ú Å¸ÀÔ
+    /// ì¡°ì»¤ íš¨ê³¼ íƒ€ì…
     /// </summary>
     public enum JokerEffectType
     {
@@ -35,18 +35,18 @@ namespace Objects
     }
 
     /// <summary>
-    /// Á¶Ä¿ ´ë»ó ¼±ÅÃ ¸ğµå
+    /// ì¡°ì»¤ ëŒ€ìƒ ì„ íƒ ëª¨ë“œ
     /// </summary>
     public enum JokerTargetMode
     {
-        None,           // ¼±ÅÃ ¸ğµå ¾Æ´Ô
-        Delete,         // »èÁ¦ÇÒ Ä«µå ¼±ÅÃ
-        SwapFirst,      // ±³È¯ÇÒ Ã¹ ¹øÂ° Ä«µå ¼±ÅÃ
-        SwapSecond      // ±³È¯ÇÒ µÎ ¹øÂ° Ä«µå ¼±ÅÃ
+        None,           // ëŒ€ìƒ ì„ íƒ ì•„ë‹˜
+        Delete,         // ì‚­ì œí•  ì¹´ë“œ ì„ íƒ
+        SwapFirst,      // êµí™˜í•  ì²« ë²ˆì§¸ ì¹´ë“œ ì„ íƒ
+        SwapSecond      // êµí™˜í•  ë‘ ë²ˆì§¸ ì¹´ë“œ ì„ íƒ
     }
 
     /// <summary>
-    /// Ä«µå ¸ğµå Å¸ÀÔ (Open/Secret)
+    /// ì¹´ë“œ ëª¨ë“œ íƒ€ì… (Open/Secret)
     /// </summary>
     public enum CardModeType
     {
@@ -55,16 +55,16 @@ namespace Objects
     }
 
     /// <summary>
-    /// °ÔÀÓ ÇÁ·Î¼¼½º »óÅÂ
+    /// ê²Œì„ í”„ë¡œì„¸ìŠ¤ ìƒíƒœ
     /// </summary>
     public enum GameProcessState
     {
-        Idle,                   // ´ë±â »óÅÂ
-        JokerDeleteProcess,     // Á¶Ä¿ »èÁ¦ ÁøÇà Áß
-        JokerSwapProcess,       // Á¶Ä¿ ±³È¯ ÁøÇà Áß
-        JokerDrawProcess,       // Á¶Ä¿ µå·Î¿ì ÁøÇà Áß
-        OperatorCalculation,    // ¿¬»êÀÚ °è»ê ÁøÇà Áß
-        CardAttackProcess,      // Ä«µå °ø°İ ÁøÇà Áß
-        CardPlacementProcess    // Ä«µå ¹èÄ¡ ÁøÇà Áß
+        Idle,                   // ìœ íœ´ ìƒíƒœ
+        JokerDeleteProcess,     // ì¡°ì»¤ ì‚­ì œ ì§„í–‰ ì¤‘
+        JokerSwapProcess,       // ì¡°ì»¤ êµí™˜ ì§„í–‰ ì¤‘
+        JokerDrawProcess,       // ì¡°ì»¤ ë“œë¡œìš° ì§„í–‰ ì¤‘
+        OperatorCalculation,    // ì—°ì‚°ì ê³„ì‚° ì§„í–‰ ì¤‘
+        CardAttackProcess,      // ì¹´ë“œ ê³µê²© ì§„í–‰ ì¤‘
+        CardPlacementProcess    // ì¹´ë“œ ë°°ì¹˜ ì§„í–‰ ì¤‘
     }
 }

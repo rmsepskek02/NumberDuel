@@ -1,4 +1,5 @@
 using Manager;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,9 +13,12 @@ namespace Objects
     /// </summary>
     public class CardZone : MonoBehaviour
     {
+        #region Enums
         public enum ZoneType { Hand, Field }
         public enum OwnerType { Player, Opponent }
+        #endregion
 
+        #region Fields and Properties
         [Header("Zone Settings")]
         public ZoneType Zone => zoneType;
         [SerializeField] private ZoneType zoneType;
@@ -27,7 +31,9 @@ namespace Objects
         private readonly List<Transform> cards = new List<Transform>();
 
         public static Transform AllZonesRoot { get; private set; }
+        #endregion
 
+        #region Unity Lifecycle
         private void Awake()
         {
             if (AllZonesRoot == null)
@@ -35,7 +41,9 @@ namespace Objects
                 AllZonesRoot = transform.parent;
             }
         }
+        #endregion
 
+        #region Public Methods
         /// <summary>
         /// 현재 Zone에 있는 카드 개수 반환
         /// </summary>
@@ -85,50 +93,31 @@ namespace Objects
             if (zoneType == ZoneType.Field &&
                 ownerType == OwnerType.Player &&
                 !TurnManager.Instance.IsLocalPlayerTurn)
-            {
-                Debug.Log("[CardZone] 내 턴이 아닙니다.");
                 return;
-            }
 
             // 기본 제한 체크들
             if (zoneType == ZoneType.Hand && cards.Count >= 10)
-            {
-                Debug.LogWarning($"[CardZone] 손패가 가득참 (10장): {ownerType}");
                 return;
-            }
 
             if (zoneType == ZoneType.Field && cards.Count >= 5)
-            {
-                Debug.LogWarning($"[CardZone] 필드가 가득함 (5장): {ownerType}");
                 return;
-            }
 
             if (cards.Contains(card))
-            {
-                Debug.LogWarning($"[CardZone] 카드가 이미 Zone에 존재합니다: {card.name}");
                 return;
-            }
 
             // 카드 컴포넌트 검증
             Card cardComponent = card.GetComponent<Card>();
             if (cardComponent == null)
-            {
-                //Debug.LogError($"[CardZone] Card 컴포넌트를 찾을 수 없습니다: {card.name}");
                 return;
-            }
 
             // 연산자 카드는 필드에 배치 불가
             if (zoneType == ZoneType.Field && cardComponent.CardType == CardType.Operator)
-            {
-                Debug.LogWarning($"[CardZone] 연산자 카드는 필드에 배치할 수 없습니다: {card.name}");
                 return;
-            }
 
             // NetworkCard 컴포넌트 확인 및 추가
             NetworkCard networkCard = card.GetComponent<NetworkCard>();
             if (networkCard == null)
             {
-                Debug.Log($"[CardZone] NetworkCard 컴포넌트가 없어 자동 추가합니다: {card.name}");
                 networkCard = card.gameObject.AddComponent<NetworkCard>();
             }
 
@@ -136,8 +125,6 @@ namespace Objects
                             ownerType == OwnerType.Player &&
                             NetworkGameManager.Instance != null &&
                             cardComponent.CardType == CardType.Number);
-
-            Debug.Log($"[CardZone] 동기화 조건 체크: zoneType={zoneType}, ownerType={ownerType}, NetworkManager={NetworkGameManager.Instance != null}, shouldSync={shouldSyncToNetwork}");
 
             // 네트워크 동기화 전송 (카드 실제 추가 전에 실행)
             if (shouldSyncToNetwork)
@@ -148,35 +135,15 @@ namespace Objects
                 string cardId = networkCard.UniqueId;
 
                 if (string.IsNullOrEmpty(cardId))
-                {
-                    Debug.LogError($"[CardZone] NetworkCard의 ID가 비어있습니다: {card.name}");
                     return;
-                }
 
-                Debug.Log($"[CardZone] 네트워크 동기화 전송 시작: {cardComponent.CardType} to {ownerType} {zoneType} (ID: {networkCard.UniqueId})");
                 NetworkGameManager.Instance.SyncCardPlacement(cardData, ownerType, zoneType, isSecret, cardId);
-                Debug.Log($"[CardZone] 네트워크 동기화 전송 완료");
-            }
-            else
-            {
-                Debug.Log($"[CardZone] 네트워크 동기화 조건 미충족 - 동기화 생략");
             }
 
             // 실제 카드 추가 로직 시작
             cards.Add(card);
             card.SetParent(transform);
 
-            // Opponent 손패 텍스트 비활성화 (보안)
-            //if (ownerType == OwnerType.Opponent && zoneType == ZoneType.Hand)
-            //{
-            //    var tmp = card.GetComponentInChildren<TMPro.TextMeshPro>();
-            //    if (tmp != null)
-            //    {
-            //        tmp.gameObject.SetActive(false);
-            //    }
-            //}
-
-            // 새로운 코드 (추가):
             // 상대방 카드 텍스트 처리 (Zone별 분기)
             if (ownerType == OwnerType.Opponent)
             {
@@ -232,7 +199,6 @@ namespace Objects
                 if (ownerType == OwnerType.Player)
                 {
                     cardComponent.SetWasPlayedThisTurn(true);
-                    Debug.Log($"[CardZone] 플레이어 카드 이번 턴 배치 표시: {card.name}");
                 }
             }
 
@@ -244,10 +210,6 @@ namespace Objects
             if (cardInterface != null)
             {
                 cardInterface.SetInteraction(zoneType, ownerType);
-            }
-            else
-            {
-                Debug.LogWarning($"[CardZone] ICard 인터페이스를 찾을 수 없습니다: {card.name}");
             }
 
             // 레이아웃 업데이트
@@ -263,39 +225,6 @@ namespace Objects
                 {
                     AddHover(spriteTransform);
                 }
-            }
-
-            Debug.Log($"[CardZone] 카드 추가 완료: {card.name} to {ownerType} {zoneType} (총 {cards.Count}장)");
-        }
-
-        /// <summary>
-        /// Card 컴포넌트에서 Manager.CardData 추출
-        /// CardPlayDetector의 동일한 메서드와 일치하는 로직
-        /// </summary>
-        /// <param name="card">데이터를 추출할 카드</param>
-        /// <returns>추출된 CardData</returns>
-        private Manager.CardData ExtractCardData(Card card)
-        {
-            switch (card.CardType)
-            {
-                case CardType.Number:
-                    // 숫자 카드: CardText에서 현재 값 추출
-                    var cardText = card.GetComponentInChildren<CardText>();
-                    long value = cardText != null ? (long)cardText.RawValue : 1;
-                    return new Manager.CardData(value);
-
-                case CardType.Operator:
-                    // 연산자 카드: OperatorType 사용
-                    return new Manager.CardData(card.OperatorType);
-
-                case CardType.Joker:
-                    // 조커 카드: 정적 생성 메서드 사용
-                    return Manager.CardData.CreateJoker();
-
-                default:
-                    // 알 수 없는 타입: 기본값 1로 설정
-                    Debug.LogWarning($"[CardZone] 알 수 없는 카드 타입: {card.CardType}");
-                    return new Manager.CardData(1);
             }
         }
 
@@ -324,15 +253,44 @@ namespace Objects
         public void UpdateLayout()
         {
             if (layoutHelper == null)
-            {
-                Debug.LogWarning("[CardZone] LayoutHelper is not assigned.");
                 return;
-            }
 
             if (zoneType == ZoneType.Hand)
                 layoutHelper.ArrangeFanLayout(cards);
             else
                 layoutHelper.ArrangeFieldLayout(cards);
+        }
+        #endregion
+
+        #region Private Methods
+        /// <summary>
+        /// Card 컴포넌트에서 Manager.CardData 추출
+        /// CardPlayDetector의 동일한 메서드와 일치하는 로직
+        /// </summary>
+        /// <param name="card">데이터를 추출할 카드</param>
+        /// <returns>추출된 CardData</returns>
+        private Manager.CardData ExtractCardData(Card card)
+        {
+            switch (card.CardType)
+            {
+                case CardType.Number:
+                    // 숫자 카드: CardText에서 현재 값 추출
+                    var cardText = card.GetComponentInChildren<CardText>();
+                    long value = cardText != null ? (long)cardText.RawValue : 1;
+                    return new Manager.CardData(value);
+
+                case CardType.Operator:
+                    // 연산자 카드: OperatorType 사용
+                    return new Manager.CardData(card.OperatorType);
+
+                case CardType.Joker:
+                    // 조커 카드: 정적 생성 메서드 사용
+                    return Manager.CardData.CreateJoker();
+
+                default:
+                    // 알 수 없는 타입: 기본값 1로 설정
+                    return new Manager.CardData(1);
+            }
         }
 
         /// <summary>
@@ -352,5 +310,6 @@ namespace Objects
             if (!card.TryGetComponent<DragHandler>(out _))
                 card.gameObject.AddComponent<DragHandler>();
         }
+        #endregion
     }
 }

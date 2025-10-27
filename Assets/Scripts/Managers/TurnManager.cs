@@ -649,11 +649,11 @@ namespace Manager
             {
                 if (IsLocalPlayerTurn)
                 {
-                    photonManager.MyTurn?.Invoke();
+                    photonManager.TriggerMyTurn();
                 }
                 else
                 {
-                    photonManager.YourTurn?.Invoke();
+                    photonManager.TriggerYourTurn();
                 }
             }
             else

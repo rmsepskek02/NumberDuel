@@ -1,10 +1,11 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using Objects;
 using Manager;
 using TMPro;
 using DG.Tweening;
-using System.Collections;
-using System.Collections.Generic;
 
 namespace Objects
 {
@@ -24,19 +25,19 @@ namespace Objects
         #endregion
 
         #region Inspector Fields
-        [Header("¿¬°áÇÒ ¿ÀºêÁ§Æ®")]
+        [Header("UI ì»´í¬ë„ŒíŠ¸")]
         [SerializeField] private GameObject dimBackground;
         [SerializeField] private GameObject cancelButton;
         [SerializeField] private JokerEffectOption drawOption;
         [SerializeField] private JokerEffectOption deleteOption;
         [SerializeField] private JokerEffectOption swapOption;
 
-        [Header("È¿°ú ¼³¸í ÅØ½ºÆ®")]
+        [Header("íš¨ê³¼ ì„¤ëª… í…ìŠ¤íŠ¸")]
         [SerializeField] private TextMeshPro drawText;
         [SerializeField] private TextMeshPro deleteText;
         [SerializeField] private TextMeshPro swapText;
 
-        [Header("¾Ö´Ï¸ŞÀÌ¼Ç ¼³Á¤")]
+        [Header("ì• ë‹ˆë©”ì´ì…˜ ì„¤ì •")]
         [SerializeField] private float maxScale = 30f;
         [SerializeField] private float animDurationUI = 0.2f;
         #endregion
@@ -82,7 +83,6 @@ namespace Objects
 
             if (elapsed >= timeout)
             {
-                Debug.LogError("[JokerModeSelector] ResourcesManager ´ë±â ½Ã°£ ÃÊ°ú");
                 yield break;
             }
 
@@ -94,11 +94,10 @@ namespace Objects
                 SetUIActive(false);
 
                 isInitialized = true;
-                Debug.Log("[JokerModeSelector] ÃÊ±âÈ­ ¿Ï·á");
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                Debug.LogError($"[JokerModeSelector] ÃÊ±âÈ­ Áß ¿À·ù: {ex.Message}");
+                UnityEngine.Debug.LogError($"[JokerModeSelector] ì´ˆê¸°í™” ì¤‘ ì˜¤ë¥˜: {ex.Message}");
             }
         }
         #endregion
@@ -134,19 +133,16 @@ namespace Objects
         {
             if (!isInitialized)
             {
-                Debug.LogWarning("[JokerModeSelector] ¾ÆÁ÷ ÃÊ±âÈ­°¡ ¿Ï·áµÇÁö ¾Ê¾Ò½À´Ï´Ù.");
                 return;
             }
 
             if (!ValidateJokerCard(jokerCard)) return;
             if (InGameManager.Instance.IsProcessing)
             {
-                Debug.LogWarning($"[JokerModeSelector] {InGameManager.Instance.CurrentProcess} ÁøÇà ÁßÀÌ¹Ç·Î Á¶Ä¿ UI¸¦ Ç¥½ÃÇÒ ¼ö ¾ø½À´Ï´Ù.");
                 return;
             }
 
             selectedJokerCard = jokerCard;
-            Debug.Log($"[JokerModeSelector] Á¶Ä¿ UI Ç¥½Ã - Ä«µå: {jokerCard.name}");
 
             if (!isSpritesSet)
             {
@@ -161,7 +157,6 @@ namespace Objects
 
         public void Hide()
         {
-            Debug.Log("[JokerModeSelector] UI ¼û±è");
             selectedJokerCard = null;
             SetUIActive(false);
         }
@@ -170,11 +165,9 @@ namespace Objects
         {
             if (selectedJokerCard == null)
             {
-                Debug.LogError("[JokerModeSelector] selectedJokerCard°¡ nullÀÔ´Ï´Ù.");
                 return;
             }
 
-            Debug.Log($"[JokerModeSelector] Á¶Ä¿ È¿°ú ¼±ÅÃ: {effectType}");
             selectedEffect = effectType;
             SetUIActive(false);
             ExecuteJokerEffect();
@@ -182,7 +175,6 @@ namespace Objects
 
         public void OnCancelPressed()
         {
-            Debug.Log("[JokerModeSelector] Ãë¼Ò ¹öÆ° Å¬¸¯");
             Hide();
         }
         #endregion
@@ -194,14 +186,12 @@ namespace Objects
             {
                 if (ResourcesManager.Instance == null)
                 {
-                    Debug.LogError("[JokerModeSelector] ResourcesManager ÀÎ½ºÅÏ½º°¡ ¾ø½À´Ï´Ù.");
                     return;
                 }
 
                 var playerSprite = ResourcesManager.Instance.GetPlayerSprite();
                 if (playerSprite == null)
                 {
-                    Debug.LogError("[JokerModeSelector] Player ½ºÇÁ¶óÀÌÆ®¸¦ °¡Á®¿Ã ¼ö ¾ø½À´Ï´Ù.");
                     return;
                 }
 
@@ -214,12 +204,10 @@ namespace Objects
                 SetOptionSprite(drawOption, drawSpriteName);
                 SetOptionSprite(deleteOption, deleteSpriteName);
                 SetOptionSprite(swapOption, swapSpriteName);
-
-                Debug.Log($"[JokerModeSelector] ½ºÇÁ¶óÀÌÆ® ¼³Á¤ ¿Ï·á - »ö»ó: {currentColor}");
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                Debug.LogError($"[JokerModeSelector] ½ºÇÁ¶óÀÌÆ® ¼³Á¤ Áß ¿À·ù: {ex.Message}");
+                UnityEngine.Debug.LogError($"[JokerModeSelector] ìŠ¤í”„ë¼ì´íŠ¸ ì„¤ì • ì¤‘ ì˜¤ë¥˜: {ex.Message}");
             }
         }
 
@@ -258,10 +246,6 @@ namespace Objects
             {
                 sr.sprite = sprite;
             }
-            else
-            {
-                Debug.LogWarning($"[JokerModeSelector] ½ºÇÁ¶óÀÌÆ®¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù: {spriteName}");
-            }
         }
         #endregion
 
@@ -284,32 +268,28 @@ namespace Objects
 
         private void ExecuteDrawEffect()
         {
-            Debug.Log("[JokerModeSelector] Draw È¿°ú ½ÇÇà ½ÃÀÛ");
             InGameManager.Instance.StartProcess(GameProcessState.JokerDrawProcess);
 
             CardZone.OwnerType cardOwner = selectedJokerCard.CurrentOwnerType;
 
-            // 1. ·ÎÄÃ¿¡¼­ 2Àå µå·Î¿ì
+            // 1. ì†íŒ¨ì—ì„œ 2ì¥ ë“œë¡œìš°
             InGameManager.Instance.DrawCardsToHand(2, cardOwner);
 
-            // 2. ³×Æ®¿öÅ© µ¿±âÈ­ Àü¼Û
+            // 2. ë„¤íŠ¸ì›Œí¬ ë™ê¸°í™” ì „ì†¡
             if (NetworkGameManager.Instance != null)
             {
                 NetworkGameManager.Instance.SyncJokerResult(selectedJokerCard, JokerEffectType.Draw);
             }
 
-            // 3. Á¶Ä¿ Ä«µå Áï½Ã Á¦°Å
+            // 3. ì¡°ì»¤ ì¹´ë“œ ì¦‰ì‹œ ì‚­ì œ
             RemoveJokerCardImmediately();
 
             InGameManager.Instance.EndProcess();
             Hide();
-
-            Debug.Log("[JokerModeSelector] Draw È¿°ú ½ÇÇà ¿Ï·á");
         }
 
         private void StartDeleteTargetSelection()
         {
-            Debug.Log("[JokerModeSelector] Delete ´ë»ó ¼±ÅÃ ½ÃÀÛ");
             InGameManager.Instance.StartProcess(GameProcessState.JokerDeleteProcess);
             StartJokerProcess(JokerEffectType.Delete);
             JokerTargetSelector.Instance.StartTargetSelection(JokerTargetMode.Delete, OnDeleteTargetSelected);
@@ -317,7 +297,6 @@ namespace Objects
 
         private void StartSwapTargetSelection()
         {
-            Debug.Log("[JokerModeSelector] Swap ´ë»ó ¼±ÅÃ ½ÃÀÛ");
             InGameManager.Instance.StartProcess(GameProcessState.JokerSwapProcess);
             StartJokerProcess(JokerEffectType.Swap);
             JokerTargetSelector.Instance.StartTargetSelection(JokerTargetMode.SwapFirst, OnSwapFirstTargetSelected);
@@ -328,14 +307,12 @@ namespace Objects
         private void OnDeleteTargetSelected(Card target)
         {
             if (target == null) return;
-            Debug.Log($"[JokerModeSelector] Delete ´ë»ó ¼±ÅÃµÊ: {target.name}");
             StartCoroutine(DeleteCardSequence(target));
         }
 
         private void OnSwapFirstTargetSelected(Card firstTarget)
         {
             if (firstTarget == null) return;
-            Debug.Log($"[JokerModeSelector] Swap Ã¹ ¹øÂ° ´ë»ó ¼±ÅÃµÊ: {firstTarget.name}");
 
             ClearAllGlow();
             ApplyGlowToOpponentCards();
@@ -348,7 +325,6 @@ namespace Objects
         private void OnSwapSecondTargetSelected(Card firstTarget, Card secondTarget)
         {
             if (firstTarget == null || secondTarget == null) return;
-            Debug.Log($"[JokerModeSelector] Swap µÎ ¹øÂ° ´ë»ó ¼±ÅÃµÊ: {secondTarget.name}");
 
             SwapCardValues(firstTarget, secondTarget);
             RemoveJokerCardImmediately();
@@ -362,51 +338,39 @@ namespace Objects
         #region Card Sequences
         private IEnumerator DeleteCardSequence(Card targetCard)
         {
-            Debug.Log($"[JokerModeSelector] Ä«µå »èÁ¦ ½ÃÄö½º ½ÃÀÛ: {targetCard.name}");
-
-            // ÇÙ½É: NetworkCard ID¸¦ »èÁ¦ Àü¿¡ ¹Ì¸® ÃßÃâ
+            // ë‹¤ì‹œ: NetworkCard IDë¥¼ í†µí•œ ì •í™• ì´ë¦„ ì „ë‹¬
             var targetNetworkCard = targetCard.GetComponent<NetworkCard>();
             string targetCardId = targetNetworkCard != null ? targetNetworkCard.UniqueId : "";
 
-            if (string.IsNullOrEmpty(targetCardId))
-            {
-                Debug.LogError($"[JokerModeSelector] ´ë»ó Ä«µåÀÇ ID¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù: {targetCard.name}");
-            }
-
-            // 1. ³×Æ®¿öÅ© µ¿±âÈ­ ¸ÕÀú Àü¼Û (Ä«µå »èÁ¦ Àü!)
+            // 1. ë„¤íŠ¸ì›Œí¬ ë™ê¸°í™” ì „ì†¡ ë¨¼ì € (ì¹´ë“œ ì‚­ì œ ì „!)
             if (NetworkGameManager.Instance != null && !string.IsNullOrEmpty(targetCardId))
             {
-                // targetCard ´ë½Å ID¸¸ Á÷Á¢ Àü´ŞÇÏµµ·Ï ¼öÁ¤µÈ ¸Ş¼­µå ÇÊ¿ä
-                var targetCards = new System.Collections.Generic.List<Card> { targetCard };
+                // targetCard ë“¤ì„ IDë¡œ ëª…í™• ì „ë‹¬í•˜ë„ë¡ ê°œì„ ëœ ë©”ì„œë“œ í•„ìš”
+                var targetCards = new List<Card> { targetCard };
                 NetworkGameManager.Instance.SyncJokerResult(selectedJokerCard, JokerEffectType.Delete, targetCards);
-                Debug.Log($"[JokerModeSelector] Delete µ¿±âÈ­ Àü¼Û ¿Ï·á: {targetCardId}");
             }
 
             yield return new WaitForSeconds(0.3f);
 
-            // 2. Ä«µå »èÁ¦ ¾Ö´Ï¸ŞÀÌ¼Ç ¹× Á¦°Å
+            // 2. ì¹´ë“œ ì œê±° ì• ë‹ˆë©”ì´ì…˜ ë° íŒŒê´´
             CardZone targetZone = FindZoneOfCard(targetCard.transform);
             yield return StartCoroutine(targetCard.AnimateRemoval(() =>
             {
                 if (targetZone != null)
                 {
                     targetZone.RemoveCard(targetCard.transform);
-                    Debug.Log($"[JokerModeSelector] Zone¿¡¼­ Ä«µå Á¦°Å: {targetCard.name}");
                 }
                 Destroy(targetCard.gameObject);
-                Debug.Log($"[JokerModeSelector] Ä«µå ¿ÀºêÁ§Æ® ÆÄ±«: {targetCard.name}");
             }));
 
             yield return new WaitForSeconds(0.2f);
 
-            // 3. Á¶Ä¿ Ä«µå Á¦°Å
+            // 3. ì¡°ì»¤ ì¹´ë“œ ì‚­ì œ
             RemoveJokerCardImmediately();
 
             InGameManager.Instance.EndProcess();
             EndJokerProcess();
             Hide();
-
-            Debug.Log("[JokerModeSelector] Ä«µå »èÁ¦ ½ÃÄö½º ¿Ï·á");
         }
 
         private void SwapCardValues(Card firstTarget, Card secondTarget)
@@ -419,22 +383,19 @@ namespace Objects
                 float firstValue = firstCardText.RawValue;
                 float secondValue = secondCardText.RawValue;
 
-                // 1. °ª ±³È¯
+                // 1. ê°’ êµí™˜
                 firstCardText.SetRawValue(secondValue);
                 secondCardText.SetRawValue(firstValue);
 
-                Debug.Log($"[JokerModeSelector] Ä«µå °ª ±³È¯ ¿Ï·á: {firstValue} <-> {secondValue}");
-
-                // 2. ³×Æ®¿öÅ© µ¿±âÈ­ Àü¼Û
+                // 2. ë„¤íŠ¸ì›Œí¬ ë™ê¸°í™” ì „ì†¡
                 if (NetworkGameManager.Instance != null)
                 {
-                    var targetCards = new System.Collections.Generic.List<Card> { firstTarget, secondTarget };
+                    var targetCards = new List<Card> { firstTarget, secondTarget };
                     NetworkGameManager.Instance.SyncJokerResult(selectedJokerCard, JokerEffectType.Swap, targetCards);
-                    Debug.Log("[JokerModeSelector] Swap µ¿±âÈ­ Àü¼Û ¿Ï·á");
                 }
             }
 
-            // 3. Á¶Ä¿ Ä«µå Á¦°Å
+            // 3. ì¡°ì»¤ ì¹´ë“œ ì‚­ì œ
             RemoveJokerCardImmediately();
         }
         #endregion
@@ -519,67 +480,34 @@ namespace Objects
 
         #region Joker Card Management
         /// <summary>
-        /// Á¶Ä¿ Ä«µå¸¦ Áï½Ã Á¦°Å (ÄÚ·çÆ¾ ¾øÀÌ)
+        /// ì¡°ì»¤ ì¹´ë“œë¥¼ ì¦‰ì‹œ ì‚­ì œ (ì½”ë£¨í‹´ ì—†ìŒ)
         /// </summary>
         private void RemoveJokerCardImmediately()
         {
             if (selectedJokerCard == null)
             {
-                Debug.LogWarning("[JokerModeSelector] Á¦°ÅÇÒ Á¶Ä¿ Ä«µå°¡ ¾ø½À´Ï´Ù (null)");
                 return;
             }
-
-            Debug.Log($"[JokerModeSelector] Á¶Ä¿ Ä«µå Áï½Ã Á¦°Å ½ÃÀÛ: {selectedJokerCard.name}");
 
             GameObject jokerObj = selectedJokerCard.gameObject;
 
-            // 1. Áï½Ã ºñÈ°¼ºÈ­ÇÏ¿© È­¸é¿¡¼­ ¼û±è
+            // 1. ì¦‰ì‹œ ë¹„í™œì„±í™”í•˜ì—¬ í™”ë©´ì—ì„œ ì œê±°
             jokerObj.SetActive(false);
-            Debug.Log($"[JokerModeSelector] Á¶Ä¿ Ä«µå ºñÈ°¼ºÈ­ ¿Ï·á");
 
-            // 2. Zone¿¡¼­ Á¦°Å
+            // 2. Zoneì—ì„œ ì œê±°
             CardZone zone = FindZoneOfCard(selectedJokerCard.transform);
             if (zone != null)
             {
-                Debug.Log($"[JokerModeSelector] Zone ¹ß°ß: {zone.name}");
                 zone.RemoveCard(selectedJokerCard.transform);
-                Debug.Log($"[JokerModeSelector] Zone¿¡¼­ Á¶Ä¿ Ä«µå Á¦°Å ¿Ï·á");
-            }
-            else
-            {
-                Debug.LogWarning($"[JokerModeSelector] Á¶Ä¿ Ä«µåÀÇ ZoneÀ» Ã£À» ¼ö ¾ø½À´Ï´Ù: {selectedJokerCard.name}");
-                LogAllZones();
             }
 
-            // 3. ºÎ¸ğ¿¡¼­ ºĞ¸®
+            // 3. ë¶€ëª¨ì—ì„œ ë¶„ë¦¬
             selectedJokerCard.transform.SetParent(null);
-            Debug.Log($"[JokerModeSelector] Á¶Ä¿ Ä«µå ºÎ¸ğ¿¡¼­ ºĞ¸® ¿Ï·á");
 
-            // 4. ¿ÀºêÁ§Æ® ÆÄ±«
+            // 4. ì˜¤ë¸Œì íŠ¸ íŒŒê´´
             Destroy(jokerObj);
-            Debug.Log($"[JokerModeSelector] Á¶Ä¿ ¿ÀºêÁ§Æ® ÆÄ±« ¿äÃ» ¿Ï·á: {jokerObj.name}");
 
             selectedJokerCard = null;
-        }
-
-        /// <summary>
-        /// µğ¹ö±ë¿ë: ¸ğµç Zone Á¤º¸ Ãâ·Â
-        /// </summary>
-        private void LogAllZones()
-        {
-            if (CardZone.AllZonesRoot == null)
-            {
-                Debug.LogError("[JokerModeSelector] AllZonesRoot°¡ nullÀÔ´Ï´Ù");
-                return;
-            }
-
-            var allZones = CardZone.AllZonesRoot.GetComponentsInChildren<CardZone>();
-            Debug.Log($"[JokerModeSelector] ÀüÃ¼ Zone °³¼ö: {allZones.Length}");
-
-            foreach (var zone in allZones)
-            {
-                Debug.Log($"[JokerModeSelector] Zone: {zone.name}, Cards: {zone.transform.childCount}");
-            }
         }
         #endregion
 
@@ -588,7 +516,6 @@ namespace Objects
         {
             if (jokerCard == null || jokerCard.CardType != CardType.Joker)
             {
-                Debug.LogError("[JokerModeSelector] À¯È¿ÇÏÁö ¾ÊÀº Á¶Ä¿ Ä«µåÀÔ´Ï´Ù.");
                 return false;
             }
             return true;
@@ -635,7 +562,6 @@ namespace Objects
         {
             if (CardZone.AllZonesRoot == null || card == null)
             {
-                Debug.LogWarning("[JokerModeSelector] AllZonesRoot ¶Ç´Â card°¡ nullÀÔ´Ï´Ù");
                 return null;
             }
 

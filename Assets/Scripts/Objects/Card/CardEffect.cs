@@ -4,12 +4,13 @@ using UnityEngine;
 namespace Objects
 {
     /// <summary>
-    /// Ä«µå¿¡ Glow È¿°ú¸¦ ºÎ¿©ÇÏ°í, MaterialPropertyBlockÀ¸·Î °ª Á¦¾î
-    /// ÃÖÀûÈ­µÈ ¹öÀü - ÇÊ¿äÇÒ ¶§¸¸ ¾÷µ¥ÀÌÆ®
+    /// ì¹´ë“œì— Glow íš¨ê³¼ë¥¼ ì ìš©í•˜ê³ , MaterialPropertyBlockìœ¼ë¡œ ì„±ëŠ¥ ìµœì í™”
+    /// ìµœì í™”ëœ êµ¬í˜„ - í•„ìš”í•  ë•Œë§Œ ì—…ë°ì´íŠ¸
     /// </summary>
     [RequireComponent(typeof(SpriteRenderer))]
     public class CardEffect : MonoBehaviour
     {
+        #region Fields and Properties
         private SpriteRenderer sr;
         private MaterialPropertyBlock block;
         private Coroutine glowRoutine;
@@ -22,37 +23,41 @@ namespace Objects
         private float currentGlow = 0f;
         private Color currentColor;
 
-        // ÃÖÀûÈ­¿ë Ä³½Ã
+        // ìµœì í™”ìš© ìºì‹œ
         private Texture2D lastTexture;
         private bool needsUpdate = true;
+        #endregion
 
+        #region Unity Lifecycle
         private void Awake()
         {
             sr = GetComponent<SpriteRenderer>();
             block = new MaterialPropertyBlock();
 
-            // ÃÊ±âÈ­
+            // ì´ˆê¸°í™”
             currentGlow = 0f;
             currentColor = Color.white;
             lastTexture = sr.sprite?.texture;
 
-            // ÃÊ±â ¼³Á¤
-            UpdatePropertyBlockIfNeeded(true); // °­Á¦ ¾÷µ¥ÀÌÆ®
+            // ì´ˆê¸° ì„¤ì •
+            UpdatePropertyBlockIfNeeded(true); // ê°•ì œ ì—…ë°ì´íŠ¸
         }
+        #endregion
 
+        #region Material Property Block Management
         /// <summary>
-        /// ÇÊ¿äÇÒ ¶§¸¸ MaterialPropertyBlock ¾÷µ¥ÀÌÆ® (ÃÖÀûÈ­)
+        /// í•„ìš”í•  ë•Œë§Œ MaterialPropertyBlock ì—…ë°ì´íŠ¸ (ìµœì í™”)
         /// </summary>
         private void UpdatePropertyBlockIfNeeded(bool forceUpdate = false)
         {
-            // ÅØ½ºÃ³°¡ ¹Ù²î¾ú´ÂÁö È®ÀÎ
+            // í…ìŠ¤ì²˜ê°€ ë°”ë€Œì—ˆëŠ”ì§€ í™•ì¸
             Texture2D currentTexture = sr.sprite?.texture;
             bool textureChanged = currentTexture != lastTexture;
 
-            // ¾÷µ¥ÀÌÆ®°¡ ÇÊ¿äÇÑ °æ¿ì¸¸ ½ÇÇà
+            // ì—…ë°ì´íŠ¸ê°€ í•„ìš”í•œ ê²½ìš°ë§Œ ì‹¤í–‰
             if (forceUpdate || needsUpdate || textureChanged)
             {
-                // _MainTex ¼³Á¤ (ÅØ½ºÃ³°¡ ¹Ù²î¾úÀ» ¶§¸¸)
+                // _MainTex ì„¤ì • (í…ìŠ¤ì²˜ê°€ ë°”ë€ ê²½ìš° ëŒ€ì‘)
                 if (textureChanged || forceUpdate)
                 {
                     if (currentTexture != null)
@@ -62,24 +67,23 @@ namespace Objects
                     }
                 }
 
-                // GLOW ÇÁ·ÎÆÛÆ¼ ¼³Á¤
+                // GLOW í”„ë¡œí¼í‹° ì„¤ì •
                 block.SetFloat(glowProperty, currentGlow);
                 block.SetColor(outlineColorProperty, currentColor);
 
-                // GPU¿¡ Àû¿ë
+                // GPUë¡œ ì „ì†¡
                 sr.SetPropertyBlock(block);
 
                 needsUpdate = false;
             }
         }
+        #endregion
 
+        #region Glow Effects
         public void SetGlow(bool enable)
         {
             if (!gameObject.activeInHierarchy)
-            {
-                Debug.LogWarning($"[CardEffect] {gameObject.name} is inactive. Cannot start Coroutine.");
                 return;
-            }
 
             float target = enable ? 1f : 0f;
 
@@ -101,7 +105,7 @@ namespace Objects
                 elapsed += Time.deltaTime;
                 float newGlow = Mathf.Lerp(start, target, elapsed / fadeDuration);
 
-                // °ªÀÌ ½ÇÁ¦·Î ¹Ù²î¾úÀ» ¶§¸¸ ¾÷µ¥ÀÌÆ®
+                // ê°’ì´ ì‹¤ì œë¡œ ë°”ë€ ê²½ìš°ë§Œ ì—…ë°ì´íŠ¸
                 if (Mathf.Abs(newGlow - currentGlow) > 0.001f)
                 {
                     currentGlow = newGlow;
@@ -112,7 +116,7 @@ namespace Objects
                 yield return null;
             }
 
-            // ÃÖÁ¾°ª ¼³Á¤
+            // ìµœì¢…ê°’ ë³´ì •
             if (Mathf.Abs(target - currentGlow) > 0.001f)
             {
                 currentGlow = target;
@@ -138,7 +142,7 @@ namespace Objects
                 elapsed += Time.deltaTime;
                 Color newColor = Color.Lerp(from, to, elapsed / duration);
 
-                // »ö»óÀÌ ½ÇÁ¦·Î ¹Ù²î¾úÀ» ¶§¸¸ ¾÷µ¥ÀÌÆ®
+                // ìƒ‰ìƒì´ ì‹¤ì œë¡œ ë°”ë€ ê²½ìš°ë§Œ ì—…ë°ì´íŠ¸
                 if (Vector4.Distance(newColor, currentColor) > 0.001f)
                 {
                     currentColor = newColor;
@@ -149,7 +153,7 @@ namespace Objects
                 yield return null;
             }
 
-            // ÃÖÁ¾ »ö»ó ¼³Á¤
+            // ìµœì¢… ìƒ‰ìƒ ë³´ì •
             if (Vector4.Distance(to, currentColor) > 0.001f)
             {
                 currentColor = to;
@@ -157,14 +161,17 @@ namespace Objects
                 UpdatePropertyBlockIfNeeded();
             }
         }
+        #endregion
 
+        #region Sprite Change Handling
         /// <summary>
-        /// ¿ÜºÎ¿¡¼­ ½ºÇÁ¶óÀÌÆ®°¡ º¯°æµÇ¾úÀ» ¶§ È£Ãâ (¼±ÅÃ»çÇ×)
+        /// ì™¸ë¶€ì—ì„œ ìŠ¤í”„ë¼ì´íŠ¸ê°€ ë³€ê²½ë˜ì—ˆì„ ë•Œ í˜¸ì¶œ (ìˆ˜ë™í˜¸ì¶œ)
         /// </summary>
         public void OnSpriteChanged()
         {
             needsUpdate = true;
             UpdatePropertyBlockIfNeeded();
         }
+        #endregion
     }
 }

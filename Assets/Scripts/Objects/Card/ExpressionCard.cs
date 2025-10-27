@@ -1,18 +1,18 @@
-using TMPro;
-using UnityEngine;
-using UnityEngine.InputSystem;
 using Manager;
 using Objects;
 using System;
+using TMPro;
+using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Expression
 {
     /// <summary>
-    /// ExpressionZone ³» °³º° Ä«µå Ç¥ÇöÀ» ´ã´çÇÏ´Â Å¬·¡½º
-    /// - ¼ıÀÚ ¶Ç´Â ¿¬»ê ±âÈ£ ÅØ½ºÆ® Ç¥½Ã
-    /// - ¹è°æ Sprite ¼³Á¤
-    /// - ÅØ½ºÆ® »ö»ó ¹× Ç¥½Ã ¿©ºÎ Á¦¾î
-    /// - Ãë¼Ò ±â´ÉÀ» À§ÇÑ Å¬¸¯ °¨Áö ¹× GLOW È¿°ú
+    /// ExpressionZone ì˜ ì¹´ë“œ í‘œí˜„ì„ ë‹´ë‹¹í•˜ëŠ” í´ë˜ìŠ¤
+    /// - ìˆ«ì ë˜ëŠ” ì—°ì‚° ê¸°í˜¸ í…ìŠ¤íŠ¸ í‘œì‹œ
+    /// - ì¹´ë“œ Sprite ì„¤ì •
+    /// - í…ìŠ¤íŠ¸ ìƒ‰ìƒ ë° í‘œì‹œ ìƒíƒœ ê´€ë¦¬
+    /// - ì·¨ì†Œ ê°€ëŠ¥í•œ ìŠ¬ë¡¯ í´ë¦­ ì´ë²¤íŠ¸ ë° GLOW íš¨ê³¼
     /// </summary>
     public class ExpressionCard : MonoBehaviour
     {
@@ -24,7 +24,7 @@ namespace Expression
         private TextMeshPro cardText;
         private SpriteRenderer spriteRenderer;
         private CardEffect cardEffect;
-        private Collider cardCollider; // 3D BoxCollider »ç¿ë
+        private Collider cardCollider; // 3D BoxCollider ìš©ë„
         #endregion
 
         #region Properties
@@ -43,7 +43,7 @@ namespace Expression
 
         private void Update()
         {
-            // ¸¶¿ì½º Å¬¸¯ °¨Áö
+            // ë§ˆìš°ìŠ¤ í´ë¦­ ê°ì§€
             if (Mouse.current.leftButton.wasPressedThisFrame)
             {
                 CheckForClick();
@@ -58,12 +58,11 @@ namespace Expression
             spriteRenderer = GetComponentInChildren<SpriteRenderer>();
             cardEffect = GetComponentInChildren<CardEffect>();
 
-            // Äİ¶óÀÌ´õ È®ÀÎ ¹× Ãß°¡
+            // ì½œë¼ì´ë” í™•ì¸ ë° ì¶”ê°€
             cardCollider = GetComponentInChildren<Collider>();
             if (cardCollider == null)
             {
                 cardCollider = gameObject.AddComponent<BoxCollider>();
-                Debug.Log($"[ExpressionCard] {gameObject.name}¿¡ BoxCollider2D Ãß°¡µÊ");
             }
         }
 
@@ -75,7 +74,7 @@ namespace Expression
                 string[] parts = name.Split('_');
                 if (parts.Length > 1 && int.TryParse(parts[1], out int index))
                 {
-                    return index - 1; // 1-based¸¦ 0-based·Î º¯È¯
+                    return index - 1; // 1-basedë¥¼ 0-basedë¡œ ë³€í™˜
                 }
             }
             return 0;
@@ -88,18 +87,12 @@ namespace Expression
             Vector2 mouseScreenPosition = Mouse.current.position.ReadValue();
             Vector3 mouseWorldPosition = Camera.main.ScreenToWorldPoint(new Vector3(mouseScreenPosition.x, mouseScreenPosition.y, Camera.main.nearClipPlane + 1f));
 
-            // 3D BoxColliderÀÇ °æ¿ì Z ÁÂÇ¥¸¦ Äİ¶óÀÌ´õ Áß½É¿¡ ¸ÂÃã
+            // 3D BoxColliderë¥¼ ìœ„í•´ Z ì¢Œí‘œë¥¼ ì½œë¼ì´ë” ì¤‘ì‹¬ì— ë§ì¶¤
             if (cardCollider != null)
             {
                 mouseWorldPosition.z = cardCollider.bounds.center.z;
 
-                // µğ¹ö±ë Á¤º¸
-                if (IsCancelable) // Ãë¼Ò °¡´ÉÇÑ »óÅÂÀÏ ¶§¸¸ µğ¹ö±ë ·Î±×
-                {
-                    Debug.Log($"[ExpressionCard] {gameObject.name} ¸¶¿ì½º Ã¼Å© - Mouse: {mouseWorldPosition}, Bounds: {cardCollider.bounds}");
-                }
-
-                // ÀÌ Ä«µåÀÇ Äİ¶óÀÌ´õ ¿µ¿ª¿¡ ¸¶¿ì½º°¡ ÀÖ´ÂÁö È®ÀÎ
+                // ì´ ì¹´ë“œì˜ ì½œë¼ì´ë” ì˜ì—­ì— ë§ˆìš°ìŠ¤ê°€ ìˆëŠ”ì§€ í™•ì¸
                 if (cardCollider.bounds.Contains(mouseWorldPosition))
                 {
                     HandleClick();
@@ -109,24 +102,18 @@ namespace Expression
 
         private void HandleClick()
         {
-            Debug.Log($"[ExpressionCard] {gameObject.name} Å¬¸¯ °¨Áö! - Slot: {SlotIndex}, Cancelable: {IsCancelable}");
-
-            // Ãë¼Ò °¡´ÉÇÑ »óÅÂ°¡ ¾Æ´Ï¸é ¹«½Ã
+            // ì·¨ì†Œ ê°€ëŠ¥í•œ ìƒíƒœê°€ ì•„ë‹ˆë©´ ë¬´ì‹œ
             if (!IsCancelable)
-            {
-                Debug.Log($"[ExpressionCard] {gameObject.name} Ãë¼Ò ºÒ°¡´ÉÇÑ »óÅÂ");
                 return;
-            }
 
-            // ÀÌº¥Æ® ¹ß»ı
-            Debug.Log($"[ExpressionCard] {gameObject.name} Ãë¼Ò ÀÌº¥Æ® ¹ß»ı!");
+            // ì´ë²¤íŠ¸ ë°œìƒ
             onClicked?.Invoke(this);
         }
         #endregion
 
         #region Display Functions
         /// <summary>
-        /// ¼ıÀÚ³ª °ª ÅØ½ºÆ®¸¦ ¼³Á¤ÇÕ´Ï´Ù.
+        /// ìˆ«ìë‚˜ ê°’ í…ìŠ¤íŠ¸ë¥¼ ì„¤ì •í•©ë‹ˆë‹¤.
         /// </summary>
         public void SetValue(string value)
         {
@@ -135,7 +122,7 @@ namespace Expression
         }
 
         /// <summary>
-        /// ¿¬»ê ±âÈ£ ¶Ç´Â µîÈ£¸¦ ¼³Á¤ÇÕ´Ï´Ù.
+        /// ì—°ì‚° ê¸°í˜¸ ë˜ëŠ” ê¸°í˜¸ë¥¼ ì„¤ì •í•©ë‹ˆë‹¤.
         /// </summary>
         public void SetSymbol(string symbol)
         {
@@ -144,7 +131,7 @@ namespace Expression
         }
 
         /// <summary>
-        /// ÇÃ·¹ÀÌ¾î ¶Ç´Â »ó´ë¿¡ µû¶ó Sprite¸¦ ¼³Á¤ÇÏ°í, ÅØ½ºÆ® »ö»óµµ ÇÔ²² ¹İ¿µÇÕ´Ï´Ù.
+        /// í”Œë ˆì´ì–´ ë˜ëŠ” ìƒëŒ€ì— ë”°ë¼ Spriteë¥¼ ì„¤ì •í•˜ê³ , í…ìŠ¤íŠ¸ ìƒ‰ìƒ ë°˜ì˜í•©ë‹ˆë‹¤.
         /// </summary>
         public void SetSprite(CardZone.OwnerType owner)
         {
@@ -165,7 +152,7 @@ namespace Expression
         }
 
         /// <summary>
-        /// Sprite¸¦ Á÷Á¢ ÁöÁ¤ÇÏ°í ÅØ½ºÆ® »ö»óµµ ÀÚµ¿ Àû¿ëÇÕ´Ï´Ù.
+        /// Spriteë¥¼ ì§ì ‘ ì„¤ì •í•˜ê³  í…ìŠ¤íŠ¸ ìƒ‰ìƒ ìë™ ì ìš©í•©ë‹ˆë‹¤.
         /// </summary>
         public void SetSprite(Sprite sprite)
         {
@@ -175,7 +162,7 @@ namespace Expression
         }
 
         /// <summary>
-        /// ÅØ½ºÆ® »ö»óÀ» ÁöÁ¤ÇÕ´Ï´Ù.
+        /// í…ìŠ¤íŠ¸ ìƒ‰ìƒì„ ì„¤ì •í•©ë‹ˆë‹¤.
         /// </summary>
         public void SetTextColor(Color color)
         {
@@ -184,7 +171,7 @@ namespace Expression
         }
 
         /// <summary>
-        /// ÅØ½ºÆ® Ç¥½Ã ¿©ºÎ¸¦ Á¦¾îÇÕ´Ï´Ù.
+        /// í…ìŠ¤íŠ¸ í‘œì‹œ ìƒíƒœë¥¼ ì„¤ì •í•©ë‹ˆë‹¤.
         /// </summary>
         public void SetTextVisible(bool visible)
         {
@@ -195,7 +182,7 @@ namespace Expression
 
         #region Cancellation & GLOW Control
         /// <summary>
-        /// Ãë¼Ò °¡´É »óÅÂ ¼³Á¤ ¹× GLOW È¿°ú Àû¿ë
+        /// ì·¨ì†Œ ê°€ëŠ¥ ìƒíƒœ ì„¤ì • ë° GLOW íš¨ê³¼ ì ìš©
         /// </summary>
         public void SetCancelable(bool cancelable)
         {
@@ -207,21 +194,16 @@ namespace Expression
                 {
                     cardEffect.SetGlow(true);
                     cardEffect.LerpGlowColor(Color.cyan, 0.3f);
-                    Debug.Log($"[ExpressionCard] {gameObject.name} Ãë¼Ò °¡´É »óÅÂ - ½Ã¾È GLOW Àû¿ë");
                 }
                 else
                 {
                     cardEffect.SetGlow(false);
                 }
             }
-            else
-            {
-                Debug.LogWarning($"[ExpressionCard] {gameObject.name} CardEffect ÄÄÆ÷³ÍÆ®°¡ ¾ø½À´Ï´Ù.");
-            }
         }
 
         /// <summary>
-        /// GLOW È¿°ú Á¦°Å
+        /// GLOW íš¨ê³¼ í•´ì œ
         /// </summary>
         public void ClearGlow()
         {
@@ -231,7 +213,7 @@ namespace Expression
         }
 
         /// <summary>
-        /// ÇöÀç GLOW »óÅÂ È®ÀÎ
+        /// í˜„ì¬ GLOW ìƒíƒœ í™•ì¸
         /// </summary>
         public bool IsGlowing()
         {

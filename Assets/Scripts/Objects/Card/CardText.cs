@@ -1,9 +1,11 @@
 ﻿using Objects;
+using System;
 using TMPro;
 using UnityEngine;
 
 public class CardText : MonoBehaviour
 {
+    #region Fields and Properties
     public TextMeshPro textMesh; // TextMeshPro 참조
     private string _textValue = "1";  // 기본값 (초기 숫자)
     private float _rawValue = 1; // 원래 숫자 값도 보관
@@ -31,7 +33,9 @@ public class CardText : MonoBehaviour
             }
         }
     }
+    #endregion
 
+    #region Unity Lifecycle
     void Awake()
     {
         if (textMesh == null)
@@ -40,7 +44,9 @@ public class CardText : MonoBehaviour
         }
         UpdateText(); // 초기 텍스트 표시
     }
+    #endregion
 
+    #region Public Methods
     /// <summary>
     /// RawValue를 외부에서 변경할 수 있도록 하는 메서드 - 나누기 연산 대응 수정
     /// 내부적으로 표시용 텍스트도 자동으로 갱신됩니다.
@@ -96,6 +102,15 @@ public class CardText : MonoBehaviour
         UpdateText();
     }
 
+    // TODO :: TEST 함수
+    public string GenerateRandomNumberString()
+    {
+        int randomNumber = UnityEngine.Random.Range(1, 6); // 1-5 랜덤
+        return randomNumber.ToString();
+    }
+    #endregion
+
+    #region Private Methods
     void UpdateText()
     {
         if (textMesh != null)
@@ -108,7 +123,7 @@ public class CardText : MonoBehaviour
     private bool IsValidInput(string value)
     {
         // 기호인지 확인
-        if (System.Array.Exists(Global.AllowedSymbols, symbol => symbol == value))
+        if (Array.Exists(Global.AllowedSymbols, symbol => symbol == value))
         {
             return true;
         }
@@ -135,11 +150,5 @@ public class CardText : MonoBehaviour
         }
         return value; // 숫자가 아니면 원본 그대로
     }
-
-    // TODO :: TEST 함수
-    public string GenerateRandomNumberString()
-    {
-        int randomNumber = Random.Range(1, 6); // 1-5 랜덤
-        return randomNumber.ToString();
-    }
+    #endregion
 }

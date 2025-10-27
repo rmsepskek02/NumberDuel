@@ -1,15 +1,17 @@
-using UnityEngine;
 using Objects;
+using System;
+using UnityEngine;
 
 namespace Manager
 {
     [RequireComponent(typeof(Card))]
     public class NetworkCard : MonoBehaviour
     {
-        [Header("³×Æ®¿öÅ© ½Äº° Á¤º¸ (µð¹ö±×¿ë - ¼öÁ¤ ±ÝÁö)")]
-        [SerializeField] private string debugUniqueId = "¹Ì»ý¼º";
+        #region Fields and Properties
+        [Header("ë„¤íŠ¸ì›Œí¬ ê³ ìœ  ì‹ë³„ (ë””ë²„ê·¸ìš© - ì½ê¸° ì „ìš©)")]
+        [SerializeField] private string debugUniqueId = "ë¯¸ìƒì„±";
 
-        [Header("À§Ä¡ Á¤º¸")]
+        [Header("ìœ„ì¹˜ ì •ë³´")]
         [SerializeField] private CardZone.OwnerType currentOwner;
         [SerializeField] private CardZone.ZoneType currentZone;
         [SerializeField] private int currentIndex;
@@ -18,8 +20,6 @@ namespace Manager
 
         private Card cardComponent;
         private bool isInitialized = false;
-
-        #region Properties
         public string UniqueId => uniqueId;
         public CardZone.OwnerType CurrentOwner => currentOwner;
         public CardZone.ZoneType CurrentZone => currentZone;
@@ -45,23 +45,18 @@ namespace Manager
         #region Initialization
         private void GenerateUniqueId()
         {
-            uniqueId = System.Guid.NewGuid().ToString("N")[..8].ToUpper();
+            uniqueId = Guid.NewGuid().ToString("N")[..8].ToUpper();
             debugUniqueId = uniqueId;
-            Debug.Log($"[NetworkCard] ID »ý¼º: {uniqueId} for {gameObject.name}");
         }
 
         public void SetUniqueId(string id)
         {
             if (string.IsNullOrEmpty(id))
-            {
-                Debug.LogWarning("[NetworkCard] ºó ID´Â ¼³Á¤ÇÒ ¼ö ¾ø½À´Ï´Ù.");
                 return;
-            }
 
             if (!string.IsNullOrEmpty(uniqueId) && uniqueId != id)
             {
                 UnregisterFromNetworkGameManager();
-                Debug.Log($"[NetworkCard] ID º¯°æ: {uniqueId} ¡æ {id}");
             }
 
             uniqueId = id;
@@ -91,19 +86,11 @@ namespace Manager
         {
             CardZone parentZone = GetComponentInParent<CardZone>();
             if (parentZone == null)
-            {
-                Debug.LogWarning($"[NetworkCard] {uniqueId}: ZoneÀ» Ã£À» ¼ö ¾ø½À´Ï´Ù.");
                 return;
-            }
 
             currentOwner = parentZone.Owner;
             currentZone = parentZone.Zone;
             currentIndex = GetIndexInZone(parentZone);
-
-            if (isInitialized)
-            {
-                Debug.Log($"[NetworkCard] {uniqueId} À§Ä¡ ¾÷µ¥ÀÌÆ®: {NetworkReference}");
-            }
 
             debugUniqueId = uniqueId;
         }
@@ -125,21 +112,14 @@ namespace Manager
         public bool ValidateCurrentState()
         {
             if (cardComponent == null)
-            {
-                Debug.LogError($"[NetworkCard] {uniqueId}: Card ÄÄÆ÷³ÍÆ®°¡ ¾ø½À´Ï´Ù.");
                 return false;
-            }
 
             CardZone parentZone = GetComponentInParent<CardZone>();
             if (parentZone == null)
-            {
-                Debug.LogError($"[NetworkCard] {uniqueId}: ºÎ¸ð ZoneÀ» Ã£À» ¼ö ¾ø½À´Ï´Ù.");
                 return false;
-            }
 
             if (parentZone.Owner != currentOwner || parentZone.Zone != currentZone)
             {
-                Debug.LogWarning($"[NetworkCard] {uniqueId}: À§Ä¡ Á¤º¸ ºÒÀÏÄ¡ °¨Áö");
                 UpdateLocationInfo();
                 return true;
             }
@@ -147,7 +127,6 @@ namespace Manager
             int actualIndex = GetIndexInZone(parentZone);
             if (actualIndex != currentIndex)
             {
-                Debug.LogWarning($"[NetworkCard] {uniqueId}: ÀÎµ¦½º ºÒÀÏÄ¡ {currentIndex} ¡æ {actualIndex}");
                 currentIndex = actualIndex;
             }
 
@@ -218,14 +197,13 @@ namespace Manager
             try
             {
                 info.uniqueId = parts[0];
-                info.owner = System.Enum.Parse<CardZone.OwnerType>(parts[1]);
-                info.zone = System.Enum.Parse<CardZone.ZoneType>(parts[2]);
+                info.owner = Enum.Parse<CardZone.OwnerType>(parts[1]);
+                info.zone = Enum.Parse<CardZone.ZoneType>(parts[2]);
                 info.index = int.Parse(parts[3]);
                 return true;
             }
-            catch (System.Exception ex)
+            catch (Exception)
             {
-                Debug.LogError($"[NetworkCard] ÂüÁ¶ ÆÄ½Ì ½ÇÆÐ: {networkRef}, ¿À·ù: {ex.Message}");
                 return false;
             }
         }
@@ -239,12 +217,6 @@ namespace Manager
         #endregion
 
         #region Debug & Utility
-        [System.Diagnostics.Conditional("UNITY_EDITOR")]
-        public void DebugPrintInfo()
-        {
-            Debug.Log($"[NetworkCard] {uniqueId}: {NetworkReference}, À¯È¿¼º: {ValidateCurrentState()}");
-        }
-
         private void OnValidate()
         {
             if (Application.isPlaying && isInitialized)

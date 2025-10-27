@@ -4,18 +4,21 @@ using Objects;
 namespace Objects
 {
     /// <summary>
-    /// Á¶Ä¿ È¿°ú ¼±ÅÃ ¿É¼Ç ÇÏ³ª¸¦ ³ªÅ¸³»´Â ÄÄÆ÷³ÍÆ®
-    /// CardModeOption°ú À¯»çÇÑ ±¸Á¶
+    /// ì¡°ì»¤ íš¨ê³¼ ì„ íƒ ì˜µì…˜ í•˜ë‚˜ë¥¼ ë‚˜íƒ€ë‚´ëŠ” ì»´í¬ë„ŒíŠ¸
+    /// CardModeOptionê³¼ ë¹„ìŠ·í•œ êµ¬ì¡°
     /// </summary>
     [RequireComponent(typeof(ObjectMouseEvent))]
     public class JokerEffectOption : MonoBehaviour
     {
-        [Tooltip("ÀÌ Ç×¸ñÀÌ ³ªÅ¸³»´Â Á¶Ä¿ È¿°ú (Draw, Delete, Swap)")]
+        #region Fields and Properties
+        [Tooltip("ì´ ê·¸ë¦¼ì´ ë‚˜íƒ€ë‚´ëŠ” ì¡°ì»¤ íš¨ê³¼ (Draw, Delete, Swap)")]
         [SerializeField] public JokerEffectType effectType;
 
         private ObjectMouseEvent mouseEvent;
         private JokerModeSelector selector;
+        #endregion
 
+        #region Unity Lifecycle
         private void Awake()
         {
             mouseEvent = GetComponent<ObjectMouseEvent>();
@@ -32,9 +35,11 @@ namespace Objects
             if (mouseEvent != null)
                 mouseEvent.OnClickReleased -= HandleClick;
         }
+        #endregion
 
+        #region Public Methods
         /// <summary>
-        /// ¿ÜºÎ¿¡¼­ »óÀ§ ¼¿·ºÅÍ¸¦ ¿¬°áÇÑ´Ù
+        /// ì™¸ë¶€ì—ì„œ ì„ íƒ ì…€ë ‰í„°ë¥¼ ì„¤ì •í•œë‹¤
         /// </summary>
         public void SetSelector(JokerModeSelector selector)
         {
@@ -42,24 +47,24 @@ namespace Objects
         }
 
         /// <summary>
-        /// ÀÌ Ç×¸ñÀÌ Å¬¸¯µÇ¾úÀ» ¶§ È£ÃâµÊ
-        /// ¼±ÅÃµÈ È¿°ú¸¦ »óÀ§ ¼¿·ºÅÍ¿¡ Àü´ŞÇÑ´Ù
+        /// ì´ ê·¸ë¦¼ì´ í´ë¦­ë˜ì—ˆì„ ë•Œ í˜¸ì¶œë¨
+        /// ì„ íƒëœ íš¨ê³¼ë¥¼ ìƒìœ„ ì…€ë ‰í„°ì— ì „ë‹¬í•œë‹¤
         /// </summary>
         private void HandleClick()
         {
             if (selector != null)
             {
-                Debug.Log($"[JokerEffectOption] {effectType} È¿°ú ¼±ÅÃµÊ");
                 selector.OnJokerEffectSelected(effectType);
             }
         }
 
         /// <summary>
-        /// ÀÌ ¿É¼ÇÀÇ È¿°ú Å¸ÀÔÀ» °¡Á®¿Â´Ù
+        /// ì´ ì˜µì…˜ì˜ íš¨ê³¼ íƒ€ì…ì„ ë°˜í™˜í•œë‹¤
         /// </summary>
         public JokerEffectType GetEffectType()
         {
             return effectType;
         }
+        #endregion
     }
 }

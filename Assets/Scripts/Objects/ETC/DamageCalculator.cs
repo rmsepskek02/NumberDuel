@@ -1,52 +1,51 @@
+using System;
 using UnityEngine;
 using Objects;
 
 namespace Utills
 {
     /// <summary>
-    /// µ¥¹ÌÁö °è»êÀ» ´ã´çÇÏ´Â Á¤Àû À¯Æ¿¸®Æ¼ Å¬·¡½º
-    /// °ø°İ µ¥¹ÌÁö, ¿¬»ê µ¥¹ÌÁö, µ¥¹ÌÁö Á¦ÇÑ µîÀ» Ã³¸®
+    /// ë°ë¯¸ì§€ ê³„ì‚°ì„ ë‹´ë‹¹í•˜ëŠ” ì •ì  ìœ í‹¸ë¦¬í‹° í´ë˜ìŠ¤
+    /// ê³µê²© ë°ë¯¸ì§€, ì—°ì‚° ë°ë¯¸ì§€, ìµœëŒ€ê°’ ì œí•œ ë“±ì„ ì²˜ë¦¬
     /// </summary>
     public static class DamageCalculator
     {
-        // ÃÖ´ë µ¥¹ÌÁö Á¦ÇÑ
+        #region Constants
+        // ìµœëŒ€ ë°ë¯¸ì§€ ì œí•œ
         private const int MAX_DAMAGE = 10;
+        #endregion
 
         #region Attack Damage Calculation
         /// <summary>
-        /// °ø°İ µ¥¹ÌÁö °è»ê (»ó´ë ÇÊµå¿¡ Ä«µå°¡ ÀÖ´Â °æ¿ì)
+        /// ê³µê²© ë°ë¯¸ì§€ ê³„ì‚° (ì–‘ìª½ í•„ë“œì— ì¹´ë“œê°€ ìˆì„ ë•Œ)
         /// </summary>
-        /// <param name="attackerValue">°ø°İÀÚ Ä«µå °ª</param>
-        /// <param name="defenderValue">¹æ¾îÀÚ Ä«µå °ª</param>
-        /// <returns>°è»êµÈ µ¥¹ÌÁö (Ç×»ó 0 ÀÌ»ó)</returns>
+        /// <param name="attackerValue">ê³µê²©ì ì¹´ë“œ ê°’</param>
+        /// <param name="defenderValue">ë°©ì–´ì ì¹´ë“œ ê°’</param>
+        /// <returns>ìµœì¢… ë°ë¯¸ì§€ (í•­ìƒ 0 ì´ìƒ)</returns>
         public static int CalculateAttackDamage(float attackerValue, float defenderValue)
         {
-            // °ø°İÀÚ °ª - ¹æ¾îÀÚ °ªÀÇ Àı´ñ°ª
+            // ê³µê²©ì ê°’ - ë°©ì–´ì ê°’ì˜ ì ˆëŒ€ê°’
             float rawDamage = Mathf.Abs(attackerValue - defenderValue);
             int damage = Mathf.FloorToInt(rawDamage);
 
-            // ÃÖ´ë µ¥¹ÌÁö Á¦ÇÑ Àû¿ë
+            // ìµœëŒ€ ë°ë¯¸ì§€ ì œí•œ ì ìš©
             damage = ApplyDamageLimit(damage);
-
-            Debug.Log($"[DamageCalculator] °ø°İ µ¥¹ÌÁö °è»ê: |{attackerValue} - {defenderValue}| = {rawDamage} ¡æ {damage} (Á¦ÇÑ Àû¿ë)");
 
             return damage;
         }
 
         /// <summary>
-        /// ºó ÇÊµå °ø°İ µ¥¹ÌÁö °è»ê (»ó´ë ÇÊµå°¡ ºñ¾îÀÖ´Â °æ¿ì)
+        /// ë¹ˆ í•„ë“œ ê³µê²© ë°ë¯¸ì§€ ê³„ì‚° (ìƒëŒ€ í•„ë“œê°€ ë¹„ì–´ìˆì„ ë•Œ)
         /// </summary>
-        /// <param name="attackerValue">°ø°İÀÚ Ä«µå °ª</param>
-        /// <returns>°è»êµÈ µ¥¹ÌÁö (°ø°İÀÚ °ª ±×´ë·Î, ÃÖ´ë Á¦ÇÑ Àû¿ë)</returns>
+        /// <param name="attackerValue">ê³µê²©ì ì¹´ë“œ ê°’</param>
+        /// <returns>ìµœì¢… ë°ë¯¸ì§€ (ê³µê²©ì ê°’ ê·¸ëŒ€ë¡œ, ìµœëŒ€ ì œí•œ ì ìš©)</returns>
         public static int CalculateEmptyFieldDamage(float attackerValue)
         {
-            // ºó ÇÊµå °ø°İ: °ø°İÀÚ °ªÀÌ ±×´ë·Î µ¥¹ÌÁö
+            // ë¹ˆ í•„ë“œ ê³µê²©: ê³µê²©ì ê°’ì„ ê·¸ëŒ€ë¡œ ë°ë¯¸ì§€ë¡œ
             int damage = Mathf.FloorToInt(attackerValue);
 
-            // ÃÖ´ë µ¥¹ÌÁö Á¦ÇÑ Àû¿ë
+            // ìµœëŒ€ ë°ë¯¸ì§€ ì œí•œ ì ìš©
             damage = ApplyDamageLimit(damage);
-
-            Debug.Log($"[DamageCalculator] ºó ÇÊµå °ø°İ µ¥¹ÌÁö: {attackerValue} ¡æ {damage} (Á¦ÇÑ Àû¿ë)");
 
             return damage;
         }
@@ -54,11 +53,11 @@ namespace Utills
 
         #region Operation Damage Calculation
         /// <summary>
-        /// ¿¬»ê °á°ú¿¡ µû¸¥ µ¥¹ÌÁö °è»ê
+        /// ì—°ì‚° ê²°ê³¼ì— ë”°ë¥¸ ë°ë¯¸ì§€ ê³„ì‚°
         /// </summary>
-        /// <param name="operationResult">¿¬»ê °á°ú °ª</param>
-        /// <param name="operatorType">»ç¿ëµÈ ¿¬»êÀÚ</param>
-        /// <returns>°è»êµÈ µ¥¹ÌÁö¿Í ´ë»ó</returns>
+        /// <param name="operationResult">ì—°ì‚° ê²°ê³¼ ê°’</param>
+        /// <param name="operatorType">ì—°ì‚° íƒ€ì…</param>
+        /// <returns>ìµœì¢… ë°ë¯¸ì§€ì™€ ëŒ€ìƒ</returns>
         public static (int damage, CardZone.OwnerType target) CalculateOperationDamage(float operationResult, OperatorType operatorType)
         {
             int damage = 0;
@@ -68,29 +67,27 @@ namespace Utills
             {
                 case OperatorType.Plus:
                 case OperatorType.Multiply:
-                    // ´õÇÏ±â/°öÇÏ±â: °á°ú°¡ ¾ç¼ö¸é »ó´ë¿¡°Ô µ¥¹ÌÁö
+                    // ë”í•˜ê¸°/ê³±í•˜ê¸°: ê²°ê³¼ê°€ ì–‘ìˆ˜ì¼ ê²½ìš°ì—ë§Œ ë°ë¯¸ì§€
                     damage = Mathf.FloorToInt(Mathf.Max(0, operationResult));
                     target = CardZone.OwnerType.Opponent;
                     break;
 
                 case OperatorType.Minus:
                 case OperatorType.Divide:
-                    // »©±â/³ª´©±â: °á°úÀÇ Àı´ñ°ªÀ» »ó´ë¿¡°Ô µ¥¹ÌÁö
+                    // ë¹¼ê¸°/ë‚˜ëˆ„ê¸°: ê²°ê³¼ì˜ ì ˆëŒ“ê°’ ê²½ìš°ì—ë§Œ ë°ë¯¸ì§€
                     damage = Mathf.FloorToInt(Mathf.Abs(operationResult));
                     target = CardZone.OwnerType.Opponent;
                     break;
 
                 default:
-                    // ¾Ë ¼ö ¾ø´Â ¿¬»êÀÚ´Â µ¥¹ÌÁö ¾øÀ½
+                    // ì•Œ ìˆ˜ ì—†ëŠ” ì—°ì‚°ìëŠ” ë°ë¯¸ì§€ ì—†ìŒ
                     damage = 0;
                     target = CardZone.OwnerType.Opponent;
                     break;
             }
 
-            // ÃÖ´ë µ¥¹ÌÁö Á¦ÇÑ Àû¿ë
+            // ìµœëŒ€ ë°ë¯¸ì§€ ì œí•œ ì ìš©
             damage = ApplyDamageLimit(damage);
-
-            Debug.Log($"[DamageCalculator] ¿¬»ê µ¥¹ÌÁö °è»ê: {operatorType} °á°ú {operationResult} ¡æ {target}¿¡°Ô {damage} µ¥¹ÌÁö");
 
             return (damage, target);
         }
@@ -98,49 +95,44 @@ namespace Utills
 
         #region Utility Methods
         /// <summary>
-        /// ÃÖ´ë µ¥¹ÌÁö Á¦ÇÑ Àû¿ë
+        /// ìµœëŒ€ ë°ë¯¸ì§€ ì œí•œ ì ìš©
         /// </summary>
-        /// <param name="damage">¿øº» µ¥¹ÌÁö</param>
-        /// <returns>Á¦ÇÑÀÌ Àû¿ëµÈ µ¥¹ÌÁö (ÃÖ´ë 10)</returns>
+        /// <param name="damage">ì›ë³¸ ë°ë¯¸ì§€</param>
+        /// <returns>ì œí•œì´ ì ìš©ëœ ë°ë¯¸ì§€ (ìµœëŒ€ 10)</returns>
         public static int ApplyDamageLimit(int damage)
         {
             int limitedDamage = Mathf.Min(damage, MAX_DAMAGE);
-
-            if (damage > MAX_DAMAGE)
-            {
-                Debug.Log($"[DamageCalculator] µ¥¹ÌÁö Á¦ÇÑ Àû¿ë: {damage} ¡æ {limitedDamage}");
-            }
 
             return limitedDamage;
         }
 
         /// <summary>
-        /// °ø°İ °á°ú¿¡ µû¸¥ ½ÂÀÚ °áÁ¤ (Ä«µå °£ ÀüÅõ¿ë)
+        /// ì „íˆ¬ ê²°ê³¼ì— ë”°ë¥¸ ìŠ¹ì íŒì • (ì¹´ë“œ ê°’ ë¹„êµ)
         /// </summary>
-        /// <param name="attackerValue">°ø°İÀÚ °ª</param>
-        /// <param name="defenderValue">¹æ¾îÀÚ °ª</param>
-        /// <returns>½Â¸®ÇÑ ÂÊ (1: °ø°İÀÚ, -1: ¹æ¾îÀÚ, 0: ¹«½ÂºÎ)</returns>
+        /// <param name="attackerValue">ê³µê²©ì ê°’</param>
+        /// <param name="defenderValue">ë°©ì–´ì ê°’</param>
+        /// <returns>ìŠ¹ë¦¬ì ê°’ (1: ê³µê²©ì, -1: ë°©ì–´ì, 0: ë¬´ìŠ¹ë¶€)</returns>
         public static int DetermineBattleWinner(float attackerValue, float defenderValue)
         {
             float difference = attackerValue - defenderValue;
 
-            if (difference > 0) return 1;      // °ø°İÀÚ ½Â¸®
-            if (difference < 0) return -1;     // ¹æ¾îÀÚ ½Â¸®
-            return 0;                          // ¹«½ÂºÎ
+            if (difference > 0) return 1;      // ê³µê²©ì ìŠ¹ë¦¬
+            if (difference < 0) return -1;     // ë°©ì–´ì ìŠ¹ë¦¬
+            return 0;                          // ë¬´ìŠ¹ë¶€
         }
 
         /// <summary>
-        /// ¿¬»ê °á°ú°¡ À¯È¿ÇÑ µ¥¹ÌÁöÀÎÁö È®ÀÎ
+        /// ì—°ì‚° ê²°ê³¼ê°€ ìœ íš¨í•œ ë°ë¯¸ì§€ì¸ì§€ í™•ì¸
         /// </summary>
-        /// <param name="result">¿¬»ê °á°ú</param>
-        /// <returns>À¯È¿ÇÑ µ¥¹ÌÁö¸é true</returns>
+        /// <param name="result">ì—°ì‚° ê²°ê³¼</param>
+        /// <returns>ìœ íš¨í•œ ë°ë¯¸ì§€ë©´ true</returns>
         public static bool IsValidDamageResult(float result)
         {
-            // NaN, Infinity Ã¼Å©
+            // NaN, Infinity ì²´í¬
             if (float.IsNaN(result) || float.IsInfinity(result))
                 return false;
 
-            // À½ÀÇ ¹«ÇÑ´ë³ª ±Ø´ÜÀûÀ¸·Î Å« °ª Ã¼Å©
+            // ê·¹ë‹¨ í•œê³„ê°’ ë„˜ì–´ì„œë©´ í° ê°’ ì²´í¬
             if (result < -1000f || result > 1000f)
                 return false;
 
@@ -148,24 +140,9 @@ namespace Utills
         }
 
         /// <summary>
-        /// ÇöÀç ÃÖ´ë µ¥¹ÌÁö Á¦ÇÑ °ª ¹İÈ¯
+        /// í˜„ì¬ ìµœëŒ€ ë°ë¯¸ì§€ ì œí•œ ê°’ ë°˜í™˜
         /// </summary>
         public static int GetMaxDamageLimit() => MAX_DAMAGE;
-        #endregion
-
-        #region Debug Methods
-        /// <summary>
-        /// µ¥¹ÌÁö °è»ê °úÁ¤À» »ó¼¼È÷ Ãâ·Â (µğ¹ö±×¿ë)
-        /// </summary>
-        /// <param name="description">°è»ê ¼³¸í</param>
-        /// <param name="value1">Ã¹ ¹øÂ° °ª</param>
-        /// <param name="value2">µÎ ¹øÂ° °ª</param>
-        /// <param name="result">ÃÖÁ¾ °á°ú</param>
-        [System.Diagnostics.Conditional("UNITY_EDITOR")]
-        public static void DebugLogCalculation(string description, float value1, float value2, int result)
-        {
-            Debug.Log($"[DamageCalculator] {description}: {value1} vs {value2} ¡æ {result} µ¥¹ÌÁö");
-        }
         #endregion
     }
 }

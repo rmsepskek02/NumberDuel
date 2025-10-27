@@ -5,17 +5,17 @@ using UnityEngine;
 namespace Objects
 {
     /// <summary>
-    /// µ¦ ¿ÀºêÁ§Æ®ÀÇ Å¬¸¯ ¶Ç´Â ÅÍÄ¡ ÀÔ·ÂÀ» Ã³¸®ÇÏ´Â ÄÄÆ÷³ÍÆ®
-    /// ResponsiveObject°¡ Æ÷ÇÔµÇ¾î¾ß ÇÏ¸ç, DragObject´Â ¾ø¾îµµ µ¿ÀÛ °¡´É
-    /// - Å¬¸¯ ¶Ç´Â ÅÍÄ¡°¡ µ¦ ¿ÀºêÁ§Æ® À§¿¡¼­ ¹ß»ýÇß´ÂÁö °¨ÁöÇÏ¿© OnClick È£Ãâ
-    /// - ¸ð¹ÙÀÏ°ú PC ¸ðµÎ ´ëÀÀÇÔ
+    /// ë± ì»´í¬ë„ŒíŠ¸ë¡œ í´ë¦­ ë˜ëŠ” í„°ì¹˜ ìž…ë ¥ì„ ì²˜ë¦¬í•˜ëŠ” ì»´í¬ë„ŒíŠ¸
+    /// ResponsiveObjectì™€ ê²°í•©ë˜ì–´ì•¼ í•˜ë©°, DragObjectëŠ” ì œì™¸ í•„ìš” ì£¼ì˜
+    /// - í´ë¦­ ë˜ëŠ” í„°ì¹˜ë¡œ ë± ì»´í¬ë„ŒíŠ¸ í´ë¦­ì´ ë°œìƒí–ˆëŠ”ì§€ ê°ì§€í•˜ì—¬ OnClick í˜¸ì¶œ
+    /// - ëª¨ë°”ì¼ê³¼ PC ëª¨ë‘ ëŒ€ì‘
     /// </summary>
     //public class Deck : ClickableObjectBase
     //{
     //    public TextMeshPro testText;
-
+    //
     //    protected override bool CanTriggerClick() => true;
-
+    //
     //    protected override void OnClick()
     //    {
     //        Debug.Log($"Deck '{gameObject.name}' was clicked!");
