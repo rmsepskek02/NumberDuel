@@ -86,6 +86,16 @@ namespace Manager
         {
             if (currentState != State.FirstCardSelected) return;
 
+            // 첫 번째 카드 아이콘 숨김 및 네트워크 동기화
+            if (firstCard != null)
+            {
+                firstCard.HideSelectionIcon();
+                if (NetworkGameManager.Instance != null)
+                {
+                    NetworkGameManager.Instance.HideCardIcon(firstCard);
+                }
+            }
+
             currentState = State.OperatorSelected;
             firstCard = null;
 
@@ -101,6 +111,24 @@ namespace Manager
         /// </summary>
         public void CancelOperatorMode()
         {
+            // 아이콘 숨김 및 네트워크 동기화
+            if (firstCard != null)
+            {
+                firstCard.HideSelectionIcon();
+                if (NetworkGameManager.Instance != null)
+                {
+                    NetworkGameManager.Instance.HideCardIcon(firstCard);
+                }
+            }
+            if (secondCard != null)
+            {
+                secondCard.HideSelectionIcon();
+                if (NetworkGameManager.Instance != null)
+                {
+                    NetworkGameManager.Instance.HideCardIcon(secondCard);
+                }
+            }
+
             RestoreDefaultGlowStates();
             ExpressionZoneManager.Instance.ResetAllSlots();
             ResetOperationState();
@@ -139,6 +167,16 @@ namespace Manager
             firstCard = card;
             currentState = State.FirstCardSelected;
 
+            // 첫 번째 카드에 연산자 아이콘 표시
+            string iconType = GetOperatorIconType(currentOperator);
+            firstCard.ShowSelectionIcon(iconType);
+
+            // 네트워크 동기화
+            if (NetworkGameManager.Instance != null)
+            {
+                NetworkGameManager.Instance.SyncCardIcon(firstCard, iconType);
+            }
+
             ExpressionZoneManager.Instance.SetFirstOperand(card);
             ExpressionZoneManager.Instance.UpdateOperationFirstSelected();
 
@@ -152,6 +190,17 @@ namespace Manager
         {
             secondCard = card;
             currentState = State.Processing;
+
+            // 두 번째 카드에 연산자 아이콘 표시
+            string iconType = GetOperatorIconType(currentOperator);
+            secondCard.ShowSelectionIcon(iconType);
+
+            // 네트워크 동기화
+            if (NetworkGameManager.Instance != null)
+            {
+                NetworkGameManager.Instance.SyncCardIcon(secondCard, iconType);
+            }
+
             StartCoroutine(ExecuteOperation());
         }
         #endregion
@@ -192,6 +241,24 @@ namespace Manager
 
             // 연산자 카드 제거
             yield return StartCoroutine(RemoveOperatorCard());
+
+            // 아이콘 숨김 및 네트워크 동기화
+            if (firstCard != null)
+            {
+                firstCard.HideSelectionIcon();
+                if (NetworkGameManager.Instance != null)
+                {
+                    NetworkGameManager.Instance.HideCardIcon(firstCard);
+                }
+            }
+            if (secondCard != null)
+            {
+                secondCard.HideSelectionIcon();
+                if (NetworkGameManager.Instance != null)
+                {
+                    NetworkGameManager.Instance.HideCardIcon(secondCard);
+                }
+            }
 
             // 상태 복귀
             RestoreDefaultGlowStates();
@@ -480,6 +547,21 @@ namespace Manager
                 OperatorType.Multiply => "×",
                 OperatorType.Divide => "÷",
                 _ => "?"
+            };
+        }
+
+        /// <summary>
+        /// 연산자 타입을 아이콘 이름으로 변환
+        /// </summary>
+        private string GetOperatorIconType(OperatorType opType)
+        {
+            return opType switch
+            {
+                OperatorType.Plus => "plus",
+                OperatorType.Minus => "minus",
+                OperatorType.Multiply => "multiply",
+                OperatorType.Divide => "divide",
+                _ => "plus"
             };
         }
 

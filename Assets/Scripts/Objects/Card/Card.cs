@@ -21,7 +21,12 @@ namespace Objects
         private SpriteRenderer spriteRenderer;
 
         /// <summary>
-        /// 전투 아이콘 참조
+        /// 선택/상태 표시 아이콘 (공격, 방어, 연산자, 조커 등 모든 아이콘 통합)
+        /// </summary>
+        [SerializeField] private GameObject selectionIcon;
+
+        /// <summary>
+        /// 기존 아이콘 필드 (현재 사용 중)
         /// </summary>
         [SerializeField] private GameObject swordIcon;
         [SerializeField] private GameObject shieldIcon;
@@ -671,38 +676,98 @@ namespace Objects
         }
         #endregion
 
-        #region Combat Icons
+        #region Selection Icons
         /// <summary>
-        /// 공격 아이콘 표시 (Sword)
+        /// 선택 아이콘 표시 (selectionIcon 통합 사용)
+        /// Icons 폴더에서 리소스 로드 시도, 없으면 임시로 sword/shield sprite 사용
+        /// </summary>
+        /// <param name="iconType">아이콘 타입: sword, shield, plus, minus, multiply, divide, delete, swap</param>
+        public void ShowSelectionIcon(string iconType)
+        {
+            if (selectionIcon == null) return;
+
+            var spriteRenderer = selectionIcon.GetComponent<SpriteRenderer>();
+            if (spriteRenderer == null)
+            {
+                Debug.LogError($"[Card] SelectionIcon에 SpriteRenderer가 없습니다!");
+                return;
+            }
+
+            // 1. Icons 폴더에서 리소스 먼저 시도
+            Sprite iconSprite = Manager.ResourcesManager.Instance?.GetSprite("Icons", $"icon_{iconType}");
+
+            // 2. 없으면 임시로 기존 GameObject의 sprite 사용
+            if (iconSprite == null)
+            {
+                iconSprite = GetTemporaryIconSprite(iconType);
+            }
+
+            // 3. 스프라이트 설정 및 활성화
+            if (iconSprite != null)
+            {
+                spriteRenderer.sprite = iconSprite;
+                spriteRenderer.color = Color.white;
+                selectionIcon.SetActive(true);
+            }
+            else
+            {
+                Debug.LogWarning($"[Card] 아이콘 스프라이트를 찾을 수 없습니다: {iconType}");
+            }
+        }
+
+        /// <summary>
+        /// 임시 아이콘 스프라이트 가져오기 (리소스 추가 전까지 sword/shield 사용)
+        /// </summary>
+        private Sprite GetTemporaryIconSprite(string iconType)
+        {
+            // 공격 및 연산자는 sword 아이콘 사용
+            if (iconType == "sword" || iconType == "plus" || iconType == "minus" ||
+                iconType == "multiply" || iconType == "divide")
+            {
+                return swordIcon?.GetComponent<SpriteRenderer>()?.sprite;
+            }
+            // 방어 및 조커는 shield 아이콘 사용
+            else if (iconType == "shield" || iconType == "delete" || iconType == "swap")
+            {
+                return shieldIcon?.GetComponent<SpriteRenderer>()?.sprite;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 선택 아이콘 숨김
+        /// </summary>
+        public void HideSelectionIcon()
+        {
+            if (selectionIcon != null)
+            {
+                selectionIcon.SetActive(false);
+            }
+        }
+
+        /// <summary>
+        /// 공격 아이콘 표시 (호환성 유지)
         /// </summary>
         public void ShowAttackIcon()
         {
-            HideAllIcons();
-            if (swordIcon != null)
-            {
-                swordIcon.SetActive(true);
-            }
+            ShowSelectionIcon("sword");
         }
 
         /// <summary>
-        /// 방어 아이콘 표시 (Shield)
+        /// 방어 아이콘 표시 (호환성 유지)
         /// </summary>
         public void ShowDefenseIcon()
         {
-            HideAllIcons();
-            if (shieldIcon != null)
-            {
-                shieldIcon.SetActive(true);
-            }
+            ShowSelectionIcon("shield");
         }
 
         /// <summary>
-        /// 모든 아이콘 숨김
+        /// 모든 아이콘 숨김 (호환성 유지)
         /// </summary>
         public void HideAllIcons()
         {
-            if (swordIcon != null) swordIcon.SetActive(false);
-            if (shieldIcon != null) shieldIcon.SetActive(false);
+            HideSelectionIcon();
         }
         #endregion
 

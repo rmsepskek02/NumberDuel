@@ -307,12 +307,31 @@ namespace Objects
         private void OnDeleteTargetSelected(Card target)
         {
             if (target == null) return;
+
+            // 삭제 대상 카드에 아이콘 표시
+            target.ShowSelectionIcon("delete");
+
+            // 네트워크 동기화
+            if (Manager.NetworkGameManager.Instance != null)
+            {
+                Manager.NetworkGameManager.Instance.SyncCardIcon(target, "delete");
+            }
+
             StartCoroutine(DeleteCardSequence(target));
         }
 
         private void OnSwapFirstTargetSelected(Card firstTarget)
         {
             if (firstTarget == null) return;
+
+            // 첫 번째 스왑 대상 카드에 아이콘 표시
+            firstTarget.ShowSelectionIcon("swap");
+
+            // 네트워크 동기화
+            if (Manager.NetworkGameManager.Instance != null)
+            {
+                Manager.NetworkGameManager.Instance.SyncCardIcon(firstTarget, "swap");
+            }
 
             ClearAllGlow();
             ApplyGlowToOpponentCards();
@@ -326,7 +345,28 @@ namespace Objects
         {
             if (firstTarget == null || secondTarget == null) return;
 
+            // 두 번째 스왑 대상 카드에 아이콘 표시
+            secondTarget.ShowSelectionIcon("swap");
+
+            // 네트워크 동기화 (아이콘 표시)
+            if (Manager.NetworkGameManager.Instance != null)
+            {
+                Manager.NetworkGameManager.Instance.SyncCardIcon(secondTarget, "swap");
+            }
+
             SwapCardValues(firstTarget, secondTarget);
+
+            // 스왑 완료 후 두 카드 모두 아이콘 숨김
+            firstTarget.HideSelectionIcon();
+            secondTarget.HideSelectionIcon();
+
+            // 네트워크 동기화 (아이콘 숨김)
+            if (Manager.NetworkGameManager.Instance != null)
+            {
+                Manager.NetworkGameManager.Instance.HideCardIcon(firstTarget);
+                Manager.NetworkGameManager.Instance.HideCardIcon(secondTarget);
+            }
+
             RemoveJokerCardImmediately();
 
             InGameManager.Instance.EndProcess();
@@ -410,6 +450,13 @@ namespace Objects
 
         private void EndJokerProcess()
         {
+            // 모든 필드 카드의 선택 아이콘 숨김 (안전장치)
+            var allCards = InGameManager.Instance.GetAllFieldCards();
+            foreach (var card in allCards)
+            {
+                card.HideSelectionIcon();
+            }
+
             ClearAllGlow();
             RestoreGlowStates();
             savedGlowStates.Clear();

@@ -67,6 +67,9 @@ namespace Manager
             LoadAllSprites(Global.Card);
             LoadAllSprites(Global.Joker);
 
+            // 아이콘 스프라이트 로드 (Icons 폴더)
+            LoadAllSprites("Icons");
+
             // 기본 카드 템플릿 생성 (색상은 나중에 적용)
             CreateBasicCardTemplates();
 
