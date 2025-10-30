@@ -28,8 +28,28 @@ namespace Objects
             int count = cards.Count;
             if (count == 0) return;
 
-            float angleStep = fanAngle / Mathf.Max(count - 1, 1);
-            float startAngle = -fanAngle / 2f;
+            // 카드가 1장일 때는 정중앙에 평평하게 배치
+            if (count == 1)
+            {
+                Transform card = cards[0];
+                // fanRadius를 적용하여 카메라에 보이도록 배치
+                card.localPosition = new Vector3(0, 0.01f, fanRadius);
+                card.localRotation = Quaternion.identity;
+
+                var motion = card.GetComponentInChildren<CardMotion>();
+                if (motion != null)
+                {
+                    motion?.ResetReturnMotion();
+                }
+                return;
+            }
+
+            // 카드 수에 따라 동적으로 각도 범위 조정 (카드가 적을 때는 좁게 모임)
+            float minAngle = 10f; // 카드가 적을 때 사용할 최소 각도
+            float dynamicAngle = Mathf.Lerp(minAngle, fanAngle, Mathf.Clamp01((count - 1) / 9f));
+
+            float angleStep = dynamicAngle / (count - 1);
+            float startAngle = -dynamicAngle / 2f;
 
             for (int i = 0; i < count; i++)
             {
