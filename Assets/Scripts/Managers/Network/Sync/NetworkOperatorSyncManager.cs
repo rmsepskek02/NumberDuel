@@ -247,10 +247,25 @@ namespace Manager.Network.Sync
             if (targetCard == null)
                 yield break;
 
-            yield return new WaitForSeconds(0.5f);
+            // ExpressionZone에 Delete 효과 표시
+            if (ExpressionZoneManager.Instance != null)
+            {
+                ExpressionZoneManager.Instance.InitForJokerDelete();
+                ExpressionZoneManager.Instance.SetJokerDeleteTarget(targetCard);
+            }
+
+            // 플레이어가 볼 수 있도록 2초 대기
+            yield return new WaitForSeconds(2.0f);
 
             hub.RemoveBackCardFromHand(CardZone.OwnerType.Opponent);
             DestroyRemoteCard(targetCard);
+
+            // ExpressionZone 초기화
+            yield return new WaitForSeconds(0.3f);
+            if (ExpressionZoneManager.Instance != null)
+            {
+                ExpressionZoneManager.Instance.ResetAllSlots();
+            }
         }
 
         /// <summary>
@@ -267,7 +282,16 @@ namespace Manager.Network.Sync
             if (firstCard == null || secondCard == null)
                 yield break;
 
-            yield return new WaitForSeconds(0.5f);
+            // ExpressionZone에 Swap 효과 표시
+            if (ExpressionZoneManager.Instance != null)
+            {
+                ExpressionZoneManager.Instance.InitForJokerSwap();
+                ExpressionZoneManager.Instance.SetJokerSwapFirst(firstCard);
+                ExpressionZoneManager.Instance.SetJokerSwapSecond(secondCard);
+            }
+
+            // 플레이어가 볼 수 있도록 2초 대기
+            yield return new WaitForSeconds(2.0f);
 
             // 값 교환
             var firstCardText = firstCard.GetComponentInChildren<CardText>();
@@ -283,6 +307,13 @@ namespace Manager.Network.Sync
             }
 
             hub.RemoveBackCardFromHand(CardZone.OwnerType.Opponent);
+
+            // ExpressionZone 초기화
+            yield return new WaitForSeconds(0.3f);
+            if (ExpressionZoneManager.Instance != null)
+            {
+                ExpressionZoneManager.Instance.ResetAllSlots();
+            }
         }
         #endregion
 

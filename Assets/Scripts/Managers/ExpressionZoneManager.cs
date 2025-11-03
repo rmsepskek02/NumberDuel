@@ -356,6 +356,121 @@ namespace Manager
         public void UpdateOperationFirstSelected() => EnableCancellation(0, 1);
         #endregion
 
+        #region Joker Effect Support
+        /// <summary>
+        /// 조커 삭제(Delete) 효과용 초기화
+        /// 슬롯 1번에 삭제 이미지 카드 표시
+        /// </summary>
+        public void InitForJokerDelete()
+        {
+            ClearAllCancelable();
+
+            // 삭제 이미지 스프라이트 가져오기
+            Sprite deleteSprite = GetJokerEffectSprite("delete");
+
+            // 슬롯 0: 비워둠 (선택될 카드 대기)
+            UpdateSlot(0, "", neutralSprite, false);
+            // 슬롯 1: 삭제 이미지
+            UpdateSlot(1, "", deleteSprite ?? neutralSprite, false);
+            // 슬롯 2, 4: 비워둠
+            UpdateSlot(2, "", neutralSprite, false);
+            UpdateSlot(4, "", neutralSprite, false);
+            FixEqualSlot();
+        }
+
+        /// <summary>
+        /// 조커 삭제 대상 카드를 슬롯 0에 표시
+        /// </summary>
+        public void SetJokerDeleteTarget(Card target)
+        {
+            if (target == null) return;
+            SetCardToSlot(target, 0, "SetJokerDeleteTarget");
+        }
+
+        /// <summary>
+        /// 조커 교환(Swap) 효과용 초기화
+        /// 슬롯 1번에 스왑 이미지 카드 표시
+        /// </summary>
+        public void InitForJokerSwap()
+        {
+            ClearAllCancelable();
+
+            // 스왑 이미지 스프라이트 가져오기
+            Sprite swapSprite = GetJokerEffectSprite("swap");
+
+            // 슬롯 0: 비워둠 (첫 번째 카드 대기)
+            UpdateSlot(0, "", neutralSprite, false);
+            // 슬롯 1: 스왑 이미지
+            UpdateSlot(1, "", swapSprite ?? neutralSprite, false);
+            // 슬롯 2, 4: 비워둠
+            UpdateSlot(2, "", neutralSprite, false);
+            UpdateSlot(4, "", neutralSprite, false);
+            FixEqualSlot();
+        }
+
+        /// <summary>
+        /// 조커 스왑 첫 번째 카드를 슬롯 0에 표시
+        /// </summary>
+        public void SetJokerSwapFirst(Card firstCard)
+        {
+            if (firstCard == null) return;
+            SetCardToSlot(firstCard, 0, "SetJokerSwapFirst");
+        }
+
+        /// <summary>
+        /// 조커 스왑 두 번째 카드를 슬롯 2에 표시
+        /// </summary>
+        public void SetJokerSwapSecond(Card secondCard)
+        {
+            if (secondCard == null) return;
+            SetCardToSlot(secondCard, 2, "SetJokerSwapSecond");
+        }
+
+        /// <summary>
+        /// 현재 플레이어 색상에 맞는 조커 효과 스프라이트 가져오기
+        /// </summary>
+        private Sprite GetJokerEffectSprite(string effectType)
+        {
+            if (ResourcesManager.Instance == null) return null;
+
+            var playerSprite = ResourcesManager.Instance.GetPlayerSprite();
+            if (playerSprite == null) return null;
+
+            // 색상 추출 (예: "color_green_1" -> "green")
+            string colorName = ExtractColorFromSpriteName(playerSprite.name);
+
+            // 조커 효과 스프라이트 이름 생성 (예: "color_green_delete")
+            string spriteName = $"color_{colorName}_{effectType}";
+
+            return ResourcesManager.Instance.GetSprite(Global.Joker, spriteName);
+        }
+
+        /// <summary>
+        /// 스프라이트 이름에서 색상 추출
+        /// </summary>
+        private string ExtractColorFromSpriteName(string spriteName)
+        {
+            if (string.IsNullOrEmpty(spriteName))
+                return "green";
+
+            if (spriteName.StartsWith("color_"))
+            {
+                string remaining = spriteName.Substring(6);
+                int underscoreIndex = remaining.IndexOf('_');
+                if (underscoreIndex > 0)
+                {
+                    return remaining.Substring(0, underscoreIndex);
+                }
+                else
+                {
+                    return remaining;
+                }
+            }
+
+            return "green";
+        }
+        #endregion
+
         #region Empty Field Attack Support
         /// <summary>
         /// 빈 필드 공격용 - slot 2번에 상대 스프라이트 "0" 표시

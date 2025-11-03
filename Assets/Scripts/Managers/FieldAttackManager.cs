@@ -87,11 +87,19 @@ namespace Manager
         /// </summary>
         private void SelectAttacker(Card attacker)
         {
+            // 공격 프로세스 시작 (턴 종료 차단 및 다른 프로세스와의 충돌 방지)
+            if (!InGameManager.Instance.StartProcess(GameProcessState.CardAttackProcess))
+            {
+                if (enableDebugLog)
+                    Debug.LogWarning("[FieldAttackManager] 다른 프로세스가 진행 중입니다.");
+                return; // 다른 프로세스 진행 중이면 중단
+            }
+
             currentAttacker = attacker;
             SetupExpressionZone(attacker);
 
             if (enableDebugLog)
-                Debug.Log($"[FieldAttackManager] 공격자 선택: {attacker.name}");
+                Debug.Log($"[FieldAttackManager] 공격자 선택 및 프로세스 시작: {attacker.name}");
 
             // 상대 필드가 비어있는지 체크
             if (IsOpponentFieldEmpty())
@@ -188,18 +196,26 @@ namespace Manager
             // 공격 아이콘 숨김
             attacker.HideAllIcons();
 
-            // 상태 초기화
-            currentAttacker = null;
             yield return new WaitForSeconds(0.8f);
 
-            // 게임이 종료되지 않았다면 GLOW 상태 복원
+            // 공격 완료 후 상태 정리 (프로세스 종료 포함)
             if (!InGameManager.Instance.IsGameEnded)
             {
-                RestoreDefaultGlowStates();
+                ResetAttackState(); // currentAttacker = null, EndProcess, ExpressionZone 리셋, GLOW 복원 모두 처리
+            }
+            else
+            {
+                // 게임 종료 시에는 최소한의 정리만
+                currentAttacker = null;
+                if (InGameManager.Instance.IsProcessing &&
+                    InGameManager.Instance.CurrentProcess == GameProcessState.CardAttackProcess)
+                {
+                    InGameManager.Instance.EndProcess();
+                }
             }
 
             if (enableDebugLog)
-                Debug.Log("[FieldAttackManager] 빈 필드 공격 완료");
+                Debug.Log("[FieldAttackManager] 빈 필드 공격 완료 및 프로세스 종료");
         }
 
         /// <summary>
@@ -289,15 +305,26 @@ namespace Manager
             attacker.HideAllIcons();
             defender.HideAllIcons();
 
-            // 상태 초기화
-            currentAttacker = null;
             yield return new WaitForSeconds(0.8f);
 
-            // 게임이 종료되지 않았다면 GLOW 상태 복원
+            // 공격 완료 후 상태 정리 (프로세스 종료 포함)
             if (!InGameManager.Instance.IsGameEnded)
             {
-                RestoreDefaultGlowStates();
+                ResetAttackState(); // currentAttacker = null, EndProcess, ExpressionZone 리셋, GLOW 복원 모두 처리
             }
+            else
+            {
+                // 게임 종료 시에는 최소한의 정리만
+                currentAttacker = null;
+                if (InGameManager.Instance.IsProcessing &&
+                    InGameManager.Instance.CurrentProcess == GameProcessState.CardAttackProcess)
+                {
+                    InGameManager.Instance.EndProcess();
+                }
+            }
+
+            if (enableDebugLog)
+                Debug.Log("[FieldAttackManager] 공격 완료 및 프로세스 종료");
         }
 
         /// <summary>
@@ -481,6 +508,17 @@ namespace Manager
         /// </summary>
         private bool CanProcessAttack()
         {
+            // 공격 프로세스가 이미 진행 중이고 공격자가 선택된 상태라면 계속 진행 허용
+            // (방어자 선택을 위해 필요)
+            if (InGameManager.Instance.IsProcessing &&
+                InGameManager.Instance.CurrentProcess == GameProcessState.CardAttackProcess &&
+                currentAttacker != null)
+            {
+                if (enableDebugLog)
+                    Debug.Log("[FieldAttackManager] 공격 프로세스 진행 중 - 방어자 선택 가능");
+                return true; // 공격 프로세스 내에서는 방어자 선택 가능
+            }
+
             // 다른 프로세스 진행 중이면 공격 불가
             if (InGameManager.Instance.IsProcessing) return false;
 

@@ -292,6 +292,13 @@ namespace Objects
         {
             InGameManager.Instance.StartProcess(GameProcessState.JokerDeleteProcess);
             StartJokerProcess(JokerEffectType.Delete);
+
+            // ExpressionZone에 Delete 효과 초기화
+            if (ExpressionZoneManager.Instance != null)
+            {
+                ExpressionZoneManager.Instance.InitForJokerDelete();
+            }
+
             JokerTargetSelector.Instance.StartTargetSelection(JokerTargetMode.Delete, OnDeleteTargetSelected);
         }
 
@@ -299,6 +306,13 @@ namespace Objects
         {
             InGameManager.Instance.StartProcess(GameProcessState.JokerSwapProcess);
             StartJokerProcess(JokerEffectType.Swap);
+
+            // ExpressionZone에 Swap 효과 초기화
+            if (ExpressionZoneManager.Instance != null)
+            {
+                ExpressionZoneManager.Instance.InitForJokerSwap();
+            }
+
             JokerTargetSelector.Instance.StartTargetSelection(JokerTargetMode.SwapFirst, OnSwapFirstTargetSelected);
         }
         #endregion
@@ -307,6 +321,12 @@ namespace Objects
         private void OnDeleteTargetSelected(Card target)
         {
             if (target == null) return;
+
+            // ExpressionZone에 삭제 대상 카드 표시
+            if (ExpressionZoneManager.Instance != null)
+            {
+                ExpressionZoneManager.Instance.SetJokerDeleteTarget(target);
+            }
 
             // 삭제 대상 카드에 아이콘 표시
             target.ShowSelectionIcon(CardIconType.Delete);
@@ -323,6 +343,12 @@ namespace Objects
         private void OnSwapFirstTargetSelected(Card firstTarget)
         {
             if (firstTarget == null) return;
+
+            // ExpressionZone에 첫 번째 스왑 카드 표시
+            if (ExpressionZoneManager.Instance != null)
+            {
+                ExpressionZoneManager.Instance.SetJokerSwapFirst(firstTarget);
+            }
 
             // 첫 번째 스왑 대상 카드에 아이콘 표시
             firstTarget.ShowSelectionIcon(CardIconType.Swap);
@@ -345,6 +371,12 @@ namespace Objects
         {
             if (firstTarget == null || secondTarget == null) return;
 
+            // ExpressionZone에 두 번째 스왑 카드 표시
+            if (ExpressionZoneManager.Instance != null)
+            {
+                ExpressionZoneManager.Instance.SetJokerSwapSecond(secondTarget);
+            }
+
             // 두 번째 스왑 대상 카드에 아이콘 표시
             secondTarget.ShowSelectionIcon(CardIconType.Swap);
 
@@ -354,30 +386,17 @@ namespace Objects
                 Manager.NetworkGameManager.Instance.SyncCardIcon(secondTarget, CardIconType.Swap);
             }
 
-            SwapCardValues(firstTarget, secondTarget);
-
-            // 스왑 완료 후 두 카드 모두 아이콘 숨김
-            firstTarget.HideSelectionIcon();
-            secondTarget.HideSelectionIcon();
-
-            // 네트워크 동기화 (아이콘 숨김)
-            if (Manager.NetworkGameManager.Instance != null)
-            {
-                Manager.NetworkGameManager.Instance.HideCardIcon(firstTarget);
-                Manager.NetworkGameManager.Instance.HideCardIcon(secondTarget);
-            }
-
-            RemoveJokerCardImmediately();
-
-            InGameManager.Instance.EndProcess();
-            EndJokerProcess();
-            Hide();
+            // 코루틴으로 Swap 시퀀스 실행
+            StartCoroutine(SwapCardSequence(firstTarget, secondTarget));
         }
         #endregion
 
         #region Card Sequences
         private IEnumerator DeleteCardSequence(Card targetCard)
         {
+            // ExpressionZone에 모든 내용 표시 후 2초 대기 (플레이어가 볼 시간)
+            yield return new WaitForSeconds(2.0f);
+
             // 다시: NetworkCard ID를 통한 정확 이름 전달
             var targetNetworkCard = targetCard.GetComponent<NetworkCard>();
             string targetCardId = targetNetworkCard != null ? targetNetworkCard.UniqueId : "";
@@ -390,7 +409,7 @@ namespace Objects
                 NetworkGameManager.Instance.SyncJokerResult(selectedJokerCard, JokerEffectType.Delete, targetCards);
             }
 
-            yield return new WaitForSeconds(0.3f);
+            yield return new WaitForSeconds(0.1f);
 
             // 2. 카드 제거 애니메이션 및 파괴
             CardZone targetZone = FindZoneOfCard(targetCard.transform);
@@ -413,8 +432,12 @@ namespace Objects
             Hide();
         }
 
-        private void SwapCardValues(Card firstTarget, Card secondTarget)
+        private IEnumerator SwapCardSequence(Card firstTarget, Card secondTarget)
         {
+            // ExpressionZone에 모든 내용 표시 후 2초 대기 (플레이어가 볼 시간)
+            yield return new WaitForSeconds(2.0f);
+
+            // 값 교환
             var firstCardText = firstTarget.GetComponentInChildren<CardText>();
             var secondCardText = secondTarget.GetComponentInChildren<CardText>();
 
@@ -435,8 +458,25 @@ namespace Objects
                 }
             }
 
+            yield return new WaitForSeconds(0.3f);
+
+            // 스왑 완료 후 두 카드 모두 아이콘 숨김
+            firstTarget.HideSelectionIcon();
+            secondTarget.HideSelectionIcon();
+
+            // 네트워크 동기화 (아이콘 숨김)
+            if (Manager.NetworkGameManager.Instance != null)
+            {
+                Manager.NetworkGameManager.Instance.HideCardIcon(firstTarget);
+                Manager.NetworkGameManager.Instance.HideCardIcon(secondTarget);
+            }
+
             // 3. 조커 카드 삭제
             RemoveJokerCardImmediately();
+
+            InGameManager.Instance.EndProcess();
+            EndJokerProcess();
+            Hide();
         }
         #endregion
 
@@ -455,6 +495,12 @@ namespace Objects
             foreach (var card in allCards)
             {
                 card.HideSelectionIcon();
+            }
+
+            // ExpressionZone 초기화
+            if (ExpressionZoneManager.Instance != null)
+            {
+                ExpressionZoneManager.Instance.ResetAllSlots();
             }
 
             ClearAllGlow();
