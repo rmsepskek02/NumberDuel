@@ -365,8 +365,8 @@ namespace Manager
         /// 카드 선택 아이콘 표시를 네트워크로 동기화
         /// </summary>
         /// <param name="card">아이콘을 표시할 카드</param>
-        /// <param name="iconType">아이콘 타입 (sword, shield, plus, minus, multiply, divide, delete, swap)</param>
-        public void SyncCardIcon(Card card, string iconType)
+        /// <param name="iconType">아이콘 타입 (CardIconType enum)</param>
+        public void SyncCardIcon(Card card, CardIconType iconType)
         {
             iconSync?.SyncCardIcon(card, iconType);
         }

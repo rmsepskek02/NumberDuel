@@ -25,6 +25,38 @@ namespace Manager
         private GameObject opponentCardTemplate;
 
         /// <summary>
+        /// CardIconType을 실제 스프라이트 이름으로 매핑
+        /// Icons 폴더의 실제 파일명 사용
+        /// </summary>
+        private Dictionary<CardIconType, string> iconSpriteMapping = new Dictionary<CardIconType, string>()
+        {
+            { CardIconType.Attack, "Sword" },       // 공격 (검)
+            { CardIconType.Defense, "Shield" },     // 방어 (방패)
+            { CardIconType.Plus, "Plus" },          // 덧셈 (+)
+            { CardIconType.Minus, "Minus" },        // 뺄셈 (-)
+            { CardIconType.Multiply, "Multiply" },  // 곱셈 (×)
+            { CardIconType.Divide, "Divide" },      // 나눗셈 (÷)
+            { CardIconType.Delete, "Delete" },      // 삭제 (금지 표시)
+            { CardIconType.Swap, "Swap" }           // 교환 (화살표)
+        };
+
+        /// <summary>
+        /// 아이콘 타입별 스케일 배율 (기본 1.0)
+        /// 작은 아이콘은 스케일을 크게, 큰 아이콘은 작게 조정
+        /// </summary>
+        private Dictionary<CardIconType, float> iconScaleMapping = new Dictionary<CardIconType, float>()
+        {
+            { CardIconType.Attack, 1.0f },      // Sword - 기본 크기
+            { CardIconType.Defense, 1.0f },     // Shield - 기본 크기
+            { CardIconType.Plus, 1.5f },        // + 기호 - 1.5배
+            { CardIconType.Minus, 1.5f },       // - 기호 - 1.5배
+            { CardIconType.Multiply, 1.5f },    // × 기호 - 1.5배
+            { CardIconType.Divide, 1.5f },      // ÷ 기호 - 1.5배
+            { CardIconType.Delete, 1.3f },      // 금지 표시 - 1.3배
+            { CardIconType.Swap, 1.3f }         // 교환 화살표 - 1.3배
+        };
+
+        /// <summary>
         /// 색상 동기화 완료 여부 (NetworkGameManager에서 사용)
         /// </summary>
         private bool isColorSynchronized = false;
@@ -535,6 +567,64 @@ namespace Manager
             }
 
             return null;
+        }
+        #endregion
+
+        #region Icon Management
+        /// <summary>
+        /// CardIconType에 해당하는 아이콘 스프라이트 반환
+        /// </summary>
+        /// <param name="iconType">아이콘 타입</param>
+        /// <returns>아이콘 스프라이트 또는 null</returns>
+        public Sprite GetIconSprite(CardIconType iconType)
+        {
+            if (iconType == CardIconType.None)
+                return null;
+
+            // iconSpriteMapping에서 스프라이트 이름 찾기
+            if (!iconSpriteMapping.TryGetValue(iconType, out string spriteName))
+            {
+                Debug.LogWarning($"[ResourcesManager] 아이콘 타입 '{iconType}'에 대한 매핑을 찾을 수 없습니다.");
+                return null;
+            }
+
+            // spriteCache에서 스프라이트 찾기
+            if (spriteCache.TryGetValue(spriteName, out Sprite iconSprite))
+            {
+                return iconSprite;
+            }
+
+            Debug.LogWarning($"[ResourcesManager] 아이콘 스프라이트 '{spriteName}'를 찾을 수 없습니다.");
+            return null;
+        }
+
+        /// <summary>
+        /// OperatorType을 CardIconType으로 변환
+        /// </summary>
+        public CardIconType OperatorToIconType(OperatorType operatorType)
+        {
+            return operatorType switch
+            {
+                OperatorType.Plus => CardIconType.Plus,
+                OperatorType.Minus => CardIconType.Minus,
+                OperatorType.Multiply => CardIconType.Multiply,
+                OperatorType.Divide => CardIconType.Divide,
+                _ => CardIconType.None
+            };
+        }
+
+        /// <summary>
+        /// JokerEffectType을 CardIconType으로 변환
+        /// </summary>
+        public CardIconType JokerToIconType(JokerEffectType jokerEffectType)
+        {
+            return jokerEffectType switch
+            {
+                JokerEffectType.Draw => CardIconType.Draw,
+                JokerEffectType.Delete => CardIconType.Delete,
+                JokerEffectType.Swap => CardIconType.Swap,
+                _ => CardIconType.None
+            };
         }
         #endregion
     }

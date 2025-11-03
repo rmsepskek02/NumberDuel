@@ -27,10 +27,10 @@ namespace Manager.Network.Sync
         /// 카드 선택 아이콘 표시를 네트워크로 동기화
         /// </summary>
         /// <param name="card">아이콘을 표시할 카드</param>
-        /// <param name="iconType">아이콘 타입 (sword, shield, plus, minus, multiply, divide, delete, swap)</param>
-        public void SyncCardIcon(Card card, string iconType)
+        /// <param name="iconType">아이콘 타입 (CardIconType enum)</param>
+        public void SyncCardIcon(Card card, CardIconType iconType)
         {
-            if (card == null || string.IsNullOrEmpty(iconType))
+            if (card == null || iconType == CardIconType.None)
                 return;
 
             if (!PhotonNetwork.InRoom || PhotonNetwork.PlayerList.Length < 2)
@@ -45,11 +45,12 @@ namespace Manager.Network.Sync
 
             string cardId = networkCard.UniqueId;
             string ownerType = card.CurrentOwnerType.ToString();
+            string iconTypeString = iconType.ToString();
 
-            Debug.Log($"[NetworkIconSyncManager] SyncCardIcon 전송: cardId={cardId}, iconType={iconType}, ownerType={ownerType}, cardName={card.gameObject.name}");
+            Debug.Log($"[NetworkIconSyncManager] SyncCardIcon 전송: cardId={cardId}, iconType={iconTypeString}, ownerType={ownerType}, cardName={card.gameObject.name}");
 
-            // RPC 호출
-            hub.photonView.RPC("RPC_SyncCardIcon", RpcTarget.Others, cardId, iconType, ownerType);
+            // RPC 호출 (iconType을 문자열로 변환하여 전송)
+            hub.photonView.RPC("RPC_SyncCardIcon", RpcTarget.Others, cardId, iconTypeString, ownerType);
         }
 
         /// <summary>
@@ -93,6 +94,13 @@ namespace Manager.Network.Sync
 
             Debug.Log($"[NetworkIconSyncManager] Owner 변환: {senderOwner} → {displayOwner}");
 
+            // 문자열을 CardIconType으로 변환
+            if (!Enum.TryParse<CardIconType>(iconType, true, out CardIconType parsedIconType))
+            {
+                Debug.LogWarning($"[NetworkIconSyncManager] 잘못된 아이콘 타입: {iconType}");
+                return;
+            }
+
             // 카드 ID로 카드 찾기 (NetworkGameManager의 registeredCards 사용)
             NetworkCard networkCard = hub.FindNetworkCard(cardId);
             if (networkCard != null)
@@ -101,8 +109,8 @@ namespace Manager.Network.Sync
                 if (card != null)
                 {
                     Debug.Log($"[NetworkIconSyncManager] 카드 찾음: {card.gameObject.name}, CurrentOwner={card.CurrentOwnerType}");
-                    // 아이콘 표시
-                    card.ShowSelectionIcon(iconType);
+                    // 아이콘 표시 (CardIconType으로 변환하여 전달)
+                    card.ShowSelectionIcon(parsedIconType);
                 }
                 else
                 {

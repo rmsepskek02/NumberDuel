@@ -309,12 +309,12 @@ namespace Objects
             if (target == null) return;
 
             // 삭제 대상 카드에 아이콘 표시
-            target.ShowSelectionIcon("delete");
+            target.ShowSelectionIcon(CardIconType.Delete);
 
             // 네트워크 동기화
             if (Manager.NetworkGameManager.Instance != null)
             {
-                Manager.NetworkGameManager.Instance.SyncCardIcon(target, "delete");
+                Manager.NetworkGameManager.Instance.SyncCardIcon(target, CardIconType.Delete);
             }
 
             StartCoroutine(DeleteCardSequence(target));
@@ -325,12 +325,12 @@ namespace Objects
             if (firstTarget == null) return;
 
             // 첫 번째 스왑 대상 카드에 아이콘 표시
-            firstTarget.ShowSelectionIcon("swap");
+            firstTarget.ShowSelectionIcon(CardIconType.Swap);
 
             // 네트워크 동기화
             if (Manager.NetworkGameManager.Instance != null)
             {
-                Manager.NetworkGameManager.Instance.SyncCardIcon(firstTarget, "swap");
+                Manager.NetworkGameManager.Instance.SyncCardIcon(firstTarget, CardIconType.Swap);
             }
 
             ClearAllGlow();
@@ -346,12 +346,12 @@ namespace Objects
             if (firstTarget == null || secondTarget == null) return;
 
             // 두 번째 스왑 대상 카드에 아이콘 표시
-            secondTarget.ShowSelectionIcon("swap");
+            secondTarget.ShowSelectionIcon(CardIconType.Swap);
 
             // 네트워크 동기화 (아이콘 표시)
             if (Manager.NetworkGameManager.Instance != null)
             {
-                Manager.NetworkGameManager.Instance.SyncCardIcon(secondTarget, "swap");
+                Manager.NetworkGameManager.Instance.SyncCardIcon(secondTarget, CardIconType.Swap);
             }
 
             SwapCardValues(firstTarget, secondTarget);

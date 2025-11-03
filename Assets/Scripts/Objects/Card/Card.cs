@@ -26,12 +26,6 @@ namespace Objects
         [SerializeField] private GameObject selectionIcon;
 
         /// <summary>
-        /// 기존 아이콘 필드 (현재 사용 중)
-        /// </summary>
-        [SerializeField] private GameObject swordIcon;
-        [SerializeField] private GameObject shieldIcon;
-
-        /// <summary>
         /// 카드 클릭 이벤트
         /// </summary>
         public static event Action<Card> onClicked;
@@ -60,6 +54,11 @@ namespace Objects
         /// 연산자 타입 (Plus, Minus, Multiply, Divide)
         /// </summary>
         public OperatorType OperatorType { get; private set; }
+
+        /// <summary>
+        /// 조커 효과 타입 (Draw, Delete, Swap)
+        /// </summary>
+        public JokerEffectType JokerEffectType { get; private set; }
 
         /// <summary>
         /// Secret 상태 여부
@@ -165,9 +164,11 @@ namespace Objects
         /// <summary>
         /// 조커 카드 초기화
         /// </summary>
-        public void InitializeAsJoker()
+        /// <param name="effectType">조커 효과 타입 (옵션)</param>
+        public void InitializeAsJoker(JokerEffectType effectType = JokerEffectType.Draw)
         {
             CardType = CardType.Joker;
+            JokerEffectType = effectType;
 
             if (cardText == null)
                 cardText = GetComponentInChildren<CardText>();
@@ -678,13 +679,13 @@ namespace Objects
 
         #region Selection Icons
         /// <summary>
-        /// 선택 아이콘 표시 (selectionIcon 통합 사용)
-        /// Icons 폴더에서 리소스 로드 시도, 없으면 임시로 sword/shield sprite 사용
+        /// 선택 아이콘 표시 (CardIconType enum 사용)
+        /// 모든 아이콘을 ResourcesManager에서 로드
         /// </summary>
-        /// <param name="iconType">아이콘 타입: sword, shield, plus, minus, multiply, divide, delete, swap</param>
-        public void ShowSelectionIcon(string iconType)
+        /// <param name="iconType">아이콘 타입</param>
+        public void ShowSelectionIcon(CardIconType iconType)
         {
-            if (selectionIcon == null) return;
+            if (selectionIcon == null || iconType == CardIconType.None) return;
 
             var spriteRenderer = selectionIcon.GetComponent<SpriteRenderer>();
             if (spriteRenderer == null)
@@ -693,16 +694,10 @@ namespace Objects
                 return;
             }
 
-            // 1. Icons 폴더에서 리소스 먼저 시도
-            Sprite iconSprite = Manager.ResourcesManager.Instance?.GetSprite("Icons", $"icon_{iconType}");
+            // ResourcesManager에서 아이콘 스프라이트 로드
+            Sprite iconSprite = Manager.ResourcesManager.Instance?.GetIconSprite(iconType);
 
-            // 2. 없으면 임시로 기존 GameObject의 sprite 사용
-            if (iconSprite == null)
-            {
-                iconSprite = GetTemporaryIconSprite(iconType);
-            }
-
-            // 3. 스프라이트 설정 및 활성화
+            // 스프라이트 설정 및 활성화
             if (iconSprite != null)
             {
                 spriteRenderer.sprite = iconSprite;
@@ -713,26 +708,6 @@ namespace Objects
             {
                 Debug.LogWarning($"[Card] 아이콘 스프라이트를 찾을 수 없습니다: {iconType}");
             }
-        }
-
-        /// <summary>
-        /// 임시 아이콘 스프라이트 가져오기 (리소스 추가 전까지 sword/shield 사용)
-        /// </summary>
-        private Sprite GetTemporaryIconSprite(string iconType)
-        {
-            // 공격 및 연산자는 sword 아이콘 사용
-            if (iconType == "sword" || iconType == "plus" || iconType == "minus" ||
-                iconType == "multiply" || iconType == "divide")
-            {
-                return swordIcon?.GetComponent<SpriteRenderer>()?.sprite;
-            }
-            // 방어 및 조커는 shield 아이콘 사용
-            else if (iconType == "shield" || iconType == "delete" || iconType == "swap")
-            {
-                return shieldIcon?.GetComponent<SpriteRenderer>()?.sprite;
-            }
-
-            return null;
         }
 
         /// <summary>
@@ -751,7 +726,7 @@ namespace Objects
         /// </summary>
         public void ShowAttackIcon()
         {
-            ShowSelectionIcon("sword");
+            ShowSelectionIcon(CardIconType.Attack);
         }
 
         /// <summary>
@@ -759,7 +734,7 @@ namespace Objects
         /// </summary>
         public void ShowDefenseIcon()
         {
-            ShowSelectionIcon("shield");
+            ShowSelectionIcon(CardIconType.Defense);
         }
 
         /// <summary>
@@ -768,6 +743,31 @@ namespace Objects
         public void HideAllIcons()
         {
             HideSelectionIcon();
+        }
+
+        /// <summary>
+        /// 현재 카드 타입에 맞는 아이콘 자동 표시
+        /// 연산자 카드 → 연산자 아이콘 (+, -, ×, ÷)
+        /// 조커 카드 → 조커 효과 아이콘 (드로우, 삭제, 교환)
+        /// </summary>
+        public void ShowCardTypeIcon()
+        {
+            if (CardType == CardType.Operator)
+            {
+                var iconType = Manager.ResourcesManager.Instance?.OperatorToIconType(OperatorType);
+                if (iconType.HasValue && iconType.Value != CardIconType.None)
+                {
+                    ShowSelectionIcon(iconType.Value);
+                }
+            }
+            else if (CardType == CardType.Joker)
+            {
+                var iconType = Manager.ResourcesManager.Instance?.JokerToIconType(JokerEffectType);
+                if (iconType.HasValue && iconType.Value != CardIconType.None)
+                {
+                    ShowSelectionIcon(iconType.Value);
+                }
+            }
         }
         #endregion
 

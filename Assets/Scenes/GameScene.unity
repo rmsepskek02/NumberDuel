@@ -197,7 +197,6 @@ MonoBehaviour:
   fanRadius: 5
   fanAngle: 60
   spacing: 2
-  maxFieldCards: 5
 --- !u!1 &28174658
 GameObject:
   m_ObjectHideFlags: 0
@@ -1719,7 +1718,7 @@ MonoBehaviour:
   cancelButton: {fileID: 1284260179}
   openOption: {fileID: 8832062190408037254}
   secretOption: {fileID: 9060221423622875723}
-  openValueText: {fileID: 7883041414080087842}
+  openValueText: {fileID: 0}
   maxScale: 30
   animDuration: 0.2
 --- !u!4 &396241080
@@ -2805,32 +2804,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 024d3b8672d9f05489f17d3f00f491ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerList: 
-  playerADeck: []
-  playerBDeck: []
-  playerAHand: []
-  playerBHand: []
-  myHandCardList: {fileID: 0}
-  myFieldCardList: {fileID: 0}
-  yourHandCardList: {fileID: 0}
-  yourFieldCardList: {fileID: 0}
-  isStart: 0
-  uiInGame: {fileID: 0}
-  choice: {fileID: 0}
-  joker: {fileID: 0}
-  clickedMyCardIdx: 0
-  clickedMyCardNumber: 
-  clickedYourCardIdx: 0
-  clickedYourCardNumber: 
-  firstCardNumber: 
-  firstCard: {fileID: 0}
-  secondCardNumber: 
-  isCopy: 0
-  isDelete: 0
-  isPlus: 0
-  isMinus: 0
-  isMultiple: 0
-  isDivision: 0
 --- !u!1 &658377745
 GameObject:
   m_ObjectHideFlags: 0
@@ -4929,7 +4902,6 @@ MonoBehaviour:
   fanRadius: 5
   fanAngle: 60
   spacing: 2
-  maxFieldCards: 5
 --- !u!1 &1200562897
 GameObject:
   m_ObjectHideFlags: 0
@@ -6087,7 +6059,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 1, z: 1}
-  m_LocalScale: {x: 2.0023475, y: 1, z: 1}
+  m_LocalScale: {x: 2.0189574, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 696535037}
@@ -6493,7 +6465,6 @@ MonoBehaviour:
   fanRadius: 5
   fanAngle: 30
   spacing: 1.5
-  maxFieldCards: 5
 --- !u!114 &1506725193
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7873,7 +7844,6 @@ MonoBehaviour:
   fanRadius: 5
   fanAngle: 30
   spacing: 2
-  maxFieldCards: 5
 --- !u!1 &1821383626
 GameObject:
   m_ObjectHideFlags: 0
@@ -8247,7 +8217,6 @@ MonoBehaviour:
   fanRadius: 5
   fanAngle: 30
   spacing: 2
-  maxFieldCards: 5
 --- !u!1 &2059014068
 GameObject:
   m_ObjectHideFlags: 0
@@ -10552,7 +10521,6 @@ MonoBehaviour:
   glowDuration: 0.8
   glowIntensity: 1.5
   glowPulseCount: 2
-  enableDebugLog: 0
 --- !u!224 &8733575364117850298
 RectTransform:
   m_ObjectHideFlags: 0
@@ -10604,7 +10572,6 @@ MonoBehaviour:
   glowDuration: 0.8
   glowIntensity: 1.5
   glowPulseCount: 2
-  enableDebugLog: 0
 --- !u!114 &8812219781415929543
 MonoBehaviour:
   m_ObjectHideFlags: 0

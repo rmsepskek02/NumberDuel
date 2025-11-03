@@ -168,7 +168,7 @@ namespace Manager
             currentState = State.FirstCardSelected;
 
             // 첫 번째 카드에 연산자 아이콘 표시
-            string iconType = GetOperatorIconType(currentOperator);
+            CardIconType iconType = ResourcesManager.Instance.OperatorToIconType(currentOperator);
             firstCard.ShowSelectionIcon(iconType);
 
             // 네트워크 동기화
@@ -192,7 +192,7 @@ namespace Manager
             currentState = State.Processing;
 
             // 두 번째 카드에 연산자 아이콘 표시
-            string iconType = GetOperatorIconType(currentOperator);
+            CardIconType iconType = ResourcesManager.Instance.OperatorToIconType(currentOperator);
             secondCard.ShowSelectionIcon(iconType);
 
             // 네트워크 동기화
@@ -547,21 +547,6 @@ namespace Manager
                 OperatorType.Multiply => "×",
                 OperatorType.Divide => "÷",
                 _ => "?"
-            };
-        }
-
-        /// <summary>
-        /// 연산자 타입을 아이콘 이름으로 변환
-        /// </summary>
-        private string GetOperatorIconType(OperatorType opType)
-        {
-            return opType switch
-            {
-                OperatorType.Plus => "plus",
-                OperatorType.Minus => "minus",
-                OperatorType.Multiply => "multiply",
-                OperatorType.Divide => "divide",
-                _ => "plus"
             };
         }
 

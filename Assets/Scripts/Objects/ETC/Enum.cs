@@ -67,4 +67,21 @@ namespace Objects
         CardAttackProcess,      // 카드 공격 진행 중
         CardPlacementProcess    // 카드 배치 진행 중
     }
+
+    /// <summary>
+    /// 카드 아이콘 타입 (직관적인 게임 상태 표시용)
+    /// </summary>
+    public enum CardIconType
+    {
+        None,           // 아이콘 없음
+        Attack,         // 공격 가능 (검)
+        Defense,        // 방어/대상 (방패)
+        Plus,           // 덧셈 연산자
+        Minus,          // 뺄셈 연산자
+        Multiply,       // 곱셈 연산자
+        Divide,         // 나눗셈 연산자
+        Delete,         // 삭제 효과 (금지 표시)
+        Swap,           // 교환 효과 (교환 화살표)
+        Draw            // 드로우 효과
+    }
 }
