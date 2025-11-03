@@ -20,7 +20,10 @@
       "mcp__mcp-unity__get_console_logs",
       "mcp__mcp-unity__select_gameobject",
       "Read(//tmp/ClaudeCodeVS/be0957c1-f549-4101-82d8-b9070deffaae/**)",
-      "Read(//tmp/ClaudeCodeVS/ef769b48-f2cb-4643-adfd-11e561c9121e/**)"
+      "Read(//tmp/ClaudeCodeVS/ef769b48-f2cb-4643-adfd-11e561c9121e/**)",
+      "Bash(mkdir:*)",
+      "Bash(powershell -Command \"(Get-Content ''D:\\Dmain\\dev\\Portfolio\\NumberDuel\\Assets\\Scripts\\Managers\\NetworkGameManager.cs'').Count\")",
+      "Bash(powershell -Command:*)"
     ],
     "deny": [],
     "ask": []
