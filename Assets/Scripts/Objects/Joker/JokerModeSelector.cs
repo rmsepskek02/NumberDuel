@@ -329,16 +329,12 @@ namespace Objects
         {
             if (target == null) return;
 
-            // 대상 선택되면 취소 비활성화
-            if (ExpressionZoneManager.Instance != null)
-            {
-                ExpressionZoneManager.Instance.ClearAllCancelable();
-            }
-
             // ExpressionZone에 삭제 대상 카드 표시
             if (ExpressionZoneManager.Instance != null)
             {
                 ExpressionZoneManager.Instance.SetJokerDeleteTarget(target);
+                // 슬롯 1 취소 가능 상태 유지 (연산 카드처럼)
+                ExpressionZoneManager.Instance.EnableJokerDeleteCancellation();
             }
 
             // 삭제 대상 카드에 아이콘 표시
@@ -388,12 +384,6 @@ namespace Objects
         {
             if (firstTarget == null || secondTarget == null) return;
 
-            // 두 번째 카드 선택되면 취소 비활성화
-            if (ExpressionZoneManager.Instance != null)
-            {
-                ExpressionZoneManager.Instance.ClearAllCancelable();
-            }
-
             // swapFirstCard 초기화
             swapFirstCard = null;
 
@@ -401,6 +391,8 @@ namespace Objects
             if (ExpressionZoneManager.Instance != null)
             {
                 ExpressionZoneManager.Instance.SetJokerSwapSecond(secondTarget);
+                // 슬롯 0, 1 취소 가능 상태 유지 (연산 카드처럼)
+                ExpressionZoneManager.Instance.EnableJokerSwapFirstCancellation();
             }
 
             // 두 번째 스왑 대상 카드에 아이콘 표시
@@ -425,6 +417,12 @@ namespace Objects
         {
             JokerTargetSelector.Instance?.EndTargetSelection();
 
+            // ExpressionZone 슬롯 초기화
+            if (ExpressionZoneManager.Instance != null)
+            {
+                ExpressionZoneManager.Instance.ResetAllSlots();
+            }
+
             InGameManager.Instance.EndProcess();
             EndJokerProcess();
             Hide();
@@ -447,10 +445,11 @@ namespace Objects
             swapFirstCard.SetCardState(false); // Glow 제거
             swapFirstCard = null;
 
-            // ExpressionZone 슬롯 0 초기화
+            // ExpressionZone 전체 슬롯 초기화 후 다시 Swap 모드로 설정
             if (ExpressionZoneManager.Instance != null)
             {
-                ExpressionZoneManager.Instance.ResetJokerFirstSlot();
+                ExpressionZoneManager.Instance.ResetAllSlots();
+                ExpressionZoneManager.Instance.InitForJokerSwap();
                 ExpressionZoneManager.Instance.EnableJokerSwapCancellation();
             }
 
@@ -479,6 +478,12 @@ namespace Objects
             }
 
             JokerTargetSelector.Instance?.EndTargetSelection();
+
+            // ExpressionZone 슬롯 초기화
+            if (ExpressionZoneManager.Instance != null)
+            {
+                ExpressionZoneManager.Instance.ResetAllSlots();
+            }
 
             InGameManager.Instance.EndProcess();
             EndJokerProcess();

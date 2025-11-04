@@ -23,7 +23,8 @@
       "Read(//tmp/ClaudeCodeVS/ef769b48-f2cb-4643-adfd-11e561c9121e/**)",
       "Bash(mkdir:*)",
       "Bash(powershell -Command \"(Get-Content ''D:\\Dmain\\dev\\Portfolio\\NumberDuel\\Assets\\Scripts\\Managers\\NetworkGameManager.cs'').Count\")",
-      "Bash(powershell -Command:*)"
+      "Bash(powershell -Command:*)",
+      "Bash(cd:*)"
     ],
     "deny": [],
     "ask": []
