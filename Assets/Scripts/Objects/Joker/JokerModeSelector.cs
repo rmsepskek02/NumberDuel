@@ -49,6 +49,9 @@ namespace Objects
         private bool isInitialized = false;
         private bool isSpritesSet = false;
         private Dictionary<Card, bool> savedGlowStates = new Dictionary<Card, bool>();
+
+        // Swap 상태 추적
+        private Card swapFirstCard;
         #endregion
 
         #region Unity Lifecycle
@@ -297,6 +300,7 @@ namespace Objects
             if (ExpressionZoneManager.Instance != null)
             {
                 ExpressionZoneManager.Instance.InitForJokerDelete();
+                ExpressionZoneManager.Instance.EnableJokerDeleteCancellation();
             }
 
             JokerTargetSelector.Instance.StartTargetSelection(JokerTargetMode.Delete, OnDeleteTargetSelected);
@@ -311,6 +315,7 @@ namespace Objects
             if (ExpressionZoneManager.Instance != null)
             {
                 ExpressionZoneManager.Instance.InitForJokerSwap();
+                ExpressionZoneManager.Instance.EnableJokerSwapCancellation();
             }
 
             JokerTargetSelector.Instance.StartTargetSelection(JokerTargetMode.SwapFirst, OnSwapFirstTargetSelected);
@@ -321,6 +326,12 @@ namespace Objects
         private void OnDeleteTargetSelected(Card target)
         {
             if (target == null) return;
+
+            // 대상 선택되면 취소 비활성화
+            if (ExpressionZoneManager.Instance != null)
+            {
+                ExpressionZoneManager.Instance.ClearAllCancelable();
+            }
 
             // ExpressionZone에 삭제 대상 카드 표시
             if (ExpressionZoneManager.Instance != null)
@@ -344,10 +355,14 @@ namespace Objects
         {
             if (firstTarget == null) return;
 
+            // 첫 번째 선택 카드 저장
+            swapFirstCard = firstTarget;
+
             // ExpressionZone에 첫 번째 스왑 카드 표시
             if (ExpressionZoneManager.Instance != null)
             {
                 ExpressionZoneManager.Instance.SetJokerSwapFirst(firstTarget);
+                ExpressionZoneManager.Instance.EnableJokerSwapFirstCancellation();
             }
 
             // 첫 번째 스왑 대상 카드에 아이콘 표시
@@ -371,6 +386,15 @@ namespace Objects
         {
             if (firstTarget == null || secondTarget == null) return;
 
+            // 두 번째 카드 선택되면 취소 비활성화
+            if (ExpressionZoneManager.Instance != null)
+            {
+                ExpressionZoneManager.Instance.ClearAllCancelable();
+            }
+
+            // swapFirstCard 초기화
+            swapFirstCard = null;
+
             // ExpressionZone에 두 번째 스왑 카드 표시
             if (ExpressionZoneManager.Instance != null)
             {
@@ -388,6 +412,75 @@ namespace Objects
 
             // 코루틴으로 Swap 시퀀스 실행
             StartCoroutine(SwapCardSequence(firstTarget, secondTarget));
+        }
+        #endregion
+
+        #region Cancellation Methods
+        /// <summary>
+        /// Delete 모드 완전 취소
+        /// </summary>
+        public void CancelDeleteMode()
+        {
+            JokerTargetSelector.Instance?.EndTargetSelection();
+
+            InGameManager.Instance.EndProcess();
+            EndJokerProcess();
+            Hide();
+        }
+
+        /// <summary>
+        /// Swap 첫 번째 카드 선택 취소 (재선택)
+        /// </summary>
+        public void ResetSwapFirstSelection()
+        {
+            if (swapFirstCard == null) return;
+
+            // 첫 번째 선택 카드의 아이콘 숨김
+            swapFirstCard.HideSelectionIcon();
+            if (Manager.NetworkGameManager.Instance != null)
+            {
+                Manager.NetworkGameManager.Instance.HideCardIcon(swapFirstCard);
+            }
+
+            swapFirstCard.SetCardState(false); // Glow 제거
+            swapFirstCard = null;
+
+            // ExpressionZone 슬롯 0 초기화
+            if (ExpressionZoneManager.Instance != null)
+            {
+                ExpressionZoneManager.Instance.ResetJokerFirstSlot();
+                ExpressionZoneManager.Instance.EnableJokerSwapCancellation();
+            }
+
+            // 내 필드 카드 다시 Glow 표시
+            ClearAllGlow();
+            ApplyGlowToPlayerCards();
+
+            // 첫 번째 카드 선택 모드로 복귀
+            JokerTargetSelector.Instance.StartTargetSelection(JokerTargetMode.SwapFirst, OnSwapFirstTargetSelected);
+        }
+
+        /// <summary>
+        /// Swap 모드 완전 취소
+        /// </summary>
+        public void CancelSwapMode()
+        {
+            // 아이콘 숨김
+            if (swapFirstCard != null)
+            {
+                swapFirstCard.HideSelectionIcon();
+                if (Manager.NetworkGameManager.Instance != null)
+                {
+                    Manager.NetworkGameManager.Instance.HideCardIcon(swapFirstCard);
+                }
+                swapFirstCard = null;
+            }
+
+            JokerTargetSelector.Instance?.EndTargetSelection();
+
+            InGameManager.Instance.EndProcess();
+            EndJokerProcess();
+            Hide();
         }
         #endregion
 

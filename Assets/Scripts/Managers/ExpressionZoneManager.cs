@@ -284,7 +284,7 @@ namespace Manager
 
             foreach (int index in slotIndices)
             {
-                if (IsValidSlotIndex(index) && slots[index].IsActive)
+                if (IsValidSlotIndex(index))
                 {
                     slots[index].SetCancelable(true);
                 }
@@ -314,6 +314,10 @@ namespace Manager
                 HandleAttackCancellation(slotIndex);
             else if (InGameManager.Instance.CurrentProcess == GameProcessState.OperatorCalculation)
                 HandleOperationCancellation(slotIndex);
+            else if (InGameManager.Instance.CurrentProcess == GameProcessState.JokerDeleteProcess)
+                HandleJokerDeleteCancellation(slotIndex);
+            else if (InGameManager.Instance.CurrentProcess == GameProcessState.JokerSwapProcess)
+                HandleJokerSwapCancellation(slotIndex);
         }
 
         /// <summary>
@@ -345,6 +349,37 @@ namespace Manager
                     break;
                 case 1: // 연산 모드 취소
                     operatorManager.CancelOperatorMode();
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// 조커 Delete 취소 처리
+        /// </summary>
+        private void HandleJokerDeleteCancellation(int slotIndex)
+        {
+            if (slotIndex == 1) // 슬롯 1 (삭제 이미지) 클릭 시 완전 취소
+            {
+                var jokerSelector = JokerModeSelector.Instance;
+                jokerSelector?.CancelDeleteMode();
+            }
+        }
+
+        /// <summary>
+        /// 조커 Swap 취소 처리
+        /// </summary>
+        private void HandleJokerSwapCancellation(int slotIndex)
+        {
+            var jokerSelector = JokerModeSelector.Instance;
+            if (jokerSelector == null) return;
+
+            switch (slotIndex)
+            {
+                case 0: // 첫 번째 카드 재선택
+                    jokerSelector.ResetSwapFirstSelection();
+                    break;
+                case 1: // Swap 모드 완전 취소
+                    jokerSelector.CancelSwapMode();
                     break;
             }
         }
@@ -468,6 +503,38 @@ namespace Manager
             }
 
             return "green";
+        }
+
+        /// <summary>
+        /// 조커 Delete 모드에서 취소 가능 표시 (슬롯 1만)
+        /// </summary>
+        public void EnableJokerDeleteCancellation()
+        {
+            EnableCancellation(1); // 슬롯 1 (삭제 이미지) 클릭 가능
+        }
+
+        /// <summary>
+        /// 조커 Swap 모드에서 취소 가능 표시 (슬롯 1만)
+        /// </summary>
+        public void EnableJokerSwapCancellation()
+        {
+            EnableCancellation(1); // 슬롯 1 (스왑 이미지) 클릭 가능
+        }
+
+        /// <summary>
+        /// 조커 Swap 첫 번째 선택 후 취소 가능 표시 (슬롯 0, 1)
+        /// </summary>
+        public void EnableJokerSwapFirstCancellation()
+        {
+            EnableCancellation(0, 1); // 슬롯 0, 1 클릭 가능
+        }
+
+        /// <summary>
+        /// 조커 첫 번째 슬롯만 초기화
+        /// </summary>
+        public void ResetJokerFirstSlot()
+        {
+            UpdateSlot(0, "", neutralSprite, false);
         }
         #endregion
 
