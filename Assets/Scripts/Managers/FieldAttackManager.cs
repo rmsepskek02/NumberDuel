@@ -95,6 +95,31 @@ namespace Manager
                 return; // 다른 프로세스 진행 중이면 중단
             }
 
+            // 시크릿 카드인 경우: 오픈으로 전환하고 공격은 진행하지 않음
+            if (attacker.IsSecret)
+            {
+                if (enableDebugLog)
+                    Debug.Log($"[FieldAttackManager] 시크릿 카드 오픈으로 전환: {attacker.name}");
+
+                attacker.OpenSecret();
+
+                // 네트워크 동기화
+                if (NetworkGameManager.Instance != null)
+                {
+                    NetworkGameManager.Instance.SyncSecretOpen(attacker);
+                }
+
+                // 프로세스 종료
+                InGameManager.Instance.EndProcess();
+                return;
+            }
+
+            // 이전 액션 결과 초기화 (새 공격 시작 전)
+            if (ExpressionZoneManager.Instance != null)
+            {
+                ExpressionZoneManager.Instance.ResetAllSlots();
+            }
+
             currentAttacker = attacker;
             SetupExpressionZone(attacker);
 
@@ -133,6 +158,12 @@ namespace Manager
 
             if (enableDebugLog)
                 Debug.Log($"[FieldAttackManager] 빈 필드 직접 공격: {attacker.name}");
+
+            // 방어자 선택 완료 → 취소 불가능 상태로 전환
+            if (ExpressionZoneManager.Instance != null)
+            {
+                ExpressionZoneManager.Instance.ClearAllCancelable();
+            }
 
             // Secret 처리: 공격자가 Secret 상태라면 공개해야 함
             bool attackerWasSecret = attacker.IsSecret;
@@ -231,6 +262,12 @@ namespace Manager
 
             if (enableDebugLog)
                 Debug.Log($"[FieldAttackManager] 공격 시작: {attacker.name} vs {defender.name}");
+
+            // 방어자 선택 완료 → 취소 불가능 상태로 전환
+            if (ExpressionZoneManager.Instance != null)
+            {
+                ExpressionZoneManager.Instance.ClearAllCancelable();
+            }
 
             // Secret 처리: 공격자와 방어자 모두 Secret 상태라면 공개해야 함
             bool attackerWasSecret = attacker.IsSecret;
@@ -452,7 +489,7 @@ namespace Manager
                 InGameManager.Instance.EndProcess();
             }
 
-            ExpressionZoneManager.Instance.ResetAllSlots();
+            // ExpressionZone은 다음 액션 시작 시 초기화 (결과 유지)
             RestoreDefaultGlowStates();
         }
         #endregion

@@ -62,6 +62,7 @@ MonoBehaviour:
   - RPC_RestartGameForAll
   - RPC_HideCardIcon
   - RPC_SyncCardIcon
+  - RPC_SyncSecretOpen
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1

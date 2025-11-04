@@ -86,6 +86,11 @@ namespace Objects
         public bool HasAttackedThisTurn { get; private set; } = false;
 
         /// <summary>
+        /// 이번 턴에 시크릿에서 오픈으로 전환되었는지 여부
+        /// </summary>
+        public bool WasOpenedThisTurn { get; private set; } = false;
+
+        /// <summary>
         /// GLOW 효과 강제 설정 여부
         /// </summary>
         private bool isGlowOverridden = false;
@@ -196,6 +201,12 @@ namespace Objects
             UpdateGlowState();
         }
 
+        public void SetWasOpenedThisTurn(bool opened)
+        {
+            WasOpenedThisTurn = opened;
+            UpdateGlowState();
+        }
+
         public void ResetTurnState()
         {
             WasPlayedThisTurn = false;
@@ -208,6 +219,7 @@ namespace Objects
             WasPlayedThisTurn = false;
             HasAttackedThisTurn = false;
             WasModifiedThisTurn = false;
+            WasOpenedThisTurn = false;
             UpdateGlowState();
         }
         #endregion
@@ -235,6 +247,11 @@ namespace Objects
             }
 
             if (HasAttackedThisTurn)
+            {
+                return false;
+            }
+
+            if (WasOpenedThisTurn)
             {
                 return false;
             }
@@ -437,6 +454,18 @@ namespace Objects
 
             SetSecret(false);
             UpdateGlowState();
+        }
+
+        /// <summary>
+        /// Secret 카드를 수동으로 오픈으로 전환 (플레이어 클릭 시 호출)
+        /// 오픈한 턴에는 공격 불가능
+        /// </summary>
+        public void OpenSecret()
+        {
+            if (!IsSecret) return;
+
+            SetSecret(false); // Sprite와 Text 색상 자동 복원
+            SetWasOpenedThisTurn(true); // 이번 턴 공격 불가
         }
         #endregion
 

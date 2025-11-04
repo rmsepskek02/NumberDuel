@@ -284,6 +284,50 @@ namespace Manager.Network.Sync
         }
         #endregion
 
+        #region Secret Open Synchronization
+        /// <summary>
+        /// 시크릿 카드 오픈을 다른 플레이어에게 동기화
+        /// </summary>
+        /// <param name="card">오픈할 시크릿 카드</param>
+        public void SyncSecretOpen(Card card)
+        {
+            if (!hub.CanPerformNetworkAction())
+                return;
+
+            var networkCard = card.GetComponent<NetworkCard>();
+            if (networkCard == null)
+                return;
+
+            string cardId = networkCard.UniqueId;
+            string ownerType = card.CurrentOwnerType.ToString();
+
+            hub.photonView.RPC("RPC_SyncSecretOpen", RpcTarget.Others, cardId, ownerType);
+        }
+
+        /// <summary>
+        /// 시크릿 카드 오픈 동기화 RPC 수신 처리
+        /// </summary>
+        /// <param name="cardId">카드 고유 ID</param>
+        /// <param name="ownerType">카드 소유자 타입</param>
+        public void ApplyRemoteSecretOpen(string cardId, string ownerType)
+        {
+            try
+            {
+                // 카드 찾기 (소유자 변환 적용)
+                var card = hub.FindCardByNetworkId(cardId);
+                if (card == null)
+                    return;
+
+                // 시크릿 오픈 (Sprite와 Text 색상 자동 복원)
+                card.OpenSecret();
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[NetworkCardSyncManager] 시크릿 오픈 동기화 실패: {ex.Message}");
+            }
+        }
+        #endregion
+
         #region Utility Methods (Public for other Sync managers)
         /// <summary>
         /// 특정 소유자와 타입의 Zone 찾기

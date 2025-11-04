@@ -296,9 +296,10 @@ namespace Objects
             InGameManager.Instance.StartProcess(GameProcessState.JokerDeleteProcess);
             StartJokerProcess(JokerEffectType.Delete);
 
-            // ExpressionZone에 Delete 효과 초기화
+            // 이전 액션 결과 초기화 및 Delete 효과 표시
             if (ExpressionZoneManager.Instance != null)
             {
+                ExpressionZoneManager.Instance.ResetAllSlots();
                 ExpressionZoneManager.Instance.InitForJokerDelete();
                 ExpressionZoneManager.Instance.EnableJokerDeleteCancellation();
             }
@@ -311,9 +312,10 @@ namespace Objects
             InGameManager.Instance.StartProcess(GameProcessState.JokerSwapProcess);
             StartJokerProcess(JokerEffectType.Swap);
 
-            // ExpressionZone에 Swap 효과 초기화
+            // 이전 액션 결과 초기화 및 Swap 효과 표시
             if (ExpressionZoneManager.Instance != null)
             {
+                ExpressionZoneManager.Instance.ResetAllSlots();
                 ExpressionZoneManager.Instance.InitForJokerSwap();
                 ExpressionZoneManager.Instance.EnableJokerSwapCancellation();
             }
@@ -590,11 +592,7 @@ namespace Objects
                 card.HideSelectionIcon();
             }
 
-            // ExpressionZone 초기화
-            if (ExpressionZoneManager.Instance != null)
-            {
-                ExpressionZoneManager.Instance.ResetAllSlots();
-            }
+            // ExpressionZone은 다음 액션 시작 시 초기화 (결과 유지)
 
             ClearAllGlow();
             RestoreGlowStates();

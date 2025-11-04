@@ -398,5 +398,25 @@ namespace Manager
             iconSync?.ApplyRemoteHideIcon(cardId, ownerType);
         }
         #endregion
+
+        #region Secret Open Synchronization
+        /// <summary>
+        /// 시크릿 카드 오픈을 네트워크로 동기화
+        /// </summary>
+        /// <param name="card">오픈할 시크릿 카드</param>
+        public void SyncSecretOpen(Card card)
+        {
+            cardSync?.SyncSecretOpen(card);
+        }
+
+        /// <summary>
+        /// 시크릿 카드 오픈 RPC 수신
+        /// </summary>
+        [PunRPC]
+        private void RPC_SyncSecretOpen(string cardId, string ownerType)
+        {
+            cardSync?.ApplyRemoteSecretOpen(cardId, ownerType);
+        }
+        #endregion
     }
 }

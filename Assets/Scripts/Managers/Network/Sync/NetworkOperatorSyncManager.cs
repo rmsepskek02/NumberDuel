@@ -260,12 +260,7 @@ namespace Manager.Network.Sync
             hub.RemoveBackCardFromHand(CardZone.OwnerType.Opponent);
             DestroyRemoteCard(targetCard);
 
-            // ExpressionZone 초기화
-            yield return new WaitForSeconds(0.3f);
-            if (ExpressionZoneManager.Instance != null)
-            {
-                ExpressionZoneManager.Instance.ResetAllSlots();
-            }
+            // ExpressionZone은 다음 액션 시작 시 초기화 (결과 유지)
         }
 
         /// <summary>
@@ -308,12 +303,7 @@ namespace Manager.Network.Sync
 
             hub.RemoveBackCardFromHand(CardZone.OwnerType.Opponent);
 
-            // ExpressionZone 초기화
-            yield return new WaitForSeconds(0.3f);
-            if (ExpressionZoneManager.Instance != null)
-            {
-                ExpressionZoneManager.Instance.ResetAllSlots();
-            }
+            // ExpressionZone은 다음 액션 시작 시 초기화 (결과 유지)
         }
         #endregion
 
