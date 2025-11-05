@@ -385,8 +385,10 @@ namespace Objects
                 }
                 else
                 {
-                    // 상대 Secret 카드: 텍스트 숨김
-                    cardTMP.gameObject.SetActive(false);
+                    // 상대 Secret 카드: "?" 표시 (RawValue는 유지됨)
+                    cardTMP.gameObject.SetActive(true);
+                    cardTMP.text = "?";
+                    cardTMP.color = Color.white;
                 }
             }
         }

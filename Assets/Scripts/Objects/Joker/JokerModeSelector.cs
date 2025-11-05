@@ -316,7 +316,8 @@ namespace Objects
             if (ExpressionZoneManager.Instance != null)
             {
                 ExpressionZoneManager.Instance.ResetAllSlots();
-                ExpressionZoneManager.Instance.InitForJokerSwap();
+                // Player가 스왑을 시작하므로 Player 색상 사용
+                ExpressionZoneManager.Instance.InitForJokerSwap(CardZone.OwnerType.Player);
                 ExpressionZoneManager.Instance.EnableJokerSwapCancellation();
             }
 
@@ -387,12 +388,11 @@ namespace Objects
             // swapFirstCard 초기화
             swapFirstCard = null;
 
-            // ExpressionZone에 두 번째 스왑 카드 표시
+            // 연산존 슬롯 Glow 제거 (취소 불가 상태)
             if (ExpressionZoneManager.Instance != null)
             {
+                ExpressionZoneManager.Instance.ClearAllCancelable();
                 ExpressionZoneManager.Instance.SetJokerSwapSecond(secondTarget);
-                // 슬롯 0, 1 취소 가능 상태 유지 (연산 카드처럼)
-                ExpressionZoneManager.Instance.EnableJokerSwapFirstCancellation();
             }
 
             // 두 번째 스왑 대상 카드에 아이콘 표시
@@ -449,7 +449,8 @@ namespace Objects
             if (ExpressionZoneManager.Instance != null)
             {
                 ExpressionZoneManager.Instance.ResetAllSlots();
-                ExpressionZoneManager.Instance.InitForJokerSwap();
+                // Player가 스왑을 시작하므로 Player 색상 사용
+                ExpressionZoneManager.Instance.InitForJokerSwap(CardZone.OwnerType.Player);
                 ExpressionZoneManager.Instance.EnableJokerSwapCancellation();
             }
 
@@ -537,7 +538,21 @@ namespace Objects
             // ExpressionZone에 모든 내용 표시 후 2초 대기 (플레이어가 볼 시간)
             yield return new WaitForSeconds(2.0f);
 
-            // 값 교환
+            // 1. 시크릿 카드 공개 (스왑 후 OPEN 상태로 전환)
+            bool firstWasSecret = firstTarget.IsSecret;
+            bool secondWasSecret = secondTarget.IsSecret;
+
+            if (firstWasSecret)
+            {
+                firstTarget.RevealSecret();
+            }
+
+            if (secondWasSecret)
+            {
+                secondTarget.RevealSecret();
+            }
+
+            // 2. 값 교환
             var firstCardText = firstTarget.GetComponentInChildren<CardText>();
             var secondCardText = secondTarget.GetComponentInChildren<CardText>();
 
@@ -546,11 +561,14 @@ namespace Objects
                 float firstValue = firstCardText.RawValue;
                 float secondValue = secondCardText.RawValue;
 
-                // 1. 값 교환
                 firstCardText.SetRawValue(secondValue);
                 secondCardText.SetRawValue(firstValue);
 
-                // 2. 네트워크 동기화 전송
+                // 3. 공격 방지 플래그 설정 (스왑된 카드는 이번 턴 공격 불가)
+                firstTarget.SetWasModifiedThisTurn(true);
+                secondTarget.SetWasModifiedThisTurn(true);
+
+                // 4. 네트워크 동기화 전송
                 if (NetworkGameManager.Instance != null)
                 {
                     var targetCards = new List<Card> { firstTarget, secondTarget };
@@ -571,7 +589,7 @@ namespace Objects
                 Manager.NetworkGameManager.Instance.HideCardIcon(secondTarget);
             }
 
-            // 3. 조커 카드 삭제
+            // 5. 조커 카드 삭제
             RemoveJokerCardImmediately();
 
             InGameManager.Instance.EndProcess();
@@ -619,10 +637,12 @@ namespace Objects
 
         private void RestoreGlowStates()
         {
-            foreach (var kvp in savedGlowStates)
+            // Glow override를 해제하고 UpdateGlowState를 호출하여
+            // WasModifiedThisTurn 등의 플래그를 올바르게 검증받도록 함
+            var allCards = InGameManager.Instance.GetAllFieldCards();
+            foreach (var card in allCards)
             {
-                if (kvp.Value)
-                    kvp.Key.SetCardState(true, Global.GlowGreen);
+                card.ClearGlowOverride();
             }
         }
 

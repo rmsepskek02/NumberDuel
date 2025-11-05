@@ -426,12 +426,13 @@ namespace Manager
         /// 조커 교환(Swap) 효과용 초기화
         /// 슬롯 1번에 스왑 이미지 카드 표시
         /// </summary>
-        public void InitForJokerSwap()
+        /// <param name="initiatorOwnerType">스왑을 시작한 플레이어 타입 (색상 결정용)</param>
+        public void InitForJokerSwap(CardZone.OwnerType initiatorOwnerType = CardZone.OwnerType.Player)
         {
             ClearAllCancelable();
 
-            // 스왑 이미지 스프라이트 가져오기
-            Sprite swapSprite = GetJokerEffectSprite("swap");
+            // 스왑을 시작한 플레이어의 색상으로 이미지 가져오기
+            Sprite swapSprite = GetJokerEffectSprite("swap", initiatorOwnerType);
 
             // 슬롯 0: 비워둠 (첫 번째 카드 대기)
             UpdateSlot(0, "", neutralSprite, false);
@@ -462,19 +463,31 @@ namespace Manager
         }
 
         /// <summary>
-        /// 현재 플레이어 색상에 맞는 조커 효과 스프라이트 가져오기
+        /// 조커 효과 스프라이트 가져오기 (색상 지정 가능)
         /// </summary>
-        private Sprite GetJokerEffectSprite(string effectType)
+        /// <param name="effectType">효과 타입 (delete, swap 등)</param>
+        /// <param name="ownerType">색상을 결정할 Owner 타입</param>
+        private Sprite GetJokerEffectSprite(string effectType, CardZone.OwnerType ownerType = CardZone.OwnerType.Player)
         {
             if (ResourcesManager.Instance == null) return null;
 
-            var playerSprite = ResourcesManager.Instance.GetPlayerSprite();
-            if (playerSprite == null) return null;
+            // Owner 타입에 따라 색상 스프라이트 선택
+            Sprite colorSprite;
+            if (ownerType == CardZone.OwnerType.Player)
+            {
+                colorSprite = ResourcesManager.Instance.GetPlayerSprite();
+            }
+            else
+            {
+                colorSprite = ResourcesManager.Instance.GetOpponentSprite();
+            }
+
+            if (colorSprite == null) return null;
 
             // 색상 추출 (예: "color_green_1" -> "green")
-            string colorName = ExtractColorFromSpriteName(playerSprite.name);
+            string colorName = ExtractColorFromSpriteName(colorSprite.name);
 
-            // 조커 효과 스프라이트 이름 생성 (예: "color_green_delete")
+            // 조커 효과 스프라이트 이름 생성 (예: "color_green_swap")
             string spriteName = $"color_{colorName}_{effectType}";
 
             return ResourcesManager.Instance.GetSprite(Global.Joker, spriteName);
@@ -598,28 +611,46 @@ namespace Manager
         {
             var cardText = card?.GetComponentInChildren<CardText>();
 
-            // 아이콘이 아닌 실제 카드 오브젝트에서 SpriteRenderer 찾기
-            SpriteRenderer spriteRenderer = null;
-            if (card != null)
-            {
-                var allRenderers = card.GetComponentsInChildren<SpriteRenderer>(true);
-                foreach (var renderer in allRenderers)
-                {
-                    // "Icon"이 포함된 GameObject는 제외
-                    if (!renderer.gameObject.name.Contains("Icon"))
-                    {
-                        spriteRenderer = renderer;
-                        break;
-                    }
-                }
-            }
-
-            if (cardText?.TextValue == null || spriteRenderer?.sprite == null)
+            if (cardText == null)
             {
                 return;
             }
 
-            UpdateSlot(slotIndex, cardText.TextValue, spriteRenderer.sprite, true);
+            // 연산존에서는 항상 RawValue 사용 (시크릿 카드도 실제 숫자 공개)
+            string displayText = Mathf.FloorToInt(cardText.RawValue).ToString();
+
+            // 스프라이트 결정 로직
+            Sprite targetSprite;
+
+            if (card.IsSecret)
+            {
+                // 시크릿 카드: 검은 배경 스프라이트 사용
+                targetSprite = ResourcesManager.Instance.GetSprite(Global.Card, Global.SpriteColorBlack);
+                if (targetSprite == null)
+                {
+                    targetSprite = ResourcesManager.Instance.GetSprite(Global.Card, "color_back");
+                }
+            }
+            else
+            {
+                // 오픈 카드: Owner에 따른 색상 스프라이트 사용
+                if (card.CurrentOwnerType == CardZone.OwnerType.Player)
+                {
+                    targetSprite = ResourcesManager.Instance.GetPlayerSprite();
+                }
+                else
+                {
+                    targetSprite = ResourcesManager.Instance.GetOpponentSprite();
+                }
+            }
+
+            if (targetSprite == null)
+            {
+                return;
+            }
+
+            // 연산존에서는 시크릿 카드도 숫자 표시
+            UpdateSlot(slotIndex, displayText, targetSprite, true);
         }
 
         /// <summary>

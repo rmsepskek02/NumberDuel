@@ -277,10 +277,10 @@ namespace Manager.Network.Sync
             if (firstCard == null || secondCard == null)
                 yield break;
 
-            // ExpressionZone에 Swap 효과 표시
+            // ExpressionZone에 Swap 효과 표시 (Opponent가 스왑을 시작했으므로 Opponent 색상 사용)
             if (ExpressionZoneManager.Instance != null)
             {
-                ExpressionZoneManager.Instance.InitForJokerSwap();
+                ExpressionZoneManager.Instance.InitForJokerSwap(CardZone.OwnerType.Opponent);
                 ExpressionZoneManager.Instance.SetJokerSwapFirst(firstCard);
                 ExpressionZoneManager.Instance.SetJokerSwapSecond(secondCard);
             }
@@ -288,7 +288,18 @@ namespace Manager.Network.Sync
             // 플레이어가 볼 수 있도록 2초 대기
             yield return new WaitForSeconds(2.0f);
 
-            // 값 교환
+            // 1. 시크릿 카드 공개 (스왑 후 OPEN 상태로 전환)
+            if (firstCard.IsSecret)
+            {
+                firstCard.RevealSecret();
+            }
+
+            if (secondCard.IsSecret)
+            {
+                secondCard.RevealSecret();
+            }
+
+            // 2. 값 교환
             var firstCardText = firstCard.GetComponentInChildren<CardText>();
             var secondCardText = secondCard.GetComponentInChildren<CardText>();
 
@@ -300,6 +311,10 @@ namespace Manager.Network.Sync
                 firstCardText.SetRawValue(secondValue);
                 secondCardText.SetRawValue(firstValue);
             }
+
+            // 3. 공격 방지 플래그 설정 (스왑된 카드는 이번 턴 공격 불가)
+            firstCard.SetWasModifiedThisTurn(true);
+            secondCard.SetWasModifiedThisTurn(true);
 
             hub.RemoveBackCardFromHand(CardZone.OwnerType.Opponent);
 
