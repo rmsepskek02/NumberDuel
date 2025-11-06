@@ -177,7 +177,7 @@ namespace Manager.Network.Sync
                 }
 
                 yield return new WaitForSeconds(1.5f);
-                ezManager.ShowResult(data.attackerValue, data.defenderValue);
+                ezManager.ShowResult(attacker, defender);
             }
 
             yield return new WaitForSeconds(1f);

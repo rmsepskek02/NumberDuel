@@ -37,7 +37,8 @@ namespace Manager
             { CardIconType.Multiply, "Multiply" },  // 곱셈 (×)
             { CardIconType.Divide, "Divide" },      // 나눗셈 (÷)
             { CardIconType.Delete, "Delete" },      // 삭제 (금지 표시)
-            { CardIconType.Swap, "Swap" }           // 교환 (화살표)
+            { CardIconType.Swap, "Swap" },          // 교환 (화살표)
+            { CardIconType.Selection, "Selection" } // 시크릿 오픈 선택
         };
 
         /// <summary>
@@ -53,7 +54,8 @@ namespace Manager
             { CardIconType.Multiply, 1.5f },    // × 기호 - 1.5배
             { CardIconType.Divide, 1.5f },      // ÷ 기호 - 1.5배
             { CardIconType.Delete, 1.3f },      // 금지 표시 - 1.3배
-            { CardIconType.Swap, 1.3f }         // 교환 화살표 - 1.3배
+            { CardIconType.Swap, 1.3f },        // 교환 화살표 - 1.3배
+            { CardIconType.Selection, 1.0f }    // 선택 표시 - 기본 크기
         };
 
         /// <summary>

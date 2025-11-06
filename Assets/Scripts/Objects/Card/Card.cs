@@ -430,6 +430,13 @@ namespace Objects
             {
                 cardTMP.gameObject.SetActive(true);
 
+                // RawValue를 실제 숫자로 표시 (시크릿에서 오픈으로 전환)
+                if (cardText != null)
+                {
+                    float rawValue = cardText.RawValue;
+                    cardTMP.text = Mathf.FloorToInt(rawValue).ToString();
+                }
+
                 // 색상 원래대로 복원
                 Color targetColor;
                 if (CurrentOwnerType == CardZone.OwnerType.Player)
@@ -468,6 +475,20 @@ namespace Objects
 
             SetSecret(false); // Sprite와 Text 색상 자동 복원
             SetWasOpenedThisTurn(true); // 이번 턴 공격 불가
+
+            // Selection 아이콘을 3초간 표시
+            StartCoroutine(ShowOpenSecretIconTemporary(3f));
+        }
+
+        /// <summary>
+        /// 시크릿 오픈 아이콘을 일정 시간 동안 표시 후 자동으로 숨김
+        /// </summary>
+        /// <param name="duration">아이콘 표시 지속 시간 (초)</param>
+        public IEnumerator ShowOpenSecretIconTemporary(float duration = 3f)
+        {
+            ShowSelectionIcon(CardIconType.Selection);
+            yield return new WaitForSeconds(duration);
+            HideSelectionIcon();
         }
         #endregion
 

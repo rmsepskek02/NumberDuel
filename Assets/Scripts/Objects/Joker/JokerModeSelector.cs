@@ -338,14 +338,10 @@ namespace Objects
                 ExpressionZoneManager.Instance.EnableJokerDeleteCancellation();
             }
 
-            // 삭제 대상 카드에 아이콘 표시
+            // 삭제 대상 카드에 아이콘 표시 (로컬만)
             target.ShowSelectionIcon(CardIconType.Delete);
 
-            // 네트워크 동기화
-            if (Manager.NetworkGameManager.Instance != null)
-            {
-                Manager.NetworkGameManager.Instance.SyncCardIcon(target, CardIconType.Delete);
-            }
+            // 네트워크 동기화는 DeleteCardSequence()에서 수행 (취소 불가 시점)
 
             StartCoroutine(DeleteCardSequence(target));
         }
@@ -364,14 +360,10 @@ namespace Objects
                 ExpressionZoneManager.Instance.EnableJokerSwapFirstCancellation();
             }
 
-            // 첫 번째 스왑 대상 카드에 아이콘 표시
+            // 첫 번째 스왑 대상 카드에 아이콘 표시 (로컬만)
             firstTarget.ShowSelectionIcon(CardIconType.Swap);
 
-            // 네트워크 동기화
-            if (Manager.NetworkGameManager.Instance != null)
-            {
-                Manager.NetworkGameManager.Instance.SyncCardIcon(firstTarget, CardIconType.Swap);
-            }
+            // 네트워크 동기화는 OnSwapSecondTargetSelected()에서 수행 (취소 불가 시점)
 
             ClearAllGlow();
             ApplyGlowToOpponentCards();
@@ -395,12 +387,13 @@ namespace Objects
                 ExpressionZoneManager.Instance.SetJokerSwapSecond(secondTarget);
             }
 
-            // 두 번째 스왑 대상 카드에 아이콘 표시
+            // 두 번째 스왑 대상 카드에 아이콘 표시 (로컬)
             secondTarget.ShowSelectionIcon(CardIconType.Swap);
 
-            // 네트워크 동기화 (아이콘 표시)
+            // 취소 불가능 시점 - 네트워크에 양쪽 아이콘 동기화
             if (Manager.NetworkGameManager.Instance != null)
             {
+                Manager.NetworkGameManager.Instance.SyncCardIcon(firstTarget, CardIconType.Swap);
                 Manager.NetworkGameManager.Instance.SyncCardIcon(secondTarget, CardIconType.Swap);
             }
 
@@ -495,6 +488,12 @@ namespace Objects
         #region Card Sequences
         private IEnumerator DeleteCardSequence(Card targetCard)
         {
+            // 취소 불가능 시점 - 네트워크에 아이콘 동기화
+            if (Manager.NetworkGameManager.Instance != null)
+            {
+                Manager.NetworkGameManager.Instance.SyncCardIcon(targetCard, CardIconType.Delete);
+            }
+
             // ExpressionZone에 모든 내용 표시 후 2초 대기 (플레이어가 볼 시간)
             yield return new WaitForSeconds(2.0f);
 

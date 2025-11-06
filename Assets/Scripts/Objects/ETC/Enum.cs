@@ -82,6 +82,7 @@ namespace Objects
         Divide,         // 나눗셈 연산자
         Delete,         // 삭제 효과 (금지 표시)
         Swap,           // 교환 효과 (교환 화살표)
-        Draw            // 드로우 효과
+        Draw,           // 드로우 효과
+        Selection       // 시크릿 오픈 선택 표시
     }
 }

@@ -217,10 +217,22 @@ namespace Manager
         /// <summary>
         /// 연산 결과를 4번 슬롯에 표시
         /// </summary>
-        public void ShowResult(float a, float b, OperatorType? operatorType = null)
+        public void ShowResult(Card firstCard, Card secondCard, OperatorType? operatorType = null)
         {
+            // 카드 값 추출
+            float a = firstCard.GetComponentInChildren<CardText>().RawValue;
+            float b = secondCard.GetComponentInChildren<CardText>().RawValue;
+
+            // 상대방 시크릿 카드 포함 여부 체크
+            bool hasOpponentSecret =
+                (firstCard.IsSecret && firstCard.CurrentOwnerType == CardZone.OwnerType.Opponent) ||
+                (secondCard.IsSecret && secondCard.CurrentOwnerType == CardZone.OwnerType.Opponent);
+
+            // 실제 연산 (내부적으로는 정확한 값 계산)
             float result = CalculateResult(a, b, operatorType);
-            string resultText = FormatResultText(result, operatorType);
+
+            // 상대 시크릿 포함 시 "?" 표시, 그 외에는 정확한 결과 표시
+            string resultText = hasOpponentSecret ? "?" : FormatResultText(result, operatorType);
             Sprite resultSprite = GetResultSprite(result, operatorType);
 
             UpdateSlot(4, resultText, resultSprite, true);
@@ -616,8 +628,16 @@ namespace Manager
                 return;
             }
 
-            // 연산존에서는 항상 RawValue 사용 (시크릿 카드도 실제 숫자 공개)
-            string displayText = Mathf.FloorToInt(cardText.RawValue).ToString();
+            // 상대방의 시크릿 카드는 "?" 표시, 그 외에는 실제 값 표시
+            string displayText;
+            if (card.IsSecret && card.CurrentOwnerType == CardZone.OwnerType.Opponent)
+            {
+                displayText = "?";
+            }
+            else
+            {
+                displayText = Mathf.FloorToInt(cardText.RawValue).ToString();
+            }
 
             // 스프라이트 결정 로직
             Sprite targetSprite;

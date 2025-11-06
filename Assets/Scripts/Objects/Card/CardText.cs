@@ -50,22 +50,42 @@ public class CardText : MonoBehaviour
     /// <summary>
     /// RawValue를 외부에서 변경할 수 있도록 하는 메서드 - 나누기 연산 대응 수정
     /// 내부적으로 표시용 텍스트도 자동으로 갱신됩니다.
+    /// 상대방 시크릿 카드의 경우 RawValue만 업데이트하고 텍스트는 "?" 유지
     /// </summary>
     public void SetRawValue(float newValue)
     {
         // 나누기 연산 결과는 정수 부분만 저장 (몫만)
         _rawValue = Mathf.Floor(newValue);
         _textValue = FormatNumber(_rawValue.ToString());
+
+        // 상대방 시크릿 카드는 텍스트 업데이트 스킵
+        Card card = GetComponentInParent<Card>();
+        if (card != null && card.IsSecret && card.CurrentOwnerType == CardZone.OwnerType.Opponent)
+        {
+            // RawValue만 업데이트, 텍스트는 "?" 유지
+            return;
+        }
+
         UpdateText();
     }
 
     /// <summary>
     /// 정수 값으로 직접 설정 (성능 최적화)
+    /// 상대방 시크릿 카드의 경우 RawValue만 업데이트하고 텍스트는 "?" 유지
     /// </summary>
     public void SetRawValue(int newValue)
     {
         _rawValue = newValue;
         _textValue = FormatNumber(newValue.ToString());
+
+        // 상대방 시크릿 카드는 텍스트 업데이트 스킵
+        Card card = GetComponentInParent<Card>();
+        if (card != null && card.IsSecret && card.CurrentOwnerType == CardZone.OwnerType.Opponent)
+        {
+            // RawValue만 업데이트, 텍스트는 "?" 유지
+            return;
+        }
+
         UpdateText();
     }
 

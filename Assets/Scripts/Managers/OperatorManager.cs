@@ -167,15 +167,11 @@ namespace Manager
             firstCard = card;
             currentState = State.FirstCardSelected;
 
-            // 첫 번째 카드에 연산자 아이콘 표시
+            // 첫 번째 카드에 연산자 아이콘 표시 (로컬만)
             CardIconType iconType = ResourcesManager.Instance.OperatorToIconType(currentOperator);
             firstCard.ShowSelectionIcon(iconType);
 
-            // 네트워크 동기화
-            if (NetworkGameManager.Instance != null)
-            {
-                NetworkGameManager.Instance.SyncCardIcon(firstCard, iconType);
-            }
+            // 네트워크 동기화는 ExecuteOperation()에서 수행 (취소 불가 시점)
 
             ExpressionZoneManager.Instance.SetFirstOperand(card);
             ExpressionZoneManager.Instance.UpdateOperationFirstSelected();
@@ -191,15 +187,11 @@ namespace Manager
             secondCard = card;
             currentState = State.Processing;
 
-            // 두 번째 카드에 연산자 아이콘 표시
+            // 두 번째 카드에 연산자 아이콘 표시 (로컬만)
             CardIconType iconType = ResourcesManager.Instance.OperatorToIconType(currentOperator);
             secondCard.ShowSelectionIcon(iconType);
 
-            // 네트워크 동기화
-            if (NetworkGameManager.Instance != null)
-            {
-                NetworkGameManager.Instance.SyncCardIcon(secondCard, iconType);
-            }
+            // 네트워크 동기화는 ExecuteOperation()에서 수행 (취소 불가 시점)
 
             StartCoroutine(ExecuteOperation());
         }
@@ -213,6 +205,14 @@ namespace Manager
         {
             ExpressionZoneManager.Instance.ClearAllCancelable();
 
+            // 취소 불가능 시점 - 네트워크에 아이콘 동기화
+            CardIconType iconType = ResourcesManager.Instance.OperatorToIconType(currentOperator);
+            if (NetworkGameManager.Instance != null)
+            {
+                NetworkGameManager.Instance.SyncCardIcon(firstCard, iconType);
+                NetworkGameManager.Instance.SyncCardIcon(secondCard, iconType);
+            }
+
             // 연산 시각화
             var ezManager = ExpressionZoneManager.Instance;
             ezManager.SetFirstOperand(firstCard);
@@ -221,14 +221,16 @@ namespace Manager
 
             yield return new WaitForSeconds(1.2f);
 
-            // 카드 값 가져오기 BEFORE로 옮긴 것 주의!
-            var (first, second) = GetCardValues();
-            ezManager.ShowResult(first, second, currentOperator);
+            // 연산 결과 표시 (Card 객체 전달 - 시크릿 카드 처리 포함)
+            ezManager.ShowResult(firstCard, secondCard, currentOperator);
 
             yield return new WaitForSeconds(0.6f);
 
-            // 네트워크 동기화는 카드 값 가져온 BEFORE에 호출!
+            // 카드 값 가져오기
+            var (first, second) = GetCardValues();
             float result = CalculateResult(first, second);
+
+            // 네트워크 동기화
             if (NetworkGameManager.Instance != null)
             {
                 NetworkGameManager.Instance.SyncOperationResult(

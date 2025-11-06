@@ -109,7 +109,7 @@ namespace Manager.Network.Sync
                 ezManager.SetOperatorByType(opType);
 
                 ezManager.SetSecondOperand(secondCard);
-                ezManager.ShowResult(data.firstCardValue, data.secondCardValue, opType);
+                ezManager.ShowResult(firstCard, secondCard, opType);
             }
 
             yield return new WaitForSeconds(1.5f);

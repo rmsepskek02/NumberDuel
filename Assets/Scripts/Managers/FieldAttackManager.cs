@@ -309,8 +309,8 @@ namespace Manager
                 yield break;
             }
 
-            // 공격 결과 계산 및 표시
-            ezManager.ShowResult(originalAttackerValue, originalDefenderValue);
+            // 공격 결과 계산 및 표시 (Card 객체 전달)
+            ezManager.ShowResult(attacker, defender);
 
             yield return new WaitForSeconds(1f);
 
