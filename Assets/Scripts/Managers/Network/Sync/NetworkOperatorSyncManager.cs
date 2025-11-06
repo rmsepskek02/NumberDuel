@@ -75,12 +75,16 @@ namespace Manager.Network.Sync
         {
             try
             {
+                // 원격 액션 시작 (카운터 증가)
+                hub.StartRemoteAction();
+
                 var opData = JsonUtility.FromJson<OperationData>(jsonData);
                 hub.StartCoroutine(ApplyRemoteOperationInternal(opData));
             }
             catch (System.Exception)
             {
-                // 오류 처리
+                // 오류 발생 시 카운터 감소
+                hub.EndRemoteAction();
             }
         }
 
@@ -96,7 +100,11 @@ namespace Manager.Network.Sync
             var secondCard = hub.FindCardByNetworkId(data.secondCardId);
 
             if (firstCard == null || secondCard == null)
+            {
+                // 카드를 찾지 못하면 카운터 감소 후 종료
+                hub.EndRemoteAction();
                 yield break;
+            }
 
             // ExpressionZone에 수식 표시
             var ezManager = ExpressionZoneManager.Instance;
@@ -145,6 +153,9 @@ namespace Manager.Network.Sync
             }
 
             hub.RemoveBackCardFromHand(CardZone.OwnerType.Opponent);
+
+            // 모든 작업 완료 - 원격 액션 종료 (카운터 감소)
+            hub.EndRemoteAction();
         }
         #endregion
 
@@ -187,12 +198,16 @@ namespace Manager.Network.Sync
         {
             try
             {
+                // 원격 액션 시작 (카운터 증가)
+                hub.StartRemoteAction();
+
                 var jokerData = JsonUtility.FromJson<JokerData>(jsonData);
                 hub.StartCoroutine(ApplyRemoteJokerInternal(jokerData));
             }
             catch (System.Exception)
             {
-                // 오류 처리
+                // 오류 발생 시 카운터 감소
+                hub.EndRemoteAction();
             }
         }
 
@@ -217,6 +232,9 @@ namespace Manager.Network.Sync
                     yield return ApplyRemoteSwap(data);
                     break;
             }
+
+            // 모든 작업 완료 - 원격 액션 종료 (카운터 감소)
+            hub.EndRemoteAction();
         }
 
         /// <summary>

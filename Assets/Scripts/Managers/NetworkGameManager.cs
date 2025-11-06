@@ -84,6 +84,19 @@ namespace Manager
         /// 아이콘 동기화 매니저
         /// </summary>
         private NetworkIconSyncManager iconSync;
+
+        /// <summary>
+        /// 현재 진행 중인 원격 액션의 개수 (수신자 측)
+        /// RPC를 통해 받은 액션(연산, 공격 등)이 처리 중일 때 증가
+        /// 코루틴 완료 시 감소
+        /// </summary>
+        private int pendingRemoteActions = 0;
+
+        /// <summary>
+        /// 원격 액션이 진행 중인지 여부
+        /// UI에서 버튼 상태 확인에 사용
+        /// </summary>
+        public bool HasPendingRemoteActions => pendingRemoteActions > 0;
         #endregion
 
         #region Card Color Synchronization System
@@ -217,6 +230,33 @@ namespace Manager
         public void RemoveBackCardFromHand(CardZone.OwnerType owner)
         {
             cardSync?.RemoveBackCardFromHand(owner);
+        }
+
+        /// <summary>
+        /// 원격 액션 시작 (카운터 증가)
+        /// RPC 핸들러에서 코루틴 시작 전에 호출
+        /// </summary>
+        public void StartRemoteAction()
+        {
+            pendingRemoteActions++;
+            Debug.Log($"[NetworkGameManager] 원격 액션 시작 - 진행 중인 액션: {pendingRemoteActions}개");
+        }
+
+        /// <summary>
+        /// 원격 액션 종료 (카운터 감소)
+        /// 코루틴 완료 시 호출
+        /// </summary>
+        public void EndRemoteAction()
+        {
+            pendingRemoteActions--;
+            if (pendingRemoteActions < 0) pendingRemoteActions = 0; // 안전장치
+            Debug.Log($"[NetworkGameManager] 원격 액션 완료 - 남은 액션: {pendingRemoteActions}개");
+
+            // 모든 원격 액션이 완료되었고, 대기 중인 턴 종료가 있으면 실행
+            if (pendingRemoteActions == 0 && TurnManager.Instance != null)
+            {
+                TurnManager.Instance.CheckPendingEndTurn();
+            }
         }
         #endregion
 

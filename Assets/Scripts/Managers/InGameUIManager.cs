@@ -57,6 +57,7 @@ namespace Manager
         void Update()
         {
             UpdateTurnDisplay();
+            UpdateEndButtonState();
         }
         #endregion
 
@@ -89,6 +90,35 @@ namespace Manager
             else
             {
                 turn.text = "대기 중";
+            }
+        }
+
+        /// <summary>
+        /// 턴 종료 버튼 상태 업데이트
+        /// 턴 종료가 예약되었거나 턴 전환 중이거나 원격 액션 진행 중이면 버튼 비활성화
+        /// </summary>
+        private void UpdateEndButtonState()
+        {
+            if (TurnManager.Instance == null || endButton == null) return;
+
+            // 게임이 시작되지 않았거나 내 턴이 아니면 처리하지 않음
+            if (!TurnManager.Instance.IsGameStarted || !TurnManager.Instance.IsLocalPlayerTurn)
+                return;
+
+            // 턴 종료가 예약되어 있거나 턴 전환 중이거나 원격 액션 진행 중이면 버튼 비활성화
+            bool hasPendingRemoteActions = NetworkGameManager.Instance != null &&
+                                           NetworkGameManager.Instance.HasPendingRemoteActions;
+
+            if (TurnManager.Instance.IsPendingEndTurn ||
+                TurnManager.Instance.IsProcessingTurn ||
+                hasPendingRemoteActions)
+            {
+                SetButtonState(endButton, false, enabledEndSprite);
+            }
+            else
+            {
+                // 모든 조건이 해제되면 활성화
+                SetButtonState(endButton, true, enabledEndSprite);
             }
         }
         #endregion

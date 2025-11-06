@@ -92,11 +92,17 @@ namespace Manager
 
         /// <summary>
         /// 프로세스 종료
-        /// 상태를 Idle로 복귀
+        /// 상태를 Idle로 복귀하고 대기 중인 턴 종료 요청 확인
         /// </summary>
         public void EndProcess()
         {
             currentProcess = GameProcessState.Idle;
+
+            // 프로세스 종료 후 대기 중인 턴 종료 요청이 있는지 확인
+            if (TurnManager.Instance != null)
+            {
+                TurnManager.Instance.CheckPendingEndTurn();
+            }
         }
 
         /// <summary>

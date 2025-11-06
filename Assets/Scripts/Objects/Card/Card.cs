@@ -261,6 +261,12 @@ namespace Objects
                 return false;
             }
 
+            // 원격 액션 진행 중에는 공격 불가 (상대방의 액션을 시청 중)
+            if (NetworkGameManager.Instance != null && NetworkGameManager.Instance.HasPendingRemoteActions)
+            {
+                return false;
+            }
+
             if (CurrentOwnerType != CardZone.OwnerType.Player)
             {
                 return false;
@@ -531,6 +537,12 @@ namespace Objects
                 return;
             }
 
+            // 원격 액션 진행 중에는 카드 클릭 차단 (상대방의 액션을 시청 중)
+            if (NetworkGameManager.Instance != null && NetworkGameManager.Instance.HasPendingRemoteActions)
+            {
+                return;
+            }
+
             if (JokerTargetSelector.Instance != null && JokerTargetSelector.Instance.IsSelecting())
             {
                 onClicked?.Invoke(this);
@@ -599,6 +611,12 @@ namespace Objects
         private void HandleEndDrag()
         {
             if (!TurnManager.Instance.IsLocalPlayerTurn)
+            {
+                return;
+            }
+
+            // 원격 액션 진행 중에는 카드 드래그 차단 (상대방의 액션을 시청 중)
+            if (NetworkGameManager.Instance != null && NetworkGameManager.Instance.HasPendingRemoteActions)
             {
                 return;
             }

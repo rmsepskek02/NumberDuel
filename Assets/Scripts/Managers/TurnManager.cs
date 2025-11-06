@@ -65,6 +65,7 @@ namespace Manager
         // 프로세스 플래그
         private bool isProcessingTurn = false; // 턴 전환 처리 중
         private float lastTurnChangeTime = 0f; // 마지막 턴 변경 시간
+        private bool pendingEndTurn = false; // 턴 종료 대기 플래그
         /// <summary>
         /// 게임이 시작되었는지 여부
         /// </summary>
@@ -119,6 +120,18 @@ namespace Manager
         /// </summary>
         public CardZone.OwnerType OpponentPlayerRole =>
             isLocalPlayerFirst ? CardZone.OwnerType.Opponent : CardZone.OwnerType.Player;
+
+        /// <summary>
+        /// 턴 종료가 예약되어 대기 중인지 여부
+        /// UI에서 버튼 상태 업데이트에 사용
+        /// </summary>
+        public bool IsPendingEndTurn => pendingEndTurn;
+
+        /// <summary>
+        /// 턴 전환 처리 중인지 여부
+        /// UI에서 버튼 상태 업데이트에 사용
+        /// </summary>
+        public bool IsProcessingTurn => isProcessingTurn;
         #endregion
 
         #region Unity Lifecycle
@@ -193,9 +206,11 @@ namespace Manager
         /// 턴 종료 (로컬 플레이어의 턴일 때만 호출 가능)
         ///
         /// 실행 순서:
-        /// 1. 턴 종료 처리 (공격 상태 초기화, 연산자 모드 취소 등)
-        /// 2. 턴 번호 증가 (RPC로 모든 클라이언트에 동기화)
-        /// 3. 첫 라운드 종료 체크
+        /// 1. 프로세스 진행 중이면 턴 종료 대기 플래그 설정 후 대기
+        /// 2. 프로세스가 없으면 즉시 턴 종료 시퀀스 실행
+        /// 3. 턴 종료 처리 (공격 상태 초기화, 연산자 모드 취소 등)
+        /// 4. 턴 번호 증가 (RPC로 모든 클라이언트에 동기화)
+        /// 5. 첫 라운드 종료 체크
         /// </summary>
         public void EndTurn()
         {
@@ -211,13 +226,44 @@ namespace Manager
                 return;
             }
 
+            // 프로세스 진행 중이면 턴 종료 대기 플래그 설정
             if (InGameManager.Instance.IsProcessing)
             {
-                Debug.LogWarning("[TurnManager] 다른 프로세스가 진행 중입니다.");
+                if (!pendingEndTurn)
+                {
+                    pendingEndTurn = true;
+                    Debug.Log("[TurnManager] 프로세스 진행 중 - 턴 종료 대기 상태로 전환");
+                }
                 return;
             }
 
+            // 즉시 턴 종료 실행
+            ExecuteEndTurn();
+        }
+
+        /// <summary>
+        /// 턴 종료 실제 실행
+        /// EndTurn() 또는 CheckPendingEndTurn()에서 호출
+        /// </summary>
+        private void ExecuteEndTurn()
+        {
+            pendingEndTurn = false;
             StartCoroutine(EndTurnSequence());
+        }
+
+        /// <summary>
+        /// 대기 중인 턴 종료 요청 체크 및 실행
+        /// InGameManager.EndProcess()에서 호출
+        /// </summary>
+        public void CheckPendingEndTurn()
+        {
+            if (!pendingEndTurn) return;
+            if (!IsLocalPlayerTurn) return;
+            if (isProcessingTurn) return;
+            if (InGameManager.Instance.IsProcessing) return;
+
+            Debug.Log("[TurnManager] 프로세스 완료 - 대기 중인 턴 종료 실행");
+            ExecuteEndTurn();
         }
 
         /// <summary>
@@ -240,14 +286,18 @@ namespace Manager
 
         /// <summary>
         /// 로컬 플레이어가 액션을 수행할 수 있는지 확인
-        /// 게임 시작, 자신의 턴, 턴 전환 중이 아님, 다른 프로세스 진행 중이 아님 모두 만족해야 함
+        /// 게임 시작, 자신의 턴, 턴 전환 중이 아님, 다른 프로세스 진행 중이 아님, 원격 액션 진행 중이 아님 모두 만족해야 함
         /// </summary>
         public bool CanPerformAction()
         {
+            bool hasPendingRemoteActions = NetworkGameManager.Instance != null &&
+                                          NetworkGameManager.Instance.HasPendingRemoteActions;
+
             return isGameStarted &&
                    IsLocalPlayerTurn &&
                    !isProcessingTurn &&
-                   !InGameManager.Instance.IsProcessing;
+                   !InGameManager.Instance.IsProcessing &&
+                   !hasPendingRemoteActions;
         }
 
         /// <summary>
@@ -412,13 +462,48 @@ namespace Manager
         /// 턴 시작 처리
         ///
         /// 실행 내용:
-        /// 1. 모든 필드 카드의 턴 상태 초기화 (WasPlayedThisTurn, HasAttackedThisTurn 등)
-        /// 2. 로컬 플레이어 턴이면 카드 1장 드로우 (첫 턴 제외)
-        /// 3. UI 업데이트 이벤트 발생
+        /// 1. 원격 액션이 완료될 때까지 대기
+        /// 2. 모든 필드 카드의 턴 상태 초기화 (원격 액션 완료 후)
+        /// 3. 로컬 플레이어 턴이면 카드 1장 드로우 (첫 턴 제외)
+        /// 4. UI 업데이트 이벤트 발생
         /// </summary>
         private void OnTurnStart()
         {
-            // 모든 필드 카드의 턴 상태 초기화
+            // 원격 액션이 진행 중이면 완료될 때까지 대기 후 턴 시작
+            if (NetworkGameManager.Instance != null && NetworkGameManager.Instance.HasPendingRemoteActions)
+            {
+                StartCoroutine(WaitForRemoteActionsAndStartTurn());
+            }
+            else
+            {
+                // 원격 액션이 없으면 즉시 턴 시작
+                CompleteTurnStart();
+            }
+        }
+
+        /// <summary>
+        /// 원격 액션 완료 대기 후 턴 시작
+        /// </summary>
+        private IEnumerator WaitForRemoteActionsAndStartTurn()
+        {
+            // 원격 액션이 모두 완료될 때까지 대기
+            while (NetworkGameManager.Instance != null && NetworkGameManager.Instance.HasPendingRemoteActions)
+            {
+                yield return null;
+            }
+
+            // 원격 액션 완료 후 턴 시작
+            CompleteTurnStart();
+        }
+
+        /// <summary>
+        /// 턴 시작 완료 (카드 상태 리셋, 드로우, UI 업데이트)
+        /// 원격 액션 완료 후 호출되므로 GLOW 효과가 올바르게 표시됨
+        /// </summary>
+        private void CompleteTurnStart()
+        {
+            // 모든 필드 카드의 턴 상태 초기화 (원격 액션 완료 후)
+            // 이 시점에서 HasPendingRemoteActions = false이므로 GLOW가 정상 표시됨
             ResetAllCardsForNewTurn();
 
             if (IsLocalPlayerTurn)
@@ -601,6 +686,7 @@ namespace Manager
         /// - 선공 플레이어 ActorNumber
         /// - 로컬 플레이어 역할
         /// - 턴 처리 플래그
+        /// - 턴 종료 대기 플래그
         /// </summary>
         public void ResetGameState()
         {
@@ -610,6 +696,7 @@ namespace Manager
             firstPlayerActorNumber = -1;
             isLocalPlayerFirst = false;
             isProcessingTurn = false;
+            pendingEndTurn = false;
             lastTurnChangeTime = 0f;
         }
 

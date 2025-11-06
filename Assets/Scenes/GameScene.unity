@@ -8297,7 +8297,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 47ec7ff326bcf9a4aa5034c00b488d56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHP: 5
+  maxHP: 30
   enableDebugLog: 1
 --- !u!1 &2076371591
 GameObject:

@@ -99,19 +99,23 @@ namespace Manager.Network.Sync
         {
             try
             {
+                // 원격 액션 시작 (카운터 증가)
+                hub.StartRemoteAction();
+
                 var combatData = JsonUtility.FromJson<CombatActionData>(jsonData);
-                ApplyRemoteCombatActionInternal(combatData);
+                hub.StartCoroutine(ApplyRemoteCombatActionInternal(combatData));
             }
             catch (Exception)
             {
-                // 오류 처리
+                // 오류 발생 시 카운터 감소
+                hub.EndRemoteAction();
             }
         }
 
         /// <summary>
         /// 원격 전투 액션 적용
         /// </summary>
-        private void ApplyRemoteCombatActionInternal(CombatActionData combatData)
+        private IEnumerator ApplyRemoteCombatActionInternal(CombatActionData combatData)
         {
             // 1. 공격자/방어자 카드 찾기
             Card attackerCard = hub.FindCardByNetworkId(combatData.attackerCardId);
@@ -120,7 +124,11 @@ namespace Manager.Network.Sync
                 : null;
 
             if (attackerCard == null)
-                return;
+            {
+                // 카드를 찾지 못하면 카운터 감소 후 종료
+                hub.EndRemoteAction();
+                yield break;
+            }
 
             // 2. Secret 해제
             if (combatData.attackerWasSecret)
@@ -144,8 +152,11 @@ namespace Manager.Network.Sync
                 defenderCard.ShowDefenseIcon();
             }
 
-            // 4. ExpressionZone 업데이트
-            hub.StartCoroutine(SyncExpressionZone(attackerCard, defenderCard, combatData));
+            // 4. ExpressionZone 업데이트 (코루틴 대기)
+            yield return hub.StartCoroutine(SyncExpressionZone(attackerCard, defenderCard, combatData));
+
+            // 5. 모든 작업 완료 - 원격 액션 종료 (카운터 감소)
+            hub.EndRemoteAction();
         }
 
         /// <summary>
