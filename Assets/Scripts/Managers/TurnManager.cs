@@ -331,15 +331,14 @@ namespace Manager
                 photonView.RPC("RPC_StartGame", RpcTarget.All, randomFirstPlayer);
             }
 
-            // 3단계: 덱 초기화 대기
-            yield return new WaitForSeconds(0.5f);
-
-            // 4단계: 첫 턴 시작 (RPC로 모든 클라이언트에 동기화)
-            yield return new WaitForSeconds(1f);
+            // 3단계: 첫 턴 시작 (RPC로 모든 클라이언트에 동기화)
+            // 덱 초기화와 카드 드로우는 동기적으로 즉시 완료되므로 지연 불필요
             if (PhotonNetwork.IsMasterClient)
             {
                 photonView.RPC("RPC_BeginFirstTurn", RpcTarget.All);
             }
+
+            yield break;
         }
 
         /// <summary>
