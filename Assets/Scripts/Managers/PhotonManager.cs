@@ -208,15 +208,48 @@ namespace Manager
 
         /// <summary>
         /// 방을 초기 상태로 되돌리는 메서드
+        /// 게임 도중 플레이어가 떠나면 완전한 게임 초기화 수행
         /// </summary>
         private void ResetGame()
         {
+            // 게임이 시작된 상태였는지 확인
+            bool wasGameStarted = TurnManager.Instance != null &&
+                                 TurnManager.Instance.IsGameStarted;
+
+            if (wasGameStarted)
+            {
+                Debug.Log("[PhotonManager] 게임 도중 플레이어 퇴장 - 게임 전체 초기화");
+
+                // 1. 게임 상태 전체 초기화 (덱, 카드, 체력 등 모두 리셋)
+                if (InGameManager.Instance != null)
+                {
+                    InGameManager.Instance.RestartGameLocal();
+                }
+
+                // 2. TurnManager 상태 초기화
+                if (TurnManager.Instance != null)
+                {
+                    TurnManager.Instance.ResetGameState();
+                }
+
+                // 3. NetworkGameManager 원격 액션 큐 클리어
+                if (NetworkGameManager.Instance != null)
+                {
+                    NetworkGameManager.Instance.ClearPendingRemoteActions();
+                }
+            }
+
+            // 4. Room Properties 업데이트
             PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable
             {
                 { "currentPlayers", 1 }
             });
 
-            InGameUIManager.Instance.ResetUI();
+            // 5. UI 초기화
+            if (InGameUIManager.Instance != null)
+            {
+                InGameUIManager.Instance.ResetUI();
+            }
         }
         #endregion
 

@@ -258,6 +258,19 @@ namespace Manager
                 TurnManager.Instance.CheckPendingEndTurn();
             }
         }
+
+        /// <summary>
+        /// 모든 대기 중인 원격 액션 강제 클리어
+        /// 게임 초기화 또는 플레이어 퇴장 시 호출
+        /// </summary>
+        public void ClearPendingRemoteActions()
+        {
+            if (pendingRemoteActions > 0)
+            {
+                Debug.Log($"[NetworkGameManager] 원격 액션 큐 강제 클리어 - {pendingRemoteActions}개 제거됨");
+                pendingRemoteActions = 0;
+            }
+        }
         #endregion
 
         #region Card Draw Synchronization System
