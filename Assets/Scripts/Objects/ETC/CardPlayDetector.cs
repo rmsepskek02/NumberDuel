@@ -170,6 +170,12 @@ namespace Objects
                 // 필드 꽉 찬 상태 체크 (최대 5장 제한)
                 if (!targetZone.CanAddCard())
                 {
+                    // 시스템 메시지 표시
+                    if (SystemMessageManager.Instance != null)
+                    {
+                        SystemMessageManager.Instance.ShowMessage("CannotPlace");
+                    }
+
                     // 카드를 손패로 되돌리기
                     ReturnCardToHand(card);
                     return;

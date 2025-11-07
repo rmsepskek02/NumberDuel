@@ -534,6 +534,11 @@ namespace Objects
         {
             if (!TurnManager.Instance.IsLocalPlayerTurn)
             {
+                // 내 턴이 아닐 때 메시지 표시
+                if (SystemMessageManager.Instance != null)
+                {
+                    SystemMessageManager.Instance.ShowMessage("NotYourTurn");
+                }
                 return;
             }
 
@@ -612,6 +617,11 @@ namespace Objects
         {
             if (!TurnManager.Instance.IsLocalPlayerTurn)
             {
+                // 내 턴이 아닐 때 메시지 표시
+                if (SystemMessageManager.Instance != null)
+                {
+                    SystemMessageManager.Instance.ShowMessage("NotYourTurn");
+                }
                 return;
             }
 

@@ -207,6 +207,12 @@ namespace Manager
 
             startButton.gameObject.SetActive(false);
 
+            // 시스템 메시지 표시
+            if (SystemMessageManager.Instance != null)
+            {
+                SystemMessageManager.Instance.ShowMessage("GameStarting");
+            }
+
             // 게임이 종료된 상태인지 확인
             if (InGameManager.Instance != null && InGameManager.Instance.IsGameEnded)
             {

@@ -383,6 +383,16 @@ namespace Manager
                 {
                     // 카드 데이터는 이미 덱에서 제거되었으므로 파기 처리
                     destroyedCount++;
+
+                    // 로컬 플레이어이고 처음 파기된 카드면 메시지 표시
+                    if (owner == CardZone.OwnerType.Player && destroyedCount == 1)
+                    {
+                        if (SystemMessageManager.Instance != null)
+                        {
+                            SystemMessageManager.Instance.ShowMessage("HandFull");
+                        }
+                    }
+
                     continue;
                 }
 
@@ -554,6 +564,19 @@ namespace Manager
         {
             // 로컬 플레이어 승패 판정
             bool localPlayerWon = (winner == CardZone.OwnerType.Player);
+
+            // 시스템 메시지 표시
+            if (SystemMessageManager.Instance != null)
+            {
+                if (localPlayerWon)
+                {
+                    SystemMessageManager.Instance.ShowMessage("Victory");
+                }
+                else
+                {
+                    SystemMessageManager.Instance.ShowMessage("Defeat");
+                }
+            }
 
             // InGameUIManager에 결과 전달
             if (InGameUIManager.Instance != null)

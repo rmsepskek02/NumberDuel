@@ -85,4 +85,15 @@ namespace Objects
         Draw,           // 드로우 효과
         Selection       // 시크릿 오픈 선택 표시
     }
+
+    /// <summary>
+    /// 시스템 메시지 타입
+    /// </summary>
+    public enum MessageType
+    {
+        Info,       // 일반 정보 (파란색/흰색)
+        Warning,    // 경고 (노란색)
+        Error,      // 오류 (빨간색)
+        Success     // 성공 (초록색)
+    }
 }

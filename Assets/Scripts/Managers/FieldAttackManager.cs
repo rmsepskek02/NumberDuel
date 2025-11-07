@@ -80,6 +80,27 @@ namespace Manager
                 if (currentAttacker == null) return; // 공격자 미선택
                 StartCoroutine(ExecuteAttack(currentAttacker, clickedCard));
             }
+            // 공격 불가능한 내 필드 카드를 클릭한 경우
+            else if (clickedCard.CurrentOwnerType == CardZone.OwnerType.Player &&
+                     clickedCard.CurrentZoneType == CardZone.ZoneType.Field &&
+                     !clickedCard.CanAttack)
+            {
+                // 첫 라운드인지 확인
+                if (TurnManager.Instance != null && TurnManager.Instance.IsFirstRound)
+                {
+                    if (SystemMessageManager.Instance != null)
+                    {
+                        SystemMessageManager.Instance.ShowMessage("FirstRoundNoAttack");
+                    }
+                }
+                else
+                {
+                    if (SystemMessageManager.Instance != null)
+                    {
+                        SystemMessageManager.Instance.ShowMessage("CannotAttack");
+                    }
+                }
+            }
         }
 
         /// <summary>

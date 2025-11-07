@@ -138,6 +138,12 @@ namespace Manager
             }
 
             EnterPlayer?.Invoke();
+
+            // 시스템 메시지 표시
+            if (SystemMessageManager.Instance != null)
+            {
+                SystemMessageManager.Instance.ShowMessage("PlayerJoined");
+            }
         }
 
         /// <summary>
@@ -219,6 +225,12 @@ namespace Manager
             if (wasGameStarted)
             {
                 Debug.Log("[PhotonManager] 게임 도중 플레이어 퇴장 - 게임 전체 초기화");
+
+                // 시스템 메시지 표시
+                if (SystemMessageManager.Instance != null)
+                {
+                    SystemMessageManager.Instance.ShowMessage("PlayerLeft");
+                }
 
                 // 1. 게임 상태 전체 초기화 (덱, 카드, 체력 등 모두 리셋)
                 if (InGameManager.Instance != null)
