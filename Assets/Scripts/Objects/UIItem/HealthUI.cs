@@ -6,6 +6,7 @@ using TMPro;
 using DG.Tweening;
 using Objects;
 using Manager;
+using Photon.Pun;
 
 namespace Objects
 {
@@ -28,6 +29,7 @@ namespace Objects
         [SerializeField] private Image opponentHealthBorder;
         [SerializeField] private TextMeshProUGUI opponentHealthText;
         [SerializeField] private RectTransform opponentHPBar;
+        [SerializeField] private GameObject opponentUIContainer;
 
         [Header("애니메이션 설정")]
         [SerializeField] private float hpBarAnimDuration = 1.2f;
@@ -54,6 +56,7 @@ namespace Objects
         {
             InitializeUI();
             SubscribeToEvents();
+            UpdateOpponentUIVisibility();
         }
 
         private void OnDestroy()
@@ -110,6 +113,14 @@ namespace Objects
         {
             HealthManager.OnHealthChanged += OnHealthChanged;
             HealthManager.OnPlayerDefeated += OnPlayerDefeated;
+
+            // PhotonManager 이벤트 구독
+            PhotonManager photonManager = FindAnyObjectByType<PhotonManager>();
+            if (photonManager != null)
+            {
+                photonManager.EnterPlayer += OnPlayerEnterOrLeave;
+                photonManager.LeavePlayer += OnPlayerEnterOrLeave;
+            }
         }
 
         /// <summary>
@@ -119,6 +130,22 @@ namespace Objects
         {
             HealthManager.OnHealthChanged -= OnHealthChanged;
             HealthManager.OnPlayerDefeated -= OnPlayerDefeated;
+
+            // PhotonManager 이벤트 구독 해제
+            PhotonManager photonManager = FindAnyObjectByType<PhotonManager>();
+            if (photonManager != null)
+            {
+                photonManager.EnterPlayer -= OnPlayerEnterOrLeave;
+                photonManager.LeavePlayer -= OnPlayerEnterOrLeave;
+            }
+        }
+
+        /// <summary>
+        /// 플레이어 입장/퇴장 시 상대방 UI 표시 업데이트
+        /// </summary>
+        private void OnPlayerEnterOrLeave()
+        {
+            UpdateOpponentUIVisibility();
         }
         #endregion
 
@@ -331,6 +358,35 @@ namespace Objects
 
         #region Public Methods
         /// <summary>
+        /// 플레이어 수에 따라 상대방 UI 표시/숨김
+        /// </summary>
+        private void UpdateOpponentUIVisibility()
+        {
+            bool shouldShowOpponent = PhotonNetwork.InRoom && PhotonNetwork.CurrentRoom.PlayerCount == 2;
+
+            if (opponentUIContainer != null)
+            {
+                opponentUIContainer.SetActive(shouldShowOpponent);
+            }
+            else
+            {
+                // opponentUIContainer가 지정되지 않은 경우 개별 컴포넌트 제어
+                if (opponentHPBar != null)
+                    opponentHPBar.gameObject.SetActive(shouldShowOpponent);
+                else
+                {
+                    // opponentHPBar도 없으면 개별 UI 요소 제어
+                    if (opponentHealthFill != null)
+                        opponentHealthFill.gameObject.SetActive(shouldShowOpponent);
+                    if (opponentHealthBorder != null)
+                        opponentHealthBorder.gameObject.SetActive(shouldShowOpponent);
+                    if (opponentHealthText != null)
+                        opponentHealthText.gameObject.SetActive(shouldShowOpponent);
+                }
+            }
+        }
+
+        /// <summary>
         /// 체력바를 강제로 업데이트 (외부에서 호출 가능)
         /// </summary>
         public void RefreshHealthUI(CardZone.OwnerType player)
@@ -389,6 +445,9 @@ namespace Objects
             // 텍스트 업데이트
             UpdateHealthText(CardZone.OwnerType.Player);
             UpdateHealthText(CardZone.OwnerType.Opponent);
+
+            // 상대방 UI 표시 상태 업데이트
+            UpdateOpponentUIVisibility();
         }
         #endregion
     }

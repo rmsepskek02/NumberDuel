@@ -2327,6 +2327,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 731319113}
+  - {fileID: 5403166088261764611}
   m_Father: {fileID: 1502141935}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
@@ -3877,6 +3878,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 891392439}
+  - {fileID: 5403166089053406309}
   m_Father: {fileID: 1502141935}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -6385,8 +6387,6 @@ RectTransform:
   - {fileID: 224740717}
   - {fileID: 1688025347}
   - {fileID: 604272644}
-  - {fileID: 5403166089053406309}
-  - {fileID: 5403166088261764611}
   - {fileID: 1226129741}
   - {fileID: 849922468}
   m_Father: {fileID: 1804743464}
@@ -9808,7 +9808,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8733575363296783068}
-  m_Father: {fileID: 1502141935}
+  m_Father: {fileID: 600814186}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
@@ -9828,7 +9828,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8733575364117850298}
-  m_Father: {fileID: 1502141935}
+  m_Father: {fileID: 852583812}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -10512,6 +10512,7 @@ MonoBehaviour:
   opponentHealthBorder: {fileID: 8364440945006086572}
   opponentHealthText: {fileID: 6599126273441678704}
   opponentHPBar: {fileID: 5403166088261764611}
+  opponentUIContainer: {fileID: 600814185}
   hpBarAnimDuration: 0.5
   damageShakeDuration: 0.3
   damageShakeStrength: 10
@@ -10563,6 +10564,7 @@ MonoBehaviour:
   opponentHealthBorder: {fileID: 8364440945006086572}
   opponentHealthText: {fileID: 6599126273441678704}
   opponentHPBar: {fileID: 8733575363296783068}
+  opponentUIContainer: {fileID: 0}
   hpBarAnimDuration: 0.5
   damageShakeDuration: 0.3
   damageShakeStrength: 10
