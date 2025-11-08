@@ -3764,8 +3764,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1799706469}
-        m_TargetAssemblyTypeName: Lobby.LobbyManager, Assembly-CSharp
-        m_MethodName: OnClickQuit
+        m_TargetAssemblyTypeName: Manager.LobbyManager, Assembly-CSharp
+        m_MethodName: OnClickLogOut
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

@@ -248,6 +248,21 @@ namespace Manager
 #endif
             Application.Quit();
         }
+
+        public void OnClickLogOut()
+        {
+            if (LoadingScreenManager.Instance != null)
+            {
+                LoadingScreenManager.Instance.FadeInThenAction(() =>
+                {
+                    PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.JoinScene));
+                });
+            }
+            else
+            {
+                PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.JoinScene));
+            }
+        }
         #endregion
     }
 }
