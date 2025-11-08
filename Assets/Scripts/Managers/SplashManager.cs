@@ -1,3 +1,4 @@
+using Objects;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -12,7 +13,7 @@ namespace Manager
         #region Unity Lifecycle
         void Start()
         {
-            SceneManager.LoadScene("JoinScene");
+            SceneManager.LoadScene(SceneNameExtensions.GetSceneName (SceneName.JoinScene));
         }
         #endregion
     }

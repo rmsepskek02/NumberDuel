@@ -96,4 +96,35 @@ namespace Objects
         Error,      // 오류 (빨간색)
         Success     // 성공 (초록색)
     }
+
+    /// <summary>
+    /// 씬 이름을 관리하는 enum — 하드코딩된 문자열 사용을 방지합니다.
+    /// 빌드 세팅에 등록된 씬 이름과 정확히 일치하도록 값의 매핑을 유지하세요.
+    /// </summary>
+    public enum SceneName
+    {
+        SplashScene,
+        JoinScene,
+        LobbyScene,
+        GameScene
+    }
+
+    /// <summary>
+    /// SceneName enum에 대한 문자열 변환 확장 메서드
+    /// 사용 예: var name = SceneName.SplashScene.GetSceneName();
+    /// </summary>
+    public static class SceneNameExtensions
+    {
+        public static string GetSceneName(this SceneName scene)
+        {
+            return scene switch
+            {
+                SceneName.SplashScene => "SplashScene",
+                SceneName.JoinScene => "JoinScene",
+                SceneName.LobbyScene => "LobbyScene",
+                SceneName.GameScene => "GameScene",
+                _ => scene.ToString()
+            };
+        }
+    }
 }

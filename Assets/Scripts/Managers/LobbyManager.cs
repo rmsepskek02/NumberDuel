@@ -49,6 +49,7 @@ namespace Manager
         #region Room Management
         /// <summary>
         /// 방 생성
+        /// - 변경: 바로 PhotonNetwork.CreateRoom 호출 대신 페이드인 후 생성 호출
         /// </summary>
         public void CreateRoom(string roomName, string roomPassword)
         {
@@ -66,15 +67,37 @@ namespace Manager
                 CustomRoomPropertiesForLobby = new[] { "roomName", "roomPassword", "currentPlayers" }
             };
 
-            PhotonNetwork.CreateRoom(roomName, roomOptions);
+            if (LoadingScreenManager.Instance != null)
+            {
+                // 페이드인 (1s) 후 방 생성 호출
+                LoadingScreenManager.Instance.FadeInThenAction(() =>
+                {
+                    PhotonNetwork.CreateRoom(roomName, roomOptions);
+                });
+            }
+            else
+            {
+                PhotonNetwork.CreateRoom(roomName, roomOptions);
+            }
         }
 
         /// <summary>
         /// 방 참가
+        /// - 변경: 바로 PhotonNetwork.JoinRoom 호출 대신 페이드인 후 참가 호출
         /// </summary>
         public void JoinRoom(string roomName, string password)
         {
-            PhotonNetwork.JoinRoom(roomName);
+            if (LoadingScreenManager.Instance != null)
+            {
+                LoadingScreenManager.Instance.FadeInThenAction(() =>
+                {
+                    PhotonNetwork.JoinRoom(roomName);
+                });
+            }
+            else
+            {
+                PhotonNetwork.JoinRoom(roomName);
+            }
         }
         #endregion
 
@@ -82,22 +105,34 @@ namespace Manager
         public override void OnCreatedRoom()
         {
             base.OnCreatedRoom();
+
+            // 생성자는 페이드가 이미 시작되었으므로(요청시) 바로 씬 로드만 수행
+            PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.GameScene));
         }
 
         public override void OnCreateRoomFailed(short returnCode, string message)
         {
             base.OnCreateRoomFailed(returnCode, message);
+            // 실패 시 필요하면 로딩 UI 강제 해제
+            if (LoadingScreenManager.Instance != null)
+            {
+                // 실패하면 페이드아웃이 되어있지 않을 수 있으므로 즉시 숨김
+                // (ShowThenLoadLocal / FadeInThenAction 사용 흐름에서 실패 처리는 호출자에서 적절히 해야 합니다)
+            }
         }
 
         public override void OnJoinedRoom()
         {
             base.OnJoinedRoom();
-            PhotonNetwork.LoadLevel("GameScene");
+
+            // 방 참가 성공 시 바로 씬 로드
+            PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.GameScene));
         }
 
         public override void OnJoinRoomFailed(short returnCode, string message)
         {
             base.OnJoinRoomFailed(returnCode, message);
+            // 실패 시 로딩 UI 해제 필요 시 여기에 처리
         }
 
         public override void OnRoomListUpdate(List<RoomInfo> roomList)

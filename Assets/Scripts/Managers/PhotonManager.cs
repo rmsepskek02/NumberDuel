@@ -1,4 +1,5 @@
 using ExitGames.Client.Photon;
+using Objects;
 using Photon.Pun;
 using Photon.Realtime;
 using System;
@@ -209,7 +210,17 @@ namespace Manager
         /// </summary>
         public override void OnLeftRoom()
         {
-            PhotonNetwork.LoadLevel("LobbyScene");
+            // 룸을 떠난 뒤 로비로 돌아갈 때도 로딩 UI를 거치도록 변경
+            if (LoadingScreenManager.Instance != null)
+            {
+                // Lobby는 로컬 전환이면 usePhoton = false로 호출
+                LoadingScreenManager.Instance.ShowThenLoadLocal(SceneNameExtensions.GetSceneName(SceneName.LobbyScene));
+            }
+            else
+            {
+                // 폴백: 기존 동작
+                PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.LobbyScene));
+            }
         }
 
         /// <summary>

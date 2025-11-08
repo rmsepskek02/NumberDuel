@@ -1,3 +1,4 @@
+using Objects;
 using Photon.Pun;
 using Photon.Realtime;
 using TMPro;
@@ -58,7 +59,14 @@ namespace Manager
             PhotonNetwork.NickName = inputId.text;
 
             // 로비로 이동
-            PhotonNetwork.LoadLevel("LobbyScene");
+            if (LoadingScreenManager.Instance != null)
+            {
+                LoadingScreenManager.Instance.ShowThenLoadLocal(SceneNameExtensions.GetSceneName(SceneName.LobbyScene));
+            }
+            else
+            {
+                PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.LobbyScene));
+            }
         }
         #endregion
 
