@@ -8,10 +8,10 @@ using TMPro;
 namespace Manager
 {
     /// <summary>
-    /// ´Ü¼ø ·Îµù ¸Å´ÏÀú (Photon ºĞ¸®)
-    /// - ·ÎÄÃ ¾À ·Îµå¿ë ShowThenLoadLocal
-    /// - ÀÓÀÇ ¾×¼Ç(¿¹: PhotonNetwork.LoadLevel)À» È£ÃâÇÏ´Â FadeInThenAction
-    /// - ¾À ·Îµå ¿Ï·á½Ã ÆäÀÌµå¾Æ¿ô
+    /// ï¿½Ü¼ï¿½ ï¿½Îµï¿½ ï¿½Å´ï¿½ï¿½ï¿½ (Photon ï¿½Ğ¸ï¿½)
+    /// - ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Îµï¿½ï¿½ ShowThenLoadLocal
+    /// - ï¿½ï¿½ï¿½ï¿½ ï¿½×¼ï¿½(ï¿½ï¿½: PhotonNetwork.LoadLevel)ï¿½ï¿½ È£ï¿½ï¿½ï¿½Ï´ï¿½ FadeInThenAction
+    /// - ï¿½ï¿½ ï¿½Îµï¿½ ï¿½Ï·ï¿½ï¿½ ï¿½ï¿½ï¿½Ìµï¿½Æ¿ï¿½
     /// </summary>
     public class LoadingScreenManager : SingletonDontDestroy<LoadingScreenManager>
     {
@@ -30,6 +30,7 @@ namespace Manager
         private TextMeshProUGUI percentText;
 
         private bool isShowing = false;
+        private bool isCancelled = false; // ë§¤ì¹­ ì·¨ì†Œ ë“±ìœ¼ë¡œ ì¸í•œ ì·¨ì†Œ í”Œë˜ê·¸
 
         protected override void Awake()
         {
@@ -48,7 +49,7 @@ namespace Manager
             SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 
-        // 1) ·ÎÄÃ ¾À ·Îµå(°£´Ü »ç¿ë)
+        // 1) ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Îµï¿½(ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½)
         public void ShowThenLoadLocal(string sceneName)
         {
             if (isShowing) return;
@@ -69,12 +70,12 @@ namespace Manager
             yield return fade;
             yield return prog;
 
-            // ¾À ·Îµå
+            // ï¿½ï¿½ ï¿½Îµï¿½
             SceneManager.LoadScene(sceneName);
-            // OnSceneLoaded¿¡¼­ ÆäÀÌµå¾Æ¿ô Ã³¸®
+            // OnSceneLoadedï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ìµï¿½Æ¿ï¿½ Ã³ï¿½ï¿½
         }
 
-        // 2) ÆäÀÌµåÀÎ ÈÄ ÀÓÀÇ ¾×¼Ç È£Ãâ (PhotonNetwork.LoadLevel °°Àº ³×Æ®¿öÅ© È£ÃâÀ» ¿©±â¼­ ½ÇÇà)
+        // 2) ï¿½ï¿½ï¿½Ìµï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½×¼ï¿½ È£ï¿½ï¿½ (PhotonNetwork.LoadLevel ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½Å© È£ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½â¼­ ï¿½ï¿½ï¿½ï¿½)
         public void FadeInThenAction(Action onFadeInComplete)
         {
             if (isShowing) return;
@@ -96,15 +97,22 @@ namespace Manager
             yield return prog;
 
             onFadeInComplete?.Invoke();
-            // ¾À ·Îµå´Â È£ÃâÀÚ(onFadeInComplete)¿¡¼­ ¼öÇà -> OnSceneLoaded¿¡¼­ ÆäÀÌµå¾Æ¿ô Ã³¸®
+            // ï¿½ï¿½ ï¿½Îµï¿½ï¿½ È£ï¿½ï¿½ï¿½ï¿½(onFadeInComplete)ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ -> OnSceneLoadedï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ìµï¿½Æ¿ï¿½ Ã³ï¿½ï¿½
         }
 
-        // ÆäÀÌµå ÀÎ »óÅÂ·Î ¾ÀÀÌ ·ÎµåµÇ¸é(·ÎÄÃ ¶Ç´Â ³×Æ®¿öÅ©) ÀÚµ¿À¸·Î ÆäÀÌµå¾Æ¿ô
+        // ï¿½ï¿½ï¿½Ìµï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½Â·ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½Ç¸ï¿½(ï¿½ï¿½ï¿½ï¿½ ï¿½Ç´ï¿½ ï¿½ï¿½Æ®ï¿½ï¿½Å©) ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ìµï¿½Æ¿ï¿½
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
+            // ì·¨ì†Œëœ ê²½ìš° ë¬´ì‹œ
+            if (isCancelled)
+            {
+                isCancelled = false;
+                return;
+            }
+
             if (!isShowing) return;
 
-            // ¾ÀÀÌ ·ÎµåµÇ¸é ¹Ù·Î ÆäÀÌµå¾Æ¿ô
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½Ç¸ï¿½ ï¿½Ù·ï¿½ ï¿½ï¿½ï¿½Ìµï¿½Æ¿ï¿½
             UpdateProgressUI(1f);
             StartCoroutine(FadeOutAndHide());
         }
@@ -120,7 +128,23 @@ namespace Manager
             UpdateProgressUI(0f);
         }
 
-        #region UI »ı¼º/µµ¿ì¹Ì (±âÁ¸ ÄÚµå Àç»ç¿ë)
+        /// <summary>
+        /// ë¡œë”© í™”ë©´ ì·¨ì†Œ (ë§¤ì¹­ ì·¨ì†Œ ë“±)
+        /// ì§„í–‰ ì¤‘ì¸ í˜ì´ë“œ ì¸/ì•„ì›ƒì„ ì¦‰ì‹œ ì¤‘ë‹¨í•˜ê³  í™”ë©´ì„ ì¦‰ì‹œ ìˆ¨ê¹€ (ì• ë‹ˆë©”ì´ì…˜ ì—†ìŒ)
+        /// </summary>
+        public void CancelLoading()
+        {
+            // ëª¨ë“  ì½”ë£¨í‹´ ì¤‘ë‹¨
+            StopAllCoroutines();
+
+            // ì·¨ì†Œ í”Œë˜ê·¸ ì„¤ì •
+            isCancelled = true;
+
+            // ì¦‰ì‹œ ìˆ¨ê¹€ (ì• ë‹ˆë©”ì´ì…˜ ì—†ìŒ)
+            HideImmediate();
+        }
+
+        #region UI ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½)
         private void CreateUIIfMissing()
         {
             if (loadingCanvas != null) return;

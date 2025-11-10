@@ -4,6 +4,7 @@ using Photon.Realtime;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using DG.Tweening;
 
 namespace Manager
 {
@@ -24,16 +25,23 @@ namespace Manager
         public Sprite fullRoomListSprite;
         public Sprite lockRoomListSprite;
 
+        [Header("빠른 매칭")]
+        public UnityEngine.UI.Button quickMatchButton;
+        public TextMeshProUGUI quickMatchButtonText;
+        public GameObject matchingIcon; // 회전 아이콘
+
         private Dictionary<string, RoomInfo> roomCache = new Dictionary<string, RoomInfo>();
         private string roomNameText;
         private string roomPasswordText;
         private bool isProcessingRoomRequest = false; // 중복 요청 방지 플래그
+        private Tweener rotationTweener; // 회전 애니메이션 Tweener
         #endregion
 
         #region Unity Lifecycle
         void Start()
         {
             OnConnectedToMaster();
+            InitializeMatchmaking();
         }
 
         void Update()
@@ -145,30 +153,18 @@ namespace Manager
         #endregion
 
         #region Photon Callbacks
-        public override void OnCreatedRoom()
-        {
-            base.OnCreatedRoom();
-
-            // 방 생성 성공 시 로딩 화면과 함께 씬 전환
-            if (LoadingScreenManager.Instance != null)
-            {
-                LoadingScreenManager.Instance.FadeInThenAction(() =>
-                {
-                    PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.GameScene));
-                });
-            }
-            else
-            {
-                PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.GameScene));
-            }
-
-            // 씬 전환되므로 플래그 리셋은 불필요 (새 씬에서 자동 초기화)
-        }
-
         public override void OnCreateRoomFailed(short returnCode, string message)
         {
             base.OnCreateRoomFailed(returnCode, message);
 
+            // 매칭 방 생성 실패인지 확인
+            if (MatchmakingManager.Instance != null && MatchmakingManager.Instance.IsSearching)
+            {
+                MatchmakingManager.Instance.OnCreateMatchmakingRoomFailed(returnCode, message);
+                return;
+            }
+
+            // 일반 방 생성 실패 처리
             // 플래그 리셋
             isProcessingRoomRequest = false;
 
@@ -181,26 +177,6 @@ namespace Manager
             {
                 SystemMessageManager.Instance?.ShowMessage("NetworkError");
             }
-        }
-
-        public override void OnJoinedRoom()
-        {
-            base.OnJoinedRoom();
-
-            // 방 참가 성공 시 로딩 화면과 함께 씬 전환
-            if (LoadingScreenManager.Instance != null)
-            {
-                LoadingScreenManager.Instance.FadeInThenAction(() =>
-                {
-                    PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.GameScene));
-                });
-            }
-            else
-            {
-                PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.GameScene));
-            }
-
-            // 씬 전환되므로 플래그 리셋은 불필요 (새 씬에서 자동 초기화)
         }
 
         public override void OnJoinRoomFailed(short returnCode, string message)
@@ -246,9 +222,248 @@ namespace Manager
             // 자동 갱신 시에는 메시지 표시하지 않음 (수동 새로고침 시에만 표시)
         }
 
+        public override void OnJoinRandomFailed(short returnCode, string message)
+        {
+            base.OnJoinRandomFailed(returnCode, message);
+
+            // MatchmakingManager에게 실패 알림
+            if (MatchmakingManager.Instance != null)
+            {
+                MatchmakingManager.Instance.OnJoinRandomMatchmakingFailed(returnCode, message);
+            }
+        }
+
+        public override void OnCreatedRoom()
+        {
+            base.OnCreatedRoom();
+
+            // 일반 방 생성인지 매칭 방 생성인지 확인
+            if (MatchmakingManager.Instance != null && MatchmakingManager.Instance.IsSearching)
+            {
+                // 매칭 방 생성 성공
+                MatchmakingManager.Instance.OnCreatedMatchmakingRoom();
+            }
+            else
+            {
+                // 일반 방 생성 성공 시 로딩 화면과 함께 씬 전환
+                if (LoadingScreenManager.Instance != null)
+                {
+                    LoadingScreenManager.Instance.FadeInThenAction(() =>
+                    {
+                        PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.GameScene));
+                    });
+                }
+                else
+                {
+                    PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.GameScene));
+                }
+            }
+        }
+
+        public override void OnJoinedRoom()
+        {
+            base.OnJoinedRoom();
+
+            // 매칭 방 입장인지 일반 방 입장인지 확인
+            if (MatchmakingManager.Instance != null && MatchmakingManager.Instance.IsSearching)
+            {
+                // 매칭 방 입장 성공
+                MatchmakingManager.Instance.OnJoinedMatchmakingRoom();
+            }
+            else
+            {
+                // 일반 방 참가 성공 시 로딩 화면과 함께 씬 전환
+                if (LoadingScreenManager.Instance != null)
+                {
+                    LoadingScreenManager.Instance.FadeInThenAction(() =>
+                    {
+                        PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.GameScene));
+                    });
+                }
+                else
+                {
+                    PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.GameScene));
+                }
+            }
+        }
+
+        public override void OnPlayerEnteredRoom(Player newPlayer)
+        {
+            base.OnPlayerEnteredRoom(newPlayer);
+
+            // MatchmakingManager에게 알림
+            if (MatchmakingManager.Instance != null && MatchmakingManager.Instance.IsSearching)
+            {
+                MatchmakingManager.Instance.OnPlayerEnteredMatchmakingRoom(newPlayer);
+            }
+        }
+
+        public override void OnLeftRoom()
+        {
+            base.OnLeftRoom();
+
+            // 매칭 취소로 인한 방 나가기인지 확인
+            bool isMatchmakingCancel = MatchmakingManager.Instance != null &&
+                                       (MatchmakingManager.Instance.CurrentState == Objects.MatchmakingState.Searching ||
+                                        MatchmakingManager.Instance.CurrentState == Objects.MatchmakingState.Idle);
+
+            // MatchmakingManager에게 알림
+            if (isMatchmakingCancel)
+            {
+                MatchmakingManager.Instance.OnLeftMatchmakingRoom();
+                // 매칭 취소는 씬 전환하지 않고 현재 로비에 유지
+                Debug.Log("[LobbyManager] 매칭 취소로 인한 방 나가기 - 씬 전환 없음");
+                return;
+            }
+
+            // 일반 방 나가기인 경우에만 로비로 돌아감
+            // (게임 중에 방을 나가는 경우)
+            Debug.Log("[LobbyManager] 일반 방 나가기 - 로비로 씬 전환");
+            if (LoadingScreenManager.Instance != null)
+            {
+                // Lobby는 로컬 전환이면 usePhoton = false로 호출
+                LoadingScreenManager.Instance.ShowThenLoadLocal(SceneNameExtensions.GetSceneName(SceneName.LobbyScene));
+            }
+            else
+            {
+                // 폴백: 기존 동작
+                PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.LobbyScene));
+            }
+        }
+
         public override void OnConnectedToMaster()
         {
             PhotonNetwork.JoinLobby();
+        }
+        #endregion
+
+        #region Matchmaking
+        /// <summary>
+        /// 매칭 시스템 초기화
+        /// </summary>
+        private void InitializeMatchmaking()
+        {
+            // MatchmakingManager 이벤트 구독
+            if (MatchmakingManager.Instance != null)
+            {
+                MatchmakingManager.Instance.OnMatchmakingStateChanged += OnMatchmakingStateChanged;
+            }
+
+            // 초기 UI 상태 설정
+            UpdateQuickMatchButton(Objects.MatchmakingState.Idle);
+        }
+
+        /// <summary>
+        /// 매칭 상태 변경 시 호출
+        /// </summary>
+        private void OnMatchmakingStateChanged(Objects.MatchmakingState newState)
+        {
+            UpdateQuickMatchButton(newState);
+        }
+
+        /// <summary>
+        /// 빠른 매칭 버튼 UI 업데이트
+        /// </summary>
+        private void UpdateQuickMatchButton(Objects.MatchmakingState state)
+        {
+            if (quickMatchButtonText == null)
+            {
+                Debug.LogWarning("[LobbyManager] quickMatchButtonText가 할당되지 않았습니다.");
+                return;
+            }
+
+            switch (state)
+            {
+                case Objects.MatchmakingState.Idle:
+                    quickMatchButtonText.text = "빠른 매칭";
+                    StopMatchingIconRotation();
+                    if (quickMatchButton != null) quickMatchButton.interactable = true;
+                    break;
+
+                case Objects.MatchmakingState.Searching:
+                    quickMatchButtonText.text = "매칭 취소";
+                    StartMatchingIconRotation();
+                    if (quickMatchButton != null) quickMatchButton.interactable = true;
+                    break;
+
+                case Objects.MatchmakingState.Matched:
+                    // 매칭 완료 시 버튼 비활성화 (씬 전환 중)
+                    if (quickMatchButton != null) quickMatchButton.interactable = false;
+                    StopMatchingIconRotation();
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// 매칭 아이콘 회전 애니메이션 시작
+        /// </summary>
+        private void StartMatchingIconRotation()
+        {
+            if (matchingIcon == null)
+            {
+                Debug.LogWarning("[LobbyManager] matchingIcon이 할당되지 않았습니다.");
+                return;
+            }
+
+            // 기존 회전 애니메이션이 있으면 중지만 (아이콘은 비활성화하지 않음)
+            if (rotationTweener != null)
+            {
+                rotationTweener.Kill();
+                rotationTweener = null;
+            }
+
+            // 회전 초기화
+            matchingIcon.transform.rotation = Quaternion.identity;
+
+            // 아이콘 활성화
+            matchingIcon.SetActive(true);
+
+            // 회전 애니메이션 시작 (무한 반복)
+            // Z축 기준 -360도 회전 (시계방향), 1초에 1회전
+            rotationTweener = matchingIcon.transform
+                .DORotate(new Vector3(0, 0, -360), 1f, RotateMode.FastBeyond360)
+                .SetEase(Ease.Linear)
+                .SetLoops(-1, LoopType.Restart);
+
+            Debug.Log("[LobbyManager] 매칭 아이콘 회전 시작");
+        }
+
+        /// <summary>
+        /// 매칭 아이콘 회전 애니메이션 중지
+        /// </summary>
+        private void StopMatchingIconRotation()
+        {
+            if (matchingIcon == null)
+            {
+                return;
+            }
+
+            // 회전 애니메이션 중지
+            if (rotationTweener != null)
+            {
+                rotationTweener.Kill();
+                rotationTweener = null;
+            }
+
+            // 회전 초기화 (0도로 리셋)
+            matchingIcon.transform.rotation = Quaternion.identity;
+
+            // 아이콘 비활성화
+            matchingIcon.SetActive(false);
+
+            Debug.Log("[LobbyManager] 매칭 아이콘 회전 중지");
+        }
+
+        private void OnDestroy()
+        {
+            // 회전 애니메이션 정리
+            StopMatchingIconRotation();
+
+            // 이벤트 구독 해제
+            if (MatchmakingManager.Instance != null)
+            {
+                MatchmakingManager.Instance.OnMatchmakingStateChanged -= OnMatchmakingStateChanged;
+            }
         }
         #endregion
 
@@ -267,6 +482,16 @@ namespace Manager
             // 방 목록 UI 업데이트
             foreach (RoomInfo roomInfo in roomCache.Values)
             {
+                // 매칭 전용 방은 목록에 표시하지 않음
+                if (roomInfo.CustomProperties.ContainsKey("isMatchmaking"))
+                {
+                    bool isMatchmaking = (bool)roomInfo.CustomProperties["isMatchmaking"];
+                    if (isMatchmaking)
+                    {
+                        continue; // 매칭 방은 스킵
+                    }
+                }
+
                 GameObject roomItem = Instantiate(roomItemFactory, roomListContent);
                 RoomItem itemComponent = roomItem.GetComponent<RoomItem>();
 
@@ -319,6 +544,31 @@ namespace Manager
         public void OnClickJoin()
         {
             JoinRoom(roomNameText, roomPasswordText);
+        }
+
+        /// <summary>
+        /// 빠른 매칭 버튼 클릭
+        /// </summary>
+        public void OnClickQuickMatch()
+        {
+            if (MatchmakingManager.Instance == null)
+            {
+                Debug.LogError("[LobbyManager] MatchmakingManager를 찾을 수 없습니다.");
+                SystemMessageManager.Instance?.ShowMessage("NetworkError");
+                return;
+            }
+
+            // 현재 상태에 따라 분기
+            if (MatchmakingManager.Instance.IsSearching)
+            {
+                // 매칭 취소
+                MatchmakingManager.Instance.CancelMatchmaking();
+            }
+            else
+            {
+                // 매칭 시작
+                MatchmakingManager.Instance.StartMatchmaking();
+            }
         }
 
         public void OnClickRefresh()

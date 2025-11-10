@@ -597,8 +597,9 @@ namespace Manager
         /// 모든 클라이언트에서 실행되어 다음 작업 수행:
         /// 1. 선공 플레이어 결정 및 로컬 플레이어 역할 설정
         /// 2. 게임 상태 초기화
-        /// 3. 덱 초기화 (카드 색상 동기화 완료 후 실행)
-        /// 4. 초기 카드 드로우 (선공 4장, 후공 5장)
+        /// 3. 카드 색상 동기화 대기
+        /// 4. 덱 초기화 (카드 색상 동기화 완료 후 실행)
+        /// 5. 초기 카드 드로우 (선공 4장, 후공 5장)
         /// </summary>
         [PunRPC]
         private void RPC_StartGame(int firstPlayerActorNumber)
@@ -608,6 +609,39 @@ namespace Manager
             isGameStarted = true;
             isFirstRound = true;
             currentTurn = 0;
+
+            // 색상 동기화가 완료될 때까지 대기 후 덱 초기화 및 카드 드로우
+            StartCoroutine(WaitForColorSyncAndInitialize());
+        }
+
+        /// <summary>
+        /// 색상 동기화 완료 대기 후 덱 초기화 및 카드 드로우
+        /// ResourcesManager의 색상 동기화가 완료되어야 올바른 색상의 카드가 생성됨
+        /// </summary>
+        private IEnumerator WaitForColorSyncAndInitialize()
+        {
+            // ResourcesManager의 색상 동기화 완료 대기
+            // 게스트 플레이어는 RPC_SyncStoredColors를 받을 때까지 대기
+            float timeout = 5f; // 최대 5초 대기
+            float elapsed = 0f;
+
+            while (elapsed < timeout)
+            {
+                // ResourcesManager가 색상 동기화를 완료했는지 확인
+                if (ResourcesManager.Instance != null && ResourcesManager.Instance.IsColorSynchronized)
+                {
+                    break;
+                }
+
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            // 타임아웃 경고
+            if (elapsed >= timeout)
+            {
+                Debug.LogWarning("[TurnManager] 색상 동기화 타임아웃! 기본 색상으로 진행합니다.");
+            }
 
             // 덱 초기화 (카드 색상 동기화 완료 후 실행)
             if (DeckManager.Instance != null)

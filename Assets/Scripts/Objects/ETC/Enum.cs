@@ -98,6 +98,16 @@ namespace Objects
     }
 
     /// <summary>
+    /// 매칭 상태
+    /// </summary>
+    public enum MatchmakingState
+    {
+        Idle,       // 매칭 대기 중 아님
+        Searching,  // 매칭 중
+        Matched     // 매칭 완료
+    }
+
+    /// <summary>
     /// 씬 이름을 관리하는 enum — 하드코딩된 문자열 사용을 방지합니다.
     /// 빌드 세팅에 등록된 씬 이름과 정확히 일치하도록 값의 매핑을 유지하세요.
     /// </summary>

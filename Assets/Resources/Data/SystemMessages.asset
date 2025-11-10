@@ -188,3 +188,8 @@ MonoBehaviour:
     messageType: 3
     displayDuration: 1
     textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}
+  - messageKey: MatchmakingCancelled
+    messageText: "\uB9E4\uCE6D\uC774 \uCDE8\uC18C\uB418\uC5C8\uC2B5\uB2C8\uB2E4."
+    messageType: 0
+    displayDuration: 1
+    textColor: {r: 1, g: 1, b: 1, a: 1}

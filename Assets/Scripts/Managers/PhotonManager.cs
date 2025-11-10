@@ -28,10 +28,19 @@ namespace Manager
             // InGameUIManager에서 이벤트 등록
             InGameUIManager.Instance.RegisterPhotonManager(this);
 
-            // 방장인 경우 색상 결정 및 저장
-            if (PhotonNetwork.IsMasterClient && PhotonNetwork.InRoom)
+            // 방에 입장한 상태라면 색상 설정
+            if (PhotonNetwork.InRoom)
             {
-                SetupRoomColors();
+                if (PhotonNetwork.IsMasterClient)
+                {
+                    // 방장: 색상 결정 및 저장
+                    SetupRoomColors();
+                }
+                else
+                {
+                    // 게스트: 룸 속성에서 색상 읽기
+                    LoadColorsFromRoomProperties();
+                }
             }
         }
         #endregion
@@ -39,26 +48,82 @@ namespace Manager
         #region Color Management
         /// <summary>
         /// 방장이 방 생성 시 색상 결정 및 방 속성에 저장
+        /// 매칭 방의 경우 이미 색상이 설정되어 있으므로 읽기만 수행
         /// </summary>
         private void SetupRoomColors()
         {
-            if (ResourcesManager.Instance != null)
+            if (ResourcesManager.Instance == null)
             {
-                var (playerSpriteName, opponentSpriteName) = ResourcesManager.Instance.SelectRandomColors();
+                Debug.LogError("[PhotonManager] ResourcesManager를 찾을 수 없습니다!");
+                return;
+            }
 
-                if (!string.IsNullOrEmpty(playerSpriteName) && !string.IsNullOrEmpty(opponentSpriteName))
+            var roomProperties = PhotonNetwork.CurrentRoom.CustomProperties;
+
+            // 이미 색상이 설정되어 있는지 확인 (매칭 방인 경우)
+            if (roomProperties.TryGetValue("masterPlayerColor", out object masterColor) &&
+                roomProperties.TryGetValue("guestPlayerColor", out object guestColor))
+            {
+                string masterColorName = masterColor.ToString();
+                string guestColorName = guestColor.ToString();
+
+                // 이미 설정된 색상이 있으면 그것을 사용
+                if (!string.IsNullOrEmpty(masterColorName) && !string.IsNullOrEmpty(guestColorName))
                 {
-                    // 방 속성에 색상 저장
-                    var roomProperties = new Hashtable
-                    {
-                        { "masterPlayerColor", playerSpriteName },
-                        { "guestPlayerColor", opponentSpriteName }
-                    };
-                    PhotonNetwork.CurrentRoom.SetCustomProperties(roomProperties);
-
-                    // 방장 자신의 색상 적용
-                    ResourcesManager.Instance.SetPlayerColors(playerSpriteName, opponentSpriteName);
+                    ResourcesManager.Instance.SetPlayerColors(masterColorName, guestColorName);
+                    Debug.Log($"[PhotonManager] 방장 색상 로드 완료 (기존): Player={masterColorName}, Opponent={guestColorName}");
+                    return;
                 }
+            }
+
+            // 색상이 없는 경우 (일반 방 생성)에만 새로 설정
+            var (playerSpriteName, opponentSpriteName) = ResourcesManager.Instance.SelectRandomColors();
+
+            if (!string.IsNullOrEmpty(playerSpriteName) && !string.IsNullOrEmpty(opponentSpriteName))
+            {
+                // 방 속성에 색상 저장
+                var newRoomProperties = new Hashtable
+                {
+                    { "masterPlayerColor", playerSpriteName },
+                    { "guestPlayerColor", opponentSpriteName }
+                };
+                PhotonNetwork.CurrentRoom.SetCustomProperties(newRoomProperties);
+
+                // 방장 자신의 색상 적용
+                ResourcesManager.Instance.SetPlayerColors(playerSpriteName, opponentSpriteName);
+
+                Debug.Log($"[PhotonManager] 방장 색상 설정 완료 (신규): Player={playerSpriteName}, Opponent={opponentSpriteName}");
+            }
+        }
+
+        /// <summary>
+        /// 게스트가 룸 속성에서 색상 읽어서 적용
+        /// 매칭 시스템에서 동시 입장한 경우에도 색상 동기화 보장
+        /// </summary>
+        private void LoadColorsFromRoomProperties()
+        {
+            if (ResourcesManager.Instance == null)
+            {
+                Debug.LogError("[PhotonManager] ResourcesManager를 찾을 수 없습니다!");
+                return;
+            }
+
+            var roomProperties = PhotonNetwork.CurrentRoom.CustomProperties;
+
+            if (roomProperties.TryGetValue("masterPlayerColor", out object masterColor) &&
+                roomProperties.TryGetValue("guestPlayerColor", out object guestColor))
+            {
+                string masterColorName = masterColor.ToString();
+                string guestColorName = guestColor.ToString();
+
+                // 게스트는 반대 색상 사용 (guestColor = Player, masterColor = Opponent)
+                ResourcesManager.Instance.SetPlayerColors(guestColorName, masterColorName);
+
+                Debug.Log($"[PhotonManager] 게스트 색상 설정 완료: Player={guestColorName}, Opponent={masterColorName}");
+            }
+            else
+            {
+                Debug.LogWarning("[PhotonManager] 룸 속성에서 색상 정보를 찾을 수 없습니다. 기본 색상 사용.");
             }
         }
 
@@ -133,6 +198,7 @@ namespace Manager
             UpdateRoomPlayerCount();
 
             // 방장이고 2명이 되었을 때 저장된 색상으로 동기화
+            // 중요: 게임 시작 전에 색상 동기화를 먼저 완료해야 함
             if (PhotonNetwork.IsMasterClient && PhotonNetwork.CurrentRoom.PlayerCount == 2)
             {
                 SyncStoredColors();
