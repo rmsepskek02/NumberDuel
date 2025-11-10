@@ -35,6 +35,21 @@ namespace Manager
         /// 매칭 방 생성 중 플래그 (중복 요청 방지)
         /// </summary>
         private bool isCreatingMatchmakingRoom = false;
+
+        /// <summary>
+        /// 방 생성 중 취소 요청 플래그
+        /// </summary>
+        private bool pendingCancel = false;
+
+        /// <summary>
+        /// 매칭 완료 검증 코루틴
+        /// </summary>
+        private Coroutine matchVerificationCoroutine = null;
+
+        /// <summary>
+        /// 매칭 완료 검증 딜레이 (1초)
+        /// </summary>
+        private const float MATCH_VERIFICATION_DELAY = 1f;
         #endregion
 
         #region Public Methods
@@ -90,6 +105,14 @@ namespace Manager
                 return;
             }
 
+            // 방 생성 중이면 취소 요청만 예약
+            if (isCreatingMatchmakingRoom)
+            {
+                Debug.Log("[MatchmakingManager] 방 생성 중이므로 취소 예약됨");
+                pendingCancel = true;
+                return;
+            }
+
             Debug.Log("[MatchmakingManager] 매칭 취소");
 
             // 방에서 나가기
@@ -140,6 +163,23 @@ namespace Manager
             }
 
             isCreatingMatchmakingRoom = false;
+
+            // 방 생성 중 취소 요청이 있었으면 즉시 방 나가기
+            if (pendingCancel)
+            {
+                Debug.Log("[MatchmakingManager] 방 생성 완료 후 예약된 취소 실행");
+                pendingCancel = false;
+
+                if (PhotonNetwork.InRoom)
+                {
+                    PhotonNetwork.LeaveRoom();
+                }
+
+                ChangeState(MatchmakingState.Idle);
+                SystemMessageManager.Instance?.ShowMessage("MatchmakingCancelled");
+                return;
+            }
+
             Debug.Log("[MatchmakingManager] 매칭 방 생성 완료. 상대방 대기 중...");
 
             // "매칭 중..." 메시지 표시
@@ -152,6 +192,7 @@ namespace Manager
         public void OnCreateMatchmakingRoomFailed(short returnCode, string message)
         {
             isCreatingMatchmakingRoom = false;
+            pendingCancel = false; // 취소 예약도 초기화
 
             Debug.LogError($"[MatchmakingManager] 매칭 방 생성 실패: {message} (Code: {returnCode})");
             ChangeState(MatchmakingState.Idle);
@@ -203,6 +244,15 @@ namespace Manager
         public void OnLeftMatchmakingRoom()
         {
             isCreatingMatchmakingRoom = false;
+            pendingCancel = false; // 취소 예약 초기화
+
+            // 매칭 검증 코루틴 중지
+            if (matchVerificationCoroutine != null)
+            {
+                StopCoroutine(matchVerificationCoroutine);
+                matchVerificationCoroutine = null;
+            }
+
             Debug.Log("[MatchmakingManager] 매칭 방에서 퇴장했습니다.");
             // 상태 변경은 CancelMatchmaking에서 이미 처리됨
         }
@@ -258,10 +308,80 @@ namespace Manager
         }
 
         /// <summary>
-        /// 매칭 완료 처리
+        /// 매칭 완료 처리 (1초 딜레이 후 검증)
         /// </summary>
         private void OnMatchingComplete()
         {
+            Debug.Log("[MatchmakingManager] 매칭 감지. 검증 시작...");
+
+            // 기존 검증 코루틴이 있으면 중지
+            if (matchVerificationCoroutine != null)
+            {
+                StopCoroutine(matchVerificationCoroutine);
+            }
+
+            // 검증 코루틴 시작
+            matchVerificationCoroutine = StartCoroutine(VerifyAndCompleteMatch());
+        }
+
+        /// <summary>
+        /// 매칭 완료 검증 후 게임 시작
+        /// 1초 딜레이 후 플레이어 수와 서로 다른 UserId 검증
+        /// </summary>
+        private System.Collections.IEnumerator VerifyAndCompleteMatch()
+        {
+            Debug.Log($"[MatchmakingManager] {MATCH_VERIFICATION_DELAY}초 후 매칭 검증 예정");
+
+            // 1초 대기
+            yield return new WaitForSeconds(MATCH_VERIFICATION_DELAY);
+
+            // 방에 여전히 있는지 확인
+            if (!PhotonNetwork.InRoom)
+            {
+                Debug.LogWarning("[MatchmakingManager] 검증 중 방에서 나갔습니다. 매칭 취소");
+                matchVerificationCoroutine = null;
+                yield break;
+            }
+
+            // 플레이어 수 확인
+            int playerCount = PhotonNetwork.CurrentRoom.PlayerCount;
+            if (playerCount < 2)
+            {
+                Debug.LogWarning($"[MatchmakingManager] 검증 실패: 플레이어 수 부족 ({playerCount}/2)");
+                matchVerificationCoroutine = null;
+                yield break;
+            }
+
+            // 서로 다른 플레이어인지 검증
+            var players = PhotonNetwork.CurrentRoom.Players.Values;
+            var playerArray = new Photon.Realtime.Player[players.Count];
+            players.CopyTo(playerArray, 0);
+
+            if (playerArray.Length >= 2)
+            {
+                string userId1 = playerArray[0].UserId;
+                string userId2 = playerArray[1].UserId;
+
+                if (userId1 == userId2)
+                {
+                    Debug.LogError($"[MatchmakingManager] 검증 실패: 동일한 UserId 감지 ({userId1}). 혼자 매칭 차단!");
+
+                    // 방 나가기 및 매칭 취소
+                    if (PhotonNetwork.InRoom)
+                    {
+                        PhotonNetwork.LeaveRoom();
+                    }
+
+                    ChangeState(MatchmakingState.Idle);
+                    SystemMessageManager.Instance?.ShowMessage("MatchmakingCancelled");
+                    matchVerificationCoroutine = null;
+                    yield break;
+                }
+
+                Debug.Log($"[MatchmakingManager] 검증 성공: 서로 다른 플레이어 확인 ({userId1} vs {userId2})");
+            }
+
+            // 검증 통과: 매칭 완료 처리
             Debug.Log("[MatchmakingManager] 매칭 완료! 게임 시작");
             ChangeState(MatchmakingState.Matched);
 
@@ -280,6 +400,8 @@ namespace Manager
             {
                 PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.GameScene));
             }
+
+            matchVerificationCoroutine = null;
         }
 
         /// <summary>

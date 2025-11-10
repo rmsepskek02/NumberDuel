@@ -35,6 +35,10 @@ namespace Manager
         private string roomPasswordText;
         private bool isProcessingRoomRequest = false; // 중복 요청 방지 플래그
         private Tweener rotationTweener; // 회전 애니메이션 Tweener
+        private float lastQuickMatchClickTime = -1f; // 마지막 빠른 매칭 버튼 클릭 시간
+        private const float QUICK_MATCH_COOLDOWN = 1f; // 빠른 매칭 버튼 쿨다운 (1초)
+        private Coroutine buttonCooldownCoroutine = null; // 버튼 쿨다운 코루틴
+        private Coroutine typingEffectCoroutine = null; // 타이핑 효과 코루틴
         #endregion
 
         #region Unity Lifecycle
@@ -372,18 +376,25 @@ namespace Manager
                 return;
             }
 
+            // 기존 타이핑 효과 중지
+            if (typingEffectCoroutine != null)
+            {
+                StopCoroutine(typingEffectCoroutine);
+                typingEffectCoroutine = null;
+            }
+
             switch (state)
             {
                 case Objects.MatchmakingState.Idle:
-                    quickMatchButtonText.text = "빠른 매칭";
+                    typingEffectCoroutine = StartCoroutine(TypeText("빠른 매칭"));
                     StopMatchingIconRotation();
-                    if (quickMatchButton != null) quickMatchButton.interactable = true;
+                    // 버튼 활성화는 쿨다운 후에만 (쿨다운 코루틴에서 처리)
                     break;
 
                 case Objects.MatchmakingState.Searching:
-                    quickMatchButtonText.text = "매칭 취소";
+                    typingEffectCoroutine = StartCoroutine(TypeText("매칭 취소"));
                     StartMatchingIconRotation();
-                    if (quickMatchButton != null) quickMatchButton.interactable = true;
+                    // 버튼 활성화는 쿨다운 후에만 (쿨다운 코루틴에서 처리)
                     break;
 
                 case Objects.MatchmakingState.Matched:
@@ -392,6 +403,28 @@ namespace Manager
                     StopMatchingIconRotation();
                     break;
             }
+        }
+
+        /// <summary>
+        /// 텍스트 타이핑 효과
+        /// </summary>
+        private System.Collections.IEnumerator TypeText(string targetText)
+        {
+            if (quickMatchButtonText == null)
+            {
+                yield break;
+            }
+
+            quickMatchButtonText.text = "";
+            float charDelay = QUICK_MATCH_COOLDOWN / targetText.Length; // 1초 동안 모든 글자 출력
+
+            foreach (char c in targetText)
+            {
+                quickMatchButtonText.text += c;
+                yield return new WaitForSeconds(charDelay);
+            }
+
+            typingEffectCoroutine = null;
         }
 
         /// <summary>
@@ -458,6 +491,19 @@ namespace Manager
         {
             // 회전 애니메이션 정리
             StopMatchingIconRotation();
+
+            // 코루틴 정리
+            if (buttonCooldownCoroutine != null)
+            {
+                StopCoroutine(buttonCooldownCoroutine);
+                buttonCooldownCoroutine = null;
+            }
+
+            if (typingEffectCoroutine != null)
+            {
+                StopCoroutine(typingEffectCoroutine);
+                typingEffectCoroutine = null;
+            }
 
             // 이벤트 구독 해제
             if (MatchmakingManager.Instance != null)
@@ -558,6 +604,29 @@ namespace Manager
                 return;
             }
 
+            // 쿨다운 체크
+            float timeSinceLastClick = Time.time - lastQuickMatchClickTime;
+            if (lastQuickMatchClickTime >= 0 && timeSinceLastClick < QUICK_MATCH_COOLDOWN)
+            {
+                Debug.Log($"[LobbyManager] 버튼 쿨다운 중: {QUICK_MATCH_COOLDOWN - timeSinceLastClick:F1}초 남음");
+                return;
+            }
+
+            // 마지막 클릭 시간 업데이트
+            lastQuickMatchClickTime = Time.time;
+
+            // 버튼 비활성화 및 쿨다운 시작
+            if (quickMatchButton != null)
+            {
+                quickMatchButton.interactable = false;
+            }
+
+            if (buttonCooldownCoroutine != null)
+            {
+                StopCoroutine(buttonCooldownCoroutine);
+            }
+            buttonCooldownCoroutine = StartCoroutine(EnableQuickMatchButtonAfterDelay());
+
             // 현재 상태에 따라 분기
             if (MatchmakingManager.Instance.IsSearching)
             {
@@ -569,6 +638,21 @@ namespace Manager
                 // 매칭 시작
                 MatchmakingManager.Instance.StartMatchmaking();
             }
+        }
+
+        /// <summary>
+        /// 1초 후 빠른 매칭 버튼 재활성화
+        /// </summary>
+        private System.Collections.IEnumerator EnableQuickMatchButtonAfterDelay()
+        {
+            yield return new WaitForSeconds(QUICK_MATCH_COOLDOWN);
+
+            if (quickMatchButton != null)
+            {
+                quickMatchButton.interactable = true;
+            }
+
+            buttonCooldownCoroutine = null;
         }
 
         public void OnClickRefresh()
