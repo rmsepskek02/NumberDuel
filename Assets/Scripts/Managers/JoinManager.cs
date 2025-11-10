@@ -1,6 +1,8 @@
 using Objects;
+using Objects.Data;
 using Photon.Pun;
 using Photon.Realtime;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,14 +11,27 @@ namespace Manager
 {
     /// <summary>
     /// Login 화면을 관리하는 매니저
-    /// Photon 네트워크 연결 및 닉네임 설정 담당
+    /// Firebase 인증 및 Photon 네트워크 연결 담당
     /// </summary>
     public class JoinManager : MonoBehaviourPunCallbacks
     {
         #region Fields and Properties
-        public Button joinButton;
-        public TMP_InputField inputId;
+        [Header("UI Elements")]
+        public TMP_InputField inputEmail;
         public TMP_InputField inputPassword;
+        public TMP_InputField inputNickname;
+        public Button actionButton;
+        public Button toggleModeButton;
+        public TextMeshProUGUI statusText;
+        public TextMeshProUGUI actionButtonText;
+        public TextMeshProUGUI toggleModeButtonText;
+        public GameObject nicknameLabel; // 회원가입 시에만 표시
+        public GameObject nicknameInputField; // 회원가입 시에만 표시
+
+        [Header("Mode Settings")]
+        private bool isLoginMode = true; // true: 로그인, false: 회원가입
+
+        private bool isProcessing = false;
         #endregion
 
         #region Unity Lifecycle
@@ -28,7 +43,14 @@ namespace Manager
             // 서버 연결 (AppId, 버전, 서버에 요청)
             PhotonNetwork.ConnectUsingSettings();
 
-            inputId.text = GameManager.Instance.clinetSettings.ClientID;
+            // UI 초기화
+            SetLoginMode(true);
+
+            // 상태 텍스트 숨김
+            if (statusText != null)
+                statusText.gameObject.SetActive(false);
+
+            // 버튼 이벤트는 Unity Editor에서 등록
         }
         #endregion
 
@@ -39,6 +61,7 @@ namespace Manager
         public override void OnConnected()
         {
             base.OnConnected();
+            ShowStatus("서버 연결 완료", Color.green);
         }
 
         /// <summary>
@@ -56,8 +79,6 @@ namespace Manager
         {
             base.OnJoinedLobby();
 
-            PhotonNetwork.NickName = inputId.text;
-
             // 로비로 이동
             if (LoadingScreenManager.Instance != null)
             {
@@ -72,12 +93,226 @@ namespace Manager
 
         #region Button Events
         /// <summary>
-        /// 로비 진입 버튼 클릭
+        /// [Deprecated] 기존 메서드 - 사용하지 말것
         /// </summary>
+        [System.Obsolete("Use OnClickActionButton instead")]
         public void OnClickButton()
         {
-            // 로비 진입 요청
-            PhotonNetwork.JoinLobby();
+            // 이 메서드는 더 이상 사용하지 않습니다.
+            // Firebase 인증을 사용하려면 OnClickActionButton을 사용하세요.
+            Debug.LogWarning("OnClickButton()은 더 이상 사용되지 않습니다. OnClickActionButton()을 사용하세요.");
+        }
+
+        /// <summary>
+        /// 로그인/회원가입 버튼 클릭
+        /// </summary>
+        public async void OnClickActionButton()
+        {
+            if (isProcessing) return;
+
+            string email = inputEmail?.text ?? "";
+            string password = inputPassword?.text ?? "";
+            string nickname = inputNickname?.text ?? "";
+
+            // 입력 검증
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+            {
+                ShowStatus("이메일과 비밀번호를 입력해주세요.", Color.red);
+                return;
+            }
+
+            if (!isLoginMode && string.IsNullOrEmpty(nickname))
+            {
+                ShowStatus("닉네임을 입력해주세요.", Color.red);
+                return;
+            }
+
+            isProcessing = true;
+            SetButtonsInteractable(false);
+
+            try
+            {
+                if (isLoginMode)
+                {
+                    // 로그인 처리
+                    ShowStatus("로그인 중...", Color.yellow);
+                    var result = await AuthManager.Instance.LoginWithEmail(email, password);
+
+                    if (result.success)
+                    {
+                        ShowStatus("로그인 성공!", Color.green);
+                        await System.Threading.Tasks.Task.Delay(500); // 0.5초 대기
+
+                        // Coroutine으로 프로필 로드 및 로비 진입
+                        StartCoroutine(OnLoginSuccessCoroutine());
+                    }
+                    else
+                    {
+                        ShowStatus(result.message, Color.red);
+                    }
+                }
+                else
+                {
+                    // 회원가입 처리
+                    ShowStatus("회원가입 중...", Color.yellow);
+                    var result = await AuthManager.Instance.RegisterWithEmail(email, password);
+
+                    if (result.success)
+                    {
+                        ShowStatus("회원가입 성공!", Color.green);
+                        await System.Threading.Tasks.Task.Delay(800); // 0.8초 대기
+
+                        // 회원가입 성공 시 자동으로 로그인되므로 프로필 생성
+                        ShowStatus("프로필 생성 중...", Color.yellow);
+                        string uid = AuthManager.Instance.CurrentUserUID;
+                        await DatabaseManager.Instance.CreateUserProfile(uid, email, nickname);
+
+                        await System.Threading.Tasks.Task.Delay(500); // 0.5초 대기
+
+                        // Coroutine으로 로비 진입
+                        StartCoroutine(OnLoginSuccessCoroutine());
+                    }
+                    else
+                    {
+                        ShowStatus(result.message, Color.red);
+                    }
+                }
+            }
+            finally
+            {
+                isProcessing = false;
+                SetButtonsInteractable(true);
+            }
+        }
+
+        /// <summary>
+        /// 모드 전환 버튼 클릭 (로그인 ↔ 회원가입)
+        /// </summary>
+        public void OnClickToggleModeButton()
+        {
+            SetLoginMode(!isLoginMode);
+        }
+        #endregion
+
+        #region Private Methods
+        /// <summary>
+        /// 로그인 성공 후 처리 (Coroutine 버전 - 빌드 호환성)
+        /// </summary>
+        private IEnumerator OnLoginSuccessCoroutine()
+        {
+            string uid = AuthManager.Instance.CurrentUserUID;
+            string email = AuthManager.Instance.CurrentUserEmail;
+
+            ShowStatus("프로필 로드 중...", Color.yellow);
+
+            // 프로필 존재 여부 확인
+            var checkTask = DatabaseManager.Instance.UserProfileExists(uid);
+            yield return new WaitUntil(() => checkTask.IsCompleted);
+
+            bool profileExists = checkTask.Result;
+            UserProfile profile = null;
+
+            if (!profileExists)
+            {
+                // 프로필이 없으면 생성 (기존 계정의 경우)
+                ShowStatus("프로필 생성 중...", Color.yellow);
+                string defaultNickname = email.Split('@')[0]; // 이메일 앞부분을 닉네임으로
+
+                var createTask = DatabaseManager.Instance.CreateUserProfile(uid, email, defaultNickname);
+                yield return new WaitUntil(() => createTask.IsCompleted);
+
+                var loadTask = DatabaseManager.Instance.GetUserProfile(uid);
+                yield return new WaitUntil(() => loadTask.IsCompleted);
+                profile = loadTask.Result;
+            }
+            else
+            {
+                // 프로필 로드
+                var loadTask = DatabaseManager.Instance.GetUserProfile(uid);
+                yield return new WaitUntil(() => loadTask.IsCompleted);
+                profile = loadTask.Result;
+            }
+
+            if (profile != null)
+            {
+                // 마지막 로그인 시간 업데이트
+                var updateTask = DatabaseManager.Instance.UpdateLastLogin(uid);
+                yield return new WaitUntil(() => updateTask.IsCompleted);
+
+                // Photon 닉네임 설정
+                PhotonNetwork.NickName = profile.Nickname;
+
+                // Photon Custom Property에 Firebase UID 저장
+                ExitGames.Client.Photon.Hashtable customProperties = new ExitGames.Client.Photon.Hashtable
+                {
+                    { "FirebaseUID", uid }
+                };
+                PhotonNetwork.LocalPlayer.SetCustomProperties(customProperties);
+
+                ShowStatus("Photon 로비 진입 중...", Color.green);
+
+                // Photon 로비 진입
+                PhotonNetwork.JoinLobby();
+
+                SetButtonsInteractable(true);
+            }
+            else
+            {
+                ShowStatus("사용자 프로필을 불러올 수 없습니다.", Color.red);
+                SetButtonsInteractable(true);
+            }
+        }
+
+        /// <summary>
+        /// UI 모드 설정 (로그인/회원가입)
+        /// </summary>
+        private void SetLoginMode(bool isLogin)
+        {
+            isLoginMode = isLogin;
+
+            // 닉네임 필드 표시/숨김
+            if (nicknameLabel != null)
+                nicknameLabel.SetActive(!isLoginMode);
+
+            if (nicknameInputField != null)
+                nicknameInputField.SetActive(!isLoginMode);
+
+            // 버튼 텍스트 변경
+            if (actionButtonText != null)
+                actionButtonText.text = isLoginMode ? "로그인" : "회원가입";
+
+            if (toggleModeButtonText != null)
+                toggleModeButtonText.text = isLoginMode ? "회원가입" : "로그인";
+
+            // 상태 텍스트 숨김
+            if (statusText != null)
+                statusText.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// 상태 메시지 표시
+        /// </summary>
+        private void ShowStatus(string message, Color color)
+        {
+            if (statusText != null)
+            {
+                statusText.text = message;
+                statusText.color = color;
+                statusText.gameObject.SetActive(true);
+                Debug.Log($"[JoinManager] {message}");
+            }
+        }
+
+        /// <summary>
+        /// 버튼 활성/비활성 설정
+        /// </summary>
+        private void SetButtonsInteractable(bool interactable)
+        {
+            if (actionButton != null)
+                actionButton.interactable = interactable;
+
+            if (toggleModeButton != null)
+                toggleModeButton.interactable = interactable;
         }
         #endregion
     }

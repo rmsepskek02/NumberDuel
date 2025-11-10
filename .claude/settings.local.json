@@ -24,7 +24,9 @@
       "Bash(mkdir:*)",
       "Bash(powershell -Command \"(Get-Content ''D:\\Dmain\\dev\\Portfolio\\NumberDuel\\Assets\\Scripts\\Managers\\NetworkGameManager.cs'').Count\")",
       "Bash(powershell -Command:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "mcp__mcp-unity__load_scene",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": []

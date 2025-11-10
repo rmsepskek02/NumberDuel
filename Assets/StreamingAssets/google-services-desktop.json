@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "48353818417",
+    "project_id": "numberduel-81d38",
+    "storage_bucket": "numberduel-81d38.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:48353818417:android:371224b8f88e8881c7a210",
+        "android_client_info": {
+          "package_name": "com.GoroCompany.NumberDuel"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCqMNppQyZheXdYFQbt21D-w_8UpZ52CAM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

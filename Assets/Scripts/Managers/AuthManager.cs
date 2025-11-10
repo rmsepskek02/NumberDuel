@@ -1,0 +1,263 @@
+using System;
+using System.Threading.Tasks;
+using Firebase;
+using Firebase.Auth;
+using Firebase.Extensions;
+using UnityEngine;
+using Utills;
+
+namespace Manager
+{
+    /// <summary>
+    /// Firebase Authentication을 관리하는 싱글톤 매니저
+    /// 이메일/비밀번호 로그인 및 회원가입 담당
+    /// </summary>
+    public class AuthManager : SingletonDontDestroy<AuthManager>
+    {
+        #region Fields and Properties
+        private FirebaseAuth auth;
+        private FirebaseUser currentUser;
+
+        /// <summary>
+        /// 현재 로그인한 사용자
+        /// </summary>
+        public FirebaseUser CurrentUser => currentUser;
+
+        /// <summary>
+        /// 로그인 상태 확인
+        /// </summary>
+        public bool IsLoggedIn => currentUser != null;
+
+        /// <summary>
+        /// 현재 사용자의 UID
+        /// </summary>
+        public string CurrentUserUID => currentUser?.UserId ?? string.Empty;
+
+        /// <summary>
+        /// 현재 사용자의 이메일
+        /// </summary>
+        public string CurrentUserEmail => currentUser?.Email ?? string.Empty;
+        #endregion
+
+        #region Initialization
+        protected override void Awake()
+        {
+            base.Awake();
+            InitializeFirebase();
+        }
+
+        private void InitializeFirebase()
+        {
+            FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task =>
+            {
+                if (task.Result == DependencyStatus.Available)
+                {
+                    auth = FirebaseAuth.DefaultInstance;
+
+                    // 인증 상태 변경 이벤트 등록
+                    auth.StateChanged += OnAuthStateChanged;
+
+                    // 이미 로그인되어 있는지 확인
+                    OnAuthStateChanged(this, null);
+
+                    Debug.Log("✅ AuthManager 초기화 완료");
+                }
+                else
+                {
+                    Debug.LogError($"❌ Firebase 초기화 실패: {task.Result}");
+                }
+            });
+        }
+
+        private void OnDestroy()
+        {
+            if (auth != null)
+            {
+                auth.StateChanged -= OnAuthStateChanged;
+            }
+        }
+
+        private void OnAuthStateChanged(object sender, EventArgs eventArgs)
+        {
+            if (auth.CurrentUser != currentUser)
+            {
+                bool signedIn = currentUser != auth.CurrentUser && auth.CurrentUser != null;
+
+                if (!signedIn && currentUser != null)
+                {
+                    Debug.Log("사용자 로그아웃");
+                }
+
+                currentUser = auth.CurrentUser;
+
+                if (signedIn)
+                {
+                    Debug.Log($"사용자 로그인: {currentUser.Email} (UID: {currentUser.UserId})");
+                }
+            }
+        }
+        #endregion
+
+        #region Public Methods - Registration
+        /// <summary>
+        /// 이메일과 비밀번호로 회원가입
+        /// </summary>
+        /// <param name="email">이메일</param>
+        /// <param name="password">비밀번호</param>
+        /// <returns>성공 여부와 메시지</returns>
+        public async Task<(bool success, string message)> RegisterWithEmail(string email, string password)
+        {
+            try
+            {
+                // 입력 검증
+                if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+                {
+                    return (false, "이메일과 비밀번호를 입력해주세요.");
+                }
+
+                if (password.Length < 6)
+                {
+                    return (false, "비밀번호는 최소 6자 이상이어야 합니다.");
+                }
+
+                // Firebase 회원가입
+                AuthResult result = await auth.CreateUserWithEmailAndPasswordAsync(email, password);
+
+                if (result.User != null)
+                {
+                    currentUser = result.User;
+
+                    // 이메일 인증 발송
+                    await SendEmailVerification();
+
+                    Debug.Log($"✅ 회원가입 성공: {email}");
+                    return (true, "회원가입이 완료되었습니다. 이메일 인증을 진행해주세요.");
+                }
+
+                return (false, "회원가입에 실패했습니다.");
+            }
+            catch (FirebaseException ex)
+            {
+                Debug.LogError($"회원가입 에러: {ex.Message}");
+                return (false, GetFirebaseErrorMessage(ex));
+            }
+        }
+
+        /// <summary>
+        /// 이메일 인증 발송
+        /// </summary>
+        public async Task<bool> SendEmailVerification()
+        {
+            if (currentUser == null)
+            {
+                Debug.LogError("로그인된 사용자가 없습니다.");
+                return false;
+            }
+
+            try
+            {
+                await currentUser.SendEmailVerificationAsync();
+                Debug.Log("✅ 이메일 인증 발송 완료");
+                return true;
+            }
+            catch (FirebaseException ex)
+            {
+                Debug.LogError($"이메일 인증 발송 실패: {ex.Message}");
+                return false;
+            }
+        }
+        #endregion
+
+        #region Public Methods - Login
+        /// <summary>
+        /// 이메일과 비밀번호로 로그인
+        /// </summary>
+        /// <param name="email">이메일</param>
+        /// <param name="password">비밀번호</param>
+        /// <returns>성공 여부와 메시지</returns>
+        public async Task<(bool success, string message)> LoginWithEmail(string email, string password)
+        {
+            try
+            {
+                // 입력 검증
+                if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+                {
+                    return (false, "이메일과 비밀번호를 입력해주세요.");
+                }
+
+                // Firebase 로그인
+                AuthResult result = await auth.SignInWithEmailAndPasswordAsync(email, password);
+
+                if (result.User != null)
+                {
+                    currentUser = result.User;
+
+                    // 이메일 인증 확인 (선택사항)
+                    // if (!currentUser.IsEmailVerified)
+                    // {
+                    //     return (false, "이메일 인증이 완료되지 않았습니다.");
+                    // }
+
+                    Debug.Log($"✅ 로그인 성공: {email}");
+                    return (true, "로그인 성공!");
+                }
+
+                return (false, "로그인에 실패했습니다.");
+            }
+            catch (FirebaseException ex)
+            {
+                Debug.LogError($"로그인 에러: {ex.Message}");
+                return (false, GetFirebaseErrorMessage(ex));
+            }
+        }
+        #endregion
+
+        #region Public Methods - Logout
+        /// <summary>
+        /// 로그아웃
+        /// </summary>
+        public void Logout()
+        {
+            if (auth != null && currentUser != null)
+            {
+                auth.SignOut();
+                currentUser = null;
+                Debug.Log("✅ 로그아웃 완료");
+            }
+        }
+        #endregion
+
+        #region Helper Methods
+        /// <summary>
+        /// Firebase 에러 메시지를 한글로 변환
+        /// </summary>
+        private string GetFirebaseErrorMessage(FirebaseException ex)
+        {
+            string errorCode = ex.Message;
+
+            if (errorCode.Contains("EMAIL_EXISTS") || errorCode.Contains("already in use"))
+                return "이미 사용 중인 이메일입니다.";
+
+            if (errorCode.Contains("INVALID_EMAIL") || errorCode.Contains("badly formatted"))
+                return "올바르지 않은 이메일 형식입니다.";
+
+            if (errorCode.Contains("WEAK_PASSWORD"))
+                return "비밀번호가 너무 약합니다. 6자 이상 입력해주세요.";
+
+            if (errorCode.Contains("USER_NOT_FOUND") || errorCode.Contains("no user record"))
+                return "존재하지 않는 계정입니다.";
+
+            if (errorCode.Contains("WRONG_PASSWORD") || errorCode.Contains("password is invalid"))
+                return "비밀번호가 올바르지 않습니다.";
+
+            if (errorCode.Contains("TOO_MANY_ATTEMPTS"))
+                return "너무 많은 시도가 있었습니다. 잠시 후 다시 시도해주세요.";
+
+            if (errorCode.Contains("NETWORK_ERROR"))
+                return "네트워크 연결을 확인해주세요.";
+
+            return $"오류가 발생했습니다: {errorCode}";
+        }
+        #endregion
+    }
+}

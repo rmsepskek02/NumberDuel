@@ -251,16 +251,31 @@ namespace Manager
 
         public void OnClickLogOut()
         {
+            // Firebase 로그아웃
+            if (AuthManager.Instance != null)
+            {
+                AuthManager.Instance.Logout();
+                Debug.Log("[LobbyManager] Firebase 로그아웃 완료");
+            }
+
+            // Photon 연결 해제
+            if (PhotonNetwork.IsConnected)
+            {
+                PhotonNetwork.Disconnect();
+                Debug.Log("[LobbyManager] Photon 연결 해제");
+            }
+
+            // JoinScene으로 이동
             if (LoadingScreenManager.Instance != null)
             {
                 LoadingScreenManager.Instance.FadeInThenAction(() =>
                 {
-                    PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.JoinScene));
+                    UnityEngine.SceneManagement.SceneManager.LoadScene(SceneNameExtensions.GetSceneName(SceneName.JoinScene));
                 });
             }
             else
             {
-                PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.JoinScene));
+                UnityEngine.SceneManagement.SceneManager.LoadScene(SceneNameExtensions.GetSceneName(SceneName.JoinScene));
             }
         }
         #endregion

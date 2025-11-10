@@ -1,4 +1,7 @@
 using Objects;
+using Objects.Data;
+using Photon.Pun;
+using Photon.Realtime;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -482,9 +485,10 @@ namespace Manager
         /// 3. 모든 프로세스 강제 종료
         /// 4. 게임 종료 이벤트 발생 (TurnManager에 알림)
         /// 5. 게임 결과 UI 표시
+        /// 6. Firebase에 게임 전적 저장 (마스터 클라이언트만)
         /// </summary>
         /// <param name="defeatedPlayer">패배한 플레이어</param>
-        public void OnGameEnd(CardZone.OwnerType defeatedPlayer)
+        public async void OnGameEnd(CardZone.OwnerType defeatedPlayer)
         {
             if (IsGameEnded)
             {
@@ -505,6 +509,12 @@ namespace Manager
 
             // 게임 결과 UI 표시 (지연 없이)
             ShowGameEndUI(GameWinner.Value, defeatedPlayer);
+
+            // Firebase에 게임 전적 저장 (마스터 클라이언트만)
+            if (PhotonNetwork.IsMasterClient && PhotonNetwork.CurrentRoom != null && PhotonNetwork.CurrentRoom.PlayerCount == 2)
+            {
+                await SaveGameResultToFirebase(GameWinner.Value, defeatedPlayer);
+            }
         }
 
         /// <summary>
@@ -592,6 +602,94 @@ namespace Manager
         public bool CanPlayGame()
         {
             return !IsGameEnded && HealthManager.Instance != null && !HealthManager.Instance.IsGameOver();
+        }
+
+        /// <summary>
+        /// Firebase에 게임 전적 저장
+        /// 마스터 클라이언트만 실행
+        /// </summary>
+        /// <param name="winner">승리한 플레이어</param>
+        /// <param name="loser">패배한 플레이어</param>
+        private async System.Threading.Tasks.Task SaveGameResultToFirebase(CardZone.OwnerType winner, CardZone.OwnerType loser)
+        {
+            try
+            {
+                // 게임 데이터 수집
+                Player[] players = PhotonNetwork.PlayerList;
+                if (players.Length != 2)
+                {
+                    Debug.LogWarning("[InGameManager] 플레이어가 2명이 아니므로 전적을 저장하지 않습니다.");
+                    return;
+                }
+
+                // 마스터와 게스트 플레이어 구분
+                Player masterPlayer = PhotonNetwork.MasterClient;
+                Player guestPlayer = players[0] == masterPlayer ? players[1] : players[0];
+
+                // Firebase UID 가져오기
+                string masterUID = GetPlayerFirebaseUID(masterPlayer);
+                string guestUID = GetPlayerFirebaseUID(guestPlayer);
+
+                if (string.IsNullOrEmpty(masterUID) || string.IsNullOrEmpty(guestUID))
+                {
+                    Debug.LogError("[InGameManager] Firebase UID를 찾을 수 없습니다. 전적 저장 불가.");
+                    return;
+                }
+
+                // 닉네임 가져오기
+                string masterNickname = masterPlayer.NickName;
+                string guestNickname = guestPlayer.NickName;
+
+                // 최종 HP 가져오기
+                int masterFinalHP = HealthManager.Instance.GetCurrentHP(CardZone.OwnerType.Player); // 마스터는 항상 Player
+                int guestFinalHP = HealthManager.Instance.GetCurrentHP(CardZone.OwnerType.Opponent); // 게스트는 항상 Opponent
+
+                // 승자 UID 결정 (마스터 관점)
+                string winnerUID = (winner == CardZone.OwnerType.Player) ? masterUID : guestUID;
+
+                // 턴 수 가져오기
+                int turnCount = TurnManager.Instance != null ? TurnManager.Instance.CurrentTurn : 0;
+
+                // GameRecord 생성
+                GameRecord record = new GameRecord(
+                    masterUID, masterNickname, masterFinalHP,
+                    guestUID, guestNickname, guestFinalHP,
+                    winnerUID, turnCount
+                );
+
+                // Firestore에 저장
+                Debug.Log($"[InGameManager] 게임 전적 저장 시작: {masterNickname} vs {guestNickname}, 승자: {(winnerUID == masterUID ? masterNickname : guestNickname)}");
+
+                bool success = await DatabaseManager.Instance.SaveGameRecord(record);
+
+                if (success)
+                {
+                    Debug.Log("[InGameManager] ✅ 게임 전적 저장 완료");
+                }
+                else
+                {
+                    Debug.LogError("[InGameManager] ❌ 게임 전적 저장 실패");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[InGameManager] 게임 전적 저장 중 오류 발생: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Photon Player의 Firebase UID 가져오기
+        /// CustomProperties에 저장된 "FirebaseUID" 키 사용
+        /// </summary>
+        private string GetPlayerFirebaseUID(Player player)
+        {
+            if (player.CustomProperties.TryGetValue("FirebaseUID", out object uid))
+            {
+                return uid as string;
+            }
+
+            Debug.LogWarning($"[InGameManager] {player.NickName}의 Firebase UID를 찾을 수 없습니다.");
+            return null;
         }
         #endregion
     }
