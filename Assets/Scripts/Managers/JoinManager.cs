@@ -3,6 +3,7 @@ using Objects.Data;
 using Photon.Pun;
 using Photon.Realtime;
 using System.Collections;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -31,6 +32,10 @@ namespace Manager
         private bool isLoginMode = true; // true: 로그인, false: 회원가입
 
         private bool isProcessing = false;
+        private Coroutine photonTimeoutCoroutine = null;
+
+        private const float PHOTON_CONNECT_TIMEOUT = 10f; // Photon 연결 타임아웃 (10초)
+        private const float TASK_TIMEOUT = 10f; // Firebase Task 타임아웃 (10초)
         #endregion
 
         #region Unity Lifecycle
@@ -42,10 +47,23 @@ namespace Manager
             // 서버 연결 (AppId, 버전, 서버에 요청)
             PhotonNetwork.ConnectUsingSettings();
 
+            // Photon 연결 타임아웃 체크 시작
+            photonTimeoutCoroutine = StartCoroutine(CheckPhotonConnectionTimeout());
+
             // UI 초기화
             SetLoginMode(true);
 
             // 버튼 이벤트는 Unity Editor에서 등록
+        }
+
+        void OnDestroy()
+        {
+            // 코루틴 정리
+            if (photonTimeoutCoroutine != null)
+            {
+                StopCoroutine(photonTimeoutCoroutine);
+                photonTimeoutCoroutine = null;
+            }
         }
         #endregion
 
@@ -65,6 +83,14 @@ namespace Manager
         public override void OnConnectedToMaster()
         {
             base.OnConnectedToMaster();
+
+            // Photon 연결 성공 시 타임아웃 코루틴 중지
+            if (photonTimeoutCoroutine != null)
+            {
+                StopCoroutine(photonTimeoutCoroutine);
+                photonTimeoutCoroutine = null;
+                Debug.Log("[JoinManager] Photon 연결 성공");
+            }
         }
 
         /// <summary>
@@ -127,6 +153,37 @@ namespace Manager
 
             try
             {
+                // ✅ 1단계: Firebase 초기화 대기
+                if (!AuthManager.Instance.IsInitialized)
+                {
+                    SystemMessageManager.Instance?.ShowMessage("InitializingFirebase");
+                    Debug.Log("[JoinManager] Firebase 초기화 대기 중...");
+
+                    bool authReady = await AuthManager.Instance.WaitForInitialization(10f);
+                    if (!authReady)
+                    {
+                        SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
+                        Debug.LogError("[JoinManager] AuthManager 초기화 실패");
+                        return;
+                    }
+
+                    Debug.Log("[JoinManager] AuthManager 초기화 완료");
+                }
+
+                if (!SessionManager.Instance.IsInitialized)
+                {
+                    bool sessionReady = await SessionManager.Instance.WaitForInitialization(10f);
+                    if (!sessionReady)
+                    {
+                        SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
+                        Debug.LogError("[JoinManager] SessionManager 초기화 실패");
+                        return;
+                    }
+
+                    Debug.Log("[JoinManager] SessionManager 초기화 완료");
+                }
+
+                // ✅ 2단계: 기존 로그인 로직 실행
                 if (isLoginMode)
                 {
                     // 로그인 처리
@@ -227,16 +284,63 @@ namespace Manager
 
         #region Private Methods
         /// <summary>
-        /// 로그인 성공 후 처리 (Coroutine 버전 - 빌드 호환성)
+        /// Photon 연결 타임아웃 체크
+        /// </summary>
+        private IEnumerator CheckPhotonConnectionTimeout()
+        {
+            yield return new WaitForSeconds(PHOTON_CONNECT_TIMEOUT);
+
+            if (!PhotonNetwork.IsConnectedAndReady)
+            {
+                Debug.LogError($"⏱️ Photon 연결 타임아웃 ({PHOTON_CONNECT_TIMEOUT}초)");
+                SystemMessageManager.Instance?.ShowMessage("PhotonConnectionTimeout");
+            }
+
+            photonTimeoutCoroutine = null;
+        }
+
+        /// <summary>
+        /// Task에 타임아웃 기능 추가
+        /// </summary>
+        private async Task<T> RunWithTimeout<T>(Task<T> task, float timeoutSeconds, string operationName)
+        {
+            var timeoutTask = Task.Delay(System.TimeSpan.FromSeconds(timeoutSeconds));
+            var completedTask = await Task.WhenAny(task, timeoutTask);
+
+            if (completedTask == timeoutTask)
+            {
+                Debug.LogError($"⏱️ {operationName} 타임아웃 ({timeoutSeconds}초)");
+                throw new System.TimeoutException($"{operationName} 타임아웃");
+            }
+
+            return await task;
+        }
+
+        /// <summary>
+        /// 로그인 성공 후 처리 (Coroutine 버전 - 타임아웃 적용)
         /// </summary>
         private IEnumerator OnLoginSuccessCoroutine()
         {
             string uid = AuthManager.Instance.CurrentUserUID;
             string email = AuthManager.Instance.CurrentUserEmail;
 
-            // 프로필 존재 여부 확인
+            // 프로필 존재 여부 확인 (타임아웃 적용)
             var checkTask = DatabaseManager.Instance.UserProfileExists(uid);
-            yield return new WaitUntil(() => checkTask.IsCompleted);
+            float elapsedTime = 0f;
+
+            while (!checkTask.IsCompleted && elapsedTime < TASK_TIMEOUT)
+            {
+                yield return new WaitForSeconds(0.1f);
+                elapsedTime += 0.1f;
+            }
+
+            if (!checkTask.IsCompleted)
+            {
+                Debug.LogError($"⏱️ 프로필 존재 확인 타임아웃 ({TASK_TIMEOUT}초)");
+                SystemMessageManager.Instance?.ShowMessage("NetworkTimeout");
+                SetButtonsInteractable(true);
+                yield break;
+            }
 
             bool profileExists = checkTask.Result;
             UserProfile profile = null;
@@ -248,25 +352,81 @@ namespace Manager
                 string defaultNickname = email.Split('@')[0]; // 이메일 앞부분을 닉네임으로
 
                 var createTask = DatabaseManager.Instance.CreateUserProfile(uid, email, defaultNickname);
-                yield return new WaitUntil(() => createTask.IsCompleted);
+                elapsedTime = 0f;
+
+                while (!createTask.IsCompleted && elapsedTime < TASK_TIMEOUT)
+                {
+                    yield return new WaitForSeconds(0.1f);
+                    elapsedTime += 0.1f;
+                }
+
+                if (!createTask.IsCompleted)
+                {
+                    Debug.LogError($"⏱️ 프로필 생성 타임아웃 ({TASK_TIMEOUT}초)");
+                    SystemMessageManager.Instance?.ShowMessage("NetworkTimeout");
+                    SetButtonsInteractable(true);
+                    yield break;
+                }
 
                 var loadTask = DatabaseManager.Instance.GetUserProfile(uid);
-                yield return new WaitUntil(() => loadTask.IsCompleted);
+                elapsedTime = 0f;
+
+                while (!loadTask.IsCompleted && elapsedTime < TASK_TIMEOUT)
+                {
+                    yield return new WaitForSeconds(0.1f);
+                    elapsedTime += 0.1f;
+                }
+
+                if (!loadTask.IsCompleted)
+                {
+                    Debug.LogError($"⏱️ 프로필 로드 타임아웃 ({TASK_TIMEOUT}초)");
+                    SystemMessageManager.Instance?.ShowMessage("NetworkTimeout");
+                    SetButtonsInteractable(true);
+                    yield break;
+                }
+
                 profile = loadTask.Result;
             }
             else
             {
-                // 프로필 로드
+                // 프로필 로드 (타임아웃 적용)
                 var loadTask = DatabaseManager.Instance.GetUserProfile(uid);
-                yield return new WaitUntil(() => loadTask.IsCompleted);
+                elapsedTime = 0f;
+
+                while (!loadTask.IsCompleted && elapsedTime < TASK_TIMEOUT)
+                {
+                    yield return new WaitForSeconds(0.1f);
+                    elapsedTime += 0.1f;
+                }
+
+                if (!loadTask.IsCompleted)
+                {
+                    Debug.LogError($"⏱️ 프로필 로드 타임아웃 ({TASK_TIMEOUT}초)");
+                    SystemMessageManager.Instance?.ShowMessage("NetworkTimeout");
+                    SetButtonsInteractable(true);
+                    yield break;
+                }
+
                 profile = loadTask.Result;
             }
 
             if (profile != null)
             {
-                // 마지막 로그인 시간 업데이트
+                // 마지막 로그인 시간 업데이트 (타임아웃 적용)
                 var updateTask = DatabaseManager.Instance.UpdateLastLogin(uid);
-                yield return new WaitUntil(() => updateTask.IsCompleted);
+                elapsedTime = 0f;
+
+                while (!updateTask.IsCompleted && elapsedTime < TASK_TIMEOUT)
+                {
+                    yield return new WaitForSeconds(0.1f);
+                    elapsedTime += 0.1f;
+                }
+
+                // 업데이트 실패해도 로그인은 진행 (치명적 아님)
+                if (!updateTask.IsCompleted)
+                {
+                    Debug.LogWarning($"⏱️ 마지막 로그인 업데이트 타임아웃 ({TASK_TIMEOUT}초) - 무시하고 진행");
+                }
 
                 // Photon 닉네임 설정
                 PhotonNetwork.NickName = profile.Nickname;

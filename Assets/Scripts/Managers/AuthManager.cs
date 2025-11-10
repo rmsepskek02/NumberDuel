@@ -17,6 +17,9 @@ namespace Manager
         #region Fields and Properties
         private FirebaseAuth auth;
         private FirebaseUser currentUser;
+        private bool isInitialized = false;
+
+        private const float INIT_TIMEOUT = 10f; // 초기화 타임아웃 (10초)
 
         /// <summary>
         /// 현재 로그인한 사용자
@@ -27,6 +30,11 @@ namespace Manager
         /// 로그인 상태 확인
         /// </summary>
         public bool IsLoggedIn => currentUser != null;
+
+        /// <summary>
+        /// 초기화 완료 여부
+        /// </summary>
+        public bool IsInitialized => isInitialized;
 
         /// <summary>
         /// 현재 사용자의 UID
@@ -60,13 +68,38 @@ namespace Manager
                     // 이미 로그인되어 있는지 확인
                     OnAuthStateChanged(this, null);
 
+                    isInitialized = true; // 초기화 완료 플래그 설정
                     Debug.Log("✅ AuthManager 초기화 완료");
                 }
                 else
                 {
                     Debug.LogError($"❌ Firebase 초기화 실패: {task.Result}");
+                    isInitialized = false;
                 }
             });
+        }
+
+        /// <summary>
+        /// Firebase 초기화 완료 대기 (타임아웃 적용)
+        /// </summary>
+        /// <param name="timeout">타임아웃 시간 (초)</param>
+        /// <returns>초기화 성공 여부</returns>
+        public async Task<bool> WaitForInitialization(float timeout = INIT_TIMEOUT)
+        {
+            float elapsedTime = 0f;
+
+            while (!isInitialized && elapsedTime < timeout)
+            {
+                await Task.Delay(100); // 0.1초마다 체크
+                elapsedTime += 0.1f;
+            }
+
+            if (!isInitialized)
+            {
+                Debug.LogError($"⏱️ AuthManager 초기화 타임아웃 ({timeout}초)");
+            }
+
+            return isInitialized;
         }
 
         private void OnDestroy()

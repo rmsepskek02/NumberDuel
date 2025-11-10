@@ -21,11 +21,17 @@ namespace Manager
         private bool isInitialized = false;
 
         private const string SESSIONS_COLLECTION = "sessions";
+        private const float INIT_TIMEOUT = 10f; // 초기화 타임아웃 (10초)
 
         /// <summary>
         /// 현재 세션 ID
         /// </summary>
         public string CurrentSessionId => currentSessionId;
+
+        /// <summary>
+        /// 초기화 완료 여부
+        /// </summary>
+        public bool IsInitialized => isInitialized;
         #endregion
 
         #region Initialization
@@ -50,6 +56,29 @@ namespace Manager
                     Debug.LogError($"❌ Firestore 초기화 실패: {task.Result}");
                 }
             });
+        }
+
+        /// <summary>
+        /// Firebase 초기화 완료 대기 (타임아웃 적용)
+        /// </summary>
+        /// <param name="timeout">타임아웃 시간 (초)</param>
+        /// <returns>초기화 성공 여부</returns>
+        public async Task<bool> WaitForInitialization(float timeout = INIT_TIMEOUT)
+        {
+            float elapsedTime = 0f;
+
+            while (!isInitialized && elapsedTime < timeout)
+            {
+                await Task.Delay(100); // 0.1초마다 체크
+                elapsedTime += 0.1f;
+            }
+
+            if (!isInitialized)
+            {
+                Debug.LogError($"⏱️ SessionManager 초기화 타임아웃 ({timeout}초)");
+            }
+
+            return isInitialized;
         }
 
         private void OnApplicationQuit()
