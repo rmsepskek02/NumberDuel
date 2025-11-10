@@ -201,6 +201,8 @@ namespace Manager
         {
             if (PhotonNetwork.InRoom)
             {
+                // 로비로 나가는 메시지 표시
+                SystemMessageManager.Instance?.ShowMessage("JoiningLobby");
                 PhotonNetwork.LeaveRoom();
             }
         }

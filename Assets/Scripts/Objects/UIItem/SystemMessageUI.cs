@@ -112,7 +112,7 @@ namespace Objects
 
         #region Public Interface
         /// <summary>
-        /// 메시지 표시
+        /// 메시지 표시 (기본 동작: 페이드 인/아웃 포함)
         /// </summary>
         /// <param name="text">표시할 메시지</param>
         /// <param name="type">메시지 타입</param>
@@ -137,6 +137,63 @@ namespace Objects
 
             // 애니메이션 시작
             StartCoroutine(ShowMessageSequence(duration));
+        }
+
+        /// <summary>
+        /// 메시지 즉시 교체 (페이드 인 없이 텍스트만 변경)
+        /// Info 타입 메시지에 사용 - 진행 상태를 실시간으로 업데이트
+        /// </summary>
+        /// <param name="text">표시할 메시지</param>
+        /// <param name="color">텍스트 색상</param>
+        public void ReplaceMessageInstantly(string text, Color color)
+        {
+            if (!isInitialized)
+            {
+                Initialize();
+            }
+
+            // 현재 메시지가 표시 중이면 텍스트만 교체
+            if (messageText != null)
+            {
+                messageText.text = text;
+                messageText.color = color;
+            }
+
+            // 이미 표시 중이 아니면 새로 표시
+            if (canvasGroup != null && canvasGroup.alpha < 0.5f)
+            {
+                // 코루틴만 정리하고 DOTween은 유지
+                StopAllCoroutines();
+
+                // 페이드 인만 실행 (표시 유지 없음)
+                StartCoroutine(FadeIn());
+            }
+        }
+
+        /// <summary>
+        /// 현재 메시지가 표시 중인지 확인
+        /// </summary>
+        public bool IsShowingMessage()
+        {
+            return canvasGroup != null && canvasGroup.alpha > 0.5f;
+        }
+
+        /// <summary>
+        /// 메시지 즉시 숨김
+        /// </summary>
+        public void HideMessageInstantly()
+        {
+            StopAllAnimations();
+
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = 0f;
+            }
+
+            if (messagePanel != null)
+            {
+                messagePanel.anchoredPosition = originalPosition;
+            }
         }
 
         /// <summary>

@@ -27,6 +27,7 @@ namespace Manager
         private Dictionary<string, RoomInfo> roomCache = new Dictionary<string, RoomInfo>();
         private string roomNameText;
         private string roomPasswordText;
+        private bool isProcessingRoomRequest = false; // 중복 요청 방지 플래그
         #endregion
 
         #region Unity Lifecycle
@@ -49,10 +50,25 @@ namespace Manager
         #region Room Management
         /// <summary>
         /// 방 생성
-        /// - 변경: 바로 PhotonNetwork.CreateRoom 호출 대신 페이드인 후 생성 호출
+        /// 성공 시 OnCreatedRoom()에서 로딩 화면과 함께 씬 전환
         /// </summary>
         public void CreateRoom(string roomName, string roomPassword)
         {
+            // 중복 요청 방지
+            if (isProcessingRoomRequest)
+            {
+                return;
+            }
+
+            // 방 이름 검증
+            if (string.IsNullOrEmpty(roomName))
+            {
+                SystemMessageManager.Instance?.ShowMessage("RoomNameEmpty");
+                return;
+            }
+
+            isProcessingRoomRequest = true;
+
             RoomOptions roomOptions = new RoomOptions
             {
                 MaxPlayers = 2,
@@ -67,37 +83,64 @@ namespace Manager
                 CustomRoomPropertiesForLobby = new[] { "roomName", "roomPassword", "currentPlayers" }
             };
 
-            if (LoadingScreenManager.Instance != null)
-            {
-                // 페이드인 (1s) 후 방 생성 호출
-                LoadingScreenManager.Instance.FadeInThenAction(() =>
-                {
-                    PhotonNetwork.CreateRoom(roomName, roomOptions);
-                });
-            }
-            else
-            {
-                PhotonNetwork.CreateRoom(roomName, roomOptions);
-            }
+            // 로딩 화면 없이 바로 호출 (성공 시 OnCreatedRoom에서 로딩 화면 표시)
+            PhotonNetwork.CreateRoom(roomName, roomOptions);
         }
 
         /// <summary>
         /// 방 참가
-        /// - 변경: 바로 PhotonNetwork.JoinRoom 호출 대신 페이드인 후 참가 호출
+        /// 성공 시 OnJoinedRoom()에서 로딩 화면과 함께 씬 전환
         /// </summary>
         public void JoinRoom(string roomName, string password)
         {
-            if (LoadingScreenManager.Instance != null)
+            // 중복 요청 방지
+            if (isProcessingRoomRequest)
             {
-                LoadingScreenManager.Instance.FadeInThenAction(() =>
+                return;
+            }
+
+            // 방 이름 검증
+            if (string.IsNullOrEmpty(roomName))
+            {
+                SystemMessageManager.Instance?.ShowMessage("RoomNameEmpty");
+                return;
+            }
+
+            // 방이 존재하는지 확인
+            if (!roomCache.ContainsKey(roomName))
+            {
+                SystemMessageManager.Instance?.ShowMessage("RoomNotFound");
+                return;
+            }
+
+            RoomInfo targetRoom = roomCache[roomName];
+
+            // 방이 가득 찼는지 확인
+            if (targetRoom.PlayerCount >= targetRoom.MaxPlayers)
+            {
+                SystemMessageManager.Instance?.ShowMessage("RoomFull");
+                return;
+            }
+
+            // 비밀번호 확인
+            if (targetRoom.CustomProperties.ContainsKey("roomPassword"))
+            {
+                string roomPassword = targetRoom.CustomProperties["roomPassword"]?.ToString();
+                if (!string.IsNullOrEmpty(roomPassword))
                 {
-                    PhotonNetwork.JoinRoom(roomName);
-                });
+                    // 비밀번호가 설정되어 있으면 검증
+                    if (password != roomPassword)
+                    {
+                        SystemMessageManager.Instance?.ShowMessage("PasswordIncorrect");
+                        return;
+                    }
+                }
             }
-            else
-            {
-                PhotonNetwork.JoinRoom(roomName);
-            }
+
+            isProcessingRoomRequest = true;
+
+            // 로딩 화면 없이 바로 호출 (성공 시 OnJoinedRoom에서 로딩 화면 표시)
+            PhotonNetwork.JoinRoom(roomName);
         }
         #endregion
 
@@ -106,18 +149,37 @@ namespace Manager
         {
             base.OnCreatedRoom();
 
-            // 생성자는 페이드가 이미 시작되었으므로(요청시) 바로 씬 로드만 수행
-            PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.GameScene));
+            // 방 생성 성공 시 로딩 화면과 함께 씬 전환
+            if (LoadingScreenManager.Instance != null)
+            {
+                LoadingScreenManager.Instance.FadeInThenAction(() =>
+                {
+                    PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.GameScene));
+                });
+            }
+            else
+            {
+                PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.GameScene));
+            }
+
+            // 씬 전환되므로 플래그 리셋은 불필요 (새 씬에서 자동 초기화)
         }
 
         public override void OnCreateRoomFailed(short returnCode, string message)
         {
             base.OnCreateRoomFailed(returnCode, message);
-            // 실패 시 필요하면 로딩 UI 강제 해제
-            if (LoadingScreenManager.Instance != null)
+
+            // 플래그 리셋
+            isProcessingRoomRequest = false;
+
+            // 방 생성 실패 처리 (에러 메시지만 표시)
+            if (returnCode == Photon.Realtime.ErrorCode.GameIdAlreadyExists)
             {
-                // 실패하면 페이드아웃이 되어있지 않을 수 있으므로 즉시 숨김
-                // (ShowThenLoadLocal / FadeInThenAction 사용 흐름에서 실패 처리는 호출자에서 적절히 해야 합니다)
+                SystemMessageManager.Instance?.ShowMessage("RoomNameDuplicate");
+            }
+            else
+            {
+                SystemMessageManager.Instance?.ShowMessage("NetworkError");
             }
         }
 
@@ -125,14 +187,42 @@ namespace Manager
         {
             base.OnJoinedRoom();
 
-            // 방 참가 성공 시 바로 씬 로드
-            PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.GameScene));
+            // 방 참가 성공 시 로딩 화면과 함께 씬 전환
+            if (LoadingScreenManager.Instance != null)
+            {
+                LoadingScreenManager.Instance.FadeInThenAction(() =>
+                {
+                    PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.GameScene));
+                });
+            }
+            else
+            {
+                PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.GameScene));
+            }
+
+            // 씬 전환되므로 플래그 리셋은 불필요 (새 씬에서 자동 초기화)
         }
 
         public override void OnJoinRoomFailed(short returnCode, string message)
         {
             base.OnJoinRoomFailed(returnCode, message);
-            // 실패 시 로딩 UI 해제 필요 시 여기에 처리
+
+            // 플래그 리셋
+            isProcessingRoomRequest = false;
+
+            // 방 참가 실패 처리 (에러 메시지만 표시)
+            if (returnCode == Photon.Realtime.ErrorCode.GameDoesNotExist)
+            {
+                SystemMessageManager.Instance?.ShowMessage("RoomNotFound");
+            }
+            else if (returnCode == Photon.Realtime.ErrorCode.GameFull)
+            {
+                SystemMessageManager.Instance?.ShowMessage("RoomFull");
+            }
+            else
+            {
+                SystemMessageManager.Instance?.ShowMessage("NetworkError");
+            }
         }
 
         public override void OnRoomListUpdate(List<RoomInfo> roomList)
@@ -152,6 +242,8 @@ namespace Manager
             }
 
             UpdateRoomListUI();
+
+            // 자동 갱신 시에는 메시지 표시하지 않음 (수동 새로고침 시에만 표시)
         }
 
         public override void OnConnectedToMaster()
@@ -237,7 +329,9 @@ namespace Manager
             }
             else
             {
+                // 수동 새로고침: UI 업데이트 및 메시지 표시
                 UpdateRoomListUI();
+                SystemMessageManager.Instance?.ShowMessage("RoomListUpdated");
             }
         }
 
@@ -249,8 +343,22 @@ namespace Manager
             Application.Quit();
         }
 
-        public void OnClickLogOut()
+        public async void OnClickLogOut()
         {
+            // 로그아웃 시작 메시지
+            SystemMessageManager.Instance?.ShowMessage("LoggingOut");
+
+            // 세션 정리 (Firebase UID 기반)
+            if (SessionManager.Instance != null && AuthManager.Instance != null)
+            {
+                string uid = AuthManager.Instance.CurrentUserUID;
+                if (!string.IsNullOrEmpty(uid))
+                {
+                    await SessionManager.Instance.ClearSession(uid);
+                    Debug.Log("[LobbyManager] 세션 정리 완료");
+                }
+            }
+
             // Firebase 로그아웃
             if (AuthManager.Instance != null)
             {
@@ -264,6 +372,9 @@ namespace Manager
                 PhotonNetwork.Disconnect();
                 Debug.Log("[LobbyManager] Photon 연결 해제");
             }
+
+            // 로그아웃 완료 메시지
+            SystemMessageManager.Instance?.ShowMessage("LogoutComplete");
 
             // JoinScene으로 이동
             if (LoadingScreenManager.Instance != null)

@@ -22,7 +22,6 @@ namespace Manager
         public TMP_InputField inputNickname;
         public Button actionButton;
         public Button toggleModeButton;
-        public TextMeshProUGUI statusText;
         public TextMeshProUGUI actionButtonText;
         public TextMeshProUGUI toggleModeButtonText;
         public GameObject nicknameLabel; // 회원가입 시에만 표시
@@ -46,10 +45,6 @@ namespace Manager
             // UI 초기화
             SetLoginMode(true);
 
-            // 상태 텍스트 숨김
-            if (statusText != null)
-                statusText.gameObject.SetActive(false);
-
             // 버튼 이벤트는 Unity Editor에서 등록
         }
         #endregion
@@ -61,7 +56,7 @@ namespace Manager
         public override void OnConnected()
         {
             base.OnConnected();
-            ShowStatus("서버 연결 완료", Color.green);
+            // 서버 연결 메시지는 표시하지 않음 (너무 많은 메시지 방지)
         }
 
         /// <summary>
@@ -117,13 +112,13 @@ namespace Manager
             // 입력 검증
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
             {
-                ShowStatus("이메일과 비밀번호를 입력해주세요.", Color.red);
+                SystemMessageManager.Instance?.ShowMessage("InputEmailPassword");
                 return;
             }
 
             if (!isLoginMode && string.IsNullOrEmpty(nickname))
             {
-                ShowStatus("닉네임을 입력해주세요.", Color.red);
+                SystemMessageManager.Instance?.ShowMessage("InputNickname");
                 return;
             }
 
@@ -135,12 +130,36 @@ namespace Manager
                 if (isLoginMode)
                 {
                     // 로그인 처리
-                    ShowStatus("로그인 중...", Color.yellow);
+                    SystemMessageManager.Instance?.ShowMessage("LoggingIn");
                     var result = await AuthManager.Instance.LoginWithEmail(email, password);
 
                     if (result.success)
                     {
-                        ShowStatus("로그인 성공!", Color.green);
+                        // 세션 체크 (중복 로그인 확인)
+                        string uid = AuthManager.Instance.CurrentUserUID;
+                        var sessionCheck = await SessionManager.Instance.CheckSession(uid);
+
+                        if (sessionCheck.isDuplicate)
+                        {
+                            // 중복 로그인 감지 - Firebase에서 오는 커스텀 메시지 사용
+                            SystemMessageManager.Instance?.ShowMessage(sessionCheck.message, MessageType.Error);
+
+                            // Firebase 로그아웃 처리
+                            AuthManager.Instance.Logout();
+                            return;
+                        }
+
+                        // 세션 생성
+                        bool sessionCreated = await SessionManager.Instance.CreateSession(uid);
+
+                        if (!sessionCreated)
+                        {
+                            SystemMessageManager.Instance?.ShowMessage("SessionCreateFailed");
+                            AuthManager.Instance.Logout();
+                            return;
+                        }
+
+                        SystemMessageManager.Instance?.ShowMessage("LoginSuccess");
                         await System.Threading.Tasks.Task.Delay(500); // 0.5초 대기
 
                         // Coroutine으로 프로필 로드 및 로비 진입
@@ -148,33 +167,45 @@ namespace Manager
                     }
                     else
                     {
-                        ShowStatus(result.message, Color.red);
+                        // Firebase 인증 에러 - 커스텀 메시지로 표시
+                        SystemMessageManager.Instance?.ShowMessage(result.message, MessageType.Error);
                     }
                 }
                 else
                 {
                     // 회원가입 처리
-                    ShowStatus("회원가입 중...", Color.yellow);
+                    SystemMessageManager.Instance?.ShowMessage("Registering");
                     var result = await AuthManager.Instance.RegisterWithEmail(email, password);
 
                     if (result.success)
                     {
-                        ShowStatus("회원가입 성공!", Color.green);
+                        SystemMessageManager.Instance?.ShowMessage("RegisterSuccess");
                         await System.Threading.Tasks.Task.Delay(800); // 0.8초 대기
 
                         // 회원가입 성공 시 자동으로 로그인되므로 프로필 생성
-                        ShowStatus("프로필 생성 중...", Color.yellow);
+                        SystemMessageManager.Instance?.ShowMessage("CreatingProfile");
                         string uid = AuthManager.Instance.CurrentUserUID;
                         await DatabaseManager.Instance.CreateUserProfile(uid, email, nickname);
 
                         await System.Threading.Tasks.Task.Delay(500); // 0.5초 대기
+
+                        // 세션 생성
+                        bool sessionCreated = await SessionManager.Instance.CreateSession(uid);
+
+                        if (!sessionCreated)
+                        {
+                            SystemMessageManager.Instance?.ShowMessage("SessionCreateFailed");
+                            AuthManager.Instance.Logout();
+                            return;
+                        }
 
                         // Coroutine으로 로비 진입
                         StartCoroutine(OnLoginSuccessCoroutine());
                     }
                     else
                     {
-                        ShowStatus(result.message, Color.red);
+                        // Firebase 인증 에러 - 커스텀 메시지로 표시
+                        SystemMessageManager.Instance?.ShowMessage(result.message, MessageType.Error);
                     }
                 }
             }
@@ -203,8 +234,6 @@ namespace Manager
             string uid = AuthManager.Instance.CurrentUserUID;
             string email = AuthManager.Instance.CurrentUserEmail;
 
-            ShowStatus("프로필 로드 중...", Color.yellow);
-
             // 프로필 존재 여부 확인
             var checkTask = DatabaseManager.Instance.UserProfileExists(uid);
             yield return new WaitUntil(() => checkTask.IsCompleted);
@@ -215,7 +244,7 @@ namespace Manager
             if (!profileExists)
             {
                 // 프로필이 없으면 생성 (기존 계정의 경우)
-                ShowStatus("프로필 생성 중...", Color.yellow);
+                SystemMessageManager.Instance?.ShowMessage("CreatingProfile");
                 string defaultNickname = email.Split('@')[0]; // 이메일 앞부분을 닉네임으로
 
                 var createTask = DatabaseManager.Instance.CreateUserProfile(uid, email, defaultNickname);
@@ -249,16 +278,14 @@ namespace Manager
                 };
                 PhotonNetwork.LocalPlayer.SetCustomProperties(customProperties);
 
-                ShowStatus("Photon 로비 진입 중...", Color.green);
-
-                // Photon 로비 진입
+                // Photon 로비 진입 (메시지 없이 자동 진입)
                 PhotonNetwork.JoinLobby();
 
                 SetButtonsInteractable(true);
             }
             else
             {
-                ShowStatus("사용자 프로필을 불러올 수 없습니다.", Color.red);
+                SystemMessageManager.Instance?.ShowMessage("ProfileLoadFailed");
                 SetButtonsInteractable(true);
             }
         }
@@ -283,24 +310,6 @@ namespace Manager
 
             if (toggleModeButtonText != null)
                 toggleModeButtonText.text = isLoginMode ? "회원가입" : "로그인";
-
-            // 상태 텍스트 숨김
-            if (statusText != null)
-                statusText.gameObject.SetActive(false);
-        }
-
-        /// <summary>
-        /// 상태 메시지 표시
-        /// </summary>
-        private void ShowStatus(string message, Color color)
-        {
-            if (statusText != null)
-            {
-                statusText.text = message;
-                statusText.color = color;
-                statusText.gameObject.SetActive(true);
-                Debug.Log($"[JoinManager] {message}");
-            }
         }
 
         /// <summary>

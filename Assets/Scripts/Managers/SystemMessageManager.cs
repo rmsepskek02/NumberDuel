@@ -22,12 +22,17 @@ namespace Manager
         [SerializeField] private bool preventDuplicateMessages = true;
         [Tooltip("메시지 간 최소 간격 (초)")]
         [SerializeField] private float minMessageInterval = 0.3f;
+        [Tooltip("Info 메시지를 즉시 교체할지 여부 (진행 상태 실시간 업데이트)")]
+        [SerializeField] private bool instantReplaceInfoMessages = true;
 
-        // 메시지 큐
+        // 메시지 큐 (Warning, Error, Success만 큐에 쌓임)
         private Queue<MessageRequest> messageQueue = new Queue<MessageRequest>();
         private bool isShowingMessage = false;
         private string lastMessageKey = "";
         private float lastMessageTime = 0f;
+
+        // 현재 표시 중인 Info 메시지 추적
+        private MessageRequest currentInfoMessage = null;
 
         // UI 참조
         private SystemMessageUI messageUI;
@@ -191,6 +196,13 @@ namespace Manager
         public void ClearMessageQueue()
         {
             messageQueue.Clear();
+            currentInfoMessage = null;
+
+            if (IsUIReady())
+            {
+                messageUI.HideMessageInstantly();
+            }
+
             Debug.Log("[SystemMessageManager] 메시지 큐를 초기화했습니다.");
         }
         #endregion
@@ -198,7 +210,8 @@ namespace Manager
         #region Message Queue Management
         /// <summary>
         /// 메시지를 큐에 추가하고 표시 시작
-        /// 큐의 마지막 메시지와 동일한 경우 추가하지 않음
+        /// Info 타입: 즉시 교체 (실시간 상태 업데이트)
+        /// Warning/Error/Success: 큐에 쌓아서 순차 표시
         /// </summary>
         private void EnqueueMessage(string text, MessageType type, float duration, Color color)
         {
@@ -210,6 +223,14 @@ namespace Manager
                 color = color
             };
 
+            // Info 타입은 즉시 교체 방식으로 처리
+            if (type == MessageType.Info && instantReplaceInfoMessages)
+            {
+                HandleInfoMessage(request);
+                return;
+            }
+
+            // Warning, Error, Success는 큐에 추가
             // 큐에 메시지가 있으면 마지막 메시지와 비교
             if (messageQueue.Count > 0)
             {
@@ -235,12 +256,46 @@ namespace Manager
         }
 
         /// <summary>
+        /// Info 메시지 즉시 처리 (진행 상태 실시간 업데이트)
+        /// </summary>
+        private void HandleInfoMessage(MessageRequest request)
+        {
+            if (!IsUIReady())
+            {
+                Debug.LogWarning("[SystemMessageManager] UI가 준비되지 않아 Info 메시지를 표시할 수 없습니다.");
+                return;
+            }
+
+            // 현재 Info 메시지가 있으면 즉시 교체
+            currentInfoMessage = request;
+
+            // 중요 메시지(Error, Success) 표시 중이면 Info 메시지는 대기
+            if (isShowingMessage)
+            {
+                Debug.Log($"[SystemMessageManager] 중요 메시지 표시 중이므로 Info 메시지는 대기: {request.text}");
+                return;
+            }
+
+            // UI에 즉시 교체
+            messageUI.ReplaceMessageInstantly(request.text, request.color);
+
+            Debug.Log($"[SystemMessageManager] Info 메시지 즉시 교체: {request.text}");
+        }
+
+        /// <summary>
         /// 메시지 큐 처리 코루틴
-        /// 순차적으로 메시지를 표시
+        /// 순차적으로 메시지를 표시 (Warning, Error, Success만)
         /// </summary>
         private IEnumerator ProcessMessageQueue()
         {
             isShowingMessage = true;
+
+            // Info 메시지가 표시 중이면 일단 숨김 (중요 메시지 우선)
+            if (currentInfoMessage != null)
+            {
+                messageUI.HideMessageInstantly();
+                currentInfoMessage = null;
+            }
 
             while (messageQueue.Count > 0)
             {
@@ -273,6 +328,13 @@ namespace Manager
             }
 
             isShowingMessage = false;
+
+            // 큐가 비었고 대기 중인 Info 메시지가 있으면 다시 표시
+            if (currentInfoMessage != null)
+            {
+                messageUI.ReplaceMessageInstantly(currentInfoMessage.text, currentInfoMessage.color);
+                Debug.Log($"[SystemMessageManager] Info 메시지 재표시: {currentInfoMessage.text}");
+            }
         }
 
         /// <summary>
