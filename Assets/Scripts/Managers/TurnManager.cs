@@ -507,6 +507,9 @@ namespace Manager
 
             if (IsLocalPlayerTurn)
             {
+                // 내 턴 시작 사운드 재생
+                SoundManager.Instance?.PlaySFX(Objects.SoundType.UI_TurnStart);
+
                 // 턴 시작: 카드 1장 드로우 (첫 턴 제외)
                 if (currentTurn > 1)
                 {

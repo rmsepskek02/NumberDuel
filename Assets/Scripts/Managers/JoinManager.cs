@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Utills;
 
 namespace Manager
 {
@@ -41,6 +42,9 @@ namespace Manager
         #region Unity Lifecycle
         void Start()
         {
+            // 모든 버튼에 클릭 사운드 자동 등록
+            UIHelper.RegisterAllButtonSounds();
+
             // 한국 리전 설정
             PhotonNetwork.PhotonServerSettings.AppSettings.FixedRegion = "kr";
 

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using DG.Tweening;
+using Utills;
 
 namespace Manager
 {
@@ -44,6 +45,9 @@ namespace Manager
         #region Unity Lifecycle
         void Start()
         {
+            // 모든 버튼에 클릭 사운드 자동 등록
+            UIHelper.RegisterAllButtonSounds();
+
             OnConnectedToMaster();
             InitializeMatchmaking();
         }
@@ -267,6 +271,9 @@ namespace Manager
         public override void OnJoinedRoom()
         {
             base.OnJoinedRoom();
+
+            // 매칭 성공 사운드 재생
+            SoundManager.Instance?.PlaySFX(SoundType.UI_MatchFound);
 
             // 매칭 방 입장인지 일반 방 입장인지 확인
             if (MatchmakingManager.Instance != null && MatchmakingManager.Instance.IsSearching)

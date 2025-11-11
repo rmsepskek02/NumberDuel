@@ -137,4 +137,49 @@ namespace Objects
             };
         }
     }
+
+    /// <summary>
+    /// 사운드 타입 - BGM과 SFX를 구분하여 관리
+    /// </summary>
+    public enum SoundType
+    {
+        // ===== BGM (배경음악) =====
+        BGM_Splash,         // 로딩 화면
+        BGM_Lobby,          // 메뉴/대기실
+        BGM_Battle,         // 인게임 배틀
+        BGM_Victory,        // 승리
+        BGM_Defeat,         // 패배
+
+        // ===== UI SFX =====
+        UI_ButtonClick,     // 버튼 클릭
+        UI_MatchFound,      // 매칭 성공
+        //UI_MessageInfo,     // 일반 메시지
+        //UI_MessageWarning,  // 경고 메시지
+        //UI_MessageError,    // 에러 메시지
+        UI_TurnStart,       // 턴 시작 알림
+
+        // ===== Card SFX =====
+        Card_Draw,          // 카드 드로우
+        Card_PlaceNormal,   // 일반 배치
+        Card_PlaceSecret,   // 시크릿 배치
+        Card_Attack,        // 공격
+        Card_Destroy,       // 파괴 (조커 삭제)
+
+        // ===== Combat SFX =====
+        Combat_Plus,        // 덧셈 연산
+        Combat_Minus,       // 뺄셈 연산
+        Combat_Multiply,    // 곱셈 연산
+        Combat_Divide,      // 나눗셈 연산
+        Combat_Damage,      // 데미지 적용
+        Combat_SecretReveal,// 시크릿 공개
+
+        // ===== Joker SFX =====
+        Joker_Draw,         // 조커 드로우 효과
+        Joker_Delete,       // 조커 삭제 효과
+        Joker_Swap,         // 조커 교환 효과
+
+        // ===== Game Event SFX =====
+        Game_Victory,       // 승리 팡파레
+        Game_Defeat         // 패배 사운드
+    }
 }
