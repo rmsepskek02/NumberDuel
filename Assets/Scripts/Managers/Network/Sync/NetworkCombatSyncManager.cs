@@ -133,13 +133,20 @@ namespace Manager.Network.Sync
             // 2. Secret 해제
             if (combatData.attackerWasSecret)
             {
+                // ★ 시크릿 공개 사운드 이벤트 발생
+                GameEventManager.Instance?.TriggerSecretRevealed();
                 attackerCard.RevealSecret();
             }
 
             if (defenderCard != null && combatData.defenderWasSecret)
             {
+                // ★ 시크릿 공개 사운드 이벤트 발생
+                GameEventManager.Instance?.TriggerSecretRevealed();
                 defenderCard.RevealSecret();
             }
+
+            // ★ 카드 공격 사운드 이벤트 발생
+            GameEventManager.Instance?.TriggerCardAttack();
 
             // 3. 전투 아이콘 표시
             if (combatData.showAttackerSwordIcon)
@@ -223,6 +230,8 @@ namespace Manager.Network.Sync
             // 카드 제거 처리
             if (data.destroyAttacker && attacker != null)
             {
+                // ★ 카드 파괴 사운드 이벤트 발생
+                GameEventManager.Instance?.TriggerCardDestroyed();
                 var zone = attacker.GetComponentInParent<CardZone>();
                 zone?.RemoveCard(attacker.transform);
                 UnityEngine.Object.Destroy(attacker.gameObject);
@@ -230,6 +239,8 @@ namespace Manager.Network.Sync
 
             if (data.destroyDefender && defender != null)
             {
+                // ★ 카드 파괴 사운드 이벤트 발생
+                GameEventManager.Instance?.TriggerCardDestroyed();
                 var zone = defender.GetComponentInParent<CardZone>();
                 zone?.RemoveCard(defender.transform);
                 UnityEngine.Object.Destroy(defender.gameObject);

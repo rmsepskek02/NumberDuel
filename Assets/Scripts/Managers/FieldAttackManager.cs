@@ -284,6 +284,9 @@ namespace Manager
             if (enableDebugLog)
                 Debug.Log($"[FieldAttackManager] 공격 시작: {attacker.name} vs {defender.name}");
 
+            // 카드 공격 이벤트 발생 (사운드 재생)
+            GameEventManager.Instance?.TriggerCardAttack();
+
             // 방어자 선택 완료 → 취소 불가능 상태로 전환
             if (ExpressionZoneManager.Instance != null)
             {

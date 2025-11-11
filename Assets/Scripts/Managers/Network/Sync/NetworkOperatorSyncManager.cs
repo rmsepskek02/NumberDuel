@@ -106,6 +106,9 @@ namespace Manager.Network.Sync
                 yield break;
             }
 
+            // ★ 연산자 사용 사운드 이벤트 발생 (필드 카드에 적용되는 순간)
+            GameEventManager.Instance?.TriggerOperatorUsed(opType);
+
             // ExpressionZone에 수식 표시
             var ezManager = ExpressionZoneManager.Instance;
             if (ezManager != null)
@@ -134,14 +137,22 @@ namespace Manager.Network.Sync
                     if (data.result > 0)
                         UpdateRemoteCardValue(firstCard, data.result);
                     else
+                    {
+                        // ★ 카드 파괴 사운드 이벤트 발생
+                        GameEventManager.Instance?.TriggerCardDestroyed();
                         DestroyRemoteCard(firstCard);
+                    }
                     break;
 
                 case OperatorType.Divide:
                     if (data.result > 0)
                         UpdateRemoteCardValue(firstCard, data.result);
                     else
+                    {
+                        // ★ 카드 파괴 사운드 이벤트 발생
+                        GameEventManager.Instance?.TriggerCardDestroyed();
                         DestroyRemoteCard(firstCard);
+                    }
 
                     // 나머지 카드 생성
                     if (data.remainder > 0)
@@ -242,6 +253,9 @@ namespace Manager.Network.Sync
         /// </summary>
         private IEnumerator ApplyRemoteDraw()
         {
+            // ★ 조커 드로우 효과 사운드 이벤트 발생
+            GameEventManager.Instance?.TriggerJokerEffect(JokerEffectType.Draw);
+
             // DrawCardsToHand 내부에서 이미 SyncCardDraw를 호출하여
             // 상대방 화면에 뒷면 카드 2장이 생성되었음
 
@@ -275,7 +289,13 @@ namespace Manager.Network.Sync
             // 플레이어가 볼 수 있도록 2초 대기
             yield return new WaitForSeconds(2.0f);
 
+            // ★ 조커 삭제 효과 사운드 이벤트 발생 (카드 삭제 전)
+            GameEventManager.Instance?.TriggerJokerEffect(JokerEffectType.Delete);
+
             hub.RemoveBackCardFromHand(CardZone.OwnerType.Opponent);
+
+            // ★ 카드 파괴 사운드 이벤트 발생
+            GameEventManager.Instance?.TriggerCardDestroyed();
             DestroyRemoteCard(targetCard);
 
             // ExpressionZone은 다음 액션 시작 시 초기화 (결과 유지)
@@ -306,14 +326,21 @@ namespace Manager.Network.Sync
             // 플레이어가 볼 수 있도록 2초 대기
             yield return new WaitForSeconds(2.0f);
 
+            // ★ 조커 스왑 효과 사운드 이벤트 발생 (값 교환 전)
+            GameEventManager.Instance?.TriggerJokerEffect(JokerEffectType.Swap);
+
             // 1. 시크릿 카드 공개 (스왑 후 OPEN 상태로 전환)
             if (firstCard.IsSecret)
             {
+                // ★ 시크릿 공개 사운드 이벤트 발생
+                GameEventManager.Instance?.TriggerSecretRevealed();
                 firstCard.RevealSecret();
             }
 
             if (secondCard.IsSecret)
             {
+                // ★ 시크릿 공개 사운드 이벤트 발생
+                GameEventManager.Instance?.TriggerSecretRevealed();
                 secondCard.RevealSecret();
             }
 

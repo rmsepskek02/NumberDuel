@@ -345,6 +345,7 @@ namespace Objects
         /// <param name="isSecret">Secret 모드 여부</param>
         public void SetSecret(bool isSecret)
         {
+            bool wasSecret = IsSecret;
             IsSecret = isSecret;
 
             if (isSecret)
@@ -354,6 +355,12 @@ namespace Objects
             else
             {
                 RestoreOriginalVisual();
+
+                // ★ 시크릿이 공개되는 순간 사운드 이벤트 발생
+                if (wasSecret)
+                {
+                    GameEventManager.Instance?.TriggerSecretRevealed();
+                }
             }
         }
 
@@ -684,6 +691,9 @@ namespace Objects
         {
             if (delay > 0f)
                 yield return new WaitForSeconds(delay);
+
+            // 카드 파괴 이벤트 발생 (사운드 재생)
+            GameEventManager.Instance?.TriggerCardDestroyed();
 
             float animDuration = 0.5f;
 

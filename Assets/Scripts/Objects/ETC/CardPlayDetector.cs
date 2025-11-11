@@ -240,6 +240,9 @@ namespace Objects
             // 배치 정보 업데이트 (배치 후 정확한 위치 반영)
             networkCard.UpdateLocationInfo();
 
+            // 카드 배치 이벤트 발생 (사운드 재생)
+            GameEventManager.Instance?.TriggerCardPlaced(isSecret);
+
             // 네트워크 동기화 전송 - uniqueId 추가!
             NetworkGameManager.Instance.SyncCardPlacement(
                 cardData,

@@ -46,6 +46,18 @@ namespace Manager
         // 현재 재생 중인 BGM
         private SoundType? currentBGM = null;
 
+        // 씬별 BGM 볼륨 스케일 (기본값 1.0)
+        private Dictionary<string, float> sceneBGMVolumeScales = new Dictionary<string, float>()
+        {
+            { "SplashScene", 1.0f },
+            { "JoinScene", 1.0f },
+            { "LobbyScene", 1.0f },
+            { "GameScene", 0.25f },  // GameScene은 25%로 낮춤
+        };
+
+        // 현재 씬의 BGM 볼륨 스케일
+        private float currentSceneVolumeScale = 1.0f;
+
         /// <summary>
         /// 외부에서 볼륨값 읽기
         /// </summary>
@@ -61,10 +73,10 @@ namespace Manager
         public bool IsSFXMuted => isSFXMuted;
 
         /// <summary>
-        /// 실제 적용되는 볼륨 (Master * Category * Mute)
-        /// 음소거 시 0, 아니면 원래 볼륨
+        /// 실제 적용되는 볼륨 (Master * Category * Mute * SceneScale)
+        /// 음소거 시 0, 아니면 원래 볼륨 * 씬별 스케일
         /// </summary>
-        private float EffectiveBGMVolume => (isMasterMuted || isBGMMuted) ? 0f : (masterVolume * bgmVolume);
+        private float EffectiveBGMVolume => (isMasterMuted || isBGMMuted) ? 0f : (masterVolume * bgmVolume * currentSceneVolumeScale);
         private float EffectiveSFXVolume => (isMasterMuted || isSFXMuted) ? 0f : (masterVolume * sfxVolume);
         #endregion
 
@@ -79,8 +91,14 @@ namespace Manager
                 GameObject bgmObject = new GameObject("BGM_AudioSource");
                 bgmObject.transform.SetParent(transform);
                 bgmSource = bgmObject.AddComponent<AudioSource>();
+
+                // 기본 설정
                 bgmSource.loop = true;
                 bgmSource.playOnAwake = false;
+
+                // ★ BGM 최적화 설정
+                bgmSource.priority = 64; // BGM은 높은 우선순위
+                bgmSource.spatialBlend = 0f; // 2D 사운드
             }
 
             // SFX AudioSource 풀 생성
@@ -94,6 +112,9 @@ namespace Manager
 
             // 씬 전환 이벤트 등록
             UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+
+            // 백그라운드에서 사운드 사전 로드 (메인 스레드 블로킹 방지)
+            StartCoroutine(PreloadSoundsAsync());
         }
 
         private void OnDestroy()
@@ -109,17 +130,25 @@ namespace Manager
         /// </summary>
         private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
         {
+            // 씬별 볼륨 스케일 먼저 설정 (PlayBGM이 이 값을 사용함)
+            currentSceneVolumeScale = sceneBGMVolumeScales.ContainsKey(scene.name)
+                ? sceneBGMVolumeScales[scene.name]
+                : 1.0f;
+
             SoundType? bgmToPlay = GetBGMForScene(scene.name);
 
             if (bgmToPlay.HasValue)
             {
+                // BGM 재생 (FadeIn에서 currentSceneVolumeScale이 적용된 EffectiveBGMVolume 사용)
                 PlayBGM(bgmToPlay.Value, loop: true, fadeInDuration: 0.5f);
 
                 // 에디터에서 AudioListener 볼륨 확인
                 #if UNITY_EDITOR
+                Debug.Log($"[SoundManager] Scene: {scene.name}, Volume Scale: {currentSceneVolumeScale}");
                 Debug.Log($"[SoundManager] AudioListener.volume: {AudioListener.volume}");
                 Debug.Log($"[SoundManager] BGM AudioSource volume: {bgmSource.volume}");
                 Debug.Log($"[SoundManager] Master: {masterVolume}, BGM: {bgmVolume}, Muted: Master={isMasterMuted}, BGM={isBGMMuted}");
+                Debug.Log($"[SoundManager] Effective BGM Volume: {EffectiveBGMVolume}");
                 #endif
             }
         }
@@ -143,6 +172,7 @@ namespace Manager
         #region Audio Source Pool Management
         /// <summary>
         /// SFX용 AudioSource 풀 생성
+        /// AudioSource 최적화 설정 포함
         /// </summary>
         private void CreateSFXPool()
         {
@@ -151,8 +181,16 @@ namespace Manager
                 GameObject sfxObject = new GameObject($"SFX_AudioSource_{i}");
                 sfxObject.transform.SetParent(transform);
                 AudioSource source = sfxObject.AddComponent<AudioSource>();
+
+                // 기본 설정
                 source.loop = false;
                 source.playOnAwake = false;
+
+                // ★ 성능 최적화 설정
+                source.priority = 128; // 기본 우선순위 (0=최고, 256=최저)
+                source.spatialBlend = 0f; // 2D 사운드 (3D 계산 비활성화)
+                source.volume = 1f; // 기본 볼륨
+
                 sfxSources.Add(source);
             }
         }
@@ -287,6 +325,69 @@ namespace Manager
 
         #region Audio Clip Management
         /// <summary>
+        /// 백그라운드에서 자주 사용하는 사운드를 비동기로 사전 로드
+        /// 메인 스레드 블로킹을 방지하여 부드러운 게임 시작 보장
+        /// Awake()에서 자동으로 호출됨
+        /// </summary>
+        private IEnumerator PreloadSoundsAsync()
+        {
+            // 첫 프레임이 렌더링된 후 실행 (로딩 화면이 먼저 표시되도록)
+            yield return new WaitForEndOfFrame();
+
+            Debug.Log("[SoundManager] 사운드 사전 로드 시작...");
+
+            // 자주 사용하는 사운드 로드
+            PreloadFrequentSounds();
+
+            Debug.Log("[SoundManager] 사운드 사전 로드 완료!");
+        }
+
+        /// <summary>
+        /// 자주 사용되는 AudioClip들을 미리 로드
+        /// 사운드 재생 지연을 방지하기 위한 사전 로딩
+        /// PreloadSoundsAsync()에서 호출됨
+        /// </summary>
+        private void PreloadFrequentSounds()
+        {
+            // 카드 관련 사운드 (가장 자주 사용)
+            PreloadSingleSound(SoundType.Card_Draw);
+            PreloadSingleSound(SoundType.Card_PlaceNormal);
+            PreloadSingleSound(SoundType.Card_PlaceSecret);
+            PreloadSingleSound(SoundType.Card_Attack);
+            PreloadSingleSound(SoundType.Card_Destroy);
+
+            // 전투 관련 사운드
+            PreloadSingleSound(SoundType.Combat_Plus);
+            PreloadSingleSound(SoundType.Combat_Minus);
+            PreloadSingleSound(SoundType.Combat_Multiply);
+            PreloadSingleSound(SoundType.Combat_Divide);
+            PreloadSingleSound(SoundType.Combat_Damage);
+            PreloadSingleSound(SoundType.Combat_SecretReveal);
+
+            // 조커 관련 사운드
+            PreloadSingleSound(SoundType.Joker_Draw);
+            PreloadSingleSound(SoundType.Joker_Delete);
+            PreloadSingleSound(SoundType.Joker_Swap);
+
+            // UI 사운드
+            PreloadSingleSound(SoundType.UI_ButtonClick);
+            PreloadSingleSound(SoundType.UI_TurnStart);
+
+            Debug.Log($"[SoundManager] 사전 로드 완료: {audioClipCache.Count}개 사운드");
+        }
+
+        /// <summary>
+        /// 단일 사운드 사전 로드
+        /// </summary>
+        private void PreloadSingleSound(SoundType soundType)
+        {
+            if (audioClipCache.ContainsKey(soundType))
+                return; // 이미 로드됨
+
+            LoadAudioClip(soundType);
+        }
+
+        /// <summary>
         /// AudioClip 로드 및 캐싱
         /// </summary>
         private AudioClip LoadAudioClip(SoundType soundType)
@@ -308,7 +409,6 @@ namespace Manager
                 if (clip != null)
                 {
                     audioClipCache[soundType] = clip;
-                    Debug.Log($"[SoundManager] AudioClip 로드 성공: {path}/{fileName}");
                     return clip;
                 }
                 else

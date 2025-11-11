@@ -269,7 +269,7 @@ namespace Manager
         /// </summary>
         private void FindDeckStackers()
         {
-            DeckStacker[] stackers = FindObjectsOfType<DeckStacker>();
+            DeckStacker[] stackers = FindObjectsByType<DeckStacker>(FindObjectsSortMode.None);
 
             foreach (var stacker in stackers)
             {

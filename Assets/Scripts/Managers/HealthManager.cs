@@ -82,6 +82,12 @@ namespace Manager
             if (enableDebugLog)
                 Debug.Log($"[HealthManager] {target}에게 {actualDamage} 데미지 적용 ({previousHP} → {newHP})");
 
+            // ★ 데미지 적용 사운드 이벤트 발생
+            if (actualDamage > 0)
+            {
+                GameEventManager.Instance?.TriggerDamageApplied();
+            }
+
             // 이벤트 발생
             OnHealthChanged?.Invoke(target, previousHP, newHP);
 

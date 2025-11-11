@@ -202,6 +202,9 @@ namespace Manager
             if (PhotonNetwork.IsMasterClient && PhotonNetwork.CurrentRoom.PlayerCount == 2)
             {
                 SyncStoredColors();
+
+                // ★ 매칭 성공 사운드 이벤트 발생 (2명이 된 순간)
+                GameEventManager.Instance?.TriggerMatchFound();
             }
 
             EnterPlayer?.Invoke();

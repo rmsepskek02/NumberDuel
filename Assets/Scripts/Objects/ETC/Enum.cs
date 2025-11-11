@@ -147,8 +147,8 @@ namespace Objects
         BGM_Splash,         // 로딩 화면
         BGM_Lobby,          // 메뉴/대기실
         BGM_Battle,         // 인게임 배틀
-        BGM_Victory,        // 승리
-        BGM_Defeat,         // 패배
+        BGM_Victory,        // 승리           확인필요
+        BGM_Defeat,         // 패배           확인필요
 
         // ===== UI SFX =====
         UI_ButtonClick,     // 버튼 클릭
@@ -156,7 +156,7 @@ namespace Objects
         //UI_MessageInfo,     // 일반 메시지
         //UI_MessageWarning,  // 경고 메시지
         //UI_MessageError,    // 에러 메시지
-        UI_TurnStart,       // 턴 시작 알림
+        UI_TurnStart,       // 턴 시작 알림 카드드로우를 하기때문에 필요할까 ?
 
         // ===== Card SFX =====
         Card_Draw,          // 카드 드로우
@@ -175,11 +175,11 @@ namespace Objects
 
         // ===== Joker SFX =====
         Joker_Draw,         // 조커 드로우 효과
-        Joker_Delete,       // 조커 삭제 효과
+        Joker_Delete,       // 조커 삭제 효과     일반 카드 파괴랑 동시에 발생함
         Joker_Swap,         // 조커 교환 효과
 
         // ===== Game Event SFX =====
-        Game_Victory,       // 승리 팡파레
-        Game_Defeat         // 패배 사운드
+        Game_Victory,       // 승리 팡파레       확인필요
+        Game_Defeat         // 패배 사운드       확인필요
     }
 }

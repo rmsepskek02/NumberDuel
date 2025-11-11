@@ -69,7 +69,7 @@ namespace Manager
         #region Unity Lifecycle
         private void Start()
         {
-            // 필요시 초기화 로직 추가
+            // 사운드 사전 로드는 SoundManager.Awake()에서 자동으로 실행됨
         }
         #endregion
 
@@ -213,6 +213,12 @@ namespace Manager
         /// </summary>
         public void StartTurn(CardZone.OwnerType currentPlayer)
         {
+            // ★ 턴 시작 사운드 이벤트 발생 (로컬 플레이어의 턴일 때만)
+            if (TurnManager.Instance != null && TurnManager.Instance.IsLocalPlayerTurn)
+            {
+                GameEventManager.Instance?.TriggerTurnStarted();
+            }
+
             DrawCardsToHand(1, currentPlayer);
         }
 
@@ -259,6 +265,12 @@ namespace Manager
 
             // 2. 모든 진행 중인 프로세스 강제 종료
             ForceEndAllProcesses();
+
+            // ★ 게임 재시작 시 원래 GameScene BGM으로 복구
+            if (SoundManager.Instance != null)
+            {
+                SoundManager.Instance.PlayBGM(SoundType.BGM_Battle, loop: true, fadeInDuration: 1f);
+            }
 
             // 3. InGameUIManager 초기화 (WIN/LOSE 텍스트 숨김)
             if (InGameUIManager.Instance != null)
@@ -399,7 +411,14 @@ namespace Manager
                     continue;
                 }
 
-                // 실제 카드 오브젝트 생성 및 손패에 배치
+                // ★ 핵심 최적화: 사운드를 Instantiate 이전에 먼저 재생
+                // 무거운 Instantiate 작업 전에 사운드를 먼저 트리거하여 즉각 반응
+                if (GameEventManager.Instance != null)
+                {
+                    GameEventManager.Instance.TriggerCardDrawn();
+                }
+
+                // 카드 오브젝트 생성 및 손패에 배치 (Instantiate는 무거운 작업)
                 GameObject cardObject = DeckManager.Instance.CreateCardObject(cardData.Value, owner, handZone);
                 if (cardObject != null)
                 {
@@ -503,6 +522,17 @@ namespace Manager
 
             // 모든 프로세스 강제 종료
             ForceEndAllProcesses();
+
+            // ★ 게임 종료 사운드 이벤트 발생 (승리/패배)
+            bool isVictory = (GameWinner.Value == CardZone.OwnerType.Player);
+            GameEventManager.Instance?.TriggerGameEnded(isVictory);
+
+            // ★ 게임 종료 BGM 전환 (승리/패배 BGM)
+            if (SoundManager.Instance != null)
+            {
+                var bgmType = isVictory ? SoundType.BGM_Victory : SoundType.BGM_Defeat;
+                SoundManager.Instance.PlayBGM(bgmType, loop: true, fadeInDuration: 1f);
+            }
 
             // 게임 종료 이벤트 발생
             OnGameEnded?.Invoke(GameWinner.Value);

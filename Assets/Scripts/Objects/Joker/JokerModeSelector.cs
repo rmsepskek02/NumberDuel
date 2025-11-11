@@ -275,6 +275,9 @@ namespace Objects
 
             CardZone.OwnerType cardOwner = selectedJokerCard.CurrentOwnerType;
 
+            // ★ 조커 드로우 효과 사운드 이벤트 발생 (카드 드로우 전에 발생)
+            GameEventManager.Instance?.TriggerJokerEffect(JokerEffectType.Draw);
+
             // 1. 손패에서 2장 드로우
             InGameManager.Instance.DrawCardsToHand(2, cardOwner);
 
@@ -511,6 +514,9 @@ namespace Objects
 
             yield return new WaitForSeconds(0.1f);
 
+            // ★ 조커 삭제 효과 사운드 이벤트 발생 (카드 삭제 전)
+            GameEventManager.Instance?.TriggerJokerEffect(JokerEffectType.Delete);
+
             // 2. 카드 제거 애니메이션 및 파괴
             CardZone targetZone = FindZoneOfCard(targetCard.transform);
             yield return StartCoroutine(targetCard.AnimateRemoval(() =>
@@ -550,6 +556,9 @@ namespace Objects
             {
                 secondTarget.RevealSecret();
             }
+
+            // ★ 조커 스왑 효과 사운드 이벤트 발생 (값 교환 전)
+            GameEventManager.Instance?.TriggerJokerEffect(JokerEffectType.Swap);
 
             // 2. 값 교환
             var firstCardText = firstTarget.GetComponentInChildren<CardText>();

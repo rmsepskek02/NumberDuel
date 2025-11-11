@@ -235,15 +235,22 @@ namespace Manager.Network.Sync
             if (!targetZone.CanAddCard())
                 return;
 
-            // 3단계: 카드 데이터 복원
+            // 3단계: ★ 핵심 최적화: 사운드를 Instantiate 이전에 먼저 재생
+            // 상대방 카드 배치 RPC를 받자마자 즉시 사운드 트리거
+            if (GameEventManager.Instance != null)
+            {
+                GameEventManager.Instance.TriggerCardPlaced(placementData.isSecret);
+            }
+
+            // 4단계: 카드 데이터 복원
             var cardData = placementData.ToCardData();
 
-            // 4단계: 카드 오브젝트 생성 (변환된 소유자 사용)
+            // 5단계: 카드 오브젝트 생성 (변환된 소유자 사용)
             GameObject cardObject = DeckManager.Instance.CreateCardObject(cardData, displayOwner, targetZone);
             if (cardObject == null)
                 return;
 
-            // 5단계: NetworkCard 설정
+            // 6단계: NetworkCard 설정
             var networkCard = cardObject.GetComponent<NetworkCard>();
             if (networkCard == null)
             {
@@ -251,14 +258,14 @@ namespace Manager.Network.Sync
             }
             networkCard.SetUniqueId(placementData.uniqueId);
 
-            // 6단계: Secret 모드 설정
+            // 7단계: Secret 모드 설정
             var card = cardObject.GetComponent<Card>();
             if (card != null && placementData.isSecret)
             {
                 card.SetSecret(true);
             }
 
-            // 7단계: 손패에서 뒷면 카드 제거 (필드 배치인 경우만, 변환된 소유자 사용)
+            // 8단계: 손패에서 뒷면 카드 제거 (필드 배치인 경우만, 변환된 소유자 사용)
             if (zoneType == CardZone.ZoneType.Field)
             {
                 RemoveBackCardFromHand(displayOwner);

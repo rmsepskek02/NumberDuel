@@ -137,6 +137,13 @@ namespace Objects
                 if (string.IsNullOrEmpty(cardId))
                     return;
 
+                // ★ 핵심 최적화: 사운드를 네트워크 동기화 및 레이아웃 계산 이전에 먼저 재생
+                // 사용자 액션(드래그 종료)에 즉각 반응하도록 이벤트 트리거
+                if (GameEventManager.Instance != null)
+                {
+                    GameEventManager.Instance.TriggerCardPlaced(isSecret);
+                }
+
                 NetworkGameManager.Instance.SyncCardPlacement(cardData, ownerType, zoneType, isSecret, cardId);
             }
 

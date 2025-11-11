@@ -274,6 +274,9 @@ namespace Manager
         {
             float result = CalculateResult(first, second);
 
+            // ★ 연산자 사용 사운드 이벤트 발생 (필드 카드에 적용되는 순간)
+            GameEventManager.Instance?.TriggerOperatorUsed(currentOperator);
+
             switch (currentOperator)
             {
                 case OperatorType.Plus:
