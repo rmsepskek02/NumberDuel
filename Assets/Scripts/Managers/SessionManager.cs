@@ -43,6 +43,13 @@ namespace Manager
 
         private void InitializeDatabase()
         {
+            // 이미 초기화 중이거나 완료된 경우 중복 호출 방지
+            if (isInitialized)
+            {
+                Debug.Log("[SessionManager] 이미 초기화 완료됨");
+                return;
+            }
+
             FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task =>
             {
                 if (task.Result == DependencyStatus.Available)
@@ -54,8 +61,24 @@ namespace Manager
                 else
                 {
                     Debug.LogError($"❌ Firestore 초기화 실패: {task.Result}");
+                    isInitialized = false;
                 }
             });
+        }
+
+        /// <summary>
+        /// Firestore 재초기화 시도 (초기화 실패 시 호출)
+        /// </summary>
+        public void RetryInitialization()
+        {
+            if (isInitialized)
+            {
+                Debug.Log("[SessionManager] 이미 초기화 완료됨 - 재초기화 불필요");
+                return;
+            }
+
+            Debug.Log("[SessionManager] Firestore 재초기화 시도...");
+            InitializeDatabase();
         }
 
         /// <summary>

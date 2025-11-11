@@ -56,6 +56,13 @@ namespace Manager
 
         private void InitializeFirebase()
         {
+            // 이미 초기화 중이거나 완료된 경우 중복 호출 방지
+            if (isInitialized)
+            {
+                Debug.Log("[AuthManager] 이미 초기화 완료됨");
+                return;
+            }
+
             FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task =>
             {
                 if (task.Result == DependencyStatus.Available)
@@ -77,6 +84,21 @@ namespace Manager
                     isInitialized = false;
                 }
             });
+        }
+
+        /// <summary>
+        /// Firebase 재초기화 시도 (초기화 실패 시 호출)
+        /// </summary>
+        public void RetryInitialization()
+        {
+            if (isInitialized)
+            {
+                Debug.Log("[AuthManager] 이미 초기화 완료됨 - 재초기화 불필요");
+                return;
+            }
+
+            Debug.Log("[AuthManager] Firebase 재초기화 시도...");
+            InitializeFirebase();
         }
 
         /// <summary>
@@ -249,14 +271,54 @@ namespace Manager
         /// <summary>
         /// 로그아웃
         /// </summary>
-        public void Logout()
+        public async void Logout()
         {
             if (auth != null && currentUser != null)
             {
+                string uid = currentUser.UserId;
+
+                // Firebase 세션 종료
                 auth.SignOut();
                 currentUser = null;
-                Debug.Log("✅ 로그아웃 완료");
+
+                // Firestore 세션 정리
+                if (SessionManager.Instance != null && SessionManager.Instance.IsInitialized)
+                {
+                    await SessionManager.Instance.ClearSession(uid);
+                    Debug.Log("✅ 로그아웃 및 세션 정리 완료");
+                }
+                else
+                {
+                    Debug.Log("✅ 로그아웃 완료 (세션 정리 생략)");
+                }
             }
+        }
+        #endregion
+
+        #region Public Methods - Auto Login
+        /// <summary>
+        /// Firebase 세션을 통한 자동 로그인 체크
+        /// </summary>
+        /// <returns>자동 로그인 가능 여부</returns>
+        public bool CanAutoLogin()
+        {
+            // Firebase 초기화 완료 여부 확인
+            if (!isInitialized)
+            {
+                Debug.Log("[AuthManager] Firebase 초기화 대기 중...");
+                return false;
+            }
+
+            // Firebase에 이미 로그인되어 있는지 확인
+            if (auth != null && auth.CurrentUser != null)
+            {
+                currentUser = auth.CurrentUser;
+                Debug.Log($"[AuthManager] 자동 로그인 가능: {currentUser.Email}");
+                return true;
+            }
+
+            Debug.Log("[AuthManager] 자동 로그인 불가: 저장된 세션 없음");
+            return false;
         }
         #endregion
 

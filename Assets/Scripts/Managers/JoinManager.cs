@@ -162,9 +162,18 @@ namespace Manager
                     bool authReady = await AuthManager.Instance.WaitForInitialization(10f);
                     if (!authReady)
                     {
-                        SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
-                        Debug.LogError("[JoinManager] AuthManager 초기화 실패");
-                        return;
+                        // 초기화 실패 시 재시도
+                        Debug.Log("[JoinManager] Firebase 재초기화 시도...");
+                        AuthManager.Instance.RetryInitialization();
+
+                        // 재시도 후 다시 대기
+                        authReady = await AuthManager.Instance.WaitForInitialization(10f);
+                        if (!authReady)
+                        {
+                            SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
+                            Debug.LogError("[JoinManager] AuthManager 초기화 재시도 실패");
+                            return;
+                        }
                     }
 
                     Debug.Log("[JoinManager] AuthManager 초기화 완료");
@@ -175,9 +184,18 @@ namespace Manager
                     bool sessionReady = await SessionManager.Instance.WaitForInitialization(10f);
                     if (!sessionReady)
                     {
-                        SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
-                        Debug.LogError("[JoinManager] SessionManager 초기화 실패");
-                        return;
+                        // 초기화 실패 시 재시도
+                        Debug.Log("[JoinManager] SessionManager 재초기화 시도...");
+                        SessionManager.Instance.RetryInitialization();
+
+                        // 재시도 후 다시 대기
+                        sessionReady = await SessionManager.Instance.WaitForInitialization(10f);
+                        if (!sessionReady)
+                        {
+                            SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
+                            Debug.LogError("[JoinManager] SessionManager 초기화 재시도 실패");
+                            return;
+                        }
                     }
 
                     Debug.Log("[JoinManager] SessionManager 초기화 완료");

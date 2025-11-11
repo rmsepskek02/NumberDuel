@@ -677,27 +677,23 @@ namespace Manager
             Application.Quit();
         }
 
-        public async void OnClickLogOut()
+        public void OnClickLogOut()
+        {
+            StartCoroutine(LogoutCoroutine());
+        }
+
+        private System.Collections.IEnumerator LogoutCoroutine()
         {
             // 로그아웃 시작 메시지
             SystemMessageManager.Instance?.ShowMessage("LoggingOut");
 
-            // 세션 정리 (Firebase UID 기반)
-            if (SessionManager.Instance != null && AuthManager.Instance != null)
-            {
-                string uid = AuthManager.Instance.CurrentUserUID;
-                if (!string.IsNullOrEmpty(uid))
-                {
-                    await SessionManager.Instance.ClearSession(uid);
-                    Debug.Log("[LobbyManager] 세션 정리 완료");
-                }
-            }
-
-            // Firebase 로그아웃
+            // Firebase 로그아웃 (AuthManager에서 세션 정리도 함께 수행)
             if (AuthManager.Instance != null)
             {
                 AuthManager.Instance.Logout();
-                Debug.Log("[LobbyManager] Firebase 로그아웃 완료");
+                // async void 메서드이므로 완료 대기
+                yield return new WaitForSeconds(0.5f);
+                Debug.Log("[LobbyManager] Firebase 로그아웃 및 세션 정리 완료");
             }
 
             // Photon 연결 해제
@@ -709,6 +705,8 @@ namespace Manager
 
             // 로그아웃 완료 메시지
             SystemMessageManager.Instance?.ShowMessage("LogoutComplete");
+
+            yield return new WaitForSeconds(0.3f);
 
             // JoinScene으로 이동
             if (LoadingScreenManager.Instance != null)
