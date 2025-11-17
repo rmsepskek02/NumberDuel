@@ -15,7 +15,6 @@ namespace Manager
         #region Fields and Properties
         [Header("Expression Zone 설정")]
         [SerializeField] private CardZone expressionZone;
-        [SerializeField] private bool enableDebugLog = false;
 
         private ExpressionCard[] slots;
         private Sprite neutralSprite;

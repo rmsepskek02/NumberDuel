@@ -8,9 +8,6 @@ namespace Manager
     public class NetworkCard : MonoBehaviour
     {
         #region Fields and Properties
-        [Header("네트워크 고유 식별 (디버그용 - 읽기 전용)")]
-        [SerializeField] private string debugUniqueId = "미생성";
-
         [Header("위치 정보")]
         [SerializeField] private CardZone.OwnerType currentOwner;
         [SerializeField] private CardZone.ZoneType currentZone;
@@ -46,7 +43,6 @@ namespace Manager
         private void GenerateUniqueId()
         {
             uniqueId = Guid.NewGuid().ToString("N")[..8].ToUpper();
-            debugUniqueId = uniqueId;
         }
 
         public void SetUniqueId(string id)
@@ -60,7 +56,6 @@ namespace Manager
             }
 
             uniqueId = id;
-            debugUniqueId = id;
             RegisterToNetworkGameManager();
         }
 
@@ -91,8 +86,6 @@ namespace Manager
             currentOwner = parentZone.Owner;
             currentZone = parentZone.Zone;
             currentIndex = GetIndexInZone(parentZone);
-
-            debugUniqueId = uniqueId;
         }
 
         private int GetIndexInZone(CardZone zone)
@@ -216,15 +209,6 @@ namespace Manager
         }
         #endregion
 
-        #region Debug & Utility
-        private void OnValidate()
-        {
-            if (Application.isPlaying && isInitialized)
-            {
-                UpdateLocationInfo();
-                debugUniqueId = uniqueId;
-            }
-        }
         #endregion
     }
 

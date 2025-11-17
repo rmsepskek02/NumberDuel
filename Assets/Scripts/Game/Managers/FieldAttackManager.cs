@@ -15,8 +15,6 @@ namespace Manager
     public class FieldAttackManager : MonoBehaviour
     {
         #region Fields and Properties
-        [SerializeField] private bool enableDebugLog = false;
-
         private Card currentAttacker;
 
         // 성능 최적화용 캐시
@@ -54,8 +52,6 @@ namespace Manager
             if (currentAttacker != null)
             {
                 ResetAttackState();
-                if (enableDebugLog)
-                    Debug.Log("[FieldAttackManager] 강제 공격 상태 초기화");
             }
         }
         #endregion
@@ -111,16 +107,12 @@ namespace Manager
             // 공격 프로세스 시작 (턴 종료 차단 및 다른 프로세스와의 충돌 방지)
             if (!InGameManager.Instance.StartProcess(GameProcessState.CardAttackProcess))
             {
-                if (enableDebugLog)
-                    Debug.LogWarning("[FieldAttackManager] 다른 프로세스가 진행 중입니다.");
                 return; // 다른 프로세스 진행 중이면 중단
             }
 
             // 시크릿 카드인 경우: 오픈으로 전환하고 공격은 진행하지 않음
             if (attacker.IsSecret)
             {
-                if (enableDebugLog)
-                    Debug.Log($"[FieldAttackManager] 시크릿 카드 오픈으로 전환: {attacker.name}");
 
                 attacker.OpenSecret();
 
@@ -144,22 +136,16 @@ namespace Manager
             currentAttacker = attacker;
             SetupExpressionZone(attacker);
 
-            if (enableDebugLog)
-                Debug.Log($"[FieldAttackManager] 공격자 선택 및 프로세스 시작: {attacker.name}");
 
             // 상대 필드가 비어있는지 체크
             if (IsOpponentFieldEmpty())
             {
-                if (enableDebugLog)
-                    Debug.Log("[FieldAttackManager] 상대 필드가 비어있음 - 상대 본 필드 직접 공격");
 
                 // 상대 본 필드 직접 공격
                 StartCoroutine(ExecuteEmptyFieldAttack(attacker));
             }
             else
             {
-                if (enableDebugLog)
-                    Debug.Log("[FieldAttackManager] 상대 필드에 카드 존재 - 대상 선택 대기");
 
                 // 대상 선택: 상대 카드 선택 대기
                 UpdateGlowStatesForTargetSelection();
@@ -177,8 +163,6 @@ namespace Manager
                 yield break;
             }
 
-            if (enableDebugLog)
-                Debug.Log($"[FieldAttackManager] 빈 필드 직접 공격: {attacker.name}");
 
             // 방어자 선택 완료 → 취소 불가능 상태로 전환
             if (ExpressionZoneManager.Instance != null)
@@ -191,8 +175,6 @@ namespace Manager
             if (attackerWasSecret)
             {
                 attacker.RevealSecret();
-                if (enableDebugLog)
-                    Debug.Log($"[FieldAttackManager] 공격자 Secret 카드 공개: {attacker.name}");
             }
 
             // 공격 아이콘 표시
@@ -201,8 +183,6 @@ namespace Manager
             // 공격 카드의 본 이름 저장 (Secret 공개 후)
             float originalAttackerValue = GetCardValue(attacker);
 
-            if (enableDebugLog)
-                Debug.Log($"[FieldAttackManager] 공격 카드의 값: {originalAttackerValue}");
 
             // ExpressionZone에 공격 상황을 설정 (방어 카드는 "0")
             var ezManager = ExpressionZoneManager.Instance;
@@ -266,8 +246,6 @@ namespace Manager
                 }
             }
 
-            if (enableDebugLog)
-                Debug.Log("[FieldAttackManager] 빈 필드 공격 완료 및 프로세스 종료");
         }
 
         /// <summary>
@@ -281,8 +259,6 @@ namespace Manager
                 yield break;
             }
 
-            if (enableDebugLog)
-                Debug.Log($"[FieldAttackManager] 공격 시작: {attacker.name} vs {defender.name}");
 
             // 카드 공격 이벤트 발생 (사운드 재생)
             GameEventManager.Instance?.TriggerCardAttack();
@@ -300,15 +276,11 @@ namespace Manager
             if (attackerWasSecret)
             {
                 attacker.RevealSecret();
-                if (enableDebugLog)
-                    Debug.Log($"[FieldAttackManager] 공격자 Secret 카드 공개: {attacker.name}");
             }
 
             if (defenderWasSecret)
             {
                 defender.RevealSecret();
-                if (enableDebugLog)
-                    Debug.Log($"[FieldAttackManager] 방어자 Secret 카드 공개: {defender.name}");
             }
 
             // 공격 아이콘 표시
@@ -318,8 +290,6 @@ namespace Manager
             // 양쪽 카드 본 이름 저장 (Secret 공개 후 수 사용)
             var (originalAttackerValue, originalDefenderValue) = GetCardValues(attacker, defender);
 
-            if (enableDebugLog)
-                Debug.Log($"[FieldAttackManager] 전투 본 수치: 공격자={originalAttackerValue}, 방어자={originalDefenderValue}");
 
             // 표현식으로 방어자 설정
             var ezManager = ExpressionZoneManager.Instance;
@@ -384,8 +354,6 @@ namespace Manager
                 }
             }
 
-            if (enableDebugLog)
-                Debug.Log("[FieldAttackManager] 공격 완료 및 프로세스 종료");
         }
 
         /// <summary>
@@ -395,8 +363,6 @@ namespace Manager
         /// <param name="damage">상대에게 입힐 데미지</param>
         private int ApplyEmptyFieldResult(Card attacker, float damage)
         {
-            if (enableDebugLog)
-                Debug.Log($"[FieldAttackManager] 빈 필드 공격 결과 적용 - 데미지: {damage}");
 
             // DamageCalculator를 통해 실제 데미지 계산
             int finalDamage = Utills.DamageCalculator.CalculateEmptyFieldDamage(damage);
@@ -406,8 +372,6 @@ namespace Manager
             {
                 int actualDamage = HealthManager.Instance.ApplyDamage(finalDamage, CardZone.OwnerType.Opponent);
 
-                if (enableDebugLog)
-                    Debug.Log($"[FieldAttackManager] 상대에게 {actualDamage} 데미지 적용 완료");
 
                 return actualDamage; // 추가: 데미지 반환
             }
@@ -430,8 +394,6 @@ namespace Manager
             float result = originalAttackerValue - originalDefenderValue;
             int actualDamage = 0; // 추가: 데미지 변수
 
-            if (enableDebugLog)
-                Debug.Log($"[FieldAttackManager] 전투 결과 계산: {originalAttackerValue} - {originalDefenderValue} = {result}");
 
             if (result > 0) // 공격자 승리
             {
@@ -442,8 +404,6 @@ namespace Manager
                     int damage = Utills.DamageCalculator.CalculateAttackDamage(originalAttackerValue, originalDefenderValue);
                     actualDamage = HealthManager.Instance.ApplyDamage(damage, CardZone.OwnerType.Opponent);
 
-                    if (enableDebugLog)
-                        Debug.Log($"[FieldAttackManager] 카드 파괴 - 상대에게 {actualDamage} 데미지");
                 }
                 else if (defenderWasSecret && enableDebugLog)
                 {
@@ -454,34 +414,24 @@ namespace Manager
                 attackerText.SetRawValue(result);
                 DestroyCard(defender);
 
-                if (enableDebugLog)
-                    Debug.Log($"[FieldAttackManager] {attacker.name} 승리 (남은 값: {result})");
             }
             else if (result < 0) // 방어자 승리
             {
                 // 방어자 승리 상황에서 플레이어는 데미지 받지 않음 (현재 요구사항)
-                if (enableDebugLog)
-                    Debug.Log("[FieldAttackManager] 방어자 승리 - 플레이어 데미지 없음");
 
                 // 카드 수치 처리
                 defenderText.SetRawValue(Mathf.Abs(result));
                 DestroyCard(attacker);
 
-                if (enableDebugLog)
-                    Debug.Log($"[FieldAttackManager] {defender.name} 승리 (남은 값: {Mathf.Abs(result)})");
             }
             else // 무승부
             {
                 // 무승부 상황에서 데미지 없음
-                if (enableDebugLog)
-                    Debug.Log("[FieldAttackManager] 무승부 - 데미지 없음");
 
                 // 카드 수치 처리
                 DestroyCard(attacker);
                 StartCoroutine(DelayedDestroy(defender, 0.2f));
 
-                if (enableDebugLog)
-                    Debug.Log("[FieldAttackManager] 양측 파괴");
             }
 
             return actualDamage; // 추가: 데미지 반환
@@ -575,8 +525,6 @@ namespace Manager
                 InGameManager.Instance.CurrentProcess == GameProcessState.CardAttackProcess &&
                 currentAttacker != null)
             {
-                if (enableDebugLog)
-                    Debug.Log("[FieldAttackManager] 공격 프로세스 진행 중 - 방어자 선택 가능");
                 return true; // 공격 프로세스 내에서는 방어자 선택 가능
             }
 
@@ -644,8 +592,6 @@ namespace Manager
 
             bool isEmpty = opponentFieldZone.GetCardCount() == 0;
 
-            if (enableDebugLog)
-                Debug.Log($"[FieldAttackManager] 상대 필드 카드 수: {opponentFieldZone.GetCardCount()}, 비어있음: {isEmpty}");
 
             return isEmpty;
         }

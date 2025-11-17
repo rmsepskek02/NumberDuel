@@ -50,7 +50,6 @@ namespace Manager
         #region Fields and Properties
         // 턴 시스템 설정
         [Header("턴 시스템 설정")]
-        [SerializeField] private bool enableDebugLog = true;
         [SerializeField] private float turnTimeLimit = 60f; // 턴 제한 시간 (초)
 
         // 게임 상태

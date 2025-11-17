@@ -29,7 +29,8 @@
       "Bash(git rm:*)",
       "Bash(del:*)",
       "Bash(git mv:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []

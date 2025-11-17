@@ -25,8 +25,6 @@ namespace Manager
             Processing
         }
 
-        [SerializeField] private bool enableDebugLog = false;
-
         private State currentState = State.Idle;
         private OperatorType currentOperator;
         private Card operatorCard;
@@ -74,9 +72,6 @@ namespace Manager
 
             InitializeOperation(operatorCard);
             SetupFirstCardSelection();
-
-            if (enableDebugLog)
-                Debug.Log($"[OperatorManager] 연산 시작: {currentOperator}");
         }
 
         /// <summary>
@@ -101,9 +96,6 @@ namespace Manager
 
             ExpressionZoneManager.Instance.ResetFirstSelection();
             SetupFirstCardSelection();
-
-            if (enableDebugLog)
-                Debug.Log("[OperatorManager] 첫 번째 카드 선택 취소");
         }
 
         /// <summary>
@@ -132,9 +124,6 @@ namespace Manager
             RestoreDefaultGlowStates();
             ExpressionZoneManager.Instance.ResetAllSlots();
             ResetOperationState();
-
-            if (enableDebugLog)
-                Debug.Log("[OperatorManager] 연산 모드 취소");
         }
         #endregion
 
@@ -297,9 +286,6 @@ namespace Manager
                     if (remainder > 0) CreateRemainderCard(remainder);
                     break;
             }
-
-            if (enableDebugLog)
-                Debug.Log($"[OperatorManager] 연산 완료: {first} {GetOperatorSymbol()} {second} = {result}");
         }
 
         /// <summary>
@@ -554,11 +540,6 @@ namespace Manager
                 _ => "?"
             };
         }
-
-        /// <summary>
-        /// 디버그 로그 활성화/비활성화
-        /// </summary>
-        public void SetDebugMode(bool enable) => enableDebugLog = enable;
         #endregion
     }
 }

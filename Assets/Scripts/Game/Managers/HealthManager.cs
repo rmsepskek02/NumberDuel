@@ -14,7 +14,6 @@ namespace Manager
         #region Fields and Properties
         [Header("체력 설정")]
         [SerializeField] private int maxHP = 30;
-        [SerializeField] private bool enableDebugLog = true;
 
         // 현재 체력
         private int playerCurrentHP;
@@ -47,9 +46,6 @@ namespace Manager
             playerCurrentHP = maxHP;
             opponentCurrentHP = maxHP;
 
-            if (enableDebugLog)
-                Debug.Log($"[HealthManager] 체력 초기화 완료 - Player: {playerCurrentHP}, Opponent: {opponentCurrentHP}");
-
             // 초기 상태 UI 업데이트
             OnHealthChanged?.Invoke(CardZone.OwnerType.Player, maxHP, playerCurrentHP);
             OnHealthChanged?.Invoke(CardZone.OwnerType.Opponent, maxHP, opponentCurrentHP);
@@ -67,8 +63,6 @@ namespace Manager
         {
             if (damage <= 0)
             {
-                if (enableDebugLog)
-                    Debug.LogWarning($"[HealthManager] 잘못된 데미지 값: {damage}");
                 return 0;
             }
 
@@ -78,9 +72,6 @@ namespace Manager
 
             // 체력 업데이트
             SetHP(target, newHP);
-
-            if (enableDebugLog)
-                Debug.Log($"[HealthManager] {target}에게 {actualDamage} 데미지 적용 ({previousHP} → {newHP})");
 
             // ★ 데미지 적용 사운드 이벤트 발생
             if (actualDamage > 0)
@@ -94,9 +85,6 @@ namespace Manager
             // 패배 상태 체크
             if (newHP <= 0)
             {
-                if (enableDebugLog)
-                    Debug.Log($"[HealthManager] {target} 패배! HP가 0이 되었습니다.");
-
                 OnPlayerDefeated?.Invoke(target);
             }
 
