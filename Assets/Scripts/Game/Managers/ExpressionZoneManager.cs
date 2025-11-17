@@ -88,13 +88,9 @@ namespace Manager
             var targetSprite = sprite ?? neutralSprite;
             var targetColor = Global.GetColorByName(targetSprite.name);
 
-            // 변경점만 확인 후 필요할때만 업데이트
-            bool needsUpdate = false;
-
             if (slot.GetComponentInChildren<SpriteRenderer>().sprite != targetSprite)
             {
                 slot.SetSprite(targetSprite);
-                needsUpdate = true;
             }
 
             if (slot.CurrentText != text || cachedActiveStates[index] != showText)
@@ -102,14 +98,12 @@ namespace Manager
                 slot.SetValue(text);
                 slot.SetTextVisible(showText);
                 cachedActiveStates[index] = showText;
-                needsUpdate = true;
             }
 
             if (cachedColors[index] != targetColor)
             {
                 slot.SetTextColor(targetColor);
                 cachedColors[index] = targetColor;
-                needsUpdate = true;
             }
 
             // 취소 가능 여부 설정
@@ -732,10 +726,6 @@ namespace Manager
             };
         }
 
-        /// <summary>
-        /// 디버그 로그 활성화/비활성화
-        /// </summary>
-        public void SetDebugMode(bool enable) => enableDebugLog = enable;
         #endregion
 
         #region Network Synchronization Support

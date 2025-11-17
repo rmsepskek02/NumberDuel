@@ -51,9 +51,6 @@ namespace Manager
     public class DeckManager : Singleton<DeckManager>
     {
         #region Fields and Properties
-        [Header("덱 설정")]
-        [SerializeField] private bool enableLogging = true;
-
         // 플레이어 덱 데이터
         private List<CardData> playerDeck = new List<CardData>();
         private List<CardData> opponentDeck = new List<CardData>();

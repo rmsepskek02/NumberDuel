@@ -405,7 +405,7 @@ namespace Manager
                     actualDamage = HealthManager.Instance.ApplyDamage(damage, CardZone.OwnerType.Opponent);
 
                 }
-                else if (defenderWasSecret && enableDebugLog)
+                else if (defenderWasSecret)
                 {
                     Debug.Log($"[FieldAttackManager] 시크릿 카드 파괴 - 데미지 없음");
                 }
@@ -640,11 +640,6 @@ namespace Manager
             yield return new WaitForSeconds(delay);
             DestroyCard(card);
         }
-
-        /// <summary>
-        /// 디버그 로그 활성화/비활성화
-        /// </summary>
-        public void SetDebugMode(bool enable) => enableDebugLog = enable;
         #endregion
     }
 }

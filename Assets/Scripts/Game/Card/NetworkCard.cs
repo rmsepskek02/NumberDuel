@@ -16,7 +16,6 @@ namespace Manager
         private string uniqueId;
 
         private Card cardComponent;
-        private bool isInitialized = false;
         public string UniqueId => uniqueId;
         public CardZone.OwnerType CurrentOwner => currentOwner;
         public CardZone.ZoneType CurrentZone => currentZone;
@@ -35,7 +34,6 @@ namespace Manager
         {
             RegisterToNetworkGameManager();
             UpdateLocationInfo();
-            isInitialized = true;
         }
         #endregion
 
@@ -209,7 +207,6 @@ namespace Manager
         }
         #endregion
 
-        #endregion
     }
 
     #region Supporting Types
