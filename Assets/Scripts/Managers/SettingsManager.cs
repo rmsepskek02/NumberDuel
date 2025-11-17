@@ -241,7 +241,7 @@ namespace Manager
             // LoadingScreenManager가 있으면 사용, 없으면 직접 로드
             if (LoadingScreenManager.Instance != null)
             {
-                LoadingScreenManager.Instance.LoadScene(SceneName.LobbyScene.GetSceneName());
+                LoadingScreenManager.Instance.ShowThenLoadLocal(SceneName.LobbyScene.GetSceneName());
             }
             else
             {
@@ -276,7 +276,7 @@ namespace Manager
             // AuthManager 로그아웃
             if (AuthManager.Instance != null)
             {
-                AuthManager.Instance.SignOut();
+                AuthManager.Instance.Logout();
             }
 
             // Photon 연결 해제
@@ -288,7 +288,7 @@ namespace Manager
             // JoinScene으로 이동
             if (LoadingScreenManager.Instance != null)
             {
-                LoadingScreenManager.Instance.LoadScene(SceneName.JoinScene.GetSceneName());
+                LoadingScreenManager.Instance.ShowThenLoadLocal(SceneName.JoinScene.GetSceneName());
             }
             else
             {
