@@ -26,7 +26,8 @@
       "Bash(powershell -Command:*)",
       "Bash(cd:*)",
       "mcp__mcp-unity__load_scene",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(del:*)"
     ],
     "deny": [],
     "ask": []

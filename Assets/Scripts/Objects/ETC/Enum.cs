@@ -182,4 +182,24 @@ namespace Objects
         Game_Victory,       // 승리 팡파레       확인필요
         Game_Defeat         // 패배 사운드       확인필요
     }
+
+    /// <summary>
+    /// 설정 탭 타입
+    /// </summary>
+    public enum SettingsTabType
+    {
+        Sound,      // 사운드 설정
+        Display,    // 화면 설정
+        Profile     // 프로필
+    }
+
+    /// <summary>
+    /// 확인 팝업 액션 타입
+    /// </summary>
+    public enum ConfirmationType
+    {
+        ExitToLobby,    // 로비로 나가기 (GameScene에서만)
+        QuitGame,       // 게임 종료
+        Logout          // 로그아웃
+    }
 }
