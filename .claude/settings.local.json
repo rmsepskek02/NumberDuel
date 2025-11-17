@@ -27,7 +27,9 @@
       "Bash(cd:*)",
       "mcp__mcp-unity__load_scene",
       "Bash(git rm:*)",
-      "Bash(del:*)"
+      "Bash(del:*)",
+      "Bash(git mv:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
