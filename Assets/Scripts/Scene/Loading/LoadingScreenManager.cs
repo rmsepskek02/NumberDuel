@@ -8,10 +8,10 @@ using TMPro;
 namespace Manager
 {
     /// <summary>
-    /// �ܼ� �ε� �Ŵ��� (Photon �и�)
-    /// - ���� �� �ε�� ShowThenLoadLocal
-    /// - ���� �׼�(��: PhotonNetwork.LoadLevel)�� ȣ���ϴ� FadeInThenAction
-    /// - �� �ε� �Ϸ�� ���̵�ƿ�
+    /// 콘솔 로딩 매니저 (Photon 분리)
+    /// - 로컬 씬 로딩은 ShowThenLoadLocal
+    /// - 외부 액션(예: PhotonNetwork.LoadLevel)을 호출하는 FadeInThenAction
+    /// - 씬 로딩 완료 시 페이드아웃
     /// </summary>
     public class LoadingScreenManager : SingletonDontDestroy<LoadingScreenManager>
     {
@@ -49,7 +49,7 @@ namespace Manager
             SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 
-        // 1) ���� �� �ε�(���� ���)
+        // 1) 로컬 씬 로딩(로컬 전용)
         public void ShowThenLoadLocal(string sceneName)
         {
             if (isShowing) return;
@@ -70,12 +70,12 @@ namespace Manager
             yield return fade;
             yield return prog;
 
-            // �� �ε�
+            // 씬 로딩
             SceneManager.LoadScene(sceneName);
-            // OnSceneLoaded���� ���̵�ƿ� ó��
+            // OnSceneLoaded에서 페이드아웃 처리
         }
 
-        // 2) ���̵��� �� ���� �׼� ȣ�� (PhotonNetwork.LoadLevel ���� ��Ʈ��ũ ȣ���� ���⼭ ����)
+        // 2) 페이드인 후 외부 액션 호출 (PhotonNetwork.LoadLevel 같은 네트워크 호출을 여기서 처리)
         public void FadeInThenAction(Action onFadeInComplete)
         {
             if (isShowing) return;
@@ -97,10 +97,10 @@ namespace Manager
             yield return prog;
 
             onFadeInComplete?.Invoke();
-            // �� �ε�� ȣ����(onFadeInComplete)���� ���� -> OnSceneLoaded���� ���̵�ƿ� ó��
+            // 씬 로딩은 호출자(onFadeInComplete)에서 처리 -> OnSceneLoaded에서 페이드아웃 처리
         }
 
-        // ���̵� �� ���·� ���� �ε�Ǹ�(���� �Ǵ� ��Ʈ��ũ) �ڵ����� ���̵�ƿ�
+        // 페이드 인 후 다음으로 씬이 로드되면(로컬 또는 네트워크) 자동으로 페이드아웃
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             // 취소된 경우 무시
@@ -112,7 +112,7 @@ namespace Manager
 
             if (!isShowing) return;
 
-            // ���� �ε�Ǹ� �ٷ� ���̵�ƿ�
+            // 씬이 로드되면 바로 페이드아웃
             UpdateProgressUI(1f);
             StartCoroutine(FadeOutAndHide());
         }
@@ -144,7 +144,7 @@ namespace Manager
             HideImmediate();
         }
 
-        #region UI ����/����� (���� �ڵ� ����)
+        #region UI 생성/관리 (런타임 코드 생성)
         private void CreateUIIfMissing()
         {
             if (loadingCanvas != null) return;

@@ -98,8 +98,8 @@ GameObject:
   - component: {fileID: 8832062192125499174}
   - component: {fileID: 8051822732004016590}
   - component: {fileID: 3376522295163322850}
-  - component: {fileID: 6593073273110370276}
   - component: {fileID: 8603382938904333960}
+  - component: {fileID: 339190596943047060}
   m_Layer: 0
   m_Name: PlayerSprite
   m_TagString: Untagged
@@ -199,22 +199,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.2, y: 0.28, z: 0.2}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &6593073273110370276
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4297495218101988121}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2b6d4505ce802447a9f381cb53f2108, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mainCamera: {fileID: 0}
-  dragThreshold: 10
-  isDraggable: 1
-  isClickable: 1
 --- !u!114 &8603382938904333960
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -230,6 +214,22 @@ MonoBehaviour:
   glowProperty: _GlowToggle
   outlineColorProperty: _OutlineColor
   fadeDuration: 0.3
+--- !u!114 &339190596943047060
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4297495218101988121}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ca9c4d22c539b34695da1ca03b95c62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mainCamera: {fileID: 0}
+  dragThreshold: 5
+  isDraggable: 1
+  isClickable: 1
 --- !u!1 &4815014488293899454
 GameObject:
   m_ObjectHideFlags: 0
@@ -419,7 +419,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fc5032f40529fc049b1a60f5205267fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  textMesh: {fileID: 0}
+  textMesh: {fileID: 7883041412626670465}
 --- !u!1 &4982297139560126397
 GameObject:
   m_ObjectHideFlags: 0
@@ -430,8 +430,8 @@ GameObject:
   m_Component:
   - component: {fileID: 7801257060444858629}
   - component: {fileID: 8826445396218837340}
-  - component: {fileID: 6180533868651849150}
   - component: {fileID: 17238282572068717}
+  - component: {fileID: 6688899093618992339}
   m_Layer: 0
   m_Name: Player_Card
   m_TagString: Untagged
@@ -469,21 +469,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   selectionIcon: {fileID: 236993657135615440}
-  swordIcon: {fileID: 0}
-  shieldIcon: {fileID: 0}
---- !u!114 &6180533868651849150
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4982297139560126397}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 270176575bf7f864cae17a6331313207, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mainCamera: {fileID: 0}
 --- !u!114 &17238282572068717
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -496,7 +481,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e58bc3266e573c4fb997c14f711aea5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  debugUniqueId: "\uBBF8\uC0DD\uC131"
   currentOwner: 0
   currentZone: 0
   currentIndex: 0
+--- !u!114 &6688899093618992339
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4982297139560126397}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b67971cc77c9972409444d792c07abab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mainCamera: {fileID: 0}

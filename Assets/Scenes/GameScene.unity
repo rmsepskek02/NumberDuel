@@ -129,7 +129,6 @@ GameObject:
   m_Component:
   - component: {fileID: 15016879}
   - component: {fileID: 15016878}
-  - component: {fileID: 15016880}
   - component: {fileID: 15016881}
   m_Layer: 0
   m_Name: PlayerHandZone
@@ -168,20 +167,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 61545643}
   m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
---- !u!114 &15016880
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 15016875}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a6c49ccbc755fd94d9e9c909ebf800bf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  playerHandZone: {fileID: 15016878}
-  spawnCount: 10
 --- !u!114 &15016881
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -207,7 +192,6 @@ GameObject:
   m_Component:
   - component: {fileID: 28174659}
   - component: {fileID: 28174660}
-  - component: {fileID: 28174661}
   m_Layer: 0
   m_Name: DeckManager
   m_TagString: Untagged
@@ -239,25 +223,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 28174658}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3647d682f2fce234ca432eb8221a462e, type: 3}
+  m_Script: {fileID: 11500000, guid: 4c64446299bc7574183a547321a57981, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enableLogging: 1
---- !u!114 &28174661
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 28174658}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eaf09fb1c941b7743a1af342a6a292e8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  playerHandZone: {fileID: 15016878}
-  opponentHandZone: {fileID: 1158633535}
-  inputActions: {fileID: 0}
 --- !u!1 &33556458
 GameObject:
   m_ObjectHideFlags: 0
@@ -774,8 +742,8 @@ GameObject:
   - component: {fileID: 140795733}
   - component: {fileID: 140795736}
   - component: {fileID: 140795735}
-  - component: {fileID: 140795734}
   - component: {fileID: 140795737}
+  - component: {fileID: 140795738}
   m_Layer: 0
   m_Name: DrawSprite
   m_TagString: Untagged
@@ -799,22 +767,6 @@ Transform:
   - {fileID: 214020588}
   m_Father: {fileID: 672380529}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
---- !u!114 &140795734
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 140795732}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2b6d4505ce802447a9f381cb53f2108, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mainCamera: {fileID: 0}
-  dragThreshold: 10
-  isDraggable: 1
-  isClickable: 1
 --- !u!65 &140795735
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -904,6 +856,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   effectType: 0
+--- !u!114 &140795738
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 140795732}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ca9c4d22c539b34695da1ca03b95c62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mainCamera: {fileID: 0}
+  dragThreshold: 5
+  isDraggable: 1
+  isClickable: 1
 --- !u!1 &166197645
 GameObject:
   m_ObjectHideFlags: 0
@@ -1475,7 +1443,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 269852578}
-  - component: {fileID: 269852580}
+  - component: {fileID: 269852579}
   m_Layer: 0
   m_Name: SwapCard
   m_TagString: Untagged
@@ -1499,7 +1467,7 @@ Transform:
   - {fileID: 2076371592}
   m_Father: {fileID: 69944040}
   m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
---- !u!114 &269852580
+--- !u!114 &269852579
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1508,12 +1476,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 269852577}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2b6d4505ce802447a9f381cb53f2108, type: 3}
+  m_Script: {fileID: 11500000, guid: 7ca9c4d22c539b34695da1ca03b95c62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   mainCamera: {fileID: 0}
   dragThreshold: 5
-  isDraggable: 1
+  isDraggable: 0
   isClickable: 1
 --- !u!1 &304007900
 GameObject:
@@ -1716,9 +1684,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   dimBackground: {fileID: 1645002294}
   cancelButton: {fileID: 1284260179}
-  openOption: {fileID: 8832062190408037254}
+  openOption: {fileID: 6593073272667779911}
   secretOption: {fileID: 9060221423622875723}
-  openValueText: {fileID: 0}
+  openValueText: {fileID: 7883041414080087842}
   maxScale: 30
   animDuration: 0.2
 --- !u!4 &396241080
@@ -2093,10 +2061,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 539923748}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2d082705918421b42b044a4a3c8f3736, type: 3}
+  m_Script: {fileID: 11500000, guid: d0afeded8b792c64db04c505f32c94d6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enableDebugLog: 0
 --- !u!1 &541101286
 GameObject:
   m_ObjectHideFlags: 0
@@ -2125,12 +2092,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 541101286}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2b6d4505ce802447a9f381cb53f2108, type: 3}
+  m_Script: {fileID: 11500000, guid: 7ca9c4d22c539b34695da1ca03b95c62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   mainCamera: {fileID: 0}
   dragThreshold: 5
-  isDraggable: 1
+  isDraggable: 0
   isClickable: 1
 --- !u!65 &541101288
 BoxCollider:
@@ -2737,7 +2704,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 651673872}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 234c8dcfbfa26474590ef6aa5755997e, type: 3}
+  m_Script: {fileID: 11500000, guid: a2ea2c351509c674a879f8a46c2aab9c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   startButton: {fileID: 990318040}
@@ -2802,7 +2769,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 653544628}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 024d3b8672d9f05489f17d3f00f491ba, type: 3}
+  m_Script: {fileID: 11500000, guid: fb4d04f37d0bb78489e9ce86b9ef8203, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &658377745
@@ -2847,7 +2814,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 658377745}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8d0a5c2b3b351d340aef663db5c5c721, type: 3}
+  m_Script: {fileID: 11500000, guid: 08ef4f141af43814b9c70020b27c9f03, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!114 &658377748
@@ -3008,7 +2975,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 672380529}
-  - component: {fileID: 672380531}
+  - component: {fileID: 672380530}
   m_Layer: 0
   m_Name: DrawCard
   m_TagString: Untagged
@@ -3032,7 +2999,7 @@ Transform:
   - {fileID: 140795733}
   m_Father: {fileID: 69944040}
   m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
---- !u!114 &672380531
+--- !u!114 &672380530
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3041,12 +3008,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 672380528}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2b6d4505ce802447a9f381cb53f2108, type: 3}
+  m_Script: {fileID: 11500000, guid: 7ca9c4d22c539b34695da1ca03b95c62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   mainCamera: {fileID: 0}
   dragThreshold: 5
-  isDraggable: 1
+  isDraggable: 0
   isClickable: 1
 --- !u!1 &689780277
 GameObject:
@@ -3479,7 +3446,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 806738144}
-  - component: {fileID: 806738146}
+  - component: {fileID: 806738145}
   m_Layer: 0
   m_Name: DeleteCard
   m_TagString: Untagged
@@ -3503,7 +3470,7 @@ Transform:
   - {fileID: 1559201560}
   m_Father: {fileID: 69944040}
   m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
---- !u!114 &806738146
+--- !u!114 &806738145
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3512,12 +3479,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 806738143}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2b6d4505ce802447a9f381cb53f2108, type: 3}
+  m_Script: {fileID: 11500000, guid: 7ca9c4d22c539b34695da1ca03b95c62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   mainCamera: {fileID: 0}
   dragThreshold: 5
-  isDraggable: 1
+  isDraggable: 0
   isClickable: 1
 --- !u!1 &815185535
 GameObject:
@@ -3546,12 +3513,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 815185535}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2b6d4505ce802447a9f381cb53f2108, type: 3}
+  m_Script: {fileID: 11500000, guid: 7ca9c4d22c539b34695da1ca03b95c62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   mainCamera: {fileID: 0}
   dragThreshold: 5
-  isDraggable: 1
+  isDraggable: 0
   isClickable: 1
 --- !u!212 &815185537
 SpriteRenderer:
@@ -4700,7 +4667,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1061525646}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cf3239f435b0bc44fb063ecd1d7f9c6e, type: 3}
+  m_Script: {fileID: 11500000, guid: f91f4d12508329e4ba9cdab5152a4424, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   prefabCache:
@@ -4836,7 +4803,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1158633533}
   - component: {fileID: 1158633535}
-  - component: {fileID: 1158633534}
   - component: {fileID: 1158633536}
   m_Layer: 0
   m_Name: OpponentHandZone
@@ -4860,20 +4826,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 61545643}
   m_LocalEulerAnglesHint: {x: 90, y: 90, z: -90}
---- !u!114 &1158633534
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1158633532}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a6c49ccbc755fd94d9e9c909ebf800bf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  playerHandZone: {fileID: 1158633535}
-  spawnCount: 0
 --- !u!114 &1158633535
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5646,12 +5598,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1284260179}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2b6d4505ce802447a9f381cb53f2108, type: 3}
+  m_Script: {fileID: 11500000, guid: 7ca9c4d22c539b34695da1ca03b95c62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   mainCamera: {fileID: 0}
   dragThreshold: 5
-  isDraggable: 1
+  isDraggable: 0
   isClickable: 1
 --- !u!1 &1291996422
 GameObject:
@@ -5786,11 +5738,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 1346641455}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bf39a4c5ea3363e46b8a2420b12de136, type: 3}
+  m_Script: {fileID: 11500000, guid: d931690541e33aa47a9af5d70c2b87ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   targetZone: {fileID: 1810711299}
-  cardModeSelector: {fileID: 0}
+  cardModeSelector: {fileID: 396241079}
 --- !u!1 &1359951188
 GameObject:
   m_ObjectHideFlags: 0
@@ -6061,7 +6013,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 1, z: 1}
-  m_LocalScale: {x: 2.0189574, y: 1, z: 1}
+  m_LocalScale: {x: 1.8530805, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 696535037}
@@ -6474,11 +6426,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1506725188}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bec8619e2adda6a438bef759de30a417, type: 3}
+  m_Script: {fileID: 11500000, guid: 02edc16b96d966e45884dd1303b02abb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   expressionZone: {fileID: 1506725191}
-  enableDebugLog: 0
 --- !u!1 &1513172574
 GameObject:
   m_ObjectHideFlags: 0
@@ -6609,9 +6560,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1514013534}
-  - component: {fileID: 1514013535}
   - component: {fileID: 1514013537}
   - component: {fileID: 1514013536}
+  - component: {fileID: 1514013538}
   m_Layer: 0
   m_Name: NetworkGameManager
   m_TagString: Untagged
@@ -6634,18 +6585,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1855200358}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1514013535
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1514013533}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e45772f0ca7b74d4e824749f4e23de52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1514013536
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6685,6 +6624,18 @@ MonoBehaviour:
   sceneViewId: 2
   InstantiationId: 0
   isRuntimeInstantiated: 0
+--- !u!114 &1514013538
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1514013533}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77a0a0cf598489541b81061af533e6d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1518440370
 GameObject:
   m_ObjectHideFlags: 0
@@ -6728,11 +6679,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 1518440370}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d548cbe3b25f0e14fbd2fb42bcb23748, type: 3}
+  m_Script: {fileID: 11500000, guid: aafc7191abcbfa24cb1476d10c71d539, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enableDebugLog: 0
-  turnTimeLimit: 180
+  turnTimeLimit: 60
 --- !u!114 &1518440373
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7034,8 +6984,8 @@ GameObject:
   - component: {fileID: 1559201560}
   - component: {fileID: 1559201563}
   - component: {fileID: 1559201562}
-  - component: {fileID: 1559201561}
   - component: {fileID: 1559201564}
+  - component: {fileID: 1559201565}
   m_Layer: 0
   m_Name: DeleteSprite
   m_TagString: Untagged
@@ -7059,22 +7009,6 @@ Transform:
   - {fileID: 882251514}
   m_Father: {fileID: 806738144}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
---- !u!114 &1559201561
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1559201559}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2b6d4505ce802447a9f381cb53f2108, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mainCamera: {fileID: 0}
-  dragThreshold: 10
-  isDraggable: 1
-  isClickable: 1
 --- !u!65 &1559201562
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -7164,6 +7098,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   effectType: 1
+--- !u!114 &1559201565
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1559201559}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ca9c4d22c539b34695da1ca03b95c62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mainCamera: {fileID: 0}
+  dragThreshold: 5
+  isDraggable: 1
+  isClickable: 1
 --- !u!1 &1591344575
 GameObject:
   m_ObjectHideFlags: 0
@@ -7419,7 +7369,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1645002294}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2b6d4505ce802447a9f381cb53f2108, type: 3}
+  m_Script: {fileID: 11500000, guid: 7ca9c4d22c539b34695da1ca03b95c62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   mainCamera: {fileID: 0}
@@ -8149,7 +8099,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1988366959}
   - component: {fileID: 1988366961}
-  - component: {fileID: 1988366960}
   - component: {fileID: 1988366962}
   m_Layer: 0
   m_Name: OpponentFieldZone
@@ -8173,20 +8122,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 61545643}
   m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
---- !u!114 &1988366960
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1988366958}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a6c49ccbc755fd94d9e9c909ebf800bf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  playerHandZone: {fileID: 1988366961}
-  spawnCount: 0
 --- !u!114 &1988366961
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8294,11 +8229,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 2076199766}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 47ec7ff326bcf9a4aa5034c00b488d56, type: 3}
+  m_Script: {fileID: 11500000, guid: a872a9a0d855788418415ad1c75c9118, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   maxHP: 30
-  enableDebugLog: 1
 --- !u!1 &2076371591
 GameObject:
   m_ObjectHideFlags: 0
@@ -8310,8 +8244,8 @@ GameObject:
   - component: {fileID: 2076371592}
   - component: {fileID: 2076371595}
   - component: {fileID: 2076371594}
-  - component: {fileID: 2076371593}
   - component: {fileID: 2076371596}
+  - component: {fileID: 2076371597}
   m_Layer: 0
   m_Name: SwapSprite
   m_TagString: Untagged
@@ -8335,22 +8269,6 @@ Transform:
   - {fileID: 2116212347}
   m_Father: {fileID: 269852578}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
---- !u!114 &2076371593
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2076371591}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2b6d4505ce802447a9f381cb53f2108, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mainCamera: {fileID: 0}
-  dragThreshold: 10
-  isDraggable: 1
-  isClickable: 1
 --- !u!65 &2076371594
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -8440,6 +8358,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   effectType: 2
+--- !u!114 &2076371597
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2076371591}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ca9c4d22c539b34695da1ca03b95c62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mainCamera: {fileID: 0}
+  dragThreshold: 5
+  isDraggable: 1
+  isClickable: 1
 --- !u!1 &2094594581
 GameObject:
   m_ObjectHideFlags: 0
@@ -8481,10 +8415,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2094594581}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9027d1238241d864fb5896153c3c8631, type: 3}
+  m_Script: {fileID: 11500000, guid: 486ff358d42ffa14f99c20cf1e3c7a55, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enableDebugLog: 0
 --- !u!1 &2116212346
 GameObject:
   m_ObjectHideFlags: 0
@@ -8844,8 +8777,8 @@ GameObject:
   - component: {fileID: 9060221423622875722}
   - component: {fileID: 1972452071089962570}
   - component: {fileID: 169892304760848436}
-  - component: {fileID: 9002867004526451823}
   - component: {fileID: 9060221423622875723}
+  - component: {fileID: 9060221423622875724}
   m_Layer: 0
   m_Name: SceretCardSprite
   m_TagString: Untagged
@@ -9643,7 +9576,7 @@ GameObject:
   - component: {fileID: 8051822731494319469}
   - component: {fileID: 3376522294531990849}
   - component: {fileID: 6593073272667779911}
-  - component: {fileID: 8832062190408037254}
+  - component: {fileID: 8832062190408037255}
   m_Layer: 0
   m_Name: OpenSprite
   m_TagString: Untagged
@@ -9679,7 +9612,7 @@ GameObject:
   - component: {fileID: 7478725873759979878}
   - component: {fileID: 7883041414080087842}
   m_Layer: 0
-  m_Name: Text (TMP)
+  m_Name: OpenText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9863,13 +9796,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 4297495218527735738}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2b6d4505ce802447a9f381cb53f2108, type: 3}
+  m_Script: {fileID: 11500000, guid: 7207503919e5a0d43a9fa00afdc82c8a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mainCamera: {fileID: 0}
-  dragThreshold: 10
-  isDraggable: 1
-  isClickable: 1
+  modeType: 0
 --- !u!114 &6599126272650037014
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10624,7 +10554,7 @@ Transform:
   - {fileID: 5626430908276628222}
   m_Father: {fileID: 7801257061227122086}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
---- !u!114 &8832062190408037254
+--- !u!114 &8832062190408037255
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -10633,10 +10563,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 4297495218527735738}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7207503919e5a0d43a9fa00afdc82c8a, type: 3}
+  m_Script: {fileID: 11500000, guid: 7ca9c4d22c539b34695da1ca03b95c62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  modeType: 0
+  mainCamera: {fileID: 0}
+  dragThreshold: 5
+  isDraggable: 1
+  isClickable: 1
 --- !u!1 &8988726658692142071
 GameObject:
   m_ObjectHideFlags: 0
@@ -10682,11 +10615,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 558366325454230654}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2b6d4505ce802447a9f381cb53f2108, type: 3}
+  m_Script: {fileID: 11500000, guid: 7ca9c4d22c539b34695da1ca03b95c62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   mainCamera: {fileID: 0}
-  dragThreshold: 10
+  dragThreshold: 5
   isDraggable: 1
   isClickable: 1
 --- !u!114 &9002867003583123956
@@ -10698,11 +10631,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 558366324726617183}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2b6d4505ce802447a9f381cb53f2108, type: 3}
+  m_Script: {fileID: 11500000, guid: 7ca9c4d22c539b34695da1ca03b95c62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   mainCamera: {fileID: 0}
-  dragThreshold: 10
+  dragThreshold: 5
   isDraggable: 1
   isClickable: 1
 --- !u!114 &9002867003606405904
@@ -10714,11 +10647,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 558366324686657211}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2b6d4505ce802447a9f381cb53f2108, type: 3}
+  m_Script: {fileID: 11500000, guid: 7ca9c4d22c539b34695da1ca03b95c62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   mainCamera: {fileID: 0}
-  dragThreshold: 10
+  dragThreshold: 5
   isDraggable: 1
   isClickable: 1
 --- !u!114 &9002867004177144536
@@ -10730,27 +10663,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 558366324517429107}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2b6d4505ce802447a9f381cb53f2108, type: 3}
+  m_Script: {fileID: 11500000, guid: 7ca9c4d22c539b34695da1ca03b95c62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   mainCamera: {fileID: 0}
-  dragThreshold: 10
-  isDraggable: 1
-  isClickable: 1
---- !u!114 &9002867004526451823
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 558366323782244804}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2b6d4505ce802447a9f381cb53f2108, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mainCamera: {fileID: 0}
-  dragThreshold: 10
+  dragThreshold: 5
   isDraggable: 1
   isClickable: 1
 --- !u!114 &9002867004900204451
@@ -10762,11 +10679,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 558366323795548680}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2b6d4505ce802447a9f381cb53f2108, type: 3}
+  m_Script: {fileID: 11500000, guid: 7ca9c4d22c539b34695da1ca03b95c62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   mainCamera: {fileID: 0}
-  dragThreshold: 10
+  dragThreshold: 5
   isDraggable: 1
   isClickable: 1
 --- !u!1 &9030134865746305136
@@ -10896,6 +10813,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   modeType: 1
+--- !u!114 &9060221423622875724
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 558366323782244804}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ca9c4d22c539b34695da1ca03b95c62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mainCamera: {fileID: 0}
+  dragThreshold: 5
+  isDraggable: 1
+  isClickable: 1
 --- !u!4 &9060221423964219376
 Transform:
   m_ObjectHideFlags: 0

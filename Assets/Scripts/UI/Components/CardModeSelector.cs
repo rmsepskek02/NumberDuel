@@ -16,7 +16,7 @@ public class CardModeSelector : MonoBehaviour
     [SerializeField] private GameObject cancelButton;
     [SerializeField] private CardModeOption openOption;
     [SerializeField] private CardModeOption secretOption;
-    [SerializeField] private TextMeshProUGUI openValueText;
+    [SerializeField] private TextMeshPro openValueText;
 
     private Transform pendingCard;
     private CardZone targetZone;

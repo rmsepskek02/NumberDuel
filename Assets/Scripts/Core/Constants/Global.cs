@@ -1,20 +1,20 @@
 using UnityEngine;
 
 /// <summary>
-/// °¢Á¾ Àü¿ª º¯¼ö ¹× ÇÔ¼ö¸¦ Á¤ÀÇÇÑ Å¬·¡½º
+/// ì „ì—­ ìƒìˆ˜ ê°’ë“¤ ë° í•¨ìˆ˜ë¥¼ ëª¨ì•„ë‘” í´ë˜ìŠ¤
 /// </summary>
 public static class Global
 {
     #region Color
-    // ÁÖ¿ä »ö»ó (RGB °ª) - HEX ÄÚµå ±âÁØ º¯È¯
+    // ì£¼ìš” ìƒ‰ìƒ (RGB ê°’) - HEX ì½”ë“œ ìë™ ë³€í™˜
     public static readonly Color Red = HexToColor("#BE373B");
     public static readonly Color Green = HexToColor("#18AD83");
     public static readonly Color Purple = HexToColor("#6855B2");
     public static readonly Color Yellow = HexToColor("#DB8E3D");
-    public static readonly Color GlowGreen = HexToColor("#05FF00"); // ¿¬µÎ Glow
-    public static readonly Color GlowRed = HexToColor("#FF000A");   // ºÓÀº Glow
+    public static readonly Color GlowGreen = HexToColor("#05FF00"); // ê³µê²© Glow
+    public static readonly Color GlowRed = HexToColor("#FF000A");   // í”¼ê²© Glow
 
-    // ÁÖ¿ä »ö»ó (HEX °ª)
+    // ì£¼ìš” ìƒ‰ìƒ (HEX ê°’)
     public static readonly string RedHex = "#BE373B";
     public static readonly string GreenHex = "#18AD83";
     public static readonly string PurpleHex = "#6855B2";
@@ -22,7 +22,7 @@ public static class Global
     public static readonly string GlowGreenHex = "#05FF00";
     public static readonly string GlowRedHex = "#FF000A";
 
-    // »ö»óÀ» ¹®ÀÚ¿­·Î °¡Á®¿À´Â ÇÔ¼ö
+    // ìƒ‰ìƒëª… ë¬¸ìì—´ë¡œ ìƒ‰ìƒì–»ê¸° í•¨ìˆ˜
     public static Color GetColorByName(string colorName)
     {
         string lower = colorName.ToLower();
@@ -35,24 +35,24 @@ public static class Global
         return Color.white;
     }
 
-    // HEX ¡æ RGB º¯È¯ ÇÔ¼ö
+    // HEX ê°’ RGB ë³€í™˜ í•¨ìˆ˜
     private static Color HexToColor(string hex)
     {
         if (ColorUtility.TryParseHtmlString(hex, out Color color))
         {
             return color;
         }
-        return Color.white; // ±âº»°ª (º¯È¯ ½ÇÆĞ ½Ã Èò»ö)
+        return Color.white; // ê¸°ë³¸ê°’ (ë³€í™˜ ì‹¤íŒ¨ ì‹œ í°ìƒ‰)
     }
 
     #endregion
 
     #region Symbols
-    // Àü¿ª¿¡¼­ »ç¿ëÇÒ ¼ö ÀÖ´Â ¿¬»ê ±âÈ£
+    // ìˆ˜ì‹ì—ì„œ ì‚¬ìš©í•  ìˆ˜ ìˆëŠ” ì—°ì‚° ê¸°í˜¸
     public static readonly string Plus = "+";
     public static readonly string Minus = "-";
-    public static readonly string Multiply = "¡¿";
-    public static readonly string Divide = "¡À";
+    public static readonly string Multiply = "Ã—";
+    public static readonly string Divide = "Ã·";
     public static readonly string Equal = "=";
 
     public static readonly string[] AllowedSymbols = { Plus, Minus, Multiply, Divide, Equal };
@@ -83,11 +83,11 @@ public static class Global
     public static readonly string SpriteColorBlack = "color_back 1_0";
     #endregion
 
-    // »ç¿ë¹ı Sample
-    // Color selectedColor = Global.GetColorByName("red"); // »¡°£»ö ¹İÈ¯
-    // textMeshPro.color = Global.Purple; // º¸¶ó»ö Àû¿ë
-    // cardRenderer.material.color = Global.Green; // ÃÊ·Ï»ö Àû¿ë
-    // string plusSymbol = Global.Plus; // "+" ±âÈ£ »ç¿ë
-    // string redMatName = Global.RedCardEmptyMat; // ¸ÓÆ¼¸®¾ó ÀÌ¸§ »ç¿ë
-    // string redImgName = Global.ColorRedEmptyImg; // ÀÌ¹ÌÁö ÀÌ¸§ »ç¿ë
+    // ì‚¬ìš© Sample
+    // Color selectedColor = Global.GetColorByName("red"); // ìƒ‰ìƒëª… ë³€í™˜
+    // textMeshPro.color = Global.Purple; // ë³´ë¼ìƒ‰ ì ìš©
+    // cardRenderer.material.color = Global.Green; // ì´ˆë¡ìƒ‰ ì ìš©
+    // string plusSymbol = Global.Plus; // "+" ê¸°í˜¸ ì‚¬ìš©
+    // string redMatName = Global.RedCardEmptyMat; // ë¨¸í‹°ë¦¬ì–¼ ì´ë¦„ ì‚¬ìš©
+    // string redImgName = Global.ColorRedEmptyImg; // ì´ë¯¸ì§€ ì´ë¦„ ì‚¬ìš©
 }

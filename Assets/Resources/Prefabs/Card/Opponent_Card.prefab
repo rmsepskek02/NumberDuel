@@ -201,8 +201,8 @@ GameObject:
   - component: {fileID: 7245099141812598248}
   - component: {fileID: 8107697579835353914}
   - component: {fileID: 3047384428680089129}
-  - component: {fileID: 8005967290753543868}
   - component: {fileID: 5989558704919043877}
+  - component: {fileID: 4478331696367455275}
   m_Layer: 0
   m_Name: OpponentCardSprite
   m_TagString: Untagged
@@ -302,22 +302,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.2, y: 0.28, z: 0.2}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &8005967290753543868
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2953172161601903607}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c2b6d4505ce802447a9f381cb53f2108, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mainCamera: {fileID: 0}
-  dragThreshold: 10
-  isDraggable: 1
-  isClickable: 1
 --- !u!114 &5989558704919043877
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -333,6 +317,22 @@ MonoBehaviour:
   glowProperty: _GlowToggle
   outlineColorProperty: _OutlineColor
   fadeDuration: 0.3
+--- !u!114 &4478331696367455275
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2953172161601903607}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ca9c4d22c539b34695da1ca03b95c62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mainCamera: {fileID: 0}
+  dragThreshold: 5
+  isDraggable: 1
+  isClickable: 1
 --- !u!1 &5580272945877059124
 GameObject:
   m_ObjectHideFlags: 0
@@ -343,8 +343,8 @@ GameObject:
   m_Component:
   - component: {fileID: 3450813533439364206}
   - component: {fileID: 1676067187599447597}
-  - component: {fileID: 3812885885470925320}
   - component: {fileID: -5136019433379471218}
+  - component: {fileID: 143648192392160732}
   m_Layer: 0
   m_Name: Opponent_Card
   m_TagString: Untagged
@@ -382,21 +382,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   selectionIcon: {fileID: 8884930114229463637}
-  swordIcon: {fileID: 0}
-  shieldIcon: {fileID: 0}
---- !u!114 &3812885885470925320
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5580272945877059124}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 270176575bf7f864cae17a6331313207, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mainCamera: {fileID: 0}
 --- !u!114 &-5136019433379471218
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -409,10 +394,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e58bc3266e573c4fb997c14f711aea5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  debugUniqueId: "\uBBF8\uC0DD\uC131"
   currentOwner: 0
   currentZone: 0
   currentIndex: 0
+--- !u!114 &143648192392160732
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5580272945877059124}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b67971cc77c9972409444d792c07abab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mainCamera: {fileID: 0}
 --- !u!1 &8884930114229463637
 GameObject:
   m_ObjectHideFlags: 0

@@ -118,17 +118,6 @@ namespace Manager
 
         #region Button Events
         /// <summary>
-        /// [Deprecated] 기존 메서드 - 사용하지 말것
-        /// </summary>
-        [System.Obsolete("Use OnClickActionButton instead")]
-        public void OnClickButton()
-        {
-            // 이 메서드는 더 이상 사용하지 않습니다.
-            // Firebase 인증을 사용하려면 OnClickActionButton을 사용하세요.
-            Debug.LogWarning("OnClickButton()은 더 이상 사용되지 않습니다. OnClickActionButton()을 사용하세요.");
-        }
-
-        /// <summary>
         /// 로그인/회원가입 버튼 클릭
         /// </summary>
         public async void OnClickActionButton()
