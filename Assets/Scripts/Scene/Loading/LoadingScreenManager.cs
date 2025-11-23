@@ -18,7 +18,7 @@ namespace Manager
         private const float FIXED_FADE_SECONDS = 1f;
         private const float FIXED_PROGRESS_SECONDS = 1f;
 
-        [SerializeField] private Color overlayColor = new Color(0f, 0f, 0f, 0.85f);
+        [SerializeField] private Color overlayColor = new Color(0f, 0f, 0f, 1.0f);
         [SerializeField] private Color progressColor = new Color(0.2f, 0.6f, 1f, 1f);
         [SerializeField] private Vector2 progressBarSize = new Vector2(600f, 22f);
         [SerializeField] private TMP_FontAsset tmpFont;
