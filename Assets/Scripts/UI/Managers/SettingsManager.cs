@@ -1,6 +1,7 @@
 using Objects;
 using Photon.Pun;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using Utills;
 
@@ -17,11 +18,11 @@ namespace Manager
         #region Fields and Properties
         [Header("UI References")]
         [SerializeField] private UI.Settings.SettingsPanelUI settingsPanelUI;
-        [SerializeField] private UI.Shared.ConfirmationPopupUI confirmationPopup;
+        [SerializeField] private GameObject settingsButton; // Settings 버튼 (씬별 활성화/비활성화)
+        // ConfirmationPopup은 Static Manager로 변경되어 필드 불필요
 
         // 설정 패널 열림 상태
         private bool isSettingsOpen = false;
-        private bool isConfirmationOpen = false;
 
         /// <summary>
         /// 설정 패널이 열려있는지 확인
@@ -40,37 +41,76 @@ namespace Manager
                 settingsPanelUI = FindAnyObjectByType<UI.Settings.SettingsPanelUI>();
             }
 
-            if (confirmationPopup == null)
+            if (settingsButton == null)
             {
-                confirmationPopup = FindAnyObjectByType<UI.Shared.ConfirmationPopupUI>();
+                settingsButton = GameObject.Find("SettingsButton");
             }
+
+            // SettingsCanvas를 DontDestroyOnLoad로 설정
+            if (settingsPanelUI != null)
+            {
+                GameObject settingsCanvas = settingsPanelUI.transform.root.gameObject;
+                UIHelper.MakeDontDestroy(settingsCanvas);
+            }
+
+            // ConfirmationPopup은 Static Manager로 자동 관리
+
+            // 씬 변경 이벤트 등록
+            SceneManager.sceneLoaded += OnSceneLoaded;
+
+            // 현재 씬에서 SettingsButton 상태 초기화
+            UpdateSettingsButtonVisibility(SceneManager.GetActiveScene().name);
+        }
+
+        private void OnDestroy()
+        {
+            // 씬 변경 이벤트 해제
+            SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 
         private void Update()
         {
-            // ESC 키 처리
-            if (Input.GetKeyDown(KeyCode.Escape))
+            // ESC 키 처리 (New Input System)
+            if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
             {
                 HandleEscapeKey();
             }
+        }
+
+        /// <summary>
+        /// 씬 로드 시 호출 - SettingsButton 활성화/비활성화 제어
+        /// </summary>
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            UpdateSettingsButtonVisibility(scene.name);
+        }
+
+        /// <summary>
+        /// 씬별 SettingsButton 활성화/비활성화
+        /// </summary>
+        private void UpdateSettingsButtonVisibility(string sceneName)
+        {
+            if (settingsButton == null)
+                return;
+
+            // SplashScene에서만 비활성화, 나머지 씬에서는 활성화
+            bool shouldShow = sceneName != SceneName.SplashScene.GetSceneName();
+            settingsButton.SetActive(shouldShow);
+
+            Debug.Log($"[SettingsManager] SettingsButton {(shouldShow ? "활성화" : "비활성화")} (씬: {sceneName})");
         }
         #endregion
 
         #region ESC Key Handling
         /// <summary>
         /// ESC 키 입력 처리
-        /// - 확인 팝업 열려있을 때: 확인 팝업만 닫기
         /// - 설정 패널 열려있을 때: 설정 닫기
         /// - 아무것도 없을 때: 설정 열기
+        /// (확인 팝업은 자체적으로 Cancel 버튼으로 닫기)
         /// </summary>
         private void HandleEscapeKey()
         {
-            if (isConfirmationOpen)
-            {
-                // 확인 팝업만 닫기
-                HideConfirmation();
-            }
-            else if (isSettingsOpen)
+            if (isSettingsOpen)
             {
                 // 설정 패널 닫기
                 HideSettings();
@@ -122,6 +162,14 @@ namespace Manager
             // 사운드 재생
             SoundManager.Instance?.PlaySFX(SoundType.UI_ButtonClick);
         }
+
+        /// <summary>
+        /// 설정 버튼 클릭 핸들러 (Inspector에서 Button.OnClick에 연결)
+        /// </summary>
+        public void OnSettingsButtonClicked()
+        {
+            ShowSettings();
+        }
         #endregion
 
         #region Footer Actions
@@ -156,35 +204,12 @@ namespace Manager
 
         #region Confirmation Popup
         /// <summary>
-        /// 확인 팝업 표시
+        /// 확인 팝업 표시 (Static Manager 사용)
         /// </summary>
         private void ShowConfirmation(ConfirmationType type)
         {
-            if (confirmationPopup == null)
-            {
-                Debug.LogError("[SettingsManager] ConfirmationPopupUI가 없습니다!");
-                ExecuteConfirmationAction(type); // 팝업 없이 바로 실행
-                return;
-            }
-
             string message = GetConfirmationMessage(type);
-            confirmationPopup.Show(message, () => ExecuteConfirmationAction(type));
-            isConfirmationOpen = true;
-
-            // 사운드 재생
-            SoundManager.Instance?.PlaySFX(SoundType.UI_ButtonClick);
-        }
-
-        /// <summary>
-        /// 확인 팝업 숨기기
-        /// </summary>
-        private void HideConfirmation()
-        {
-            if (confirmationPopup == null)
-                return;
-
-            confirmationPopup.Hide();
-            isConfirmationOpen = false;
+            UI.Shared.ConfirmationPopup.Show(message, () => ExecuteConfirmationAction(type));
         }
 
         /// <summary>
@@ -221,8 +246,7 @@ namespace Manager
                     break;
             }
 
-            // 확인 팝업 닫기
-            HideConfirmation();
+            // 확인 팝업은 자동으로 닫힘 (ConfirmationPopupUI에서 처리)
         }
 
         /// <summary>
@@ -297,16 +321,6 @@ namespace Manager
 
             // 설정 패널 닫기
             HideSettings();
-        }
-        #endregion
-
-        #region Public API for ConfirmationPopup
-        /// <summary>
-        /// 확인 팝업이 닫힐 때 ConfirmationPopupUI에서 호출
-        /// </summary>
-        public void OnConfirmationClosed()
-        {
-            isConfirmationOpen = false;
         }
         #endregion
     }

@@ -1,4 +1,5 @@
 using Objects;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -17,7 +18,7 @@ namespace UI.Settings
         [SerializeField] private Button logoutButton; // "로그아웃"
 
         [Header("Exit Button Text")]
-        [SerializeField] private TMPro.TextMeshProUGUI exitButtonText; // Exit 버튼 텍스트
+        [SerializeField] private TextMeshProUGUI exitButtonText; // Exit 버튼 텍스트
 
         private string currentSceneName;
         #endregion
@@ -92,8 +93,8 @@ namespace UI.Settings
 
             if (currentSceneName == SceneName.GameScene.GetSceneName())
             {
-                // GameScene: "로비로 나가기"
-                exitButtonText.text = "로비로 나가기";
+                // GameScene: "방 나가기"
+                exitButtonText.text = "방 나가기";
             }
             else
             {

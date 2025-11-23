@@ -82,5 +82,30 @@ namespace Utills
 
             Debug.Log($"[UIHelper] {parent.name} 하위 ButtonSound 등록 완료 - 추가: {addedCount}개");
         }
+
+        /// <summary>
+        /// GameObject를 DontDestroyOnLoad로 설정
+        /// 씬 전환 시에도 파괴되지 않음
+        /// </summary>
+        /// <param name="gameObject">대상 GameObject</param>
+        public static void SetDontDestroyOnLoad(GameObject gameObject)
+        {
+            if (gameObject == null)
+            {
+                Debug.LogError("[UIHelper] GameObject가 null입니다!");
+                return;
+            }
+
+            Object.DontDestroyOnLoad(gameObject);
+            Debug.Log($"[UIHelper] {gameObject.name}을(를) DontDestroyOnLoad로 설정했습니다.");
+        }
+
+        /// <summary>
+        /// GameObject를 DontDestroyOnLoad로 설정 (Extension Method)
+        /// </summary>
+        public static void MakeDontDestroy(this GameObject gameObject)
+        {
+            SetDontDestroyOnLoad(gameObject);
+        }
     }
 }

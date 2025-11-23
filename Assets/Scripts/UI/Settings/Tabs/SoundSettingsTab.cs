@@ -13,22 +13,32 @@ namespace UI.Settings.Tabs
     {
         #region Fields and Properties
         [Header("Master Volume")]
-        [SerializeField] private Slider masterVolumeSlider;
-        [SerializeField] private TextMeshProUGUI masterVolumeText;
-        [SerializeField] private Toggle masterMuteToggle;
+        [SerializeField] private Slider masterVolumeSlider;      // MasterSlider
+        [SerializeField] private TextMeshProUGUI masterVolumeText; // MasterValue
+        [SerializeField] private Toggle masterMuteToggle;        // MasterToggle
+        [SerializeField] private GameObject masterIconOn;        // 마스터 ON 아이콘
+        [SerializeField] private GameObject masterIconOff;       // 마스터 OFF 아이콘
 
         [Header("BGM Volume")]
-        [SerializeField] private Slider bgmVolumeSlider;
-        [SerializeField] private TextMeshProUGUI bgmVolumeText;
-        [SerializeField] private Toggle bgmMuteToggle;
+        [SerializeField] private Slider bgmVolumeSlider;         // BGMSlider
+        [SerializeField] private TextMeshProUGUI bgmVolumeText;  // BGMValue
+        [SerializeField] private Toggle bgmMuteToggle;           // BGMToggle
+        [SerializeField] private GameObject bgmIconOn;           // BGM ON 아이콘
+        [SerializeField] private GameObject bgmIconOff;          // BGM OFF 아이콘
 
         [Header("SFX Volume")]
-        [SerializeField] private Slider sfxVolumeSlider;
-        [SerializeField] private TextMeshProUGUI sfxVolumeText;
-        [SerializeField] private Toggle sfxMuteToggle;
+        [SerializeField] private Slider sfxVolumeSlider;         // SFXSlider
+        [SerializeField] private TextMeshProUGUI sfxVolumeText;  // SFXValue
+        [SerializeField] private Toggle sfxMuteToggle;           // SFXToggle
+        [SerializeField] private GameObject sfxIconOn;           // SFX ON 아이콘
+        [SerializeField] private GameObject sfxIconOff;          // SFX OFF 아이콘
 
         [Header("Reset Button")]
         [SerializeField] private Button resetButton;
+
+        // 슬라이더 색상 (캐싱)
+        private static readonly Color normalColor = new Color(0x0A / 255f, 0xFF / 255f, 0x00 / 255f); // #0AFF00
+        private static readonly Color mutedColor = Global.GlowRed; // #FF000A
 
         private bool isInitializing = false; // 초기화 중 플래그 (이벤트 중복 방지)
         #endregion
@@ -100,6 +110,8 @@ namespace UI.Settings.Tabs
             if (masterMuteToggle != null)
             {
                 masterMuteToggle.isOn = soundManager.IsMasterMuted;
+                UpdateToggleIcons(masterIconOn, masterIconOff, soundManager.IsMasterMuted);
+                UpdateSliderColor(masterVolumeSlider, soundManager.IsMasterMuted);
             }
 
             // BGM Volume
@@ -112,6 +124,8 @@ namespace UI.Settings.Tabs
             if (bgmMuteToggle != null)
             {
                 bgmMuteToggle.isOn = soundManager.IsBGMMuted;
+                UpdateToggleIcons(bgmIconOn, bgmIconOff, soundManager.IsBGMMuted);
+                UpdateSliderColor(bgmVolumeSlider, soundManager.IsBGMMuted);
             }
 
             // SFX Volume
@@ -124,6 +138,8 @@ namespace UI.Settings.Tabs
             if (sfxMuteToggle != null)
             {
                 sfxMuteToggle.isOn = soundManager.IsSFXMuted;
+                UpdateToggleIcons(sfxIconOn, sfxIconOff, soundManager.IsSFXMuted);
+                UpdateSliderColor(sfxVolumeSlider, soundManager.IsSFXMuted);
             }
 
             isInitializing = false;
@@ -184,6 +200,8 @@ namespace UI.Settings.Tabs
                 return;
 
             Manager.SoundManager.Instance?.SetMasterMute(isMuted);
+            UpdateToggleIcons(masterIconOn, masterIconOff, isMuted);
+            UpdateSliderColor(masterVolumeSlider, isMuted);
         }
 
         /// <summary>
@@ -195,6 +213,8 @@ namespace UI.Settings.Tabs
                 return;
 
             Manager.SoundManager.Instance?.SetBGMMute(isMuted);
+            UpdateToggleIcons(bgmIconOn, bgmIconOff, isMuted);
+            UpdateSliderColor(bgmVolumeSlider, isMuted);
         }
 
         /// <summary>
@@ -206,6 +226,8 @@ namespace UI.Settings.Tabs
                 return;
 
             Manager.SoundManager.Instance?.SetSFXMute(isMuted);
+            UpdateToggleIcons(sfxIconOn, sfxIconOff, isMuted);
+            UpdateSliderColor(sfxVolumeSlider, isMuted);
         }
         #endregion
 
@@ -254,13 +276,25 @@ namespace UI.Settings.Tabs
             }
 
             if (masterMuteToggle != null)
+            {
                 masterMuteToggle.isOn = false;
+                UpdateToggleIcons(masterIconOn, masterIconOff, false);
+                UpdateSliderColor(masterVolumeSlider, false);
+            }
 
             if (bgmMuteToggle != null)
+            {
                 bgmMuteToggle.isOn = false;
+                UpdateToggleIcons(bgmIconOn, bgmIconOff, false);
+                UpdateSliderColor(bgmVolumeSlider, false);
+            }
 
             if (sfxMuteToggle != null)
+            {
                 sfxMuteToggle.isOn = false;
+                UpdateToggleIcons(sfxIconOn, sfxIconOff, false);
+                UpdateSliderColor(sfxVolumeSlider, false);
+            }
 
             isInitializing = false;
 
@@ -290,6 +324,49 @@ namespace UI.Settings.Tabs
         private void PlayTestSound()
         {
             Manager.SoundManager.Instance?.PlaySFX(SoundType.UI_ButtonClick);
+        }
+
+        /// <summary>
+        /// 토글 아이콘 전환 (ON/OFF 상태에 따라 아이콘 활성화/비활성화)
+        /// </summary>
+        /// <param name="iconOn">ON 상태 아이콘 (음소거됨)</param>
+        /// <param name="iconOff">OFF 상태 아이콘 (음소거 안됨)</param>
+        /// <param name="isMuted">음소거 여부</param>
+        private void UpdateToggleIcons(GameObject iconOn, GameObject iconOff, bool isMuted)
+        {
+            if (iconOn != null)
+            {
+                iconOn.SetActive(isMuted);
+            }
+
+            if (iconOff != null)
+            {
+                iconOff.SetActive(!isMuted);
+            }
+        }
+
+        /// <summary>
+        /// 슬라이더 색상 업데이트 (음소거 상태에 따라 Fill Area 색상 변경)
+        /// </summary>
+        /// <param name="slider">변경할 슬라이더</param>
+        /// <param name="isMuted">음소거 여부</param>
+        private void UpdateSliderColor(Slider slider, bool isMuted)
+        {
+            if (slider == null)
+                return;
+
+            Color targetColor = isMuted ? mutedColor : normalColor;
+
+            // Fill Area의 Image 색상만 변경
+            var fillArea = slider.fillRect;
+            if (fillArea != null)
+            {
+                var fillImage = fillArea.GetComponent<Image>();
+                if (fillImage != null)
+                {
+                    fillImage.color = targetColor;
+                }
+            }
         }
         #endregion
     }

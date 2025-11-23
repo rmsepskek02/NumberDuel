@@ -14,6 +14,10 @@ namespace UI.Settings
     public class SettingsPanelUI : MonoBehaviour
     {
         #region Fields and Properties
+        [Header("Panel References")]
+        [SerializeField] private GameObject background; // 배경 (Background)
+        [SerializeField] private GameObject mainPanel;     // 실제 UI 패널
+
         [Header("UI References")]
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private RectTransform panelRect;
@@ -28,6 +32,9 @@ namespace UI.Settings
         [SerializeField] private GameObject soundContent;
         [SerializeField] private GameObject displayContent;
         [SerializeField] private GameObject profileContent;
+
+        [Header("Tab Scripts")]
+        [SerializeField] private Tabs.DisplaySettingsTab displaySettingsTab;
 
         [Header("Animation Settings")]
         [SerializeField] private float showDuration = 0.3f;
@@ -55,7 +62,12 @@ namespace UI.Settings
                 canvasGroup.blocksRaycasts = false;
             }
 
-            gameObject.SetActive(false);
+            // 패널들 초기 비활성화
+            if (background != null)
+                background.SetActive(false);
+
+            if (mainPanel != null)
+                mainPanel.SetActive(false);
         }
 
         private void OnDestroy()
@@ -81,8 +93,12 @@ namespace UI.Settings
             // 이전 Tween 정리
             hideTween?.Kill();
 
-            // 활성화
-            gameObject.SetActive(true);
+            // 패널들 활성화
+            if (background != null)
+                background.SetActive(true);
+
+            if (mainPanel != null)
+                mainPanel.SetActive(true);
 
             // 기본 탭 활성화 (사운드)
             SwitchTab(SettingsTabType.Sound);
@@ -96,6 +112,33 @@ namespace UI.Settings
         /// </summary>
         public void Hide()
         {
+            // Display 탭의 변경사항 확인
+            if (displaySettingsTab != null && displaySettingsTab.HasUnsavedChanges())
+            {
+                displaySettingsTab.PromptSaveChanges(
+                    onSave: () =>
+                    {
+                        // 저장 후 닫기
+                        HideInternal();
+                    },
+                    onDiscard: () =>
+                    {
+                        // 변경사항 버리고 닫기
+                        HideInternal();
+                    }
+                );
+                return;
+            }
+
+            // 변경사항 없으면 바로 닫기
+            HideInternal();
+        }
+
+        /// <summary>
+        /// 설정 패널 숨기기 (내부)
+        /// </summary>
+        private void HideInternal()
+        {
             // 이전 Tween 정리
             showTween?.Kill();
 
@@ -107,6 +150,36 @@ namespace UI.Settings
         /// 탭 전환
         /// </summary>
         public void SwitchTab(SettingsTabType tab)
+        {
+            // Display 탭에서 다른 탭으로 전환 시 변경사항 확인
+            if (currentTab == SettingsTabType.Display && tab != SettingsTabType.Display)
+            {
+                if (displaySettingsTab != null && displaySettingsTab.HasUnsavedChanges())
+                {
+                    displaySettingsTab.PromptSaveChanges(
+                        onSave: () =>
+                        {
+                            // 저장 후 탭 전환
+                            SwitchTabInternal(tab);
+                        },
+                        onDiscard: () =>
+                        {
+                            // 변경사항 버리고 탭 전환
+                            SwitchTabInternal(tab);
+                        }
+                    );
+                    return;
+                }
+            }
+
+            // 변경사항 없으면 바로 전환
+            SwitchTabInternal(tab);
+        }
+
+        /// <summary>
+        /// 탭 전환 (내부)
+        /// </summary>
+        private void SwitchTabInternal(SettingsTabType tab)
         {
             currentTab = tab;
 
@@ -244,7 +317,11 @@ namespace UI.Settings
             if (canvasGroup == null || panelRect == null)
             {
                 // CanvasGroup이 없으면 즉시 비활성화
-                gameObject.SetActive(false);
+                if (background != null)
+                    background.SetActive(false);
+
+                if (mainPanel != null)
+                    mainPanel.SetActive(false);
                 return;
             }
 
@@ -264,7 +341,11 @@ namespace UI.Settings
             // 완료 시 비활성화
             hideSequence.OnComplete(() =>
             {
-                gameObject.SetActive(false);
+                if (background != null)
+                    background.SetActive(false);
+
+                if (mainPanel != null)
+                    mainPanel.SetActive(false);
             });
 
             hideTween = hideSequence;

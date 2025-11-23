@@ -26,6 +26,7 @@ namespace UI.Shared
         [SerializeField] private float hideDuration = 0.15f;
 
         private Action onConfirmed;
+        private Action onCanceled;
         private Tween showTween;
         private Tween hideTween;
         #endregion
@@ -68,6 +69,17 @@ namespace UI.Shared
         /// <param name="onConfirm">확인 버튼 클릭 시 실행할 액션</param>
         public void Show(string message, Action onConfirm)
         {
+            Show(message, onConfirm, null);
+        }
+
+        /// <summary>
+        /// 확인 팝업 표시 (취소 콜백 포함)
+        /// </summary>
+        /// <param name="message">표시할 메시지</param>
+        /// <param name="onConfirm">확인 버튼 클릭 시 실행할 액션</param>
+        /// <param name="onCancel">취소 버튼 클릭 시 실행할 액션</param>
+        public void Show(string message, Action onConfirm, Action onCancel)
+        {
             // 이전 Tween 정리
             hideTween?.Kill();
 
@@ -79,6 +91,7 @@ namespace UI.Shared
 
             // 액션 저장
             onConfirmed = onConfirm;
+            onCanceled = onCancel;
 
             // 활성화
             gameObject.SetActive(true);
@@ -105,7 +118,7 @@ namespace UI.Shared
             Manager.SoundManager.Instance?.PlaySFX(SoundType.UI_ButtonClick);
 
             // SettingsManager에 알림
-            Manager.SettingsManager.Instance?.OnConfirmationClosed();
+            //Manager.SettingsManager.Instance?.OnConfirmationClosed();
         }
         #endregion
 
@@ -115,6 +128,9 @@ namespace UI.Shared
         /// </summary>
         private void OnCancelClicked()
         {
+            // 취소 액션 실행
+            onCanceled?.Invoke();
+
             Hide();
         }
 
