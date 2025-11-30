@@ -657,6 +657,12 @@ namespace Manager
 
             // 모든 클라이언트에서 자신의 초기 카드 드로우 실행
             ExecuteInitialDraw();
+
+            // 상대방 정보 캐싱 (연결 끊김 시 GameRecord 생성에 사용)
+            if (InGameManager.Instance != null)
+            {
+                InGameManager.Instance.CacheOpponentInfo();
+            }
         }
 
         /// <summary>

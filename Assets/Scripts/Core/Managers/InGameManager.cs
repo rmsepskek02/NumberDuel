@@ -38,6 +38,18 @@ namespace Manager
         private GameProcessState currentProcess = GameProcessState.Idle;
 
         /// <summary>
+        /// 캐싱된 상대방 Firebase UID
+        /// 상대방 이탈 시 GameRecord 생성에 사용
+        /// </summary>
+        private string opponentUID = null;
+
+        /// <summary>
+        /// 캐싱된 상대방 닉네임
+        /// 상대방 이탈 시 GameRecord 생성에 사용
+        /// </summary>
+        private string opponentNickname = null;
+
+        /// <summary>
         /// 현재 프로세스 상태 (읽기 전용)
         /// </summary>
         public GameProcessState CurrentProcess => currentProcess;
@@ -70,6 +82,16 @@ namespace Manager
         private void Start()
         {
             // 사운드 사전 로드는 SoundManager.Awake()에서 자동으로 실행됨
+        }
+
+        private void OnApplicationQuit()
+        {
+            // 게임 중 앱 종료 시 패배 기록
+            if (!IsGameEnded && PhotonNetwork.InRoom)
+            {
+                Debug.Log("[InGameManager] 앱 종료 → 패배 기록");
+                RecordDefeatOnDisconnect();
+            }
         }
         #endregion
 
@@ -720,6 +742,229 @@ namespace Manager
 
             Debug.LogWarning($"[InGameManager] {player.NickName}의 Firebase UID를 찾을 수 없습니다.");
             return null;
+        }
+        #endregion
+
+        #region Disconnect Handling
+        /// <summary>
+        /// 게임 시작 시 상대방 정보 캐싱
+        /// 상대방 이탈 시 GameRecord 생성에 사용
+        /// TurnManager.WaitForColorSyncAndInitialize에서 호출
+        /// </summary>
+        public void CacheOpponentInfo()
+        {
+            if (!PhotonNetwork.InRoom)
+            {
+                Debug.LogWarning("[InGameManager] 방에 접속하지 않아 상대방 정보를 캐싱할 수 없습니다.");
+                return;
+            }
+
+            // 상대방 플레이어 찾기 (로컬 플레이어가 아닌 플레이어)
+            var opponent = PhotonNetwork.PlayerList.FirstOrDefault(p => !p.IsLocal);
+
+            if (opponent != null)
+            {
+                // Firebase UID 가져오기
+                if (opponent.CustomProperties.TryGetValue("FirebaseUID", out object uid))
+                {
+                    opponentUID = uid as string;
+                }
+
+                // 닉네임 가져오기
+                opponentNickname = opponent.NickName;
+
+                Debug.Log($"[InGameManager] 상대방 정보 캐싱 완료: {opponentNickname} ({opponentUID})");
+            }
+            else
+            {
+                Debug.LogWarning("[InGameManager] 상대방 플레이어를 찾을 수 없습니다.");
+            }
+        }
+
+        /// <summary>
+        /// 상대방 연결 끊김으로 인한 승리 처리
+        /// </summary>
+        public void ForceEndGameByOpponentDisconnect()
+        {
+            if (IsGameEnded)
+            {
+                Debug.LogWarning("[InGameManager] 이미 게임이 종료되었습니다.");
+                return;
+            }
+
+            Debug.Log("[InGameManager] 상대방 연결 끊김 → 승리 처리");
+
+            // 내가 승리
+            CardZone.OwnerType winner = CardZone.OwnerType.Player;
+
+            IsGameEnded = true;
+            GameWinner = winner;
+
+            // 모든 프로세스 강제 종료
+            ForceEndAllProcesses();
+
+            // 게임 종료 이벤트 발생
+            OnGameEnded?.Invoke(winner);
+
+            // 승리 BGM
+            if (SoundManager.Instance != null)
+            {
+                SoundManager.Instance.PlayBGM(SoundType.BGM_Victory, loop: true, fadeInDuration: 1f);
+            }
+
+            // 승리 사운드
+            GameEventManager.Instance?.TriggerGameEnded(isVictory: true);
+
+            // 시스템 메시지 표시
+            SystemMessageManager.Instance?.ShowMessage("OpponentDisconnected");
+
+            // UI 표시
+            ShowGameEndUI(winner, CardZone.OwnerType.Opponent);
+
+            // GameRecord 생성 (캐싱된 상대방 정보 사용)
+            RecordGameWithOpponent(isWinner: true);
+        }
+
+        /// <summary>
+        /// 내 연결 끊김으로 인한 패배 기록
+        /// (UI 표시 없이 데이터만 기록)
+        /// </summary>
+        public void RecordDefeatOnDisconnect()
+        {
+            if (IsGameEnded)
+            {
+                return; // 이미 종료된 게임이면 무시
+            }
+
+            Debug.Log("[InGameManager] 내가 연결 끊김 → 패배 기록");
+
+            IsGameEnded = true;
+            GameWinner = CardZone.OwnerType.Opponent;
+
+            // 패배 기록 (Firebase)
+            RecordGameResultLocal(isWinner: false);
+
+            // UI 표시 없음 (이미 연결이 끊긴 상태)
+        }
+
+        /// <summary>
+        /// 로컬 플레이어의 게임 결과 기록 (Firebase)
+        /// 연결 끊김 등 상대방 정보를 알 수 없을 때 사용
+        /// </summary>
+        /// <param name="isWinner">승리 여부</param>
+        private async void RecordGameResultLocal(bool isWinner)
+        {
+            if (DatabaseManager.Instance == null)
+            {
+                Debug.LogWarning("[InGameManager] DatabaseManager를 찾을 수 없어 기록하지 못했습니다.");
+                return;
+            }
+
+            try
+            {
+                // 현재 Firebase UID 가져오기
+                string myUID = GetLocalPlayerFirebaseUID();
+
+                if (string.IsNullOrEmpty(myUID))
+                {
+                    Debug.LogError("[InGameManager] Firebase UID를 찾을 수 없습니다. 전적 저장 불가.");
+                    return;
+                }
+
+                // 간단한 전적 업데이트 (상대방 정보 없이)
+                await DatabaseManager.Instance.UpdatePlayerStats(myUID, isWinner);
+
+                Debug.Log($"[InGameManager] 게임 결과 기록: {(isWinner ? "승리" : "패배")}");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[InGameManager] 게임 전적 저장 중 오류 발생: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 로컬 플레이어의 Firebase UID 가져오기
+        /// </summary>
+        private string GetLocalPlayerFirebaseUID()
+        {
+            var localPlayer = PhotonNetwork.LocalPlayer;
+            if (localPlayer.CustomProperties.TryGetValue("FirebaseUID", out object uid))
+            {
+                return uid as string;
+            }
+
+            Debug.LogWarning("[InGameManager] 로컬 플레이어의 Firebase UID를 찾을 수 없습니다.");
+            return null;
+        }
+
+        /// <summary>
+        /// 캐싱된 상대방 정보를 사용하여 GameRecord 생성
+        /// 상대방 이탈 시에만 사용 (양측 정보가 있어야 GameRecord 생성 가능)
+        /// </summary>
+        /// <param name="isWinner">내가 승리했는지 여부</param>
+        private async void RecordGameWithOpponent(bool isWinner)
+        {
+            if (DatabaseManager.Instance == null)
+            {
+                Debug.LogWarning("[InGameManager] DatabaseManager를 찾을 수 없어 기록하지 못했습니다.");
+                return;
+            }
+
+            // 상대방 정보가 없으면 통계만 업데이트
+            if (string.IsNullOrEmpty(opponentUID))
+            {
+                Debug.LogWarning("[InGameManager] 상대방 정보 없음 → 통계만 기록");
+                RecordGameResultLocal(isWinner);
+                return;
+            }
+
+            try
+            {
+                // 내 정보 가져오기
+                string myUID = GetLocalPlayerFirebaseUID();
+                if (string.IsNullOrEmpty(myUID))
+                {
+                    Debug.LogError("[InGameManager] Firebase UID를 찾을 수 없습니다. 전적 저장 불가.");
+                    return;
+                }
+
+                string myNickname = PhotonNetwork.LocalPlayer.NickName;
+
+                // 최종 HP 가져오기
+                int myFinalHP = HealthManager.Instance.GetCurrentHP(CardZone.OwnerType.Player);
+                int opponentFinalHP = HealthManager.Instance.GetCurrentHP(CardZone.OwnerType.Opponent);
+
+                // 승자 UID 결정
+                string winnerUID = isWinner ? myUID : opponentUID;
+
+                // 턴 수 가져오기
+                int turnCount = TurnManager.Instance != null ? TurnManager.Instance.CurrentTurn : 0;
+
+                // GameRecord 생성
+                GameRecord record = new GameRecord(
+                    myUID, myNickname, myFinalHP,
+                    opponentUID, opponentNickname, opponentFinalHP,
+                    winnerUID, turnCount
+                );
+
+                // Firestore에 저장
+                Debug.Log($"[InGameManager] GameRecord 저장 시작: {myNickname} vs {opponentNickname}, 승자: {(isWinner ? myNickname : opponentNickname)}");
+
+                bool success = await DatabaseManager.Instance.SaveGameRecord(record);
+
+                if (success)
+                {
+                    Debug.Log($"[InGameManager] ✅ GameRecord 저장 완료: {myNickname} vs {opponentNickname}");
+                }
+                else
+                {
+                    Debug.LogError("[InGameManager] ❌ GameRecord 저장 실패");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[InGameManager] GameRecord 저장 중 오류 발생: {ex.Message}");
+            }
         }
         #endregion
     }

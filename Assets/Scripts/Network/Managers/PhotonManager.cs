@@ -222,13 +222,41 @@ namespace Manager
         public override void OnPlayerLeftRoom(Player otherPlayer)
         {
             base.OnPlayerLeftRoom(otherPlayer);
+
+            Debug.Log($"[PhotonManager] 플레이어 퇴장: {otherPlayer.NickName}");
+
             UpdateRoomPlayerCount();
             LeavePlayer?.Invoke();
 
-            // 혼자 남았으면 방 초기화
+            // 게임 중 이탈 감지 → 승리 처리
+            if (InGameManager.Instance != null && !InGameManager.Instance.IsGameEnded)
+            {
+                Debug.Log("[PhotonManager] 게임 중 상대방 이탈 감지 → 승리 처리");
+                InGameManager.Instance.ForceEndGameByOpponentDisconnect();
+                return; // ResetGame 호출 안 함 (게임 종료 UI 유지)
+            }
+
+            // 혼자 남았으면 방 초기화 (게임 시작 전)
             if (PhotonNetwork.CurrentRoom.PlayerCount == 1)
             {
                 ResetGame();
+            }
+        }
+
+        /// <summary>
+        /// 로컬 플레이어의 네트워크 연결이 끊겼을 때
+        /// </summary>
+        public override void OnDisconnected(DisconnectCause cause)
+        {
+            base.OnDisconnected(cause);
+
+            Debug.Log($"[PhotonManager] 연결 끊김: {cause}");
+
+            // 게임 중이면 패배 기록
+            if (InGameManager.Instance != null && !InGameManager.Instance.IsGameEnded)
+            {
+                Debug.Log("[PhotonManager] 게임 중 내가 연결 끊김 → 패배 기록");
+                InGameManager.Instance.RecordDefeatOnDisconnect();
             }
         }
 

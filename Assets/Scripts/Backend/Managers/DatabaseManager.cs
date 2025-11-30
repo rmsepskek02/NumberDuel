@@ -235,10 +235,11 @@ namespace Manager
 
         /// <summary>
         /// 플레이어 통계 업데이트
+        /// 연결 끊김 등 상대방 정보 없이 전적만 기록할 때 사용
         /// </summary>
         /// <param name="uid">Firebase UID</param>
         /// <param name="isWin">승리 여부</param>
-        private async Task UpdatePlayerStats(string uid, bool isWin)
+        public async Task UpdatePlayerStats(string uid, bool isWin)
         {
             try
             {
