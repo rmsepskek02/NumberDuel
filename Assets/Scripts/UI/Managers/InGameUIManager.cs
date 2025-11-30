@@ -17,14 +17,12 @@ namespace Manager
         [Header("UI 컴포넌트")]
         public Button startButton;
         public Button endButton;
-        public Button leaveButton;
         public TextMeshProUGUI turn;
         public TextMeshProUGUI playerText;
         public TextMeshProUGUI opponentText;
 
         [Header("버튼 스프라이트")]
         public Sprite enabledStartSprite;
-        public Sprite enabledLeaveSprite;
         public Sprite enabledEndSprite;
         public Sprite disabledSprite;
 
@@ -74,10 +72,8 @@ namespace Manager
             // 버튼 이벤트 등록
             startButton.onClick.AddListener(OnClickStart);
             endButton.onClick.AddListener(OnClickEnd);
-            leaveButton.onClick.AddListener(OnClickLeave);
 
             // 초기 버튼 상태 설정
-            SetButtonState(leaveButton, true, enabledLeaveSprite);
             SetButtonState(endButton, false, disabledSprite);
             SetButtonState(startButton, false, enabledStartSprite, false);
         }
@@ -248,21 +244,6 @@ namespace Manager
             }
 
             TurnManager.Instance.EndTurn();
-        }
-
-        /// <summary>
-        /// 룸 나가기 버튼 클릭
-        /// </summary>
-        public void OnClickLeave()
-        {
-            if (pm != null)
-            {
-                pm.OnLeaveRoom();
-            }
-            else
-            {
-                PhotonNetwork.LeaveRoom();
-            }
         }
         #endregion
 
@@ -462,7 +443,6 @@ namespace Manager
             // 버튼 이벤트 해제
             if (startButton != null) startButton.onClick.RemoveListener(OnClickStart);
             if (endButton != null) endButton.onClick.RemoveListener(OnClickEnd);
-            if (leaveButton != null) leaveButton.onClick.RemoveListener(OnClickLeave);
         }
         #endregion
     }
