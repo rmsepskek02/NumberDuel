@@ -19,9 +19,16 @@ namespace Manager
         private FirebaseFirestore db;
         private string currentSessionId;
         private bool isInitialized = false;
+        private ListenerRegistration sessionListener; // Firestore 실시간 리스너
+        private string currentMonitoringUid; // 현재 모니터링 중인 UID
 
         private const string SESSIONS_COLLECTION = "sessions";
         private const float INIT_TIMEOUT = 10f; // 초기화 타임아웃 (10초)
+
+        /// <summary>
+        /// 강제 로그아웃 이벤트 (다른 곳에서 로그인하여 세션이 종료될 때 호출)
+        /// </summary>
+        public event Action OnForceLogout;
 
         /// <summary>
         /// 현재 세션 ID
@@ -106,6 +113,9 @@ namespace Manager
 
         private void OnApplicationQuit()
         {
+            // 세션 모니터링 중지
+            StopSessionMonitoring();
+
             // 앱 종료 시 세션 정리
             if (!string.IsNullOrEmpty(currentSessionId))
             {
@@ -277,7 +287,7 @@ namespace Manager
 
         #region Public Methods - Force Login (추후 구현용)
         /// <summary>
-        /// [추후 구현] 기존 세션 강제 종료 및 로그인
+        /// 기존 세션 강제 종료 및 로그인
         /// 팝업에서 '기존 접속 해제하고 로그인' 선택 시 사용
         /// </summary>
         /// <param name="uid">사용자 UID</param>
@@ -296,6 +306,106 @@ namespace Manager
                 Debug.LogError($"❌ 강제 로그인 실패: {ex.Message}");
                 return false;
             }
+        }
+        #endregion
+
+        #region Public Methods - Session Monitoring
+        /// <summary>
+        /// 세션 실시간 모니터링 시작
+        /// 다른 곳에서 로그인하여 세션이 변경/삭제되면 자동으로 강제 로그아웃
+        /// </summary>
+        /// <param name="uid">모니터링할 사용자 UID</param>
+        public void StartSessionMonitoring(string uid)
+        {
+            if (!isInitialized)
+            {
+                Debug.LogError("❌ Firestore가 초기화되지 않았습니다.");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(uid))
+            {
+                Debug.LogWarning("⚠️ UID가 비어있습니다.");
+                return;
+            }
+
+            // 이미 모니터링 중이면 중지 후 재시작
+            if (sessionListener != null)
+            {
+                StopSessionMonitoring();
+            }
+
+            currentMonitoringUid = uid;
+
+            // Firestore 실시간 리스너 등록
+            DocumentReference docRef = db.Collection(SESSIONS_COLLECTION).Document(uid);
+            sessionListener = docRef.Listen(snapshot =>
+            {
+                OnSessionDocumentChanged(snapshot, uid);
+            });
+
+            Debug.Log($"✅ 세션 모니터링 시작: {uid}");
+        }
+
+        /// <summary>
+        /// 세션 모니터링 중지
+        /// </summary>
+        public void StopSessionMonitoring()
+        {
+            if (sessionListener != null)
+            {
+                sessionListener.Stop();
+                sessionListener = null;
+                Debug.Log($"✅ 세션 모니터링 중지: {currentMonitoringUid}");
+                currentMonitoringUid = null;
+            }
+        }
+
+        /// <summary>
+        /// Firestore 세션 문서 변경 감지 콜백
+        /// </summary>
+        private void OnSessionDocumentChanged(DocumentSnapshot snapshot, string uid)
+        {
+            if (snapshot == null)
+            {
+                Debug.LogWarning("⚠️ 세션 스냅샷이 null입니다.");
+                return;
+            }
+
+            // 세션 문서가 삭제되었거나 존재하지 않는 경우
+            if (!snapshot.Exists)
+            {
+                Debug.LogWarning("⚠️ 세션이 삭제되었습니다. 강제 로그아웃 처리합니다.");
+                HandleForceLogout();
+                return;
+            }
+
+            // 세션 ID가 변경된 경우 (다른 곳에서 로그인)
+            Dictionary<string, object> data = snapshot.ToDictionary();
+            if (data.ContainsKey("sessionId"))
+            {
+                string newSessionId = data["sessionId"].ToString();
+
+                // 현재 세션 ID와 다르면 강제 로그아웃
+                if (!string.IsNullOrEmpty(currentSessionId) && newSessionId != currentSessionId)
+                {
+                    Debug.LogWarning($"⚠️ 세션 ID가 변경되었습니다. (현재: {currentSessionId}, 새로운: {newSessionId})");
+                    Debug.LogWarning("⚠️ 다른 곳에서 로그인되었습니다. 강제 로그아웃 처리합니다.");
+                    HandleForceLogout();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 강제 로그아웃 처리
+        /// </summary>
+        private void HandleForceLogout()
+        {
+            // 모니터링 중지
+            StopSessionMonitoring();
+
+            // 이벤트 호출 (UI 등에서 구독하여 처리)
+            OnForceLogout?.Invoke();
         }
         #endregion
     }

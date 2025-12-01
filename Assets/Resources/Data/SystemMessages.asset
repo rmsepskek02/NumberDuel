@@ -222,3 +222,15 @@ MonoBehaviour:
     messageType: 3
     displayDuration: 2
     textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}
+  - messageKey: ForceLoginInProgress
+    messageText: "\uAE30\uC874 \uC138\uC158\uC744 \uC885\uB8CC\uD558\uACE0 \uB85C\uADF8\uC778
+      \uC911..."
+    messageType: 0
+    displayDuration: 1
+    textColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  - messageKey: DuplicateLoginDetected
+    messageText: "\uB2E4\uB978 \uAE30\uAE30\uC5D0\uC11C \uB85C\uADF8\uC778\uD558\uC5EC
+      \uC811\uC18D\uC774 \uD574\uC81C\uB418\uC5C8\uC2B5\uB2C8\uB2E4."
+    messageType: 2
+    displayDuration: 5
+    textColor: {r: 1, g: 0.3019608, b: 0.3019608, a: 1}

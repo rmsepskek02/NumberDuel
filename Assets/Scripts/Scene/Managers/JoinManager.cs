@@ -209,11 +209,44 @@ namespace Manager
 
                         if (sessionCheck.isDuplicate)
                         {
-                            // 중복 로그인 감지 - Firebase에서 오는 커스텀 메시지 사용
-                            SystemMessageManager.Instance?.ShowMessage(sessionCheck.message, MessageType.Error);
+                            // 중복 로그인 감지 - 팝업으로 사용자에게 선택권 제공
+                            UI.Shared.ConfirmationPopup.Show(
+                                "이미 로그인 중인 계정입니다.\n기존 접속을 해제하고 로그인하시겠습니까?",
+                                onConfirm: async () =>
+                                {
+                                    // 확인 클릭: 기존 세션 강제 종료 후 로그인
+                                    SystemMessageManager.Instance?.ShowMessage("ForceLoginInProgress");
 
-                            // Firebase 로그아웃 처리
-                            AuthManager.Instance.Logout();
+                                    bool forceLoginSuccess = await SessionManager.Instance.ForceLogin(uid);
+
+                                    if (forceLoginSuccess)
+                                    {
+                                        // 세션 모니터링 시작 (다른 곳에서 로그인 시 감지)
+                                        SessionManager.Instance.StartSessionMonitoring(uid);
+
+                                        // 로그인 성공 - 이후 프로세스 계속 진행
+                                        SystemMessageManager.Instance?.ShowMessage("LoginSuccess");
+                                        await System.Threading.Tasks.Task.Delay(500);
+                                        StartCoroutine(OnLoginSuccessCoroutine());
+                                    }
+                                    else
+                                    {
+                                        SystemMessageManager.Instance?.ShowMessage("SessionCreateFailed");
+                                        AuthManager.Instance.Logout();
+                                    }
+
+                                    // 처리 완료 후 플래그 초기화
+                                    isProcessing = false;
+                                    SetButtonsInteractable(true);
+                                },
+                                onCancel: () =>
+                                {
+                                    // 취소 클릭: 로그인 취소
+                                    AuthManager.Instance.Logout();
+                                    isProcessing = false;
+                                    SetButtonsInteractable(true);
+                                }
+                            );
                             return;
                         }
 
@@ -226,6 +259,9 @@ namespace Manager
                             AuthManager.Instance.Logout();
                             return;
                         }
+
+                        // 세션 모니터링 시작 (다른 곳에서 로그인 시 감지)
+                        SessionManager.Instance.StartSessionMonitoring(uid);
 
                         SystemMessageManager.Instance?.ShowMessage("LoginSuccess");
                         await System.Threading.Tasks.Task.Delay(500); // 0.5초 대기
@@ -266,6 +302,9 @@ namespace Manager
                             AuthManager.Instance.Logout();
                             return;
                         }
+
+                        // 세션 모니터링 시작 (다른 곳에서 로그인 시 감지)
+                        SessionManager.Instance.StartSessionMonitoring(uid);
 
                         // Coroutine으로 로비 진입
                         StartCoroutine(OnLoginSuccessCoroutine());

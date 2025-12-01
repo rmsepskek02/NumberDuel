@@ -5,6 +5,7 @@ using Firebase.Auth;
 using Firebase.Extensions;
 using UnityEngine;
 using Utills;
+using Objects;
 
 namespace Manager
 {
@@ -77,6 +78,13 @@ namespace Manager
 
                     isInitialized = true; // 초기화 완료 플래그 설정
                     Debug.Log("✅ AuthManager 초기화 완료");
+
+                    // SessionManager의 강제 로그아웃 이벤트 구독
+                    if (SessionManager.Instance != null)
+                    {
+                        SessionManager.Instance.OnForceLogout += HandleForceLogout;
+                        Debug.Log("✅ SessionManager 강제 로그아웃 이벤트 구독 완료");
+                    }
                 }
                 else
                 {
@@ -129,6 +137,12 @@ namespace Manager
             if (auth != null)
             {
                 auth.StateChanged -= OnAuthStateChanged;
+            }
+
+            // SessionManager 이벤트 구독 해제
+            if (SessionManager.Instance != null)
+            {
+                SessionManager.Instance.OnForceLogout -= HandleForceLogout;
             }
         }
 
@@ -352,6 +366,64 @@ namespace Manager
                 return "네트워크 연결을 확인해주세요.";
 
             return $"오류가 발생했습니다: {errorCode}";
+        }
+        #endregion
+
+        #region Force Logout Handler
+        /// <summary>
+        /// 강제 로그아웃 처리 (다른 곳에서 로그인하여 세션이 종료될 때 호출)
+        /// </summary>
+        private void HandleForceLogout()
+        {
+            Debug.LogWarning("⚠️ 다른 곳에서 로그인되어 강제 로그아웃됩니다.");
+
+            // Firebase 로그아웃 처리
+            Logout();
+
+            // 시스템 메시지 표시 준비
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoadedForMessage;
+
+            // JoinScene으로 이동
+            if (LoadingScreenManager.Instance != null)
+            {
+                LoadingScreenManager.Instance.ShowThenLoadLocal(SceneNameExtensions.GetSceneName(SceneName.JoinScene));
+            }
+            else
+            {
+                UnityEngine.SceneManagement.SceneManager.LoadScene(SceneNameExtensions.GetSceneName(SceneName.JoinScene));
+            }
+        }
+
+        /// <summary>
+        /// 씬 로드 완료 후 시스템 메시지 표시
+        /// </summary>
+        private void OnSceneLoadedForMessage(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+        {
+            // 이벤트 구독 해제
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoadedForMessage;
+
+            // 시스템 메시지 표시 (씬이 로드된 후 약간의 지연을 두고 표시)
+            UnityEngine.MonoBehaviour coroutineRunner = this;
+            coroutineRunner.StartCoroutine(ShowForceLogoutMessageDelayed());
+        }
+
+        /// <summary>
+        /// 강제 로그아웃 메시지 표시 (지연)
+        /// </summary>
+        private System.Collections.IEnumerator ShowForceLogoutMessageDelayed()
+        {
+            // 0.5초 대기 (씬 전환 완료 후 메시지 표시)
+            yield return new UnityEngine.WaitForSeconds(0.5f);
+
+            // 시스템 메시지 표시
+            if (SystemMessageManager.Instance != null)
+            {
+                SystemMessageManager.Instance.ShowMessage("DuplicateLoginDetected");
+            }
+            else
+            {
+                Debug.LogWarning("⚠️ SystemMessageManager를 찾을 수 없습니다.");
+            }
         }
         #endregion
     }
