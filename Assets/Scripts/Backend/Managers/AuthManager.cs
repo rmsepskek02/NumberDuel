@@ -394,6 +394,13 @@ namespace Manager
         {
             Debug.LogWarning("⚠️ 다른 곳에서 로그인되어 강제 로그아웃됩니다.");
 
+            // 설정 UI가 열려있으면 닫기
+            if (SettingsManager.Instance != null && SettingsManager.Instance.IsSettingsOpen)
+            {
+                SettingsManager.Instance.HideSettings();
+                Debug.Log("[AuthManager] 설정 UI 닫기 완료");
+            }
+
             // 🔥 중요: Logout() 대신 SignOutWithoutSessionClear() 사용!
             // 이유: 세션은 이미 다른 클라이언트(Client B)가 사용 중이므로 삭제하면 안됨
             // Logout()을 호출하면 ClearSession()이 실행되어 Client B의 세션까지 삭제됨
