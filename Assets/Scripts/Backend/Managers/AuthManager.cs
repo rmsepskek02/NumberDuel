@@ -307,6 +307,23 @@ namespace Manager
                 }
             }
         }
+
+        /// <summary>
+        /// Firebase에서만 로그아웃 (Firestore 세션은 유지)
+        /// 중복 로그인 팝업에서 취소 버튼 클릭 시 사용
+        /// Client B가 로그인을 취소해도 Client A의 세션이 삭제되지 않도록 함
+        /// </summary>
+        public void SignOutWithoutSessionClear()
+        {
+            if (auth != null && currentUser != null)
+            {
+                Debug.Log("✅ Firebase 로그아웃 (Firestore 세션 유지)");
+
+                // Firebase 세션만 종료
+                auth.SignOut();
+                currentUser = null;
+            }
+        }
         #endregion
 
         #region Public Methods - Auto Login

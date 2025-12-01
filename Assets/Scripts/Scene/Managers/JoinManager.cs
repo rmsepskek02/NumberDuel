@@ -241,8 +241,13 @@ namespace Manager
                                 },
                                 onCancel: () =>
                                 {
-                                    // 취소 클릭: 로그인 취소
-                                    AuthManager.Instance.Logout();
+                                    // 취소 클릭: Firebase에서만 로그아웃 (Firestore 세션은 유지)
+                                    // Client A의 세션을 삭제하지 않음
+                                    AuthManager.Instance.SignOutWithoutSessionClear();
+
+                                    // 로그인 취소 메시지 표시
+                                    SystemMessageManager.Instance?.ShowMessage("LoginCanceled");
+
                                     isProcessing = false;
                                     SetButtonsInteractable(true);
                                 }
