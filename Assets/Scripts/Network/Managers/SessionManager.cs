@@ -21,6 +21,7 @@ namespace Manager
         private bool isInitialized = false;
         private ListenerRegistration sessionListener; // Firestore 실시간 리스너
         private string currentMonitoringUid; // 현재 모니터링 중인 UID
+        private bool isFirstListenerCall = true; // 리스너 첫 호출 여부 (초기 호출 무시용)
 
         private const string SESSIONS_COLLECTION = "sessions";
         private const float INIT_TIMEOUT = 10f; // 초기화 타임아웃 (10초)
@@ -371,6 +372,7 @@ namespace Manager
             }
 
             currentMonitoringUid = uid;
+            isFirstListenerCall = true; // 첫 호출 플래그 초기화
 
             // Firestore 실시간 리스너 등록
             DocumentReference docRef = db.Collection(SESSIONS_COLLECTION).Document(uid);
@@ -379,7 +381,7 @@ namespace Manager
                 OnSessionDocumentChanged(snapshot, uid);
             });
 
-            Debug.Log($"✅ 세션 모니터링 시작: {uid}");
+            Debug.Log($"✅ 세션 모니터링 시작: {uid} (currentSessionId: {currentSessionId})");
         }
 
         /// <summary>
@@ -407,6 +409,16 @@ namespace Manager
                 return;
             }
 
+            // 🔥 리스너 첫 호출은 무시 (모니터링 시작 시 현재 문서를 읽어오는 것이므로)
+            if (isFirstListenerCall)
+            {
+                isFirstListenerCall = false;
+                Debug.Log($"📌 세션 모니터링 첫 호출 (무시): currentSessionId={currentSessionId}");
+                return;
+            }
+
+            Debug.Log($"🔔 세션 변경 감지: snapshot.Exists={snapshot.Exists}");
+
             // 세션 문서가 삭제되었거나 존재하지 않는 경우
             if (!snapshot.Exists)
             {
@@ -421,12 +433,18 @@ namespace Manager
             {
                 string newSessionId = data["sessionId"].ToString();
 
+                Debug.Log($"🔍 세션 ID 비교: currentSessionId={currentSessionId}, newSessionId={newSessionId}");
+
                 // 현재 세션 ID와 다르면 강제 로그아웃
                 if (!string.IsNullOrEmpty(currentSessionId) && newSessionId != currentSessionId)
                 {
                     Debug.LogWarning($"⚠️ 세션 ID가 변경되었습니다. (현재: {currentSessionId}, 새로운: {newSessionId})");
                     Debug.LogWarning("⚠️ 다른 곳에서 로그인되었습니다. 강제 로그아웃 처리합니다.");
                     HandleForceLogout();
+                }
+                else
+                {
+                    Debug.Log($"✅ 세션 ID 일치 - 정상 (변경 없음)");
                 }
             }
         }
