@@ -126,6 +126,15 @@ namespace Manager
                 }
             }
         }
+
+        private void OnDestroy()
+        {
+            // 세션 모니터링 중지 (Firestore 리스너 정리)
+            // Editor Play Mode 종료 시에도 확실히 정리되도록 함
+            StopSessionMonitoring();
+
+            Debug.Log("[SessionManager] OnDestroy 호출됨");
+        }
         #endregion
 
         #region Public Methods - Session Check
