@@ -294,21 +294,47 @@ namespace Manager
         }
         #endregion
 
-        #region Public Methods - Force Login (추후 구현용)
+        #region Public Methods - Force Login
         /// <summary>
         /// 기존 세션 강제 종료 및 로그인
         /// 팝업에서 '기존 접속 해제하고 로그인' 선택 시 사용
+        ///
+        /// 방안 1: 세션 문서 덮어쓰기 방식
+        /// - 기존 세션을 삭제하지 않고 SetAsync()로 덮어씀
+        /// - Client A의 Firestore 리스너가 sessionId 변경을 감지하여 강제 로그아웃 트리거
+        /// - 삭제-생성 타이밍 이슈 해결
         /// </summary>
         /// <param name="uid">사용자 UID</param>
         public async Task<bool> ForceLogin(string uid)
         {
+            if (!isInitialized)
+            {
+                Debug.LogError("❌ Firestore가 초기화되지 않았습니다.");
+                return false;
+            }
+
             try
             {
-                // 기존 세션 삭제
-                await ClearSession(uid);
+                // 새로운 세션 ID 생성 (GUID 사용)
+                currentSessionId = Guid.NewGuid().ToString();
 
-                // 새로운 세션 생성
-                return await CreateSession(uid);
+                // 현재 타임스탬프
+                string timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+
+                // Firestore에 세션 정보 덮어쓰기 (기존 세션 삭제하지 않음)
+                Dictionary<string, object> sessionData = new Dictionary<string, object>
+                {
+                    { "sessionId", currentSessionId },
+                    { "lastActiveTime", timestamp },
+                    { "deviceInfo", SystemInfo.deviceModel }
+                };
+
+                DocumentReference docRef = db.Collection(SESSIONS_COLLECTION).Document(uid);
+                await docRef.SetAsync(sessionData); // SetAsync로 덮어쓰기
+
+                Debug.Log($"✅ 강제 로그인 완료 - 세션 덮어쓰기: {currentSessionId}");
+                Debug.Log($"   → Client A의 세션 ID가 변경되어 강제 로그아웃이 트리거됩니다.");
+                return true;
             }
             catch (Exception ex)
             {
