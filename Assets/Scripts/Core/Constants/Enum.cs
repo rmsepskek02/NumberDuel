@@ -198,8 +198,9 @@ namespace Objects
     /// </summary>
     public enum ConfirmationType
     {
-        ExitToLobby,    // 로비로 나가기 (GameScene에서만)
-        QuitGame,       // 게임 종료
-        Logout          // 로그아웃
+        ExitToLobby,              // 로비로 나가기 (게임 진행 중)
+        ExitToLobbyBeforeGame,    // 로비로 나가기 (게임 시작 전)
+        QuitGame,                 // 게임 종료
+        Logout                    // 로그아웃
     }
 }

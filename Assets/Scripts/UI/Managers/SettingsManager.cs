@@ -183,8 +183,19 @@ namespace Manager
 
             if (currentSceneName == SceneName.GameScene.GetSceneName())
             {
-                // GameScene: 로비로 나가기
-                ShowConfirmation(ConfirmationType.ExitToLobby);
+                // GameScene: 게임 진행 여부에 따라 다른 메시지
+                bool isGameInProgress = TurnManager.Instance?.IsGameStarted ?? false;
+
+                if (isGameInProgress)
+                {
+                    // 게임 진행 중
+                    ShowConfirmation(ConfirmationType.ExitToLobby);
+                }
+                else
+                {
+                    // 게임 시작 전
+                    ShowConfirmation(ConfirmationType.ExitToLobbyBeforeGame);
+                }
             }
             else
             {
@@ -220,6 +231,7 @@ namespace Manager
             return type switch
             {
                 ConfirmationType.ExitToLobby => "게임에서 나가시겠습니까?\n진행 중인 게임은 패배 처리됩니다.",
+                ConfirmationType.ExitToLobbyBeforeGame => "방을 나가시겠습니까?",
                 ConfirmationType.QuitGame => "게임을 종료하시겠습니까?",
                 ConfirmationType.Logout => "로그아웃 하시겠습니까?",
                 _ => "계속하시겠습니까?"
@@ -234,6 +246,7 @@ namespace Manager
             switch (type)
             {
                 case ConfirmationType.ExitToLobby:
+                case ConfirmationType.ExitToLobbyBeforeGame:
                     ExitToLobby();
                     break;
 
