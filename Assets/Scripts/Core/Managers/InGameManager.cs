@@ -86,8 +86,10 @@ namespace Manager
 
         private void OnApplicationQuit()
         {
-            // 게임 중 앱 종료 시 패배 기록
-            if (!IsGameEnded && PhotonNetwork.InRoom)
+            // 게임 진행 중이고 앱 종료 시 패배 기록
+            bool isGameInProgress = TurnManager.Instance?.IsGameStarted ?? false;
+
+            if (!IsGameEnded && PhotonNetwork.InRoom && isGameInProgress)
             {
                 Debug.Log("[InGameManager] 앱 종료 → 패배 기록");
                 RecordDefeatOnDisconnect();

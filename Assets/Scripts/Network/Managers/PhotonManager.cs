@@ -228,8 +228,12 @@ namespace Manager
             UpdateRoomPlayerCount();
             LeavePlayer?.Invoke();
 
-            // 게임 중 이탈 감지 → 승리 처리
-            if (InGameManager.Instance != null && !InGameManager.Instance.IsGameEnded)
+            // 게임 진행 중 이탈 감지 → 승리 처리
+            bool isGameInProgress = TurnManager.Instance?.IsGameStarted ?? false;
+
+            if (InGameManager.Instance != null &&
+                !InGameManager.Instance.IsGameEnded &&
+                isGameInProgress)
             {
                 Debug.Log("[PhotonManager] 게임 중 상대방 이탈 감지 → 승리 처리");
                 InGameManager.Instance.ForceEndGameByOpponentDisconnect();
@@ -252,8 +256,12 @@ namespace Manager
 
             Debug.Log($"[PhotonManager] 연결 끊김: {cause}");
 
-            // 게임 중이면 패배 기록
-            if (InGameManager.Instance != null && !InGameManager.Instance.IsGameEnded)
+            // 게임 진행 중이면 패배 기록
+            bool isGameInProgress = TurnManager.Instance?.IsGameStarted ?? false;
+
+            if (InGameManager.Instance != null &&
+                !InGameManager.Instance.IsGameEnded &&
+                isGameInProgress)
             {
                 Debug.Log("[PhotonManager] 게임 중 내가 연결 끊김 → 패배 기록");
                 InGameManager.Instance.RecordDefeatOnDisconnect();
