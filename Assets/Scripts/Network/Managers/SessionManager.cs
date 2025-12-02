@@ -18,6 +18,7 @@ namespace Manager
         #region Fields and Properties
         private FirebaseFirestore db;
         private string currentSessionId;
+        private string cachedUserUID; // 캐시된 사용자 UID (OnDestroy에서 AuthManager 참조 불필요)
         private bool isInitialized = false;
         private ListenerRegistration sessionListener; // Firestore 실시간 리스너
         private string currentMonitoringUid; // 현재 모니터링 중인 UID
@@ -54,7 +55,6 @@ namespace Manager
             // 이미 초기화 중이거나 완료된 경우 중복 호출 방지
             if (isInitialized)
             {
-                Debug.Log("[SessionManager] 이미 초기화 완료됨");
                 return;
             }
 
@@ -64,7 +64,6 @@ namespace Manager
                 {
                     db = FirebaseFirestore.DefaultInstance;
                     isInitialized = true;
-                    Debug.Log("✅ SessionManager 초기화 완료");
                 }
                 else
                 {
@@ -81,11 +80,9 @@ namespace Manager
         {
             if (isInitialized)
             {
-                Debug.Log("[SessionManager] 이미 초기화 완료됨 - 재초기화 불필요");
                 return;
             }
 
-            Debug.Log("[SessionManager] Firestore 재초기화 시도...");
             InitializeDatabase();
         }
 
@@ -114,27 +111,31 @@ namespace Manager
 
         private void OnApplicationQuit()
         {
-            // 세션 모니터링 중지
+            // 1. Firestore 리스너 중지
             StopSessionMonitoring();
 
-            // 앱 종료 시 세션 정리
-            if (!string.IsNullOrEmpty(currentSessionId))
+            // 2. 세션 정리 (캐시된 UID 사용 - AuthManager 참조 불필요!)
+            if (!string.IsNullOrEmpty(cachedUserUID) &&
+                !string.IsNullOrEmpty(currentSessionId))
             {
-                string uid = AuthManager.Instance.CurrentUserUID;
-                if (!string.IsNullOrEmpty(uid))
-                {
-                    ClearSession(uid);
-                }
+                _ = ClearSession(cachedUserUID);
             }
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
-            // 세션 모니터링 중지 (Firestore 리스너 정리)
-            // Editor Play Mode 종료 시에도 확실히 정리되도록 함
+            // Firestore 리스너 중지 (중복 호출 안전)
             StopSessionMonitoring();
 
-            Debug.Log("[SessionManager] OnDestroy 호출됨");
+            // 세션 정리 (OnApplicationQuit에서 실패했을 경우 재시도)
+            if (!string.IsNullOrEmpty(cachedUserUID) &&
+                !string.IsNullOrEmpty(currentSessionId))
+            {
+                _ = ClearSession(cachedUserUID);
+            }
+
+            // 베이스 클래스의 OnDestroy 호출 (싱글톤 인스턴스 정리)
+            base.OnDestroy();
         }
         #endregion
 
@@ -161,12 +162,6 @@ namespace Manager
                 if (snapshot.Exists)
                 {
                     // 기존 세션이 존재함
-                    Dictionary<string, object> data = snapshot.ToDictionary();
-                    string existingSessionId = data.ContainsKey("sessionId") ? data["sessionId"].ToString() : "";
-                    string lastActiveTime = data.ContainsKey("lastActiveTime") ? data["lastActiveTime"].ToString() : "";
-
-                    Debug.Log($"⚠️ 이미 활성 세션이 존재합니다. SessionId: {existingSessionId}");
-
                     // TODO: 추후 팝업 처리 로직 추가
                     // 현재는 중복 로그인으로 판단
                     return (true, "이미 로그인 되어 있는 아이디입니다.");
@@ -196,6 +191,9 @@ namespace Manager
 
             try
             {
+                // UID 캐싱 (OnDestroy에서 사용)
+                cachedUserUID = uid;
+
                 // 고유한 세션 ID 생성 (GUID 사용)
                 currentSessionId = Guid.NewGuid().ToString();
 
@@ -213,7 +211,6 @@ namespace Manager
                 DocumentReference docRef = db.Collection(SESSIONS_COLLECTION).Document(uid);
                 await docRef.SetAsync(sessionData);
 
-                Debug.Log($"✅ 세션 생성 완료: {currentSessionId}");
                 return true;
             }
             catch (Exception ex)
@@ -249,7 +246,6 @@ namespace Manager
                 DocumentReference docRef = db.Collection(SESSIONS_COLLECTION).Document(uid);
                 await docRef.UpdateAsync("lastActiveTime", timestamp);
 
-                Debug.Log($"✅ 세션 갱신 완료: {timestamp}");
                 return true;
             }
             catch (Exception ex)
@@ -284,7 +280,7 @@ namespace Manager
                 await docRef.DeleteAsync();
 
                 currentSessionId = null;
-                Debug.Log($"✅ 세션 정리 완료: {uid}");
+                cachedUserUID = null; // 캐시도 정리
                 return true;
             }
             catch (Exception ex)
@@ -316,6 +312,9 @@ namespace Manager
 
             try
             {
+                // UID 캐싱 (OnDestroy에서 사용)
+                cachedUserUID = uid;
+
                 // 새로운 세션 ID 생성 (GUID 사용)
                 currentSessionId = Guid.NewGuid().ToString();
 
@@ -333,8 +332,6 @@ namespace Manager
                 DocumentReference docRef = db.Collection(SESSIONS_COLLECTION).Document(uid);
                 await docRef.SetAsync(sessionData); // SetAsync로 덮어쓰기
 
-                Debug.Log($"✅ 강제 로그인 완료 - 세션 덮어쓰기: {currentSessionId}");
-                Debug.Log($"   → Client A의 세션 ID가 변경되어 강제 로그아웃이 트리거됩니다.");
                 return true;
             }
             catch (Exception ex)
@@ -380,8 +377,6 @@ namespace Manager
             {
                 OnSessionDocumentChanged(snapshot, uid);
             });
-
-            Debug.Log($"✅ 세션 모니터링 시작: {uid} (currentSessionId: {currentSessionId})");
         }
 
         /// <summary>
@@ -393,7 +388,6 @@ namespace Manager
             {
                 sessionListener.Stop();
                 sessionListener = null;
-                Debug.Log($"✅ 세션 모니터링 중지: {currentMonitoringUid}");
                 currentMonitoringUid = null;
             }
         }
@@ -413,11 +407,8 @@ namespace Manager
             if (isFirstListenerCall)
             {
                 isFirstListenerCall = false;
-                Debug.Log($"📌 세션 모니터링 첫 호출 (무시): currentSessionId={currentSessionId}");
                 return;
             }
-
-            Debug.Log($"🔔 세션 변경 감지: snapshot.Exists={snapshot.Exists}");
 
             // 세션 문서가 삭제되었거나 존재하지 않는 경우
             if (!snapshot.Exists)
@@ -433,18 +424,12 @@ namespace Manager
             {
                 string newSessionId = data["sessionId"].ToString();
 
-                Debug.Log($"🔍 세션 ID 비교: currentSessionId={currentSessionId}, newSessionId={newSessionId}");
-
                 // 현재 세션 ID와 다르면 강제 로그아웃
                 if (!string.IsNullOrEmpty(currentSessionId) && newSessionId != currentSessionId)
                 {
                     Debug.LogWarning($"⚠️ 세션 ID가 변경되었습니다. (현재: {currentSessionId}, 새로운: {newSessionId})");
                     Debug.LogWarning("⚠️ 다른 곳에서 로그인되었습니다. 강제 로그아웃 처리합니다.");
                     HandleForceLogout();
-                }
-                else
-                {
-                    Debug.Log($"✅ 세션 ID 일치 - 정상 (변경 없음)");
                 }
             }
         }

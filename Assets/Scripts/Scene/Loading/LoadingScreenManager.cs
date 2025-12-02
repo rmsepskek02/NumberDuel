@@ -49,6 +49,23 @@ namespace Manager
             SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 
+        protected override void OnDestroy()
+        {
+            // SceneManager 이벤트 해제 (안전장치)
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+
+            // 동적으로 생성한 LoadingCanvas GameObject 파괴
+            // OnDestroy 중에는 Destroy()가 아닌 DestroyImmediate() 사용 필요
+            if (loadingCanvas != null)
+            {
+                DestroyImmediate(loadingCanvas.gameObject);
+                loadingCanvas = null;
+            }
+
+            // 베이스 클래스의 OnDestroy 호출 (싱글톤 인스턴스 정리)
+            base.OnDestroy();
+        }
+
         // 1) 로컬 씬 로딩(로컬 전용)
         public void ShowThenLoadLocal(string sceneName)
         {

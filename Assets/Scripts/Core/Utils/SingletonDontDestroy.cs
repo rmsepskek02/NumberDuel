@@ -50,6 +50,16 @@ namespace Utills
                 Destroy(gameObject);
             }
         }
+
+        protected virtual void OnDestroy()
+        {
+            // 이 인스턴스가 현재 싱글톤 인스턴스인 경우에만 null로 설정
+            // Editor Play Mode 종료 시 정리되지 않은 오브젝트 경고 방지
+            if (instance == this)
+            {
+                instance = null;
+            }
+        }
         #endregion
     }
 }

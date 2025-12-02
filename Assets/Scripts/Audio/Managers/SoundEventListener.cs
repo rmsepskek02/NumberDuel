@@ -50,40 +50,41 @@ namespace Manager
 
                 // Game Events
                 GameEventManager.Instance.OnGameEnded.AddListener(PlayGameEndSound);
-
-                Debug.Log("[SoundEventListener] UnityEvent 구독 완료 (15개 이벤트)");
             }
         }
 
         /// <summary>
         /// 모든 게임 이벤트 구독 해제 (메모리 누수 방지)
+        /// FindAnyObjectByType 사용으로 OnDestroy 중 GameObject 재생성 방지
         /// </summary>
         private void UnsubscribeEvents()
         {
-            if (GameEventManager.Instance != null)
+            // FindAnyObjectByType를 사용하여 GameObject 재생성 방지
+            // Instance getter는 OnDestroy 중에 새로운 GameObject를 생성할 수 있음
+            var eventManager = FindAnyObjectByType<GameEventManager>();
+
+            if (eventManager != null)
             {
                 // Card Events
-                GameEventManager.Instance.OnCardDrawn.RemoveListener(PlayDrawSound);
-                GameEventManager.Instance.OnCardPlaced.RemoveListener(PlayPlaceSound);
-                GameEventManager.Instance.OnCardAttack.RemoveListener(PlayAttackSound);
-                GameEventManager.Instance.OnCardDestroyed.RemoveListener(PlayDestroySound);
+                eventManager.OnCardDrawn.RemoveListener(PlayDrawSound);
+                eventManager.OnCardPlaced.RemoveListener(PlayPlaceSound);
+                eventManager.OnCardAttack.RemoveListener(PlayAttackSound);
+                eventManager.OnCardDestroyed.RemoveListener(PlayDestroySound);
 
                 // Combat Events
-                GameEventManager.Instance.OnOperatorUsed.RemoveListener(PlayOperatorSound);
-                GameEventManager.Instance.OnDamageApplied.RemoveListener(PlayDamageSound);
-                GameEventManager.Instance.OnSecretRevealed.RemoveListener(PlaySecretRevealSound);
+                eventManager.OnOperatorUsed.RemoveListener(PlayOperatorSound);
+                eventManager.OnDamageApplied.RemoveListener(PlayDamageSound);
+                eventManager.OnSecretRevealed.RemoveListener(PlaySecretRevealSound);
 
                 // Joker Events
-                GameEventManager.Instance.OnJokerEffect.RemoveListener(PlayJokerEffectSound);
+                eventManager.OnJokerEffect.RemoveListener(PlayJokerEffectSound);
 
                 // UI Events
-                GameEventManager.Instance.OnTurnStarted.RemoveListener(PlayTurnStartSound);
-                GameEventManager.Instance.OnMatchFound.RemoveListener(PlayMatchFoundSound);
+                eventManager.OnTurnStarted.RemoveListener(PlayTurnStartSound);
+                eventManager.OnMatchFound.RemoveListener(PlayMatchFoundSound);
 
                 // Game Events
-                GameEventManager.Instance.OnGameEnded.RemoveListener(PlayGameEndSound);
-
-                Debug.Log("[SoundEventListener] UnityEvent 구독 해제");
+                eventManager.OnGameEnded.RemoveListener(PlayGameEndSound);
             }
         }
         #endregion

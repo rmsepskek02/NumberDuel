@@ -117,12 +117,15 @@ namespace Manager
             StartCoroutine(PreloadSoundsAsync());
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
             // 씬 전환 이벤트 해제
             UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
 
             ClearCache();
+
+            // 베이스 클래스의 OnDestroy 호출 (싱글톤 인스턴스 정리)
+            base.OnDestroy();
         }
 
         /// <summary>

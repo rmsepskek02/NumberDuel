@@ -132,7 +132,7 @@ namespace Manager
             return isInitialized;
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
             if (auth != null)
             {
@@ -140,10 +140,15 @@ namespace Manager
             }
 
             // SessionManager 이벤트 구독 해제
-            if (SessionManager.Instance != null)
+            // FindAnyObjectByType 사용으로 OnDestroy 중 GameObject 재생성 방지
+            var sessionManager = FindAnyObjectByType<SessionManager>();
+            if (sessionManager != null)
             {
-                SessionManager.Instance.OnForceLogout -= HandleForceLogout;
+                sessionManager.OnForceLogout -= HandleForceLogout;
             }
+
+            // 베이스 클래스의 OnDestroy 호출 (싱글톤 인스턴스 정리)
+            base.OnDestroy();
         }
 
         private void OnAuthStateChanged(object sender, EventArgs eventArgs)
