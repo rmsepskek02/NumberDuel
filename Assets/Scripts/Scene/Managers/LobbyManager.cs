@@ -48,8 +48,30 @@ namespace Manager
             // 모든 버튼에 클릭 사운드 자동 등록
             UIHelper.RegisterAllButtonSounds();
 
-            OnConnectedToMaster();
-            InitializeMatchmaking();
+            // 로딩스크린 수동 제어 모드 전환 (연결 확인 후 수동 페이드아웃)
+            if (LoadingScreenManager.Instance != null)
+            {
+                LoadingScreenManager.Instance.SetManualControl();
+            }
+
+            // Photon 연결 상태 확인
+            if (PhotonNetwork.IsConnectedAndReady && PhotonNetwork.InLobby)
+            {
+                // 연결 성공 → 수동 페이드아웃
+                if (LoadingScreenManager.Instance != null)
+                {
+                    LoadingScreenManager.Instance.FadeOutManually();
+                }
+
+                OnConnectedToMaster();
+                InitializeMatchmaking();
+            }
+            else
+            {
+                // 연결 실패 → 재연결 시도
+                Debug.LogWarning("[LobbyManager] Photon 연결이 끊어진 상태로 LobbyScene 진입. 재연결 시도...");
+                StartCoroutine(RetryConnectionRoutine());
+            }
         }
 
         void Update()
@@ -718,10 +740,94 @@ namespace Manager
             // JoinScene으로 이동
             if (LoadingScreenManager.Instance != null)
             {
-                LoadingScreenManager.Instance.FadeInThenAction(() =>
+                LoadingScreenManager.Instance.ShowThenLoadLocal(SceneNameExtensions.GetSceneName(SceneName.JoinScene));
+            }
+            else
+            {
+                UnityEngine.SceneManagement.SceneManager.LoadScene(SceneNameExtensions.GetSceneName(SceneName.JoinScene));
+            }
+        }
+        #endregion
+
+        #region Connection Management
+        /// <summary>
+        /// Photon 재연결 시도 코루틴
+        /// </summary>
+        private System.Collections.IEnumerator RetryConnectionRoutine()
+        {
+            const float RETRY_TIMEOUT = 10f; // 재연결 타임아웃 (10초)
+            float startTime = Time.time;
+
+            // 로딩스크린 상태 업데이트
+            if (LoadingScreenManager.Instance != null)
+            {
+                LoadingScreenManager.Instance.UpdateProgress(0.3f, "재연결 중...");
+            }
+
+            // Photon 재연결 시도
+            if (!PhotonNetwork.IsConnected)
+            {
+                Debug.Log("[LobbyManager] Photon 재연결 시도...");
+                PhotonNetwork.ConnectUsingSettings();
+            }
+            else if (!PhotonNetwork.InLobby)
+            {
+                Debug.Log("[LobbyManager] Photon 로비 재입장 시도...");
+                PhotonNetwork.JoinLobby();
+            }
+
+            // 재연결 대기
+            while (Time.time - startTime < RETRY_TIMEOUT)
+            {
+                // 연결 성공 확인
+                if (PhotonNetwork.IsConnectedAndReady && PhotonNetwork.InLobby)
                 {
-                    UnityEngine.SceneManagement.SceneManager.LoadScene(SceneNameExtensions.GetSceneName(SceneName.JoinScene));
-                });
+                    Debug.Log("[LobbyManager] Photon 재연결 성공!");
+
+                    // 로딩스크린 페이드아웃
+                    if (LoadingScreenManager.Instance != null)
+                    {
+                        LoadingScreenManager.Instance.UpdateProgress(1f, "완료!");
+                        yield return new WaitForSeconds(0.3f);
+                        LoadingScreenManager.Instance.FadeOutManually();
+                    }
+
+                    // 로비 초기화
+                    OnConnectedToMaster();
+                    InitializeMatchmaking();
+                    yield break;
+                }
+
+                // 진행률 업데이트
+                float elapsedTime = Time.time - startTime;
+                float progress = Mathf.Clamp01(0.3f + (elapsedTime / RETRY_TIMEOUT) * 0.6f);
+                if (LoadingScreenManager.Instance != null)
+                {
+                    LoadingScreenManager.Instance.UpdateProgress(progress, "재연결 중...");
+                }
+
+                yield return new WaitForSeconds(0.1f);
+            }
+
+            // 재연결 타임아웃
+            Debug.LogError("[LobbyManager] Photon 재연결 타임아웃!");
+
+            // 로딩스크린 숨김
+            if (LoadingScreenManager.Instance != null)
+            {
+                LoadingScreenManager.Instance.FadeOutManually();
+                yield return new WaitForSeconds(1f); // 페이드아웃 대기
+            }
+
+            // 시스템 메시지 표시
+            SystemMessageManager.Instance?.ShowMessage("ConnectionLost");
+
+            // JoinScene으로 복귀
+            yield return new WaitForSeconds(2f); // 메시지 표시 시간
+
+            if (LoadingScreenManager.Instance != null)
+            {
+                LoadingScreenManager.Instance.ShowThenLoadLocal(SceneNameExtensions.GetSceneName(SceneName.JoinScene));
             }
             else
             {

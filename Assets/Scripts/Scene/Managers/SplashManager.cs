@@ -134,6 +134,25 @@ namespace Manager
                 // Photon 로비 진입
                 PhotonNetwork.JoinLobby();
 
+                // 로비 진입 완료 대기 (OnJoinedLobby 콜백이 실행될 때까지)
+                float joinLobbyElapsedTime = 0f;
+                const float JOIN_LOBBY_TIMEOUT = 10f;
+
+                Debug.Log("[SplashManager] 로비 진입 대기 중...");
+                while (!PhotonNetwork.InLobby && joinLobbyElapsedTime < JOIN_LOBBY_TIMEOUT)
+                {
+                    yield return new WaitForSeconds(0.1f);
+                    joinLobbyElapsedTime += 0.1f;
+                }
+
+                if (!PhotonNetwork.InLobby)
+                {
+                    Debug.LogError("[SplashManager] 로비 진입 타임아웃 - 로그인 화면으로 이동");
+                    AuthManager.Instance.Logout();
+                    SceneManager.LoadScene(SceneNameExtensions.GetSceneName(SceneName.JoinScene));
+                    yield break;
+                }
+
                 Debug.Log("[SplashManager] ✅ 자동 로그인 성공 - 로비로 이동");
                 SceneManager.LoadScene(SceneNameExtensions.GetSceneName(SceneName.LobbyScene));
             }

@@ -35,13 +35,27 @@ namespace Manager
         private bool isProcessing = false;
         private Coroutine photonTimeoutCoroutine = null;
 
+        // Photon 연결 상태 추적
+        private bool isTrackingPhotonConnection = false;
+        private float photonConnectionStartTime = 0f;
+        private float loadingScreenStartTime = 0f; // 로딩스크린 시작 시간
+        private Photon.Realtime.ClientState lastClientState;
+
         private const float PHOTON_CONNECT_TIMEOUT = 10f; // Photon 연결 타임아웃 (10초)
         private const float TASK_TIMEOUT = 10f; // Firebase Task 타임아웃 (10초)
+        private const float MIN_LOADING_DURATION = 1.5f; // 최소 로딩 시간 (페이드인 + 여유)
         #endregion
 
         #region Unity Lifecycle
         void Start()
         {
+            // 로딩스크린 안전장치: JoinScene 진입 시 혹시 남아있는 로딩스크린 페이드아웃
+            if (LoadingScreenManager.Instance != null)
+            {
+                // 약간의 딜레이 후 페이드아웃 (OnSceneLoaded가 실행되지 않았을 경우 대비)
+                StartCoroutine(EnsureLoadingScreenHidden());
+            }
+
             // 모든 버튼에 클릭 사운드 자동 등록
             UIHelper.RegisterAllButtonSounds();
 
@@ -58,6 +72,47 @@ namespace Manager
             SetLoginMode(true);
 
             // 버튼 이벤트는 Unity Editor에서 등록
+        }
+
+        /// <summary>
+        /// 로딩스크린이 제대로 숨겨지지 않았을 경우 강제로 숨김
+        /// </summary>
+        private System.Collections.IEnumerator EnsureLoadingScreenHidden()
+        {
+            // 0.5초 대기 (OnSceneLoaded가 실행될 시간)
+            yield return new WaitForSeconds(0.5f);
+
+            // 로딩스크린 강제 숨김 (안전장치)
+            var loadingManager = LoadingScreenManager.Instance;
+            if (loadingManager != null)
+            {
+                loadingManager.ForceHide();
+                Debug.Log("[JoinManager] 로딩스크린 안전장치 실행: ForceHide() 호출");
+            }
+        }
+
+        void Update()
+        {
+            // Photon 연결 상태 추적 중일 때만
+            if (!isTrackingPhotonConnection)
+                return;
+
+            var currentState = PhotonNetwork.NetworkClientState;
+
+            // 상태가 변경되었을 때만 업데이트
+            if (currentState != lastClientState)
+            {
+                lastClientState = currentState;
+                UpdatePhotonConnectionProgress(currentState);
+            }
+
+            // 타임아웃 체크
+            float elapsedTime = Time.time - photonConnectionStartTime;
+            if (elapsedTime > PHOTON_CONNECT_TIMEOUT)
+            {
+                Debug.LogError($"[JoinManager] Photon 연결 타임아웃 감지! 경과 시간: {elapsedTime}초");
+                OnPhotonConnectionTimeout();
+            }
         }
 
         void OnDestroy()
@@ -104,15 +159,125 @@ namespace Manager
         {
             base.OnJoinedLobby();
 
-            // 로비로 이동
+            Debug.Log("[JoinManager] OnJoinedLobby 호출됨");
+
+            // Photon 연결 추적 중지
+            isTrackingPhotonConnection = false;
+
+            // 최소 로딩 시간 보장을 위한 코루틴 시작
+            StartCoroutine(TransitionToLobbyAfterMinDelay());
+        }
+
+        /// <summary>
+        /// 최소 로딩 시간을 보장한 후 LobbyScene으로 전환
+        /// </summary>
+        private System.Collections.IEnumerator TransitionToLobbyAfterMinDelay()
+        {
+            // 로딩스크린 진행률 100% 업데이트
             if (LoadingScreenManager.Instance != null)
             {
-                LoadingScreenManager.Instance.ShowThenLoadLocal(SceneNameExtensions.GetSceneName(SceneName.LobbyScene));
+                LoadingScreenManager.Instance.UpdateProgress(1f, "완료!");
             }
-            else
+
+            // 최소 로딩 시간이 지났는지 확인
+            float elapsedTime = Time.time - loadingScreenStartTime;
+            float remainingTime = MIN_LOADING_DURATION - elapsedTime;
+
+            if (remainingTime > 0)
             {
-                PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.LobbyScene));
+                Debug.Log($"[JoinManager] 최소 로딩 시간 대기 중... ({remainingTime:F2}초)");
+                yield return new WaitForSeconds(remainingTime);
             }
+
+            Debug.Log("[JoinManager] LobbyScene으로 전환");
+
+            // 씬 전환
+            UnityEngine.SceneManagement.SceneManager.LoadScene(SceneNameExtensions.GetSceneName(SceneName.LobbyScene));
+        }
+        #endregion
+
+        #region Photon Connection Tracking
+        /// <summary>
+        /// Photon 연결 상태에 따라 로딩 진행률 업데이트
+        /// </summary>
+        private void UpdatePhotonConnectionProgress(Photon.Realtime.ClientState state)
+        {
+            if (LoadingScreenManager.Instance == null)
+                return;
+
+            float progress = 0f;
+            string statusMessage = "";
+
+            switch (state)
+            {
+                case Photon.Realtime.ClientState.PeerCreated:
+                    progress = 0.1f;
+                    statusMessage = "서버 연결 준비 중...";
+                    break;
+
+                case Photon.Realtime.ClientState.Authenticating:
+                    progress = 0.33f;
+                    statusMessage = "인증 중...";
+                    break;
+
+                case Photon.Realtime.ClientState.Authenticated:
+                    progress = 0.66f;
+                    statusMessage = "인증 완료...";
+                    break;
+
+                case Photon.Realtime.ClientState.JoiningLobby:
+                    progress = 0.9f;
+                    statusMessage = "로비 입장 중...";
+                    break;
+
+                case Photon.Realtime.ClientState.JoinedLobby:
+                    progress = 1f;
+                    statusMessage = "완료!";
+                    break;
+
+                case Photon.Realtime.ClientState.ConnectedToMasterServer:
+                case Photon.Realtime.ClientState.ConnectedToGameServer:
+                case Photon.Realtime.ClientState.ConnectedToNameServer:
+                    progress = 0.5f;
+                    statusMessage = "서버 연결 중...";
+                    break;
+
+                case Photon.Realtime.ClientState.Disconnecting:
+                case Photon.Realtime.ClientState.Disconnected:
+                    progress = 0f;
+                    statusMessage = "연결 실패...";
+                    break;
+
+                default:
+                    progress = 0.2f;
+                    statusMessage = "연결 중...";
+                    break;
+            }
+
+            LoadingScreenManager.Instance.UpdateProgress(progress, statusMessage);
+            Debug.Log($"[JoinManager] Photon 상태: {state} ({progress * 100}%)");
+        }
+
+        /// <summary>
+        /// Photon 연결 타임아웃 처리
+        /// </summary>
+        private void OnPhotonConnectionTimeout()
+        {
+            isTrackingPhotonConnection = false;
+
+            Debug.LogError($"[JoinManager] Photon 연결 타임아웃 ({PHOTON_CONNECT_TIMEOUT}초)");
+
+            // 로딩스크린 페이드아웃
+            if (LoadingScreenManager.Instance != null)
+            {
+                LoadingScreenManager.Instance.FadeOutManually();
+            }
+
+            // 시스템 메시지 표시
+            SystemMessageManager.Instance?.ShowMessage("ConnectionFailed");
+
+            // 버튼 활성화
+            SetButtonsInteractable(true);
         }
         #endregion
 
@@ -379,6 +544,15 @@ namespace Manager
             string uid = AuthManager.Instance.CurrentUserUID;
             string email = AuthManager.Instance.CurrentUserEmail;
 
+            // 로딩스크린 활성화 및 시작 시간 기록
+            loadingScreenStartTime = Time.time;
+
+            if (LoadingScreenManager.Instance != null)
+            {
+                LoadingScreenManager.Instance.ShowManual("프로필 로드 중...");
+                yield return null; // 페이드인 시작을 위한 한 프레임 대기
+            }
+
             // 프로필 존재 여부 확인 (타임아웃 적용)
             var checkTask = DatabaseManager.Instance.UserProfileExists(uid);
             float elapsedTime = 0f;
@@ -493,13 +667,48 @@ namespace Manager
                 };
                 PhotonNetwork.LocalPlayer.SetCustomProperties(customProperties);
 
-                // Photon 로비 진입 (메시지 없이 자동 진입)
+                Debug.Log($"[JoinManager] Photon 상태: {PhotonNetwork.NetworkClientState}, InLobby: {PhotonNetwork.InLobby}");
+
+                // 이미 로비에 있는지 확인
+                if (PhotonNetwork.InLobby)
+                {
+                    Debug.Log("[JoinManager] 이미 로비에 있음 - 바로 LobbyScene 전환");
+
+                    if (LoadingScreenManager.Instance != null)
+                    {
+                        LoadingScreenManager.Instance.UpdateProgress(1f, "완료!");
+                    }
+
+                    UnityEngine.SceneManagement.SceneManager.LoadScene(SceneNameExtensions.GetSceneName(SceneName.LobbyScene));
+                    yield break;
+                }
+
+                // Photon 연결 추적 시작
+                isTrackingPhotonConnection = true;
+                photonConnectionStartTime = Time.time;
+                lastClientState = PhotonNetwork.NetworkClientState;
+
+                Debug.Log($"[JoinManager] Photon 연결 추적 시작 - 현재 상태: {lastClientState}");
+
+                // 로딩스크린 상태 업데이트
+                if (LoadingScreenManager.Instance != null)
+                {
+                    LoadingScreenManager.Instance.UpdateProgress(0.1f, "로비 연결 준비 중...");
+                }
+
+                // Photon 로비 진입
                 PhotonNetwork.JoinLobby();
 
                 SetButtonsInteractable(true);
             }
             else
             {
+                // 로딩스크린 숨김
+                if (LoadingScreenManager.Instance != null)
+                {
+                    LoadingScreenManager.Instance.FadeOutManually();
+                }
+
                 SystemMessageManager.Instance?.ShowMessage("ProfileLoadFailed");
                 SetButtonsInteractable(true);
             }

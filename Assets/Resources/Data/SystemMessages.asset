@@ -239,3 +239,15 @@ MonoBehaviour:
     messageType: 3
     displayDuration: 2
     textColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  - messageKey: ConnectionLost
+    messageText: "\uC11C\uBC84 \uC5F0\uACB0\uC774 \uB04A\uC5B4\uC84C\uC2B5\uB2C8\uB2E4.
+      \uB2E4\uC2DC \uB85C\uADF8\uC778\uD574\uC8FC\uC138\uC694."
+    messageType: 2
+    displayDuration: 3
+    textColor: {r: 1, g: 0.3019608, b: 0.3019608, a: 1}
+  - messageKey: ConnectionFailed
+    messageText: "\uC11C\uBC84 \uC5F0\uACB0\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.
+      \uB2E4\uC2DC \uC2DC\uB3C4\uD574\uC8FC\uC138\uC694."
+    messageType: 2
+    displayDuration: 3
+    textColor: {r: 1, g: 0.3019608, b: 0.3019608, a: 1}
