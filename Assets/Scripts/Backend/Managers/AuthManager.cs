@@ -293,7 +293,7 @@ namespace Manager
 
         #region Public Methods - Logout
         /// <summary>
-        /// 로그아웃
+        /// 로그아웃 (수동 로그아웃 - 로그아웃 버튼 클릭 시)
         /// </summary>
         public async void Logout()
         {
@@ -301,11 +301,14 @@ namespace Manager
             {
                 string uid = currentUser.UserId;
 
-                // Firebase 세션 종료
-                auth.SignOut();
-                currentUser = null;
+                // ✅ 1. 먼저 SessionManager 리스너 중지 (자기 자신의 세션 삭제를 감지하지 않도록)
+                if (SessionManager.Instance != null)
+                {
+                    SessionManager.Instance.StopSessionMonitoring();
+                    Debug.Log("[AuthManager] 세션 모니터링 중지");
+                }
 
-                // Firestore 세션 정리
+                // ✅ 2. Firestore 세션 정리
                 if (SessionManager.Instance != null && SessionManager.Instance.IsInitialized)
                 {
                     await SessionManager.Instance.ClearSession(uid);
@@ -315,6 +318,10 @@ namespace Manager
                 {
                     Debug.Log("✅ 로그아웃 완료 (세션 정리 생략)");
                 }
+
+                // ✅ 3. Firebase 세션 종료
+                auth.SignOut();
+                currentUser = null;
             }
         }
 

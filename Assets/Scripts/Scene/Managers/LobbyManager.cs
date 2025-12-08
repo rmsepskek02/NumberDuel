@@ -705,48 +705,6 @@ namespace Manager
 #endif
             Application.Quit();
         }
-
-        public void OnClickLogOut()
-        {
-            StartCoroutine(LogoutCoroutine());
-        }
-
-        private System.Collections.IEnumerator LogoutCoroutine()
-        {
-            // 로그아웃 시작 메시지
-            SystemMessageManager.Instance?.ShowMessage("LoggingOut");
-
-            // Firebase 로그아웃 (AuthManager에서 세션 정리도 함께 수행)
-            if (AuthManager.Instance != null)
-            {
-                AuthManager.Instance.Logout();
-                // async void 메서드이므로 완료 대기
-                yield return new WaitForSeconds(0.5f);
-                Debug.Log("[LobbyManager] Firebase 로그아웃 및 세션 정리 완료");
-            }
-
-            // Photon 연결 해제
-            if (PhotonNetwork.IsConnected)
-            {
-                PhotonNetwork.Disconnect();
-                Debug.Log("[LobbyManager] Photon 연결 해제");
-            }
-
-            // 로그아웃 완료 메시지
-            SystemMessageManager.Instance?.ShowMessage("LogoutComplete");
-
-            yield return new WaitForSeconds(0.3f);
-
-            // JoinScene으로 이동
-            if (LoadingScreenManager.Instance != null)
-            {
-                LoadingScreenManager.Instance.ShowThenLoadLocal(SceneNameExtensions.GetSceneName(SceneName.JoinScene));
-            }
-            else
-            {
-                UnityEngine.SceneManagement.SceneManager.LoadScene(SceneNameExtensions.GetSceneName(SceneName.JoinScene));
-            }
-        }
         #endregion
 
         #region Connection Management
