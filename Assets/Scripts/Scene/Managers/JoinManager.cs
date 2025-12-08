@@ -487,7 +487,6 @@ namespace Manager
                 else
                 {
                     // 회원가입 처리
-                    SystemMessageManager.Instance?.ShowMessage("Registering");
                     var result = await AuthManager.Instance.RegisterWithEmail(email, password);
 
                     if (result.success)
