@@ -261,7 +261,7 @@ MonoBehaviour:
     messageType: 3
     displayDuration: 3
     textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}
-  - messageKey: EmailVerificationSent
+  - messageKey: EmailVerificationReSent
     messageText: "\uC778\uC99D \uC774\uBA54\uC77C\uC744 \uB2E4\uC2DC \uBC1C\uC1A1\uD588\uC2B5\uB2C8\uB2E4"
     messageType: 3
     displayDuration: 3
