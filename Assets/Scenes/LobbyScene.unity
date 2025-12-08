@@ -4851,7 +4851,7 @@ MonoBehaviour:
   height: {fileID: 23302746}
   roomNameInputField: {fileID: 807691054}
   roomPasswordInputField: {fileID: 262239953}
-  roomListContent: {fileID: 1835181959}
+  roomListContent: {fileID: 1449322207}
   roomItemFactory: {fileID: 7659352955405676591, guid: 6631e94bb9251ef4c956e81043a00a08, type: 3}
   enableRoomListSprite: {fileID: 21300000, guid: 1da5e6cdb077f3b4cbb12aaf71cae698, type: 3}
   fullRoomListSprite: {fileID: 21300000, guid: 6eb5d9765a5afd74d9c377db64bd44cd, type: 3}
