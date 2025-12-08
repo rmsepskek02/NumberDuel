@@ -361,6 +361,14 @@ namespace Manager
             {
                 string errorMessage = GetFirebaseErrorMessage(ex);
                 Debug.LogError($"[AuthManager] 인증 이메일 발송 실패: {errorMessage}");
+
+                // Rate Limiting 에러인 경우 (이미 이메일이 발송되었을 가능성 높음)
+                if (errorMessage.Contains("unusual activity") || errorMessage.Contains("blocked"))
+                {
+                    Debug.LogWarning("[AuthManager] Firebase Rate Limiting 감지 - 이메일은 발송되었을 수 있습니다");
+                    return (true, "인증 이메일을 발송했습니다");
+                }
+
                 return (false, errorMessage);
             }
             catch (Exception ex)

@@ -380,8 +380,8 @@ namespace Manager
 
                     if (result.success)
                     {
-                        // ✅ 이메일 인증 체크
-                        if (!AuthManager.Instance.IsEmailVerified)
+                        // ✅ 이메일 인증 체크 (테스트 계정 제외)
+                        if (!AuthManager.Instance.IsEmailVerified && !IsTestAccount(email))
                         {
                             // ⚠️ 미인증 경고 팝업
                             UI.Shared.ConfirmationPopup.Show(
@@ -398,7 +398,7 @@ namespace Manager
                                 {
                                     // [닫기] 버튼: 아무 동작 안 함
                                 },
-                                confirmText: "인증 이메일 재발송",
+                                confirmText: "재발송",
                                 cancelText: "닫기"
                             );
 
@@ -517,9 +517,6 @@ namespace Manager
                                 confirmText: "확인",
                                 cancelText: "재발송"
                             );
-
-                            // ❌ 프로필 생성 및 세션 생성 제거
-                            // 인증 후 로그인 시 처리하도록 변경
                         }
                         else
                         {
@@ -821,6 +818,35 @@ namespace Manager
         /// </summary>
         private async Task ResendVerificationEmail()
         {
+            // 입력 필드에서 이메일/비밀번호 가져오기
+            string email = inputEmail.text.Trim();
+            string password = inputPassword.text;
+
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+            {
+                SystemMessageManager.Instance?.ShowMessage(
+                    "이메일과 비밀번호를 입력해주세요",
+                    MessageType.Error
+                );
+                return;
+            }
+
+            // 로그인 상태가 아니라면 재로그인
+            if (!AuthManager.Instance.IsLoggedIn)
+            {
+                var loginResult = await AuthManager.Instance.LoginWithEmail(email, password);
+
+                if (!loginResult.success)
+                {
+                    SystemMessageManager.Instance?.ShowMessage(
+                        "로그인 실패: " + loginResult.message,
+                        MessageType.Error
+                    );
+                    return;
+                }
+            }
+
+            // 인증 이메일 재발송
             var result = await AuthManager.Instance.SendVerificationEmail();
 
             if (result.success)
@@ -832,13 +858,48 @@ namespace Manager
             }
             else
             {
-                // 발송 실패 시 재시도 권장 메시지
                 SystemMessageManager.Instance?.ShowMessage(
                     result.message + "\n잠시 후 다시 시도해주세요",
                     MessageType.Error,
-                    4f // 4초 동안 표시
+                    4f
                 );
             }
+
+            // 재발송 후 다시 로그아웃
+            AuthManager.Instance.SignOutWithoutSessionClear();
+        }
+
+        /// <summary>
+        /// 테스트 계정 여부 확인 (이메일 인증 제외 대상)
+        /// </summary>
+        /// <param name="email">확인할 이메일 주소</param>
+        /// <returns>테스트 계정이면 true</returns>
+        private bool IsTestAccount(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+                return false;
+
+            // 테스트 계정 목록
+            string[] testAccounts = new string[]
+            {
+                "a@a.com",
+                "b@b.com",
+                "c@c.com",
+                "d@d.com",
+                "e@e.com"
+            };
+
+            // 이메일이 테스트 계정 목록에 있는지 확인
+            foreach (var testEmail in testAccounts)
+            {
+                if (email.Equals(testEmail, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    Debug.LogWarning($"[JoinManager] 테스트 계정 감지: {email} - 이메일 인증 건너뜀");
+                    return true;
+                }
+            }
+
+            return false;
         }
         #endregion
     }
