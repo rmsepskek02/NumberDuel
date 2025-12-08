@@ -251,3 +251,23 @@ MonoBehaviour:
     messageType: 2
     displayDuration: 3
     textColor: {r: 1, g: 0.3019608, b: 0.3019608, a: 1}
+  - messageKey: EmailNotVerified
+    messageText: "\uC774\uBA54\uC77C \uC778\uC99D\uC774 \uD544\uC694\uD569\uB2C8\uB2E4"
+    messageType: 1
+    displayDuration: 3
+    textColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  - messageKey: EmailVerificationSent
+    messageText: "\uC778\uC99D \uC774\uBA54\uC77C\uC744 \uBC1C\uC1A1\uD588\uC2B5\uB2C8\uB2E4"
+    messageType: 3
+    displayDuration: 3
+    textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}
+  - messageKey: EmailVerificationSent
+    messageText: "\uC778\uC99D \uC774\uBA54\uC77C\uC744 \uB2E4\uC2DC \uBC1C\uC1A1\uD588\uC2B5\uB2C8\uB2E4"
+    messageType: 3
+    displayDuration: 3
+    textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}
+  - messageKey: EmailVerificationComplete
+    messageText: "\uC778\uC99D \uC774\uBA54\uC77C \uC778\uC99D\uC774 \uC644\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4."
+    messageType: 3
+    displayDuration: 3
+    textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}
