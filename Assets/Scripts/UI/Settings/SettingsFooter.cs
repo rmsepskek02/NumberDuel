@@ -49,6 +49,7 @@ namespace UI.Settings
             // 활성화될 때마다 씬 확인 및 버튼 텍스트 업데이트
             currentSceneName = SceneManager.GetActiveScene().name;
             UpdateExitButtonText();
+            UpdateLogoutButtonVisibility();
         }
         #endregion
 
@@ -100,6 +101,25 @@ namespace UI.Settings
             {
                 // 그 외: "게임 종료"
                 exitButtonText.text = "게임 종료";
+            }
+        }
+
+        /// <summary>
+        /// 씬별 로그아웃 버튼 표시 여부 업데이트
+        /// </summary>
+        private void UpdateLogoutButtonVisibility()
+        {
+            if (logoutButton == null)
+                return;
+
+            // JoinScene에서는 로그아웃 버튼 숨김
+            if (currentSceneName == SceneName.JoinScene.GetSceneName())
+            {
+                logoutButton.gameObject.SetActive(false);
+            }
+            else
+            {
+                logoutButton.gameObject.SetActive(true);
             }
         }
         #endregion

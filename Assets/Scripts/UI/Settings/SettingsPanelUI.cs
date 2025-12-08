@@ -1,6 +1,7 @@
 using DG.Tweening;
 using Objects;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace UI.Settings
@@ -43,11 +44,15 @@ namespace UI.Settings
         private SettingsTabType currentTab = SettingsTabType.Sound;
         private Tween showTween;
         private Tween hideTween;
+        private string currentSceneName;
         #endregion
 
         #region Unity Lifecycle
         private void Awake()
         {
+            // 현재 씬 이름 가져오기
+            currentSceneName = SceneManager.GetActiveScene().name;
+
             // 버튼 이벤트 등록
             closeButton?.onClick.AddListener(OnCloseClicked);
             soundTabButton?.onClick.AddListener(() => SwitchTab(SettingsTabType.Sound));
@@ -68,6 +73,9 @@ namespace UI.Settings
 
             if (mainPanel != null)
                 mainPanel.SetActive(false);
+
+            // 씬별 탭 표시 업데이트
+            UpdateTabVisibility();
         }
 
         private void OnDestroy()
@@ -90,6 +98,9 @@ namespace UI.Settings
         /// </summary>
         public void Show()
         {
+            // 현재 씬 확인
+            currentSceneName = SceneManager.GetActiveScene().name;
+
             // 이전 Tween 정리
             hideTween?.Kill();
 
@@ -99,6 +110,9 @@ namespace UI.Settings
 
             if (mainPanel != null)
                 mainPanel.SetActive(true);
+
+            // 씬별 탭 표시 업데이트
+            UpdateTabVisibility();
 
             // 기본 탭 활성화 (사운드)
             SwitchTab(SettingsTabType.Sound);
@@ -269,6 +283,25 @@ namespace UI.Settings
             ColorBlock colors = button.colors;
             colors.normalColor = Color.white; // 흰색 (강조)
             button.colors = colors;
+        }
+
+        /// <summary>
+        /// 씬별 탭 표시 여부 업데이트
+        /// </summary>
+        private void UpdateTabVisibility()
+        {
+            if (profileTabButton == null)
+                return;
+
+            // JoinScene에서는 Profile 탭 숨김
+            if (currentSceneName == SceneName.JoinScene.GetSceneName())
+            {
+                profileTabButton.gameObject.SetActive(false);
+            }
+            else
+            {
+                profileTabButton.gameObject.SetActive(true);
+            }
         }
         #endregion
 
