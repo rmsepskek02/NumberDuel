@@ -46,6 +46,11 @@ namespace Manager
         /// 현재 사용자의 이메일
         /// </summary>
         public string CurrentUserEmail => currentUser?.Email ?? string.Empty;
+
+        /// <summary>
+        /// 이메일 인증 여부 확인
+        /// </summary>
+        public bool IsEmailVerified => currentUser?.IsEmailVerified ?? false;
         #endregion
 
         #region Initialization
@@ -327,6 +332,66 @@ namespace Manager
                 // Firebase 세션만 종료
                 auth.SignOut();
                 currentUser = null;
+            }
+        }
+
+        /// <summary>
+        /// 현재 사용자에게 이메일 인증 메일 발송
+        /// </summary>
+        /// <returns>성공 여부와 메시지</returns>
+        public async Task<(bool success, string message)> SendVerificationEmail()
+        {
+            if (currentUser == null)
+            {
+                return (false, "로그인이 필요합니다");
+            }
+
+            if (currentUser.IsEmailVerified)
+            {
+                return (false, "이미 인증된 이메일입니다");
+            }
+
+            try
+            {
+                await currentUser.SendEmailVerificationAsync();
+                Debug.Log($"[AuthManager] 인증 이메일 발송 성공: {currentUser.Email}");
+                return (true, "인증 이메일을 발송했습니다");
+            }
+            catch (FirebaseException ex)
+            {
+                string errorMessage = GetFirebaseErrorMessage(ex);
+                Debug.LogError($"[AuthManager] 인증 이메일 발송 실패: {errorMessage}");
+                return (false, errorMessage);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[AuthManager] 인증 이메일 발송 실패: {ex.Message}");
+                return (false, "인증 이메일 발송에 실패했습니다");
+            }
+        }
+
+        /// <summary>
+        /// 사용자 정보 새로고침 (인증 상태 업데이트)
+        /// </summary>
+        /// <returns>성공 여부</returns>
+        public async Task<bool> ReloadUserInfo()
+        {
+            if (currentUser == null)
+            {
+                Debug.LogWarning("[AuthManager] 로그인된 사용자가 없습니다");
+                return false;
+            }
+
+            try
+            {
+                await currentUser.ReloadAsync();
+                Debug.Log($"[AuthManager] 사용자 정보 새로고침 완료 (IsEmailVerified: {currentUser.IsEmailVerified})");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[AuthManager] 사용자 정보 새로고침 실패: {ex.Message}");
+                return false;
             }
         }
         #endregion

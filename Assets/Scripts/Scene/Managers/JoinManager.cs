@@ -115,6 +115,18 @@ namespace Manager
             }
         }
 
+        /// <summary>
+        /// 앱이 포그라운드로 돌아올 때 인증 상태 체크 (자동 새로고침)
+        /// 사용자가 이메일 앱에서 인증 링크를 클릭한 후 게임으로 돌아올 때 감지
+        /// </summary>
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            if (hasFocus && AuthManager.Instance != null && AuthManager.Instance.IsLoggedIn)
+            {
+                _ = CheckEmailVerificationStatus();
+            }
+        }
+
         void OnDestroy()
         {
             // 코루틴 정리
@@ -368,6 +380,33 @@ namespace Manager
 
                     if (result.success)
                     {
+                        // ✅ 이메일 인증 체크
+                        if (!AuthManager.Instance.IsEmailVerified)
+                        {
+                            // ⚠️ 미인증 경고 팝업
+                            UI.Shared.ConfirmationPopup.Show(
+                                "이메일 인증이 필요합니다.\n\n" +
+                                $"{email}으로 발송된\n" +
+                                "이메일의 인증 링크를 클릭해주세요.\n\n" +
+                                "이메일을 받지 못하셨나요?",
+                                onConfirm: async () =>
+                                {
+                                    // [재발송] 버튼: 인증 이메일 재발송
+                                    await ResendVerificationEmail();
+                                },
+                                onCancel: () =>
+                                {
+                                    // [닫기] 버튼: 아무 동작 안 함
+                                },
+                                confirmText: "인증 이메일 재발송",
+                                cancelText: "닫기"
+                            );
+
+                            // Firebase에서 로그아웃 (인증 완료 전까지 로그인 불가)
+                            AuthManager.Instance.SignOutWithoutSessionClear();
+                            return;
+                        }
+
                         // 세션 체크 (중복 로그인 확인)
                         string uid = AuthManager.Instance.CurrentUserUID;
                         var sessionCheck = await SessionManager.Instance.CheckSession(uid);
@@ -453,31 +492,44 @@ namespace Manager
 
                     if (result.success)
                     {
-                        SystemMessageManager.Instance?.ShowMessage("RegisterSuccess");
-                        await System.Threading.Tasks.Task.Delay(800); // 0.8초 대기
+                        // ✅ 인증 이메일 발송
+                        var verificationResult = await AuthManager.Instance.SendVerificationEmail();
 
-                        // 회원가입 성공 시 자동으로 로그인되므로 프로필 생성
-                        SystemMessageManager.Instance?.ShowMessage("CreatingProfile");
-                        string uid = AuthManager.Instance.CurrentUserUID;
-                        await DatabaseManager.Instance.CreateUserProfile(uid, email, nickname);
-
-                        await System.Threading.Tasks.Task.Delay(500); // 0.5초 대기
-
-                        // 세션 생성
-                        bool sessionCreated = await SessionManager.Instance.CreateSession(uid);
-
-                        if (!sessionCreated)
+                        if (verificationResult.success)
                         {
-                            SystemMessageManager.Instance?.ShowMessage("SessionCreateFailed");
-                            AuthManager.Instance.Logout();
-                            return;
+                            // ✅ 회원가입 성공 및 인증 이메일 발송 완료 팝업
+                            UI.Shared.ConfirmationPopup.Show(
+                                "회원가입이 완료되었습니다!\n\n" +
+                                $"{email}으로\n" +
+                                "인증 이메일을 발송했습니다.\n\n" +
+                                "이메일의 인증 링크를 클릭하면\n" +
+                                "로그인할 수 있습니다.",
+                                onConfirm: () =>
+                                {
+                                    // [확인] 버튼: 로그인 모드로 전환
+                                    SetLoginMode(true);
+                                },
+                                onCancel: async () =>
+                                {
+                                    // [재발송] 버튼: 인증 이메일 재발송
+                                    await ResendVerificationEmail();
+                                },
+                                confirmText: "확인",
+                                cancelText: "재발송"
+                            );
+
+                            // ❌ 프로필 생성 및 세션 생성 제거
+                            // 인증 후 로그인 시 처리하도록 변경
                         }
-
-                        // 세션 모니터링 시작 (다른 곳에서 로그인 시 감지)
-                        SessionManager.Instance.StartSessionMonitoring(uid);
-
-                        // Coroutine으로 로비 진입
-                        StartCoroutine(OnLoginSuccessCoroutine());
+                        else
+                        {
+                            // ⚠️ 인증 이메일 발송 실패 - 재시도 권장
+                            SystemMessageManager.Instance?.ShowMessage(
+                                verificationResult.message + "\n잠시 후 다시 시도해주세요",
+                                MessageType.Error,
+                                4f
+                            );
+                        }
                     }
                     else
                     {
@@ -746,6 +798,47 @@ namespace Manager
 
             if (toggleModeButton != null)
                 toggleModeButton.interactable = interactable;
+        }
+
+        /// <summary>
+        /// 이메일 인증 상태 확인 (자동 새로고침)
+        /// </summary>
+        private async Task CheckEmailVerificationStatus()
+        {
+            await AuthManager.Instance.ReloadUserInfo();
+
+            if (AuthManager.Instance.IsEmailVerified)
+            {
+                SystemMessageManager.Instance?.ShowMessage(
+                    "이메일 인증이 완료되었습니다!",
+                    MessageType.Success
+                );
+            }
+        }
+
+        /// <summary>
+        /// 인증 이메일 재발송
+        /// </summary>
+        private async Task ResendVerificationEmail()
+        {
+            var result = await AuthManager.Instance.SendVerificationEmail();
+
+            if (result.success)
+            {
+                SystemMessageManager.Instance?.ShowMessage(
+                    "인증 이메일을 다시 발송했습니다",
+                    MessageType.Success
+                );
+            }
+            else
+            {
+                // 발송 실패 시 재시도 권장 메시지
+                SystemMessageManager.Instance?.ShowMessage(
+                    result.message + "\n잠시 후 다시 시도해주세요",
+                    MessageType.Error,
+                    4f // 4초 동안 표시
+                );
+            }
         }
         #endregion
     }

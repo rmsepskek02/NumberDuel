@@ -18,6 +18,8 @@ namespace UI.Shared
         [SerializeField] private TextMeshProUGUI messageText;
         [SerializeField] private Button cancelButton;
         [SerializeField] private Button confirmButton;
+        [SerializeField] private TextMeshProUGUI cancelButtonText;
+        [SerializeField] private TextMeshProUGUI confirmButtonText;
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private RectTransform popupRect;
 
@@ -80,6 +82,19 @@ namespace UI.Shared
         /// <param name="onCancel">취소 버튼 클릭 시 실행할 액션</param>
         public void Show(string message, Action onConfirm, Action onCancel)
         {
+            Show(message, onConfirm, onCancel, "확인", "취소");
+        }
+
+        /// <summary>
+        /// 확인 팝업 표시 (버튼 텍스트 커스터마이징 포함)
+        /// </summary>
+        /// <param name="message">표시할 메시지</param>
+        /// <param name="onConfirm">확인 버튼 클릭 시 실행할 액션</param>
+        /// <param name="onCancel">취소 버튼 클릭 시 실행할 액션</param>
+        /// <param name="confirmText">확인 버튼 텍스트 (기본값: "확인")</param>
+        /// <param name="cancelText">취소 버튼 텍스트 (기본값: "취소")</param>
+        public void Show(string message, Action onConfirm, Action onCancel, string confirmText, string cancelText)
+        {
             // 이전 Tween 정리
             hideTween?.Kill();
 
@@ -87,6 +102,17 @@ namespace UI.Shared
             if (messageText != null)
             {
                 messageText.text = message;
+            }
+
+            // 버튼 텍스트 설정
+            if (confirmButtonText != null)
+            {
+                confirmButtonText.text = confirmText;
+            }
+
+            if (cancelButtonText != null)
+            {
+                cancelButtonText.text = cancelText;
             }
 
             // 액션 저장

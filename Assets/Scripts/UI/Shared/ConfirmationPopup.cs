@@ -45,6 +45,19 @@ namespace UI.Shared
         /// <param name="onCancel">취소 버튼 클릭 시 실행할 액션 (null 가능)</param>
         public static void Show(string message, Action onConfirm, Action onCancel)
         {
+            Show(message, onConfirm, onCancel, "확인", "취소");
+        }
+
+        /// <summary>
+        /// 확인 팝업 표시 (버튼 텍스트 커스터마이징 포함)
+        /// </summary>
+        /// <param name="message">표시할 메시지</param>
+        /// <param name="onConfirm">확인 버튼 클릭 시 실행할 액션 (null 가능)</param>
+        /// <param name="onCancel">취소 버튼 클릭 시 실행할 액션 (null 가능)</param>
+        /// <param name="confirmText">확인 버튼 텍스트 (기본값: "확인")</param>
+        /// <param name="cancelText">취소 버튼 텍스트 (기본값: "취소")</param>
+        public static void Show(string message, Action onConfirm, Action onCancel, string confirmText, string cancelText)
+        {
             // 최초 1회만 로드
             if (instance == null)
             {
@@ -56,7 +69,7 @@ namespace UI.Shared
             }
 
             // 팝업 표시
-            instance.Show(message, onConfirm, onCancel);
+            instance.Show(message, onConfirm, onCancel, confirmText, cancelText);
         }
 
         /// <summary>
