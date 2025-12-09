@@ -97,26 +97,11 @@ MonoBehaviour:
     messageType: 3
     displayDuration: 1
     textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}
-  - messageKey: Registering
-    messageText: "\uD68C\uC6D0\uAC00\uC785 \uC911..."
-    messageType: 0
-    displayDuration: 1
-    textColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  - messageKey: RegisterSuccess
-    messageText: "\uD68C\uC6D0\uAC00\uC785 \uC131\uACF5!"
-    messageType: 3
-    displayDuration: 1
-    textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}
   - messageKey: SessionCreateFailed
     messageText: "\uC138\uC158 \uC0DD\uC131\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4."
     messageType: 2
     displayDuration: 3
     textColor: {r: 1, g: 0.3019608, b: 0.3019608, a: 1}
-  - messageKey: CreatingProfile
-    messageText: "\uD504\uB85C\uD544 \uC0DD\uC131 \uC911..."
-    messageType: 0
-    displayDuration: 2
-    textColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   - messageKey: ProfileLoadFailed
     messageText: "\uC0AC\uC6A9\uC790 \uD504\uB85C\uD544\uC744 \uBD88\uB7EC\uC62C
       \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."
@@ -178,16 +163,11 @@ MonoBehaviour:
     messageType: 2
     displayDuration: 3
     textColor: {r: 1, g: 0.3019608, b: 0.3019608, a: 1}
-  - messageKey: LoggingOut
-    messageText: "\uB85C\uADF8\uC544\uC6C3 \uC911..."
-    messageType: 0
-    displayDuration: 1
-    textColor: {r: 1, g: 1, b: 1, a: 1}
   - messageKey: LogoutComplete
     messageText: "\uB85C\uADF8\uC544\uC6C3\uB418\uC5C8\uC2B5\uB2C8\uB2E4."
     messageType: 3
     displayDuration: 1
-    textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}
+    textColor: {r: 0.3, g: 1, b: 0.3, a: 1}
   - messageKey: MatchmakingCancelled
     messageText: "\uB9E4\uCE6D \uCDE8\uC18C"
     messageType: 3
@@ -217,8 +197,7 @@ MonoBehaviour:
     displayDuration: 5
     textColor: {r: 1, g: 0.3019608, b: 0.3019608, a: 1}
   - messageKey: OpponentDisconnected
-    messageText: "\uC0C1\uB300\uBC29\uC758 \uC5F0\uACB0\uC774 \uB04A\uC5B4\uC84C\uC2B5\uB2C8\uB2E4.
-      \uC2B9\uB9AC!"
+    messageText: "\uC0C1\uB300\uAC00 \uC5F0\uACB0\uC774 \uB04A\uC5B4\uC84C\uC2B5\uB2C8\uB2E4."
     messageType: 3
     displayDuration: 2
     textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}
@@ -251,23 +230,23 @@ MonoBehaviour:
     messageType: 2
     displayDuration: 3
     textColor: {r: 1, g: 0.3019608, b: 0.3019608, a: 1}
-  - messageKey: EmailNotVerified
-    messageText: "\uC774\uBA54\uC77C \uC778\uC99D\uC774 \uD544\uC694\uD569\uB2C8\uB2E4"
-    messageType: 1
-    displayDuration: 3
-    textColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  - messageKey: EmailVerificationSent
-    messageText: "\uC778\uC99D \uC774\uBA54\uC77C\uC744 \uBC1C\uC1A1\uD588\uC2B5\uB2C8\uB2E4"
-    messageType: 3
-    displayDuration: 3
-    textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}
   - messageKey: EmailVerificationReSent
-    messageText: "\uC778\uC99D \uC774\uBA54\uC77C\uC744 \uB2E4\uC2DC \uBC1C\uC1A1\uD588\uC2B5\uB2C8\uB2E4"
+    messageText: "\uC778\uC99D \uC774\uBA54\uC77C\uC744 \uB2E4\uC2DC \uBC1C\uC1A1\uD588\uC2B5\uB2C8\uB2E4."
     messageType: 3
     displayDuration: 3
     textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}
   - messageKey: EmailVerificationComplete
-    messageText: "\uC778\uC99D \uC774\uBA54\uC77C \uC778\uC99D\uC774 \uC644\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4."
+    messageText: "\uC774\uBA54\uC77C \uC778\uC99D\uC774 \uC644\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4!"
     messageType: 3
     displayDuration: 3
     textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}
+  - messageKey: ProfileNotFound
+    messageText: "\uD504\uB85C\uD544\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."
+    messageType: 2
+    displayDuration: 3
+    textColor: {r: 1, g: 0.3, b: 0.3, a: 1}
+  - messageKey: ProfileCreateFailed
+    messageText: "\uD504\uB85C\uD544 \uC0DD\uC131\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4."
+    messageType: 2
+    displayDuration: 3
+    textColor: {r: 1, g: 0.3, b: 0.3, a: 1}

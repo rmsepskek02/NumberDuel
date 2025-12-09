@@ -63,12 +63,50 @@ namespace Manager
 
         #region User Profile Methods
         /// <summary>
+        /// 닉네임 사용 가능 여부 확인 (중복 체크)
+        /// </summary>
+        /// <param name="nickname">확인할 닉네임</param>
+        /// <returns>사용 가능하면 true, 중복이면 false</returns>
+        public async Task<bool> IsNicknameAvailable(string nickname)
+        {
+            if (!isInitialized)
+            {
+                Debug.LogError("Firestore가 초기화되지 않았습니다. 초기화를 시도합니다...");
+                await WaitForInitialization();
+
+                if (!isInitialized)
+                {
+                    Debug.LogError("Firestore 초기화 실패.");
+                    return false;
+                }
+            }
+
+            try
+            {
+                // Firestore에서 닉네임으로 쿼리
+                Query query = db.Collection(USERS_COLLECTION).WhereEqualTo("Nickname", nickname);
+                QuerySnapshot snapshot = await query.GetSnapshotAsync();
+
+                // 결과가 없으면 사용 가능
+                bool isAvailable = snapshot.Count == 0;
+                Debug.Log($"[DatabaseManager] 닉네임 '{nickname}' 사용 가능 여부: {isAvailable}");
+                return isAvailable;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"❌ 닉네임 중복 확인 실패: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
         /// 새로운 사용자 프로필 생성
         /// </summary>
         /// <param name="uid">Firebase UID</param>
         /// <param name="email">이메일</param>
         /// <param name="nickname">닉네임</param>
-        public async Task<bool> CreateUserProfile(string uid, string email, string nickname)
+        /// <param name="emailVerified">이메일 인증 상태 (기본값: false)</param>
+        public async Task<bool> CreateUserProfile(string uid, string email, string nickname, bool emailVerified = false)
         {
             if (!isInitialized)
             {
@@ -85,13 +123,13 @@ namespace Manager
             try
             {
                 // 새 프로필 생성
-                UserProfile profile = new UserProfile(email, nickname);
+                UserProfile profile = new UserProfile(email, nickname, emailVerified);
 
                 // Firestore에 저장
                 DocumentReference docRef = db.Collection(USERS_COLLECTION).Document(uid);
                 await docRef.SetAsync(profile);
 
-                Debug.Log($"✅ 사용자 프로필 생성 완료: {nickname} ({uid})");
+                Debug.Log($"✅ 사용자 프로필 생성 완료: {nickname} ({uid}), 이메일 인증: {emailVerified}");
                 return true;
             }
             catch (Exception ex)
@@ -195,6 +233,38 @@ namespace Manager
             catch (Exception ex)
             {
                 Debug.LogError($"❌ 닉네임 업데이트 실패: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 이메일 인증 상태 업데이트 (로그인 시 호출)
+        /// </summary>
+        /// <param name="uid">Firebase UID</param>
+        /// <param name="verified">이메일 인증 상태</param>
+        public async Task<bool> UpdateEmailVerified(string uid, bool verified)
+        {
+            if (!isInitialized)
+            {
+                Debug.LogError("Firestore가 초기화되지 않았습니다.");
+                return false;
+            }
+
+            try
+            {
+                DocumentReference docRef = db.Collection(USERS_COLLECTION).Document(uid);
+                await docRef.UpdateAsync(new System.Collections.Generic.Dictionary<string, object>
+                {
+                    { "EmailVerified", verified },
+                    { "LastLoginAt", DateTime.UtcNow }
+                });
+
+                Debug.Log($"✅ 이메일 인증 상태 업데이트 완료: {uid} (인증: {verified})");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"❌ 이메일 인증 상태 업데이트 실패: {ex.Message}");
                 return false;
             }
         }
@@ -328,6 +398,20 @@ namespace Manager
                 Debug.LogError("DatabaseManager 초기화 타임아웃");
             }
         }
+
+        // TODO: 미인증 계정 자동 삭제 기능 (Firebase Cloud Functions로 구현 예정)
+        //
+        // Firebase Cloud Functions를 사용하여 매일 자정에 실행되는 스케줄러 구현:
+        // 1. emailVerified가 false이고 createdAt이 7일 이상 지난 계정 찾기
+        // 2. Firestore 프로필 삭제
+        // 3. Firebase Authentication 계정 삭제 (Admin SDK 사용)
+        //
+        // 구현 방법:
+        // - Firebase CLI로 Cloud Functions 초기화: firebase init functions
+        // - functions/index.js에 스케줄러 함수 작성
+        // - firebase deploy --only functions로 배포
+        //
+        // 참고: Cloud Functions는 별도 비용이 발생할 수 있으므로 Firebase Console에서 요금제 확인 필요
         #endregion
     }
 }

@@ -33,6 +33,7 @@ namespace Manager
 
         // 현재 표시 중인 Info 메시지 추적
         private MessageRequest currentInfoMessage = null;
+        private Coroutine infoMessageHideCoroutine = null;
 
         // UI 참조
         private SystemMessageUI messageUI;
@@ -198,6 +199,13 @@ namespace Manager
             messageQueue.Clear();
             currentInfoMessage = null;
 
+            // Info 메시지 타이머 취소
+            if (infoMessageHideCoroutine != null)
+            {
+                StopCoroutine(infoMessageHideCoroutine);
+                infoMessageHideCoroutine = null;
+            }
+
             if (IsUIReady())
             {
                 messageUI.HideMessageInstantly();
@@ -257,6 +265,7 @@ namespace Manager
 
         /// <summary>
         /// Info 메시지 즉시 처리 (진행 상태 실시간 업데이트)
+        /// ✅ 3초 후 자동으로 사라짐
         /// </summary>
         private void HandleInfoMessage(MessageRequest request)
         {
@@ -276,10 +285,38 @@ namespace Manager
                 return;
             }
 
+            // 이전 Info 메시지 타이머 취소
+            if (infoMessageHideCoroutine != null)
+            {
+                StopCoroutine(infoMessageHideCoroutine);
+                infoMessageHideCoroutine = null;
+            }
+
             // UI에 즉시 교체
             messageUI.ReplaceMessageInstantly(request.text, request.color);
 
-            Debug.Log($"[SystemMessageManager] Info 메시지 즉시 교체: {request.text}");
+            // ✅ 3초 후 자동으로 사라지도록 타이머 시작
+            infoMessageHideCoroutine = StartCoroutine(HideInfoMessageAfterDuration(request.duration));
+
+            Debug.Log($"[SystemMessageManager] Info 메시지 즉시 교체: {request.text} (지속 시간: {request.duration}초)");
+        }
+
+        /// <summary>
+        /// Info 메시지 자동 숨김 코루틴
+        /// </summary>
+        private IEnumerator HideInfoMessageAfterDuration(float duration)
+        {
+            yield return new WaitForSeconds(duration);
+
+            // 중요 메시지가 표시 중이 아니고, 현재 Info 메시지가 남아있으면 숨김
+            if (!isShowingMessage && currentInfoMessage != null)
+            {
+                messageUI.HideMessageInstantly();
+                currentInfoMessage = null;
+                Debug.Log("[SystemMessageManager] Info 메시지 자동 숨김");
+            }
+
+            infoMessageHideCoroutine = null;
         }
 
         /// <summary>

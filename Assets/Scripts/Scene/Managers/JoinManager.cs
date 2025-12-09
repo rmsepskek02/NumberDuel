@@ -314,7 +314,10 @@ namespace Manager
 
             if (!isLoginMode && string.IsNullOrEmpty(nickname))
             {
-                SystemMessageManager.Instance?.ShowMessage("InputNickname");
+                if (SystemMessageManager.Instance != null)
+                {
+                    SystemMessageManager.Instance.ShowMessage("InputNickname");
+                }
                 return;
             }
 
@@ -487,11 +490,49 @@ namespace Manager
                 else
                 {
                     // 회원가입 처리
+
+                    // ✅ 1. 닉네임 중복 확인
+                    bool isNicknameAvailable = await DatabaseManager.Instance.IsNicknameAvailable(nickname);
+
+                    if (!isNicknameAvailable)
+                    {
+                        // 닉네임 중복 - 팝업으로 알림
+                        UI.Shared.ConfirmationPopup.Show(
+                            $"'{nickname}' 닉네임은 이미 사용 중입니다.\n\n다른 닉네임을 입력해주세요.",
+                            onConfirm: () =>
+                            {
+                                // [확인] 버튼: 팝업 닫기
+                            },
+                            onCancel: null
+                        );
+
+                        isProcessing = false;
+                        SetButtonsInteractable(true);
+                        return;
+                    }
+
+                    // ✅ 2. Firebase Authentication 계정 생성
                     var result = await AuthManager.Instance.RegisterWithEmail(email, password);
 
                     if (result.success)
                     {
-                        // ✅ 인증 이메일 발송
+                        string uid = AuthManager.Instance.CurrentUserUID;
+
+                        // ✅ 3. Firestore 프로필 생성 (emailVerified: false)
+                        bool profileCreated = await DatabaseManager.Instance.CreateUserProfile(uid, email, nickname, emailVerified: false);
+
+                        if (!profileCreated)
+                        {
+                            if (SystemMessageManager.Instance != null)
+                            {
+                                SystemMessageManager.Instance.ShowMessage("ProfileCreateFailed");
+                            }
+                            isProcessing = false;
+                            SetButtonsInteractable(true);
+                            return;
+                        }
+
+                        // ✅ 5. 인증 이메일 발송
                         var verificationResult = await AuthManager.Instance.SendVerificationEmail();
 
                         if (verificationResult.success)
@@ -624,83 +665,51 @@ namespace Manager
 
             if (!profileExists)
             {
-                // 프로필이 없으면 생성 (기존 계정의 경우)
-                SystemMessageManager.Instance?.ShowMessage("CreatingProfile");
-                string defaultNickname = email.Split('@')[0]; // 이메일 앞부분을 닉네임으로
-
-                var createTask = DatabaseManager.Instance.CreateUserProfile(uid, email, defaultNickname);
-                elapsedTime = 0f;
-
-                while (!createTask.IsCompleted && elapsedTime < TASK_TIMEOUT)
+                // ⚠️ 프로필이 없는 경우: 정상적인 경우 발생하지 않아야 함
+                // (회원가입 시 프로필 생성하므로)
+                Debug.LogError($"[JoinManager] 프로필이 존재하지 않습니다: {uid}");
+                if (SystemMessageManager.Instance != null)
                 {
-                    yield return new WaitForSeconds(0.1f);
-                    elapsedTime += 0.1f;
+                    SystemMessageManager.Instance.ShowMessage("ProfileNotFound");
                 }
-
-                if (!createTask.IsCompleted)
-                {
-                    Debug.LogError($"⏱️ 프로필 생성 타임아웃 ({TASK_TIMEOUT}초)");
-                    SystemMessageManager.Instance?.ShowMessage("NetworkTimeout");
-                    SetButtonsInteractable(true);
-                    yield break;
-                }
-
-                var loadTask = DatabaseManager.Instance.GetUserProfile(uid);
-                elapsedTime = 0f;
-
-                while (!loadTask.IsCompleted && elapsedTime < TASK_TIMEOUT)
-                {
-                    yield return new WaitForSeconds(0.1f);
-                    elapsedTime += 0.1f;
-                }
-
-                if (!loadTask.IsCompleted)
-                {
-                    Debug.LogError($"⏱️ 프로필 로드 타임아웃 ({TASK_TIMEOUT}초)");
-                    SystemMessageManager.Instance?.ShowMessage("NetworkTimeout");
-                    SetButtonsInteractable(true);
-                    yield break;
-                }
-
-                profile = loadTask.Result;
+                SetButtonsInteractable(true);
+                yield break;
             }
-            else
+
+            // 프로필 로드 (타임아웃 적용)
+            var loadTask = DatabaseManager.Instance.GetUserProfile(uid);
+            elapsedTime = 0f;
+
+            while (!loadTask.IsCompleted && elapsedTime < TASK_TIMEOUT)
             {
-                // 프로필 로드 (타임아웃 적용)
-                var loadTask = DatabaseManager.Instance.GetUserProfile(uid);
-                elapsedTime = 0f;
-
-                while (!loadTask.IsCompleted && elapsedTime < TASK_TIMEOUT)
-                {
-                    yield return new WaitForSeconds(0.1f);
-                    elapsedTime += 0.1f;
-                }
-
-                if (!loadTask.IsCompleted)
-                {
-                    Debug.LogError($"⏱️ 프로필 로드 타임아웃 ({TASK_TIMEOUT}초)");
-                    SystemMessageManager.Instance?.ShowMessage("NetworkTimeout");
-                    SetButtonsInteractable(true);
-                    yield break;
-                }
-
-                profile = loadTask.Result;
+                yield return new WaitForSeconds(0.1f);
+                elapsedTime += 0.1f;
             }
+
+            if (!loadTask.IsCompleted)
+            {
+                Debug.LogError($"⏱️ 프로필 로드 타임아웃 ({TASK_TIMEOUT}초)");
+                SystemMessageManager.Instance?.ShowMessage("NetworkTimeout");
+                SetButtonsInteractable(true);
+                yield break;
+            }
+
+            profile = loadTask.Result;
 
             if (profile != null)
             {
-                // 마지막 로그인 시간 업데이트 (타임아웃 적용)
-                var updateTask = DatabaseManager.Instance.UpdateLastLogin(uid);
+                // ✅ 이메일 인증 상태 업데이트 (로그인 성공 시 true로 설정)
+                var updateEmailVerifiedTask = DatabaseManager.Instance.UpdateEmailVerified(uid, true);
                 elapsedTime = 0f;
 
-                while (!updateTask.IsCompleted && elapsedTime < TASK_TIMEOUT)
+                while (!updateEmailVerifiedTask.IsCompleted && elapsedTime < TASK_TIMEOUT)
                 {
                     yield return new WaitForSeconds(0.1f);
                     elapsedTime += 0.1f;
                 }
 
                 // 업데이트 실패해도 로그인은 진행 (치명적 아님)
-                if (!updateTask.IsCompleted)
+                if (!updateEmailVerifiedTask.IsCompleted)
                 {
                     Debug.LogWarning($"⏱️ 마지막 로그인 업데이트 타임아웃 ({TASK_TIMEOUT}초) - 무시하고 진행");
                 }
@@ -805,10 +814,10 @@ namespace Manager
 
             if (AuthManager.Instance.IsEmailVerified)
             {
-                SystemMessageManager.Instance?.ShowMessage(
-                    "이메일 인증이 완료되었습니다!",
-                    MessageType.Success
-                );
+                if (SystemMessageManager.Instance != null)
+                {
+                    SystemMessageManager.Instance.ShowMessage("EmailVerificationComplete");
+                }
             }
         }
 
@@ -823,10 +832,10 @@ namespace Manager
 
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
             {
-                SystemMessageManager.Instance?.ShowMessage(
-                    "이메일과 비밀번호를 입력해주세요",
-                    MessageType.Error
-                );
+                if (SystemMessageManager.Instance != null)
+                {
+                    SystemMessageManager.Instance.ShowMessage("InputEmailPassword");
+                }
                 return;
             }
 
@@ -850,10 +859,10 @@ namespace Manager
 
             if (result.success)
             {
-                SystemMessageManager.Instance?.ShowMessage(
-                    "인증 이메일을 다시 발송했습니다",
-                    MessageType.Success
-                );
+                if (SystemMessageManager.Instance != null)
+                {
+                    SystemMessageManager.Instance.ShowMessage("EmailVerificationReSent");
+                }
             }
             else
             {

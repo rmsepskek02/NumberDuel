@@ -319,7 +319,7 @@ namespace Manager
             // ✅ 수동 로그아웃 시스템 메시지 표시
             if (SystemMessageManager.Instance != null)
             {
-                SystemMessageManager.Instance.ShowMessage("로그아웃되었습니다", MessageType.Info);
+                SystemMessageManager.Instance.ShowMessage("LogoutComplete");
             }
 
             // Photon 연결 해제

@@ -16,6 +16,9 @@ namespace Objects.Data
         public string Nickname { get; set; }
 
         [FirestoreProperty]
+        public bool EmailVerified { get; set; }
+
+        [FirestoreProperty]
         public DateTime CreatedAt { get; set; }
 
         [FirestoreProperty]
@@ -27,12 +30,14 @@ namespace Objects.Data
         public UserProfile()
         {
             Stats = new UserStats();
+            EmailVerified = false;
         }
 
-        public UserProfile(string email, string nickname)
+        public UserProfile(string email, string nickname, bool emailVerified = false)
         {
             Email = email;
             Nickname = nickname;
+            EmailVerified = emailVerified;
             CreatedAt = DateTime.UtcNow;
             LastLoginAt = DateTime.UtcNow;
             Stats = new UserStats();
