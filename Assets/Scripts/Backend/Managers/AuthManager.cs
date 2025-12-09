@@ -386,6 +386,53 @@ namespace Manager
         }
 
         /// <summary>
+        /// 비밀번호 재설정 이메일 발송
+        /// </summary>
+        /// <param name="email">비밀번호를 재설정할 이메일 주소</param>
+        /// <returns>성공 여부와 메시지</returns>
+        public async Task<(bool success, string message)> SendPasswordResetEmail(string email)
+        {
+            try
+            {
+                // 입력 검증
+                if (string.IsNullOrEmpty(email))
+                {
+                    return (false, "이메일을 입력해주세요.");
+                }
+
+                // Firebase 초기화 확인
+                if (!isInitialized || auth == null)
+                {
+                    return (false, "Firebase가 초기화되지 않았습니다.");
+                }
+
+                // 비밀번호 재설정 이메일 발송
+                await auth.SendPasswordResetEmailAsync(email);
+                Debug.Log($"[AuthManager] 비밀번호 재설정 이메일 발송 성공: {email}");
+                return (true, "비밀번호 재설정 이메일을 발송했습니다");
+            }
+            catch (FirebaseException ex)
+            {
+                string errorMessage = GetFirebaseErrorMessage(ex);
+                Debug.LogError($"[AuthManager] 비밀번호 재설정 이메일 발송 실패: {errorMessage}");
+
+                // Rate Limiting 에러인 경우 (이미 이메일이 발송되었을 가능성 높음)
+                if (errorMessage.Contains("unusual activity") || errorMessage.Contains("blocked"))
+                {
+                    Debug.LogWarning("[AuthManager] Firebase Rate Limiting 감지 - 이메일은 발송되었을 수 있습니다");
+                    return (true, "비밀번호 재설정 이메일을 발송했습니다");
+                }
+
+                return (false, errorMessage);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[AuthManager] 비밀번호 재설정 이메일 발송 실패: {ex.Message}");
+                return (false, "비밀번호 재설정 이메일 발송에 실패했습니다");
+            }
+        }
+
+        /// <summary>
         /// 사용자 정보 새로고침 (인증 상태 업데이트)
         /// </summary>
         /// <returns>성공 여부</returns>

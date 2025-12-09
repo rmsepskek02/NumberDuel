@@ -23,14 +23,18 @@ namespace Manager
         public TMP_InputField inputPassword;
         public TMP_InputField inputNickname;
         public Button actionButton;
-        public Button toggleModeButton;
         public TextMeshProUGUI actionButtonText;
-        public TextMeshProUGUI toggleModeButtonText;
         public GameObject nicknameLabel; // 회원가입 시에만 표시
         public GameObject nicknameInputField; // 회원가입 시에만 표시
 
+        [Header("Mode Buttons")]
+        public Button loginButton;           // 로그인 버튼
+        public Button signupButton;          // 회원가입 버튼
+        public Button forgotPasswordButton;  // 비밀번호 찾기 버튼
+
         [Header("Mode Settings")]
-        private bool isLoginMode = true; // true: 로그인, false: 회원가입
+        private int currentMode = 0; // 0: 로그인, 1: 회원가입, 2: 비밀번호 찾기
+        private bool isLoginMode = true; // 하위 호환성 유지
 
         private bool isProcessing = false;
         private Coroutine photonTimeoutCoroutine = null;
@@ -295,11 +299,18 @@ namespace Manager
 
         #region Button Events
         /// <summary>
-        /// 로그인/회원가입 버튼 클릭
+        /// 로그인/회원가입/비밀번호 찾기 버튼 클릭
         /// </summary>
         public async void OnClickActionButton()
         {
             if (isProcessing) return;
+
+            // 비밀번호 찾기 모드
+            if (currentMode == 2)
+            {
+                await HandlePasswordReset();
+                return;
+            }
 
             string email = inputEmail?.text ?? "";
             string password = inputPassword?.text ?? "";
@@ -583,11 +594,35 @@ namespace Manager
         }
 
         /// <summary>
-        /// 모드 전환 버튼 클릭 (로그인 ↔ 회원가입)
+        /// 모드 전환 버튼 클릭 (로그인 ↔ 회원가입) - 하위 호환성용
         /// </summary>
         public void OnClickToggleModeButton()
         {
             SetLoginMode(!isLoginMode);
+        }
+
+        /// <summary>
+        /// 로그인 버튼 클릭
+        /// </summary>
+        public void OnClickLoginButton()
+        {
+            SetMode(0);
+        }
+
+        /// <summary>
+        /// 회원가입 버튼 클릭
+        /// </summary>
+        public void OnClickSignupButton()
+        {
+            SetMode(1);
+        }
+
+        /// <summary>
+        /// 비밀번호 찾기 버튼 클릭
+        /// </summary>
+        public void OnClickForgotPasswordButton()
+        {
+            SetMode(2);
         }
         #endregion
 
@@ -772,25 +807,80 @@ namespace Manager
         }
 
         /// <summary>
-        /// UI 모드 설정 (로그인/회원가입)
+        /// UI 모드 설정 (로그인/회원가입) - 하위 호환성용
         /// </summary>
         private void SetLoginMode(bool isLogin)
         {
-            isLoginMode = isLogin;
+            SetMode(isLogin ? 0 : 1);
+        }
 
-            // 닉네임 필드 표시/숨김
+        /// <summary>
+        /// UI 모드 설정 (0: 로그인, 1: 회원가입, 2: 비밀번호 찾기)
+        /// </summary>
+        private void SetMode(int mode)
+        {
+            currentMode = mode;
+            isLoginMode = (mode == 0);
+
+            // 입력 필드 표시/숨김
+            if (inputPassword != null)
+                inputPassword.gameObject.SetActive(mode != 2); // 비밀번호 찾기 모드에서는 숨김
+
             if (nicknameLabel != null)
-                nicknameLabel.SetActive(!isLoginMode);
+                nicknameLabel.SetActive(mode == 1); // 회원가입 모드에서만 표시
 
             if (nicknameInputField != null)
-                nicknameInputField.SetActive(!isLoginMode);
+                nicknameInputField.SetActive(mode == 1); // 회원가입 모드에서만 표시
 
-            // 버튼 텍스트 변경
+            // actionButton 텍스트 변경
             if (actionButtonText != null)
-                actionButtonText.text = isLoginMode ? "로그인" : "회원가입";
+            {
+                switch (mode)
+                {
+                    case 0:
+                        actionButtonText.text = "로그인";
+                        break;
+                    case 1:
+                        actionButtonText.text = "회원가입";
+                        break;
+                    case 2:
+                        actionButtonText.text = "재설정\n이메일 발송";
+                        break;
+                }
+            }
 
-            if (toggleModeButtonText != null)
-                toggleModeButtonText.text = isLoginMode ? "회원가입" : "로그인";
+            // 버튼 순서 변경
+            SetButtonOrder(mode);
+        }
+
+        /// <summary>
+        /// 버튼 순서 설정 (활성 모드 버튼을 왼쪽으로)
+        /// </summary>
+        private void SetButtonOrder(int mode)
+        {
+            if (loginButton == null || signupButton == null || forgotPasswordButton == null)
+                return;
+
+            switch (mode)
+            {
+                case 0: // 로그인 모드
+                    loginButton.transform.SetSiblingIndex(0);
+                    signupButton.transform.SetSiblingIndex(1);
+                    forgotPasswordButton.transform.SetSiblingIndex(2);
+                    break;
+
+                case 1: // 회원가입 모드
+                    signupButton.transform.SetSiblingIndex(0);
+                    loginButton.transform.SetSiblingIndex(1);
+                    forgotPasswordButton.transform.SetSiblingIndex(2);
+                    break;
+
+                case 2: // 비밀번호 찾기 모드
+                    forgotPasswordButton.transform.SetSiblingIndex(0);
+                    loginButton.transform.SetSiblingIndex(1);
+                    signupButton.transform.SetSiblingIndex(2);
+                    break;
+            }
         }
 
         /// <summary>
@@ -875,6 +965,68 @@ namespace Manager
 
             // 재발송 후 다시 로그아웃
             AuthManager.Instance.SignOutWithoutSessionClear();
+        }
+
+        /// <summary>
+        /// 비밀번호 찾기 처리
+        /// </summary>
+        private async Task HandlePasswordReset()
+        {
+            string email = inputEmail?.text.Trim() ?? "";
+
+            // 이메일 입력 확인
+            if (string.IsNullOrEmpty(email))
+            {
+                SystemMessageManager.Instance?.ShowMessage("InputEmailPassword");
+                return;
+            }
+
+            isProcessing = true;
+            SetButtonsInteractable(false);
+
+            try
+            {
+                // Firebase 초기화 대기
+                if (!AuthManager.Instance.IsInitialized)
+                {
+                    SystemMessageManager.Instance?.ShowMessage("InitializingFirebase");
+                    bool authReady = await AuthManager.Instance.WaitForInitialization(10f);
+                    if (!authReady)
+                    {
+                        SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
+                        return;
+                    }
+                }
+
+                // 비밀번호 재설정 이메일 발송
+                var result = await AuthManager.Instance.SendPasswordResetEmail(email);
+
+                if (result.success)
+                {
+                    // 성공 팝업
+                    UI.Shared.ConfirmationPopup.Show(
+                        $"비밀번호 재설정 이메일이\n{email}으로 발송되었습니다.\n\n" +
+                        "이메일을 확인하여\n비밀번호를 재설정해주세요.",
+                        onConfirm: () =>
+                        {
+                            // 로그인 모드로 전환
+                            SetMode(0);
+                        },
+                        onCancel: null,
+                        confirmText: "확인"
+                    );
+                }
+                else
+                {
+                    // 실패 메시지
+                    SystemMessageManager.Instance?.ShowMessage(result.message, MessageType.Error);
+                }
+            }
+            finally
+            {
+                isProcessing = false;
+                SetButtonsInteractable(true);
+            }
         }
 
         /// <summary>
