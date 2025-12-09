@@ -115,6 +115,13 @@ namespace UI.Shared
                 cancelButtonText.text = cancelText;
             }
 
+            // 취소 버튼 표시/숨김 처리 (onCancel이 null이면 버튼 숨김)
+            if (cancelButton != null)
+            {
+                bool showCancelButton = onCancel != null;
+                cancelButton.gameObject.SetActive(showCancelButton);
+            }
+
             // 액션 저장
             onConfirmed = onConfirm;
             onCanceled = onCancel;

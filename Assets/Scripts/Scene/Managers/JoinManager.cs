@@ -544,18 +544,18 @@ namespace Manager
                                 "인증 이메일을 발송했습니다.\n\n" +
                                 "이메일의 인증 링크를 클릭하면\n" +
                                 "로그인할 수 있습니다.",
-                                onConfirm: () =>
+                                onConfirm: async () =>
                                 {
-                                    // [확인] 버튼: 로그인 모드로 전환
-                                    SetLoginMode(true);
-                                },
-                                onCancel: async () =>
-                                {
-                                    // [재발송] 버튼: 인증 이메일 재발송
+                                    // [확인] 버튼(왼쪽): 인증 이메일 재발송
                                     await ResendVerificationEmail();
                                 },
-                                confirmText: "확인",
-                                cancelText: "재발송"
+                                onCancel: () =>
+                                {
+                                    // [취소] 버튼(오른쪽): 로그인 모드로 전환
+                                    SetLoginMode(true);
+                                },
+                                confirmText: "재발송",
+                                cancelText: "닫기"
                             );
                         }
                         else
