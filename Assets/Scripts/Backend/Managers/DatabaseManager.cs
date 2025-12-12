@@ -69,6 +69,51 @@ namespace Manager
         /// <returns>사용 가능하면 true, 중복이면 false</returns>
         public async Task<bool> IsNicknameAvailable(string nickname)
         {
+            Debug.Log($"[DatabaseManager] 🔍 닉네임 중복 확인 시작: '{nickname}'");
+
+            if (!isInitialized)
+            {
+                Debug.LogError("Firestore가 초기화되지 않았습니다. 초기화를 시도합니다...");
+                await WaitForInitialization();
+
+                if (!isInitialized)
+                {
+                    Debug.LogError("❌ Firestore 초기화 실패 → false 반환");
+                    return false;
+                }
+            }
+
+            try
+            {
+                Debug.Log($"[DatabaseManager] Firestore 쿼리 시작: Nickname == '{nickname}'");
+
+                // Firestore에서 닉네임으로 쿼리
+                Query query = db.Collection(USERS_COLLECTION).WhereEqualTo("Nickname", nickname);
+                QuerySnapshot snapshot = await query.GetSnapshotAsync();
+
+                Debug.Log($"[DatabaseManager] 쿼리 완료: snapshot.Count = {snapshot.Count}");
+
+                // 결과가 없으면 사용 가능
+                bool isAvailable = snapshot.Count == 0;
+                Debug.Log($"[DatabaseManager] ✅ 닉네임 '{nickname}' 사용 가능 여부: {isAvailable} (Count: {snapshot.Count})");
+                return isAvailable;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"❌ 닉네임 중복 확인 실패: {ex.Message}");
+                Debug.LogError($"❌ Exception StackTrace: {ex.StackTrace}");
+                Debug.LogError($"❌ false 반환 (예외 발생으로 인한 실패)");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 이메일 등록 여부 확인
+        /// </summary>
+        /// <param name="email">확인할 이메일</param>
+        /// <returns>등록되어 있으면 true, 등록되지 않았으면 false</returns>
+        public async Task<bool> IsEmailRegistered(string email)
+        {
             if (!isInitialized)
             {
                 Debug.LogError("Firestore가 초기화되지 않았습니다. 초기화를 시도합니다...");
@@ -83,18 +128,18 @@ namespace Manager
 
             try
             {
-                // Firestore에서 닉네임으로 쿼리
-                Query query = db.Collection(USERS_COLLECTION).WhereEqualTo("Nickname", nickname);
+                // Firestore에서 이메일로 쿼리
+                Query query = db.Collection(USERS_COLLECTION).WhereEqualTo("Email", email);
                 QuerySnapshot snapshot = await query.GetSnapshotAsync();
 
-                // 결과가 없으면 사용 가능
-                bool isAvailable = snapshot.Count == 0;
-                Debug.Log($"[DatabaseManager] 닉네임 '{nickname}' 사용 가능 여부: {isAvailable}");
-                return isAvailable;
+                // 결과가 있으면 등록된 이메일
+                bool isRegistered = snapshot.Count > 0;
+                Debug.Log($"[DatabaseManager] 이메일 '{email}' 등록 여부: {isRegistered}");
+                return isRegistered;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"❌ 닉네임 중복 확인 실패: {ex.Message}");
+                Debug.LogError($"❌ 이메일 등록 확인 실패: {ex.Message}");
                 return false;
             }
         }

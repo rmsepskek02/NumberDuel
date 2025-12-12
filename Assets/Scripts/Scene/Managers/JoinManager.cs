@@ -18,14 +18,18 @@ namespace Manager
     public class JoinManager : MonoBehaviourPunCallbacks
     {
         #region Fields and Properties
-        [Header("UI Elements")]
-        public TMP_InputField inputEmail;
-        public TMP_InputField inputPassword;
-        public TMP_InputField inputNickname;
-        public Button actionButton;
-        public TextMeshProUGUI actionButtonText;
-        public GameObject nicknameLabel; // 회원가입 시에만 표시
-        public GameObject nicknameInputField; // 회원가입 시에만 표시
+        [Header("UI Elements - Input Components")]
+        public TMP_InputField inputEmail;    // 이메일 입력 컴포넌트 (데이터 읽기용)
+        public TMP_InputField inputPassword; // 비밀번호 입력 컴포넌트 (데이터 읽기용)
+        public TMP_InputField inputNickname; // 닉네임 입력 컴포넌트 (데이터 읽기용)
+
+        [Header("UI Elements - Input Fields (GameObject)")]
+        public GameObject emailLabel;        // 이메일 라벨 (UI 제어용)
+        public GameObject emailInputField;   // 이메일 입력 필드 (UI 제어용)
+        public GameObject passwordLabel;     // 비밀번호 라벨 (UI 제어용)
+        public GameObject passwordInputField; // 비밀번호 입력 필드 (UI 제어용)
+        public GameObject nicknameLabel;     // 닉네임 라벨 (UI 제어용)
+        public GameObject nicknameInputField; // 닉네임 입력 필드 (UI 제어용)
 
         [Header("Mode Buttons")]
         public Button loginButton;           // 로그인 버튼
@@ -298,331 +302,56 @@ namespace Manager
         #endregion
 
         #region Button Events
-        /// <summary>
-        /// 로그인/회원가입/비밀번호 찾기 버튼 클릭
-        /// </summary>
-        public async void OnClickActionButton()
-        {
-            if (isProcessing) return;
-
-            // 비밀번호 찾기 모드
-            if (currentMode == 2)
-            {
-                await HandlePasswordReset();
-                return;
-            }
-
-            string email = inputEmail?.text ?? "";
-            string password = inputPassword?.text ?? "";
-            string nickname = inputNickname?.text ?? "";
-
-            // 입력 검증
-            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
-            {
-                SystemMessageManager.Instance?.ShowMessage("InputEmailPassword");
-                return;
-            }
-
-            if (!isLoginMode && string.IsNullOrEmpty(nickname))
-            {
-                if (SystemMessageManager.Instance != null)
-                {
-                    SystemMessageManager.Instance.ShowMessage("InputNickname");
-                }
-                return;
-            }
-
-            isProcessing = true;
-            SetButtonsInteractable(false);
-
-            try
-            {
-                // ✅ 1단계: Firebase 초기화 대기
-                if (!AuthManager.Instance.IsInitialized)
-                {
-                    SystemMessageManager.Instance?.ShowMessage("InitializingFirebase");
-                    Debug.Log("[JoinManager] Firebase 초기화 대기 중...");
-
-                    bool authReady = await AuthManager.Instance.WaitForInitialization(10f);
-                    if (!authReady)
-                    {
-                        // 초기화 실패 시 재시도
-                        Debug.Log("[JoinManager] Firebase 재초기화 시도...");
-                        AuthManager.Instance.RetryInitialization();
-
-                        // 재시도 후 다시 대기
-                        authReady = await AuthManager.Instance.WaitForInitialization(10f);
-                        if (!authReady)
-                        {
-                            SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
-                            Debug.LogError("[JoinManager] AuthManager 초기화 재시도 실패");
-                            return;
-                        }
-                    }
-
-                    Debug.Log("[JoinManager] AuthManager 초기화 완료");
-                }
-
-                if (!SessionManager.Instance.IsInitialized)
-                {
-                    bool sessionReady = await SessionManager.Instance.WaitForInitialization(10f);
-                    if (!sessionReady)
-                    {
-                        // 초기화 실패 시 재시도
-                        Debug.Log("[JoinManager] SessionManager 재초기화 시도...");
-                        SessionManager.Instance.RetryInitialization();
-
-                        // 재시도 후 다시 대기
-                        sessionReady = await SessionManager.Instance.WaitForInitialization(10f);
-                        if (!sessionReady)
-                        {
-                            SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
-                            Debug.LogError("[JoinManager] SessionManager 초기화 재시도 실패");
-                            return;
-                        }
-                    }
-
-                    Debug.Log("[JoinManager] SessionManager 초기화 완료");
-                }
-
-                // ✅ 2단계: 기존 로그인 로직 실행
-                if (isLoginMode)
-                {
-                    // 로그인 처리
-                    SystemMessageManager.Instance?.ShowMessage("LoggingIn");
-                    var result = await AuthManager.Instance.LoginWithEmail(email, password);
-
-                    if (result.success)
-                    {
-                        // ✅ 이메일 인증 체크 (테스트 계정 제외)
-                        if (!AuthManager.Instance.IsEmailVerified && !IsTestAccount(email))
-                        {
-                            // ⚠️ 미인증 경고 팝업
-                            UI.Shared.ConfirmationPopup.Show(
-                                "이메일 인증이 필요합니다.\n\n" +
-                                $"{email}으로 발송된\n" +
-                                "이메일의 인증 링크를 클릭해주세요.\n\n" +
-                                "이메일을 받지 못하셨나요?",
-                                onConfirm: async () =>
-                                {
-                                    // [재발송] 버튼: 인증 이메일 재발송
-                                    await ResendVerificationEmail();
-                                },
-                                onCancel: () =>
-                                {
-                                    // [닫기] 버튼: 아무 동작 안 함
-                                },
-                                confirmText: "재발송",
-                                cancelText: "닫기"
-                            );
-
-                            // Firebase에서 로그아웃 (인증 완료 전까지 로그인 불가)
-                            AuthManager.Instance.SignOutWithoutSessionClear();
-                            return;
-                        }
-
-                        // 세션 체크 (중복 로그인 확인)
-                        string uid = AuthManager.Instance.CurrentUserUID;
-                        var sessionCheck = await SessionManager.Instance.CheckSession(uid);
-
-                        if (sessionCheck.isDuplicate)
-                        {
-                            // 중복 로그인 감지 - 팝업으로 사용자에게 선택권 제공
-                            UI.Shared.ConfirmationPopup.Show(
-                                "이미 로그인 중인 계정입니다.\n기존 접속을 해제하고 로그인하시겠습니까?",
-                                onConfirm: async () =>
-                                {
-                                    // 확인 클릭: 기존 세션 강제 종료 후 로그인
-                                    SystemMessageManager.Instance?.ShowMessage("ForceLoginInProgress");
-
-                                    bool forceLoginSuccess = await SessionManager.Instance.ForceLogin(uid);
-
-                                    if (forceLoginSuccess)
-                                    {
-                                        // 세션 모니터링 시작 (다른 곳에서 로그인 시 감지)
-                                        SessionManager.Instance.StartSessionMonitoring(uid);
-
-                                        // 로그인 성공 - 이후 프로세스 계속 진행
-                                        SystemMessageManager.Instance?.ShowMessage("LoginSuccess");
-                                        await System.Threading.Tasks.Task.Delay(500);
-                                        StartCoroutine(OnLoginSuccessCoroutine());
-                                    }
-                                    else
-                                    {
-                                        SystemMessageManager.Instance?.ShowMessage("SessionCreateFailed");
-                                        AuthManager.Instance.Logout();
-                                    }
-
-                                    // 처리 완료 후 플래그 초기화
-                                    isProcessing = false;
-                                    SetButtonsInteractable(true);
-                                },
-                                onCancel: () =>
-                                {
-                                    // 취소 클릭: Firebase에서만 로그아웃 (Firestore 세션은 유지)
-                                    // Client A의 세션을 삭제하지 않음
-                                    AuthManager.Instance.SignOutWithoutSessionClear();
-
-                                    // 로그인 취소 메시지 표시
-                                    SystemMessageManager.Instance?.ShowMessage("LoginCanceled");
-
-                                    isProcessing = false;
-                                    SetButtonsInteractable(true);
-                                }
-                            );
-                            return;
-                        }
-
-                        // 세션 생성
-                        bool sessionCreated = await SessionManager.Instance.CreateSession(uid);
-
-                        if (!sessionCreated)
-                        {
-                            SystemMessageManager.Instance?.ShowMessage("SessionCreateFailed");
-                            AuthManager.Instance.Logout();
-                            return;
-                        }
-
-                        // 세션 모니터링 시작 (다른 곳에서 로그인 시 감지)
-                        SessionManager.Instance.StartSessionMonitoring(uid);
-
-                        SystemMessageManager.Instance?.ShowMessage("LoginSuccess");
-                        await System.Threading.Tasks.Task.Delay(500); // 0.5초 대기
-
-                        // Coroutine으로 프로필 로드 및 로비 진입
-                        StartCoroutine(OnLoginSuccessCoroutine());
-                    }
-                    else
-                    {
-                        // Firebase 인증 에러 - 커스텀 메시지로 표시
-                        SystemMessageManager.Instance?.ShowMessage(result.message, MessageType.Error);
-                    }
-                }
-                else
-                {
-                    // 회원가입 처리
-
-                    // ✅ 1. 닉네임 중복 확인
-                    bool isNicknameAvailable = await DatabaseManager.Instance.IsNicknameAvailable(nickname);
-
-                    if (!isNicknameAvailable)
-                    {
-                        // 닉네임 중복 - 팝업으로 알림
-                        UI.Shared.ConfirmationPopup.Show(
-                            $"'{nickname}' 닉네임은 이미 사용 중입니다.\n\n다른 닉네임을 입력해주세요.",
-                            onConfirm: () =>
-                            {
-                                // [확인] 버튼: 팝업 닫기
-                            },
-                            onCancel: null
-                        );
-
-                        isProcessing = false;
-                        SetButtonsInteractable(true);
-                        return;
-                    }
-
-                    // ✅ 2. Firebase Authentication 계정 생성
-                    var result = await AuthManager.Instance.RegisterWithEmail(email, password);
-
-                    if (result.success)
-                    {
-                        string uid = AuthManager.Instance.CurrentUserUID;
-
-                        // ✅ 3. Firestore 프로필 생성 (emailVerified: false)
-                        bool profileCreated = await DatabaseManager.Instance.CreateUserProfile(uid, email, nickname, emailVerified: false);
-
-                        if (!profileCreated)
-                        {
-                            if (SystemMessageManager.Instance != null)
-                            {
-                                SystemMessageManager.Instance.ShowMessage("ProfileCreateFailed");
-                            }
-                            isProcessing = false;
-                            SetButtonsInteractable(true);
-                            return;
-                        }
-
-                        // ✅ 5. 인증 이메일 발송
-                        var verificationResult = await AuthManager.Instance.SendVerificationEmail();
-
-                        if (verificationResult.success)
-                        {
-                            // ✅ 회원가입 성공 및 인증 이메일 발송 완료 팝업
-                            UI.Shared.ConfirmationPopup.Show(
-                                "회원가입이 완료되었습니다!\n\n" +
-                                $"{email}으로\n" +
-                                "인증 이메일을 발송했습니다.\n\n" +
-                                "이메일의 인증 링크를 클릭하면\n" +
-                                "로그인할 수 있습니다.",
-                                onConfirm: async () =>
-                                {
-                                    // [확인] 버튼(왼쪽): 인증 이메일 재발송
-                                    await ResendVerificationEmail();
-                                },
-                                onCancel: () =>
-                                {
-                                    // [취소] 버튼(오른쪽): 로그인 모드로 전환
-                                    SetLoginMode(true);
-                                },
-                                confirmText: "재발송",
-                                cancelText: "닫기"
-                            );
-                        }
-                        else
-                        {
-                            // ⚠️ 인증 이메일 발송 실패 - 재시도 권장
-                            SystemMessageManager.Instance?.ShowMessage(
-                                verificationResult.message + "\n잠시 후 다시 시도해주세요",
-                                MessageType.Error,
-                                4f
-                            );
-                        }
-                    }
-                    else
-                    {
-                        // Firebase 인증 에러 - 커스텀 메시지로 표시
-                        SystemMessageManager.Instance?.ShowMessage(result.message, MessageType.Error);
-                    }
-                }
-            }
-            finally
-            {
-                isProcessing = false;
-                SetButtonsInteractable(true);
-            }
-        }
-
-        /// <summary>
-        /// 모드 전환 버튼 클릭 (로그인 ↔ 회원가입) - 하위 호환성용
-        /// </summary>
-        public void OnClickToggleModeButton()
-        {
-            SetLoginMode(!isLoginMode);
-        }
 
         /// <summary>
         /// 로그인 버튼 클릭
         /// </summary>
-        public void OnClickLoginButton()
+        public async void OnClickLoginButton()
         {
-            SetMode(0);
+            if (currentMode != 0)
+            {
+                // 다른 모드였다면 → 로그인 모드로 전환만
+                SetMode(0);
+            }
+            else
+            {
+                // 이미 로그인 모드였다면 → 로그인 실행
+                await ExecuteLogin();
+            }
         }
 
         /// <summary>
         /// 회원가입 버튼 클릭
         /// </summary>
-        public void OnClickSignupButton()
+        public async void OnClickSignupButton()
         {
-            SetMode(1);
+            if (currentMode != 1)
+            {
+                // 다른 모드였다면 → 회원가입 모드로 전환만
+                SetMode(1);
+            }
+            else
+            {
+                // 이미 회원가입 모드였다면 → 회원가입 실행
+                await ExecuteSignup();
+            }
         }
 
         /// <summary>
         /// 비밀번호 찾기 버튼 클릭
         /// </summary>
-        public void OnClickForgotPasswordButton()
+        public async void OnClickForgotPasswordButton()
         {
-            SetMode(2);
+            if (currentMode != 2)
+            {
+                // 다른 모드였다면 → 비밀번호 찾기 모드로 전환만
+                SetMode(2);
+            }
+            else
+            {
+                // 이미 비밀번호 찾기 모드였다면 → 이메일 발송 실행
+                await ExecutePasswordReset();
+            }
         }
         #endregion
 
@@ -822,32 +551,19 @@ namespace Manager
             currentMode = mode;
             isLoginMode = (mode == 0);
 
-            // 입력 필드 표시/숨김
-            if (inputPassword != null)
-                inputPassword.gameObject.SetActive(mode != 2); // 비밀번호 찾기 모드에서는 숨김
+            // 비밀번호 입력 필드 표시/숨김 (비밀번호 찾기 모드에서는 숨김)
+            if (passwordLabel != null)
+                passwordLabel.SetActive(mode != 2);
 
+            if (passwordInputField != null)
+                passwordInputField.SetActive(mode != 2);
+
+            // 닉네임 입력 필드 표시/숨김 (회원가입 모드에서만 표시)
             if (nicknameLabel != null)
-                nicknameLabel.SetActive(mode == 1); // 회원가입 모드에서만 표시
+                nicknameLabel.SetActive(mode == 1);
 
             if (nicknameInputField != null)
-                nicknameInputField.SetActive(mode == 1); // 회원가입 모드에서만 표시
-
-            // actionButton 텍스트 변경
-            if (actionButtonText != null)
-            {
-                switch (mode)
-                {
-                    case 0:
-                        actionButtonText.text = "로그인";
-                        break;
-                    case 1:
-                        actionButtonText.text = "회원가입";
-                        break;
-                    case 2:
-                        actionButtonText.text = "재설정\n이메일 발송";
-                        break;
-                }
-            }
+                nicknameInputField.SetActive(mode == 1);
 
             // 버튼 순서 변경
             SetButtonOrder(mode);
@@ -888,11 +604,14 @@ namespace Manager
         /// </summary>
         private void SetButtonsInteractable(bool interactable)
         {
-            if (actionButton != null)
-                actionButton.interactable = interactable;
+            if (loginButton != null)
+                loginButton.interactable = interactable;
 
-            if (toggleModeButton != null)
-                toggleModeButton.interactable = interactable;
+            if (signupButton != null)
+                signupButton.interactable = interactable;
+
+            if (forgotPasswordButton != null)
+                forgotPasswordButton.interactable = interactable;
         }
 
         /// <summary>
@@ -968,9 +687,298 @@ namespace Manager
         }
 
         /// <summary>
-        /// 비밀번호 찾기 처리
+        /// 로그인 실행
         /// </summary>
-        private async Task HandlePasswordReset()
+        private async Task ExecuteLogin()
+        {
+            if (isProcessing) return;
+
+            string email = inputEmail?.text ?? "";
+            string password = inputPassword?.text ?? "";
+
+            // 입력 검증
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+            {
+                SystemMessageManager.Instance?.ShowMessage("InputEmailPassword");
+                return;
+            }
+
+            isProcessing = true;
+            SetButtonsInteractable(false);
+
+            try
+            {
+                // Firebase 초기화 대기
+                if (!AuthManager.Instance.IsInitialized)
+                {
+                    SystemMessageManager.Instance?.ShowMessage("InitializingFirebase");
+                    Debug.Log("[JoinManager] Firebase 초기화 대기 중...");
+
+                    bool authReady = await AuthManager.Instance.WaitForInitialization(10f);
+                    if (!authReady)
+                    {
+                        Debug.Log("[JoinManager] Firebase 재초기화 시도...");
+                        AuthManager.Instance.RetryInitialization();
+                        authReady = await AuthManager.Instance.WaitForInitialization(10f);
+                        if (!authReady)
+                        {
+                            SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
+                            Debug.LogError("[JoinManager] AuthManager 초기화 재시도 실패");
+                            return;
+                        }
+                    }
+                    Debug.Log("[JoinManager] AuthManager 초기화 완료");
+                }
+
+                if (!SessionManager.Instance.IsInitialized)
+                {
+                    bool sessionReady = await SessionManager.Instance.WaitForInitialization(10f);
+                    if (!sessionReady)
+                    {
+                        Debug.Log("[JoinManager] SessionManager 재초기화 시도...");
+                        SessionManager.Instance.RetryInitialization();
+                        sessionReady = await SessionManager.Instance.WaitForInitialization(10f);
+                        if (!sessionReady)
+                        {
+                            SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
+                            Debug.LogError("[JoinManager] SessionManager 초기화 재시도 실패");
+                            return;
+                        }
+                    }
+                    Debug.Log("[JoinManager] SessionManager 초기화 완료");
+                }
+
+                // 로그인 처리
+                SystemMessageManager.Instance?.ShowMessage("LoggingIn");
+                var result = await AuthManager.Instance.LoginWithEmail(email, password);
+
+                if (result.success)
+                {
+                    // 이메일 인증 체크 (테스트 계정 제외)
+                    if (!AuthManager.Instance.IsEmailVerified && !IsTestAccount(email))
+                    {
+                        UI.Shared.ConfirmationPopup.Show(
+                            "이메일 인증이 필요합니다.\n\n" +
+                            $"{email}으로 발송된\n" +
+                            "이메일의 인증 링크를 클릭해주세요.\n\n" +
+                            "이메일을 받지 못하셨나요?",
+                            onConfirm: async () =>
+                            {
+                                await ResendVerificationEmail();
+                            },
+                            onCancel: () => { },
+                            confirmText: "재발송",
+                            cancelText: "닫기"
+                        );
+
+                        AuthManager.Instance.SignOutWithoutSessionClear();
+                        return;
+                    }
+
+                    // 세션 체크 (중복 로그인 확인)
+                    string uid = AuthManager.Instance.CurrentUserUID;
+                    var sessionCheck = await SessionManager.Instance.CheckSession(uid);
+
+                    if (sessionCheck.isDuplicate)
+                    {
+                        UI.Shared.ConfirmationPopup.Show(
+                            "이미 로그인 중인 계정입니다.\n기존 접속을 해제하고 로그인하시겠습니까?",
+                            onConfirm: async () =>
+                            {
+                                SystemMessageManager.Instance?.ShowMessage("ForceLoginInProgress");
+                                bool forceLoginSuccess = await SessionManager.Instance.ForceLogin(uid);
+
+                                if (forceLoginSuccess)
+                                {
+                                    SessionManager.Instance.StartSessionMonitoring(uid);
+                                    SystemMessageManager.Instance?.ShowMessage("LoginSuccess");
+                                    await System.Threading.Tasks.Task.Delay(500);
+                                    StartCoroutine(OnLoginSuccessCoroutine());
+                                }
+                                else
+                                {
+                                    SystemMessageManager.Instance?.ShowMessage("SessionCreateFailed");
+                                    AuthManager.Instance.Logout();
+                                }
+
+                                isProcessing = false;
+                                SetButtonsInteractable(true);
+                            },
+                            onCancel: () =>
+                            {
+                                AuthManager.Instance.SignOutWithoutSessionClear();
+                                SystemMessageManager.Instance?.ShowMessage("LoginCanceled");
+                                isProcessing = false;
+                                SetButtonsInteractable(true);
+                            },
+                            confirmText: "확인",
+                            cancelText: "취소"
+                        );
+                        return;
+                    }
+
+                    // 세션 생성
+                    bool sessionCreated = await SessionManager.Instance.CreateSession(uid);
+                    if (!sessionCreated)
+                    {
+                        SystemMessageManager.Instance?.ShowMessage("SessionCreateFailed");
+                        AuthManager.Instance.Logout();
+                        return;
+                    }
+
+                    SessionManager.Instance.StartSessionMonitoring(uid);
+                    SystemMessageManager.Instance?.ShowMessage("LoginSuccess");
+                    await System.Threading.Tasks.Task.Delay(500);
+                    StartCoroutine(OnLoginSuccessCoroutine());
+                }
+                else
+                {
+                    SystemMessageManager.Instance?.ShowMessage(result.message, MessageType.Error);
+                }
+            }
+            finally
+            {
+                isProcessing = false;
+                SetButtonsInteractable(true);
+            }
+        }
+
+        /// <summary>
+        /// 회원가입 실행
+        /// </summary>
+        private async Task ExecuteSignup()
+        {
+            if (isProcessing) return;
+
+            string email = inputEmail?.text ?? "";
+            string password = inputPassword?.text ?? "";
+            string nickname = inputNickname?.text ?? "";
+
+            // 입력 검증
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+            {
+                SystemMessageManager.Instance?.ShowMessage("InputEmailPassword");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(nickname))
+            {
+                SystemMessageManager.Instance?.ShowMessage("InputNickname");
+                return;
+            }
+
+            isProcessing = true;
+            SetButtonsInteractable(false);
+
+            try
+            {
+                // Firebase 초기화 대기
+                if (!AuthManager.Instance.IsInitialized)
+                {
+                    SystemMessageManager.Instance?.ShowMessage("InitializingFirebase");
+                    bool authReady = await AuthManager.Instance.WaitForInitialization(10f);
+                    if (!authReady)
+                    {
+                        AuthManager.Instance.RetryInitialization();
+                        authReady = await AuthManager.Instance.WaitForInitialization(10f);
+                        if (!authReady)
+                        {
+                            SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
+                            return;
+                        }
+                    }
+                }
+
+                if (!SessionManager.Instance.IsInitialized)
+                {
+                    bool sessionReady = await SessionManager.Instance.WaitForInitialization(10f);
+                    if (!sessionReady)
+                    {
+                        SessionManager.Instance.RetryInitialization();
+                        sessionReady = await SessionManager.Instance.WaitForInitialization(10f);
+                        if (!sessionReady)
+                        {
+                            SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
+                            return;
+                        }
+                    }
+                }
+
+                // 닉네임 중복 확인
+                bool isNicknameAvailable = await DatabaseManager.Instance.IsNicknameAvailable(nickname);
+                if (!isNicknameAvailable)
+                {
+                    UI.Shared.ConfirmationPopup.Show(
+                        $"'{nickname}' 닉네임은 이미 사용 중입니다.\n\n다른 닉네임을 입력해주세요.",
+                        onConfirm: () => { },
+                        onCancel: null,
+                        confirmText: "확인",
+                        cancelText: "취소"
+                    );
+                    return;
+                }
+
+                // Firebase Authentication 계정 생성
+                var result = await AuthManager.Instance.RegisterWithEmail(email, password);
+                if (result.success)
+                {
+                    string uid = AuthManager.Instance.CurrentUserUID;
+
+                    // Firestore 프로필 생성
+                    bool profileCreated = await DatabaseManager.Instance.CreateUserProfile(uid, email, nickname, emailVerified: false);
+                    if (!profileCreated)
+                    {
+                        SystemMessageManager.Instance?.ShowMessage("ProfileCreateFailed");
+                        return;
+                    }
+
+                    // 인증 이메일 발송
+                    var verificationResult = await AuthManager.Instance.SendVerificationEmail();
+                    if (verificationResult.success)
+                    {
+                        UI.Shared.ConfirmationPopup.Show(
+                            "회원가입이 완료되었습니다!\n\n" +
+                            $"{email}으로\n" +
+                            "인증 이메일을 발송했습니다.\n\n" +
+                            "이메일의 인증 링크를 클릭하면\n" +
+                            "로그인할 수 있습니다.",
+                            onConfirm: async () =>
+                            {
+                                await ResendVerificationEmail();
+                            },
+                            onCancel: () =>
+                            {
+                                SetLoginMode(true);
+                            },
+                            confirmText: "재발송",
+                            cancelText: "닫기"
+                        );
+                    }
+                    else
+                    {
+                        SystemMessageManager.Instance?.ShowMessage(
+                            verificationResult.message + "\n잠시 후 다시 시도해주세요",
+                            MessageType.Error,
+                            4f
+                        );
+                    }
+                }
+                else
+                {
+                    SystemMessageManager.Instance?.ShowMessage(result.message, MessageType.Error);
+                }
+            }
+            finally
+            {
+                isProcessing = false;
+                SetButtonsInteractable(true);
+            }
+        }
+
+        /// <summary>
+        /// 비밀번호 찾기 실행
+        /// </summary>
+        private async Task ExecutePasswordReset()
         {
             string email = inputEmail?.text.Trim() ?? "";
 
@@ -998,14 +1006,37 @@ namespace Manager
                     }
                 }
 
-                // 비밀번호 재설정 이메일 발송
+                // DatabaseManager 초기화 확인 및 대기
+                if (DatabaseManager.Instance == null)
+                {
+                    Debug.LogError("[JoinManager] DatabaseManager 인스턴스를 찾을 수 없습니다.");
+                    SystemMessageManager.Instance?.ShowMessage("DatabaseError", MessageType.Error);
+                    return;
+                }
+
+                // 이메일 등록 여부 확인
+                bool isRegistered = await DatabaseManager.Instance.IsEmailRegistered(email);
+
+                if (!isRegistered)
+                {
+                    // 등록되지 않은 이메일 - 확인 버튼만 있는 팝업 표시
+                    UI.Shared.ConfirmationPopup.Show(
+                        "가입되지 않은 이메일입니다.\n\n" +
+                        "회원가입을 먼저 진행해주세요.",
+                        onConfirm: null,  // 확인 버튼 클릭 시 팝업만 닫힘
+                        onCancel: null    // 취소 버튼 숨김
+                    );
+                    return;
+                }
+
+                // 등록된 이메일 - 비밀번호 재설정 이메일 발송
                 var result = await AuthManager.Instance.SendPasswordResetEmail(email);
 
                 if (result.success)
                 {
                     // 성공 팝업
                     UI.Shared.ConfirmationPopup.Show(
-                        $"비밀번호 재설정 이메일이\n{email}으로 발송되었습니다.\n\n" +
+                        $"비밀번호 재설정 이메일이\n'{email}'\n으로 발송되었습니다.\n\n" +
                         "이메일을 확인하여\n비밀번호를 재설정해주세요.",
                         onConfirm: () =>
                         {
@@ -1013,7 +1044,8 @@ namespace Manager
                             SetMode(0);
                         },
                         onCancel: null,
-                        confirmText: "확인"
+                        confirmText: "확인",
+                        cancelText: "취소"
                     );
                 }
                 else
