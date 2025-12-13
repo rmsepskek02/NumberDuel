@@ -11,7 +11,7 @@ namespace UI.Shared
     /// 재사용 가능한 확인 팝업
     /// 동적으로 메시지와 액션 설정 가능
     /// </summary>
-    public class ConfirmationPopupUI : MonoBehaviour
+    public class ConfirmationPopupUI : MonoBehaviour, ICloseable
     {
         #region Fields and Properties
         [Header("UI References")]
@@ -31,6 +31,14 @@ namespace UI.Shared
         private Action onCanceled;
         private Tween showTween;
         private Tween hideTween;
+
+        // 애니메이션 진행 상태
+        private bool isAnimating = false;
+
+        /// <summary>
+        /// 애니메이션 진행 중인지 여부
+        /// </summary>
+        public bool IsAnimating => isAnimating;
         #endregion
 
         #region Unity Lifecycle
@@ -60,6 +68,28 @@ namespace UI.Shared
             // 버튼 이벤트 해제
             cancelButton?.onClick.RemoveListener(OnCancelClicked);
             confirmButton?.onClick.RemoveListener(OnConfirmClicked);
+        }
+        #endregion
+
+        #region ICloseable Implementation
+        /// <summary>
+        /// ICloseable 구현: 팝업 닫기 (취소 버튼 클릭과 동일)
+        /// UIStackManager의 ESC 키 처리에서 호출됨
+        /// </summary>
+        public void Close()
+        {
+            // 취소 버튼 클릭과 동일하게 처리
+            OnCancelClicked();
+        }
+
+        /// <summary>
+        /// ICloseable 구현: 닫을 수 있는 상태인지 확인
+        /// </summary>
+        /// <returns>애니메이션 진행 중이 아니면 true</returns>
+        public bool CanClose()
+        {
+            // 애니메이션 진행 중이면 닫을 수 없음
+            return !isAnimating;
         }
         #endregion
 
@@ -129,6 +159,9 @@ namespace UI.Shared
             // 활성화
             gameObject.SetActive(true);
 
+            // UIStackManager에 등록
+            UIStackManager.Instance?.Push(this);
+
             // 애니메이션
             PlayShowAnimation();
 
@@ -144,14 +177,14 @@ namespace UI.Shared
             // 이전 Tween 정리
             showTween?.Kill();
 
+            // UIStackManager에서 제거
+            UIStackManager.Instance?.Pop();
+
             // 애니메이션
             PlayHideAnimation();
 
             // 사운드 재생
             Manager.SoundManager.Instance?.PlaySFX(SoundType.UI_ButtonClick);
-
-            // SettingsManager에 알림
-            //Manager.SettingsManager.Instance?.OnConfirmationClosed();
         }
         #endregion
 
@@ -192,6 +225,9 @@ namespace UI.Shared
                 return;
             }
 
+            // 애니메이션 시작
+            isAnimating = true;
+
             // 초기 상태
             canvasGroup.alpha = 0f;
             popupRect.localScale = Vector3.one * 0.9f;
@@ -212,6 +248,7 @@ namespace UI.Shared
             {
                 canvasGroup.interactable = true;
                 canvasGroup.blocksRaycasts = true;
+                isAnimating = false; // 애니메이션 완료
             });
 
             showTween = showSequence;
@@ -228,6 +265,9 @@ namespace UI.Shared
                 gameObject.SetActive(false);
                 return;
             }
+
+            // 애니메이션 시작
+            isAnimating = true;
 
             // 상호작용 비활성화
             canvasGroup.interactable = false;
@@ -246,6 +286,7 @@ namespace UI.Shared
             hideSequence.OnComplete(() =>
             {
                 gameObject.SetActive(false);
+                isAnimating = false; // 애니메이션 완료
             });
 
             hideTween = hideSequence;

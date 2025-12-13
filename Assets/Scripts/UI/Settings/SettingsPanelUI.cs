@@ -45,6 +45,14 @@ namespace UI.Settings
         private Tween showTween;
         private Tween hideTween;
         private string currentSceneName;
+
+        // 애니메이션 진행 상태
+        private bool isAnimating = false;
+
+        /// <summary>
+        /// 애니메이션 진행 중인지 여부
+        /// </summary>
+        public bool IsAnimating => isAnimating;
         #endregion
 
         #region Unity Lifecycle
@@ -317,6 +325,9 @@ namespace UI.Settings
                 return;
             }
 
+            // 애니메이션 시작
+            isAnimating = true;
+
             // 초기 상태
             canvasGroup.alpha = 0f;
             panelRect.localScale = Vector3.one * 0.8f;
@@ -337,6 +348,7 @@ namespace UI.Settings
             {
                 canvasGroup.interactable = true;
                 canvasGroup.blocksRaycasts = true;
+                isAnimating = false; // 애니메이션 완료
             });
 
             showTween = showSequence;
@@ -357,6 +369,9 @@ namespace UI.Settings
                     mainPanel.SetActive(false);
                 return;
             }
+
+            // 애니메이션 시작
+            isAnimating = true;
 
             // 상호작용 비활성화
             canvasGroup.interactable = false;
@@ -379,6 +394,8 @@ namespace UI.Settings
 
                 if (mainPanel != null)
                     mainPanel.SetActive(false);
+
+                isAnimating = false; // 애니메이션 완료
             });
 
             hideTween = hideSequence;

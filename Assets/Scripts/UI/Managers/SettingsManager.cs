@@ -10,10 +10,10 @@ namespace Manager
     /// <summary>
     /// 설정 시스템 중앙 관리자
     /// - 설정 패널 Show/Hide
-    /// - ESC 키 감지
+    /// - UIStackManager를 통한 ESC 키 처리
     /// - 씬별 Footer 액션 분기
     /// </summary>
-    public class SettingsManager : SingletonDontDestroy<SettingsManager>
+    public class SettingsManager : SingletonDontDestroy<SettingsManager>, UI.ICloseable
     {
         #region Fields and Properties
         [Header("UI References")]
@@ -34,6 +34,9 @@ namespace Manager
         protected override void Awake()
         {
             base.Awake();
+
+            // UIStackManager 초기화 (Instance 접근으로 자동 생성)
+            var uiStackManager = UI.UIStackManager.Instance;
 
             // UI 참조가 없으면 씬에서 찾기
             if (settingsPanelUI == null)
@@ -68,15 +71,6 @@ namespace Manager
             SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 
-        private void Update()
-        {
-            // ESC 키 처리 (New Input System)
-            if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
-            {
-                HandleEscapeKey();
-            }
-        }
-
         /// <summary>
         /// 씬 로드 시 호출 - SettingsButton 활성화/비활성화 제어
         /// </summary>
@@ -96,30 +90,34 @@ namespace Manager
             // SplashScene에서만 비활성화, 나머지 씬에서는 활성화
             bool shouldShow = sceneName != SceneName.SplashScene.GetSceneName();
             settingsButton.SetActive(shouldShow);
-
-            Debug.Log($"[SettingsManager] SettingsButton {(shouldShow ? "활성화" : "비활성화")} (씬: {sceneName})");
         }
         #endregion
 
-        #region ESC Key Handling
+        #region ICloseable Implementation
         /// <summary>
-        /// ESC 키 입력 처리
-        /// - 설정 패널 열려있을 때: 설정 닫기
-        /// - 아무것도 없을 때: 설정 열기
-        /// (확인 팝업은 자체적으로 Cancel 버튼으로 닫기)
+        /// ICloseable 구현: 설정 패널 닫기
+        /// UIStackManager의 ESC 키 처리에서 호출됨
         /// </summary>
-        private void HandleEscapeKey()
+        public void Close()
         {
-            if (isSettingsOpen)
-            {
-                // 설정 패널 닫기
-                HideSettings();
-            }
-            else
-            {
-                // 설정 패널 열기
-                ShowSettings();
-            }
+            HideSettings();
+        }
+
+        /// <summary>
+        /// ICloseable 구현: 닫을 수 있는 상태인지 확인
+        /// </summary>
+        /// <returns>애니메이션 진행 중이 아니고 설정이 열려있으면 true</returns>
+        public bool CanClose()
+        {
+            // 설정이 열려있지 않으면 닫을 수 없음
+            if (!isSettingsOpen)
+                return false;
+
+            // 애니메이션 진행 중이면 닫을 수 없음
+            if (settingsPanelUI != null && settingsPanelUI.IsAnimating)
+                return false;
+
+            return true;
         }
         #endregion
 
@@ -141,6 +139,9 @@ namespace Manager
             settingsPanelUI.Show();
             isSettingsOpen = true;
 
+            // UIStackManager에 등록
+            UI.UIStackManager.Instance?.Push(this);
+
             // 사운드 재생
             SoundManager.Instance?.PlaySFX(SoundType.UI_ButtonClick);
         }
@@ -158,6 +159,9 @@ namespace Manager
 
             settingsPanelUI.Hide();
             isSettingsOpen = false;
+
+            // UIStackManager에서 제거
+            UI.UIStackManager.Instance?.Pop();
 
             // 사운드 재생
             SoundManager.Instance?.PlaySFX(SoundType.UI_ButtonClick);

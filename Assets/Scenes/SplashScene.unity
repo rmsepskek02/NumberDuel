@@ -2132,6 +2132,50 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 473435195}
   m_CullTransparentMesh: 1
+--- !u!1 &478840059
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 478840061}
+  - component: {fileID: 478840060}
+  m_Layer: 0
+  m_Name: UIStackManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &478840060
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 478840059}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd6f835eb21ab5f4cb6a543b9783c347, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &478840061
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 478840059}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &505003290
 GameObject:
   m_ObjectHideFlags: 0
@@ -8412,7 +8456,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b37ea213da47fd1459a5e61b057ab7ed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  settingsPanelUI: {fileID: 0}
+  settingsPanelUI: {fileID: 352904205}
   settingsButton: {fileID: 2141909784}
 --- !u!4 &1537268874
 Transform:
@@ -12741,3 +12785,4 @@ SceneRoots:
   - {fileID: 352904204}
   - {fileID: 1537268874}
   - {fileID: 1200112445}
+  - {fileID: 478840061}
