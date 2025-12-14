@@ -87,19 +87,6 @@ namespace UI.Settings
             UpdateTabVisibility();
         }
 
-        private void Update()
-        {
-            // 설정 패널이 활성화되어 있고 애니메이션 중이 아닐 때만 키 입력 처리
-            if (!mainPanel.activeSelf || isAnimating)
-                return;
-
-            // Enter 키 - 설정 패널 닫기 (ESC와 동일)
-            if (Keyboard.current != null && Keyboard.current.enterKey.wasPressedThisFrame)
-            {
-                Manager.SettingsManager.Instance?.HideSettings();
-            }
-        }
-
         private void OnDestroy()
         {
             // Tween 정리

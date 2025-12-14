@@ -66,13 +66,18 @@ namespace UI.Shared
             if (!gameObject.activeSelf || isAnimating)
                 return;
 
-            // Enter 키 - 확인 버튼 클릭
+            // Enter 키 처리
             if (Keyboard.current != null && Keyboard.current.enterKey.wasPressedThisFrame)
             {
-                if (confirmButton != null && confirmButton.interactable)
+                // 취소 버튼이 활성화되어 있으면 Enter 무시 (명시적 클릭 유도)
+                // 예: "재발송"과 "닫기" 버튼이 같이 있는 경우, 실수로 Enter를 눌러 작업이 실행되는 것을 방지
+                if (cancelButton != null && cancelButton.gameObject.activeSelf)
                 {
-                    OnConfirmClicked();
+                    return; // Do nothing - force explicit click
                 }
+
+                // 취소 버튼이 없으면 팝업 닫기 (안전한 종료)
+                OnCancelClicked();
             }
         }
 
