@@ -4,6 +4,7 @@ using Objects;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 
 namespace UI.Shared
 {
@@ -57,6 +58,22 @@ namespace UI.Shared
             }
 
             gameObject.SetActive(false);
+        }
+
+        private void Update()
+        {
+            // 팝업이 활성화되어 있고 애니메이션 중이 아닐 때만 키 입력 처리
+            if (!gameObject.activeSelf || isAnimating)
+                return;
+
+            // Enter 키 - 확인 버튼 클릭
+            if (Keyboard.current != null && Keyboard.current.enterKey.wasPressedThisFrame)
+            {
+                if (confirmButton != null && confirmButton.interactable)
+                {
+                    OnConfirmClicked();
+                }
+            }
         }
 
         private void OnDestroy()

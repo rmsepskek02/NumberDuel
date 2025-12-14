@@ -1163,6 +1163,10 @@ namespace Manager
             if (isProcessing)
                 return;
 
+            // UIStack에 팝업이 열려있으면 무시 (팝업에서 처리)
+            if (UI.UIStackManager.Instance != null && UI.UIStackManager.Instance.HasOpenUI)
+                return;
+
             switch (currentMode)
             {
                 case 0: // 로그인 모드
