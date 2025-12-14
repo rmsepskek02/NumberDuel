@@ -67,7 +67,7 @@ namespace Manager
                 }
                 else
                 {
-                    Debug.LogError($"❌ Firestore 초기화 실패: {task.Result}");
+                    Debug.LogError($"Firestore 초기화 실패: {task.Result}");
                     isInitialized = false;
                 }
             });
@@ -149,7 +149,7 @@ namespace Manager
         {
             if (!isInitialized)
             {
-                Debug.LogError("❌ Firestore가 초기화되지 않았습니다.");
+                Debug.LogError("Firestore가 초기화되지 않았습니다.");
                 return (false, "세션 체크 중 오류 발생");
             }
 
@@ -172,7 +172,7 @@ namespace Manager
             }
             catch (Exception ex)
             {
-                Debug.LogError($"❌ 세션 체크 실패: {ex.Message}");
+                Debug.LogError($"세션 체크 실패: {ex.Message}");
                 return (false, "세션 체크 중 오류 발생");
             }
         }
@@ -185,7 +185,7 @@ namespace Manager
         {
             if (!isInitialized)
             {
-                Debug.LogError("❌ Firestore가 초기화되지 않았습니다.");
+                Debug.LogError("Firestore가 초기화되지 않았습니다.");
                 return false;
             }
 
@@ -215,7 +215,7 @@ namespace Manager
             }
             catch (Exception ex)
             {
-                Debug.LogError($"❌ 세션 생성 실패: {ex.Message}");
+                Debug.LogError($"세션 생성 실패: {ex.Message}");
                 return false;
             }
         }
@@ -228,7 +228,7 @@ namespace Manager
         {
             if (!isInitialized)
             {
-                Debug.LogError("❌ Firestore가 초기화되지 않았습니다.");
+                Debug.LogError("Firestore가 초기화되지 않았습니다.");
                 return false;
             }
 
@@ -236,7 +236,7 @@ namespace Manager
             {
                 if (string.IsNullOrEmpty(currentSessionId))
                 {
-                    Debug.LogWarning("⚠️ 현재 세션 ID가 없습니다.");
+                    Debug.LogWarning("현재 세션 ID가 없습니다.");
                     return false;
                 }
 
@@ -250,7 +250,7 @@ namespace Manager
             }
             catch (Exception ex)
             {
-                Debug.LogError($"❌ 세션 갱신 실패: {ex.Message}");
+                Debug.LogError($"세션 갱신 실패: {ex.Message}");
                 return false;
             }
         }
@@ -263,7 +263,7 @@ namespace Manager
         {
             if (!isInitialized)
             {
-                Debug.LogError("❌ Firestore가 초기화되지 않았습니다.");
+                Debug.LogError("Firestore가 초기화되지 않았습니다.");
                 return false;
             }
 
@@ -271,7 +271,7 @@ namespace Manager
             {
                 if (string.IsNullOrEmpty(uid))
                 {
-                    Debug.LogWarning("⚠️ UID가 비어있습니다.");
+                    Debug.LogWarning("UID가 비어있습니다.");
                     return false;
                 }
 
@@ -285,7 +285,7 @@ namespace Manager
             }
             catch (Exception ex)
             {
-                Debug.LogError($"❌ 세션 정리 실패: {ex.Message}");
+                Debug.LogError($"세션 정리 실패: {ex.Message}");
                 return false;
             }
         }
@@ -306,7 +306,7 @@ namespace Manager
         {
             if (!isInitialized)
             {
-                Debug.LogError("❌ Firestore가 초기화되지 않았습니다.");
+                Debug.LogError("Firestore가 초기화되지 않았습니다.");
                 return false;
             }
 
@@ -336,7 +336,7 @@ namespace Manager
             }
             catch (Exception ex)
             {
-                Debug.LogError($"❌ 강제 로그인 실패: {ex.Message}");
+                Debug.LogError($"강제 로그인 실패: {ex.Message}");
                 return false;
             }
         }
@@ -352,13 +352,13 @@ namespace Manager
         {
             if (!isInitialized)
             {
-                Debug.LogError("❌ Firestore가 초기화되지 않았습니다.");
+                Debug.LogError("Firestore가 초기화되지 않았습니다.");
                 return;
             }
 
             if (string.IsNullOrEmpty(uid))
             {
-                Debug.LogWarning("⚠️ UID가 비어있습니다.");
+                Debug.LogWarning("UID가 비어있습니다.");
                 return;
             }
 
@@ -399,7 +399,7 @@ namespace Manager
         {
             if (snapshot == null)
             {
-                Debug.LogWarning("⚠️ 세션 스냅샷이 null입니다.");
+                Debug.LogWarning("세션 스냅샷이 null입니다.");
                 return;
             }
 
@@ -413,7 +413,7 @@ namespace Manager
             // 세션 문서가 삭제되었거나 존재하지 않는 경우
             if (!snapshot.Exists)
             {
-                Debug.LogWarning("⚠️ 세션이 삭제되었습니다. 강제 로그아웃 처리합니다.");
+                Debug.LogWarning("세션이 삭제되었습니다. 강제 로그아웃 처리합니다.");
                 HandleForceLogout();
                 return;
             }
@@ -427,8 +427,8 @@ namespace Manager
                 // 현재 세션 ID와 다르면 강제 로그아웃
                 if (!string.IsNullOrEmpty(currentSessionId) && newSessionId != currentSessionId)
                 {
-                    Debug.LogWarning($"⚠️ 세션 ID가 변경되었습니다. (현재: {currentSessionId}, 새로운: {newSessionId})");
-                    Debug.LogWarning("⚠️ 다른 곳에서 로그인되었습니다. 강제 로그아웃 처리합니다.");
+                    Debug.LogWarning($"세션 ID가 변경되었습니다. (현재: {currentSessionId}, 새로운: {newSessionId})");
+                    Debug.LogWarning("다른 곳에서 로그인되었습니다. 강제 로그아웃 처리합니다.");
                     HandleForceLogout();
                 }
             }

@@ -153,7 +153,6 @@ namespace Manager
                     yield break;
                 }
 
-                Debug.Log("[SplashManager] ✅ 자동 로그인 성공 - 로비로 이동");
                 SceneManager.LoadScene(SceneNameExtensions.GetSceneName(SceneName.LobbyScene));
             }
             else

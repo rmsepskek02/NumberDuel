@@ -82,18 +82,16 @@ namespace Manager
                     OnAuthStateChanged(this, null);
 
                     isInitialized = true; // 초기화 완료 플래그 설정
-                    Debug.Log("✅ AuthManager 초기화 완료");
 
                     // SessionManager의 강제 로그아웃 이벤트 구독
                     if (SessionManager.Instance != null)
                     {
                         SessionManager.Instance.OnForceLogout += HandleForceLogout;
-                        Debug.Log("✅ SessionManager 강제 로그아웃 이벤트 구독 완료");
                     }
                 }
                 else
                 {
-                    Debug.LogError($"❌ Firebase 초기화 실패: {task.Result}");
+                    Debug.LogError($"Firebase 초기화 실패: {task.Result}");
                     isInitialized = false;
                 }
             });
@@ -209,7 +207,6 @@ namespace Manager
                     // 이메일 인증 발송
                     await SendEmailVerification();
 
-                    Debug.Log($"✅ 회원가입 성공: {email}");
                     return (true, "회원가입이 완료되었습니다. 이메일 인증을 진행해주세요.");
                 }
 
@@ -236,7 +233,6 @@ namespace Manager
             try
             {
                 await currentUser.SendEmailVerificationAsync();
-                Debug.Log("✅ 이메일 인증 발송 완료");
                 return true;
             }
             catch (FirebaseException ex)
@@ -277,7 +273,6 @@ namespace Manager
                     //     return (false, "이메일 인증이 완료되지 않았습니다.");
                     // }
 
-                    Debug.Log($"✅ 로그인 성공: {email}");
                     return (true, "로그인 성공!");
                 }
 
@@ -312,11 +307,6 @@ namespace Manager
                 if (SessionManager.Instance != null && SessionManager.Instance.IsInitialized)
                 {
                     await SessionManager.Instance.ClearSession(uid);
-                    Debug.Log("✅ 로그아웃 및 세션 정리 완료");
-                }
-                else
-                {
-                    Debug.Log("✅ 로그아웃 완료 (세션 정리 생략)");
                 }
 
                 // ✅ 3. Firebase 세션 종료
@@ -334,7 +324,6 @@ namespace Manager
         {
             if (auth != null && currentUser != null)
             {
-                Debug.Log("✅ Firebase 로그아웃 (Firestore 세션 유지)");
 
                 // Firebase 세션만 종료
                 auth.SignOut();

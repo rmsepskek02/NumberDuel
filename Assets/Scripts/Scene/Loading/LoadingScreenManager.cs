@@ -147,7 +147,7 @@ namespace Manager
         {
             if (!CanTransitionTo(newState))
             {
-                Debug.LogError($"[LoadingScreen] ❌ 잘못된 상태 전환: {currentState} → {newState}");
+                Debug.LogError($"[LoadingScreen] 잘못된 상태 전환: {currentState} → {newState}");
                 return;
             }
 
@@ -455,8 +455,8 @@ namespace Manager
                 }
                 else
                 {
-                    Debug.LogWarning("[LoadingScreenManager] ⚠️ 기본 폰트를 사용합니다.\n" +
-                                     "→ Inspector에서 'Maplestory Bold SDF_OutLine' 폰트를 할당하면 더 나은 텍스트를 볼 수 있습니다.");
+                    Debug.LogWarning("[LoadingScreenManager] 기본 폰트를 사용합니다.\n" +
+                                     "Inspector에서 'Maplestory Bold SDF_OutLine' 폰트를 할당하면 더 나은 텍스트를 볼 수 있습니다.");
                 }
             }
 

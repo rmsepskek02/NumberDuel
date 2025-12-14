@@ -716,13 +716,9 @@ namespace Manager
 
                 bool success = await DatabaseManager.Instance.SaveGameRecord(record);
 
-                if (success)
+                if (!success)
                 {
-                    Debug.Log("[InGameManager] ✅ 게임 전적 저장 완료");
-                }
-                else
-                {
-                    Debug.LogError("[InGameManager] ❌ 게임 전적 저장 실패");
+                    Debug.LogError("[InGameManager] 게임 전적 저장 실패");
                 }
             }
             catch (Exception ex)
@@ -954,13 +950,9 @@ namespace Manager
 
                 bool success = await DatabaseManager.Instance.SaveGameRecord(record);
 
-                if (success)
+                if (!success)
                 {
-                    Debug.Log($"[InGameManager] ✅ GameRecord 저장 완료: {myNickname} vs {opponentNickname}");
-                }
-                else
-                {
-                    Debug.LogError("[InGameManager] ❌ GameRecord 저장 실패");
+                    Debug.LogError("[InGameManager] GameRecord 저장 실패");
                 }
             }
             catch (Exception ex)

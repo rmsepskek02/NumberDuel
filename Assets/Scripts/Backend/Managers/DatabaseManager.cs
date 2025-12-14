@@ -43,19 +43,17 @@ namespace Manager
                     try
                     {
                         db.Settings.PersistenceEnabled = false;
-                        Debug.Log("✅ Firestore 오프라인 캐시 비활성화");
                     }
                     catch (System.Exception ex)
                     {
-                        Debug.LogWarning($"⚠️ Firestore 설정 변경 실패 (이미 사용 중): {ex.Message}");
+                        Debug.LogWarning($"Firestore 설정 변경 실패 (이미 사용 중): {ex.Message}");
                     }
 
                     isInitialized = true;
-                    Debug.Log("✅ DatabaseManager 초기화 완료");
                 }
                 else
                 {
-                    Debug.LogError($"❌ Firestore 초기화 실패: {task.Result}");
+                    Debug.LogError($"Firestore 초기화 실패: {task.Result}");
                 }
             });
         }
@@ -69,8 +67,6 @@ namespace Manager
         /// <returns>사용 가능하면 true, 중복이면 false</returns>
         public async Task<bool> IsNicknameAvailable(string nickname)
         {
-            Debug.Log($"[DatabaseManager] 🔍 닉네임 중복 확인 시작: '{nickname}'");
-
             if (!isInitialized)
             {
                 Debug.LogError("Firestore가 초기화되지 않았습니다. 초기화를 시도합니다...");
@@ -78,31 +74,23 @@ namespace Manager
 
                 if (!isInitialized)
                 {
-                    Debug.LogError("❌ Firestore 초기화 실패 → false 반환");
+                    Debug.LogError("Firestore 초기화 실패.");
                     return false;
                 }
             }
 
             try
             {
-                Debug.Log($"[DatabaseManager] Firestore 쿼리 시작: Nickname == '{nickname}'");
-
                 // Firestore에서 닉네임으로 쿼리
                 Query query = db.Collection(USERS_COLLECTION).WhereEqualTo("Nickname", nickname);
                 QuerySnapshot snapshot = await query.GetSnapshotAsync();
 
-                Debug.Log($"[DatabaseManager] 쿼리 완료: snapshot.Count = {snapshot.Count}");
-
                 // 결과가 없으면 사용 가능
-                bool isAvailable = snapshot.Count == 0;
-                Debug.Log($"[DatabaseManager] ✅ 닉네임 '{nickname}' 사용 가능 여부: {isAvailable} (Count: {snapshot.Count})");
-                return isAvailable;
+                return snapshot.Count == 0;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"❌ 닉네임 중복 확인 실패: {ex.Message}");
-                Debug.LogError($"❌ Exception StackTrace: {ex.StackTrace}");
-                Debug.LogError($"❌ false 반환 (예외 발생으로 인한 실패)");
+                Debug.LogError($"닉네임 중복 확인 실패: {ex.Message}");
                 return false;
             }
         }
@@ -133,13 +121,11 @@ namespace Manager
                 QuerySnapshot snapshot = await query.GetSnapshotAsync();
 
                 // 결과가 있으면 등록된 이메일
-                bool isRegistered = snapshot.Count > 0;
-                Debug.Log($"[DatabaseManager] 이메일 '{email}' 등록 여부: {isRegistered}");
-                return isRegistered;
+                return snapshot.Count > 0;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"❌ 이메일 등록 확인 실패: {ex.Message}");
+                Debug.LogError($"이메일 등록 확인 실패: {ex.Message}");
                 return false;
             }
         }
@@ -174,12 +160,11 @@ namespace Manager
                 DocumentReference docRef = db.Collection(USERS_COLLECTION).Document(uid);
                 await docRef.SetAsync(profile);
 
-                Debug.Log($"✅ 사용자 프로필 생성 완료: {nickname} ({uid}), 이메일 인증: {emailVerified}");
                 return true;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"❌ 사용자 프로필 생성 실패: {ex.Message}");
+                Debug.LogError($"사용자 프로필 생성 실패: {ex.Message}");
                 return false;
             }
         }
@@ -211,7 +196,6 @@ namespace Manager
                 if (snapshot.Exists)
                 {
                     UserProfile profile = snapshot.ConvertTo<UserProfile>();
-                    Debug.Log($"✅ 사용자 프로필 로드 완료: {profile.Nickname}");
                     return profile;
                 }
                 else
@@ -222,7 +206,7 @@ namespace Manager
             }
             catch (Exception ex)
             {
-                Debug.LogError($"❌ 사용자 프로필 로드 실패: {ex.Message}");
+                Debug.LogError($"사용자 프로필 로드 실패: {ex.Message}");
                 return null;
             }
         }
@@ -244,12 +228,11 @@ namespace Manager
                 DocumentReference docRef = db.Collection(USERS_COLLECTION).Document(uid);
                 await docRef.UpdateAsync("LastLoginAt", DateTime.UtcNow);
 
-                Debug.Log($"✅ 마지막 로그인 시간 업데이트 완료: {uid}");
                 return true;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"❌ 마지막 로그인 시간 업데이트 실패: {ex.Message}");
+                Debug.LogError($"마지막 로그인 시간 업데이트 실패: {ex.Message}");
                 return false;
             }
         }
@@ -272,12 +255,11 @@ namespace Manager
                 DocumentReference docRef = db.Collection(USERS_COLLECTION).Document(uid);
                 await docRef.UpdateAsync("Nickname", newNickname);
 
-                Debug.Log($"✅ 닉네임 업데이트 완료: {newNickname}");
                 return true;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"❌ 닉네임 업데이트 실패: {ex.Message}");
+                Debug.LogError($"닉네임 업데이트 실패: {ex.Message}");
                 return false;
             }
         }
@@ -304,12 +286,11 @@ namespace Manager
                     { "LastLoginAt", DateTime.UtcNow }
                 });
 
-                Debug.Log($"✅ 이메일 인증 상태 업데이트 완료: {uid} (인증: {verified})");
                 return true;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"❌ 이메일 인증 상태 업데이트 실패: {ex.Message}");
+                Debug.LogError($"이메일 인증 상태 업데이트 실패: {ex.Message}");
                 return false;
             }
         }
@@ -338,12 +319,11 @@ namespace Manager
                 await UpdatePlayerStats(record.Player1UID, record.WinnerUID == record.Player1UID);
                 await UpdatePlayerStats(record.Player2UID, record.WinnerUID == record.Player2UID);
 
-                Debug.Log($"✅ 게임 결과 저장 완료");
                 return true;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"❌ 게임 결과 저장 실패: {ex.Message}");
+                Debug.LogError($"게임 결과 저장 실패: {ex.Message}");
                 return false;
             }
         }
@@ -380,12 +360,11 @@ namespace Manager
                         { "Stats.Losses", profile.Stats.Losses }
                     });
 
-                    Debug.Log($"✅ 플레이어 통계 업데이트 완료: {uid} (승리: {isWin})");
                 }
             }
             catch (Exception ex)
             {
-                Debug.LogError($"❌ 플레이어 통계 업데이트 실패: {ex.Message}");
+                Debug.LogError($"플레이어 통계 업데이트 실패: {ex.Message}");
             }
         }
         #endregion
@@ -418,7 +397,7 @@ namespace Manager
             }
             catch (Exception ex)
             {
-                Debug.LogError($"❌ 프로필 존재 확인 실패: {ex.Message}");
+                Debug.LogError($"프로필 존재 확인 실패: {ex.Message}");
                 return false;
             }
         }
