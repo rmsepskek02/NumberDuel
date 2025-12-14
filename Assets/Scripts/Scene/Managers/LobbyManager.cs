@@ -6,6 +6,7 @@ using TMPro;
 using UnityEngine;
 using DG.Tweening;
 using Utills;
+using UnityEngine.InputSystem;
 
 namespace Manager
 {
@@ -40,6 +41,10 @@ namespace Manager
         private const float QUICK_MATCH_COOLDOWN = 1f; // 빠른 매칭 버튼 쿨다운 (1초)
         private Coroutine buttonCooldownCoroutine = null; // 버튼 쿨다운 코루틴
         private Coroutine typingEffectCoroutine = null; // 타이핑 효과 코루틴
+
+        // Tab 키 InputField 전환 관리
+        private TMP_InputField[] inputFieldOrder;
+        private int currentInputFieldIndex = 0;
         #endregion
 
         #region Unity Lifecycle
@@ -47,6 +52,9 @@ namespace Manager
         {
             // 모든 버튼에 클릭 사운드 자동 등록
             UIHelper.RegisterAllButtonSounds();
+
+            // Tab 키 InputField 전환 순서 초기화
+            InitializeInputFieldOrder();
 
             // 로딩스크린 수동 제어 모드 전환 (연결 확인 후 수동 페이드아웃)
             if (LoadingScreenManager.Instance != null)
@@ -82,6 +90,9 @@ namespace Manager
             // 화면 크기 표시
             width.text = $"{Screen.width}";
             height.text = $"{Screen.height}";
+
+            // 키보드 입력 처리
+            HandleKeyboardInput();
         }
         #endregion
 
@@ -791,6 +802,94 @@ namespace Manager
             {
                 UnityEngine.SceneManagement.SceneManager.LoadScene(SceneNameExtensions.GetSceneName(SceneName.JoinScene));
             }
+        }
+        #endregion
+
+        #region Keyboard Input Handling
+        /// <summary>
+        /// Tab 키 InputField 전환 순서 초기화
+        /// </summary>
+        private void InitializeInputFieldOrder()
+        {
+            inputFieldOrder = new TMP_InputField[]
+            {
+                roomNameInputField,
+                roomPasswordInputField
+            };
+        }
+
+        /// <summary>
+        /// 키보드 입력 처리 (Tab, Enter)
+        /// </summary>
+        private void HandleKeyboardInput()
+        {
+            if (Keyboard.current == null)
+                return;
+
+            // Tab 키 처리
+            if (Keyboard.current.tabKey.wasPressedThisFrame)
+            {
+                HandleTabKey();
+            }
+
+            // Enter 키 처리
+            if (Keyboard.current.enterKey.wasPressedThisFrame)
+            {
+                HandleEnterKey();
+            }
+        }
+
+        /// <summary>
+        /// Tab 키 처리: InputField 간 전환
+        /// </summary>
+        private void HandleTabKey()
+        {
+            // UIStack에 팝업이 열려있으면 무시 (팝업에서 처리)
+            if (UI.UIStackManager.Instance != null && UI.UIStackManager.Instance.HasOpenUI)
+                return;
+
+            // InputField가 설정되지 않았으면 무시
+            if (inputFieldOrder == null || inputFieldOrder.Length == 0)
+                return;
+
+            // 현재 활성화된 InputField 찾기
+            for (int i = 0; i < inputFieldOrder.Length; i++)
+            {
+                if (inputFieldOrder[i] != null && inputFieldOrder[i].isFocused)
+                {
+                    currentInputFieldIndex = i;
+                    break;
+                }
+            }
+
+            // 다음 InputField로 이동 (순환)
+            currentInputFieldIndex = (currentInputFieldIndex + 1) % inputFieldOrder.Length;
+            inputFieldOrder[currentInputFieldIndex]?.ActivateInputField();
+        }
+
+        /// <summary>
+        /// Enter 키 처리: 방 입장 버튼 실행
+        /// </summary>
+        private void HandleEnterKey()
+        {
+            // 처리 중이면 무시
+            if (isProcessingRoomRequest)
+                return;
+
+            // UIStack에 팝업이 열려있으면 무시 (팝업에서 처리)
+            if (UI.UIStackManager.Instance != null && UI.UIStackManager.Instance.HasOpenUI)
+                return;
+
+            // 이 프레임에서 이미 Enter 키가 소비되었으면 무시 (팝업에서 처리한 경우)
+            if (UI.UIStackManager.Instance != null && UI.UIStackManager.Instance.IsEnterKeyConsumed())
+                return;
+
+            // 방 제목이 입력되지 않았으면 무시
+            if (string.IsNullOrWhiteSpace(roomNameText))
+                return;
+
+            // 방 입장 실행
+            OnClickJoin();
         }
         #endregion
     }
