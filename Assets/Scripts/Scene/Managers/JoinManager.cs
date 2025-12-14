@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 using Utills;
 
 namespace Manager
@@ -38,7 +39,6 @@ namespace Manager
 
         [Header("Mode Settings")]
         private int currentMode = 0; // 0: 로그인, 1: 회원가입, 2: 비밀번호 찾기
-        private bool isLoginMode = true; // 하위 호환성 유지
 
         private bool isProcessing = false;
         private Coroutine photonTimeoutCoroutine = null;
@@ -47,6 +47,9 @@ namespace Manager
         private bool isTrackingPhotonConnection = false;
         private float photonConnectionStartTime = 0f;
         private float loadingScreenStartTime = 0f; // 로딩스크린 시작 시간
+
+        // Tab 키로 InputField 순회
+        private TMP_InputField[] inputFieldOrder;
         private Photon.Realtime.ClientState lastClientState;
 
         private const float PHOTON_CONNECT_TIMEOUT = 10f; // Photon 연결 타임아웃 (10초)
@@ -79,6 +82,9 @@ namespace Manager
             // UI 초기화
             SetLoginMode(true);
 
+            // InputField 순서 초기화
+            UpdateInputFieldOrder();
+
             // 버튼 이벤트는 Unity Editor에서 등록
         }
 
@@ -101,6 +107,18 @@ namespace Manager
 
         void Update()
         {
+            // Tab 키로 다음 InputField로 이동
+            if (Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame)
+            {
+                HandleTabKey();
+            }
+
+            // Enter 키로 현재 모드에 맞는 버튼 실행
+            if (Keyboard.current != null && Keyboard.current.enterKey.wasPressedThisFrame)
+            {
+                HandleEnterKey();
+            }
+
             // Photon 연결 상태 추적 중일 때만
             if (!isTrackingPhotonConnection)
                 return;
@@ -373,23 +391,6 @@ namespace Manager
         }
 
         /// <summary>
-        /// Task에 타임아웃 기능 추가
-        /// </summary>
-        private async Task<T> RunWithTimeout<T>(Task<T> task, float timeoutSeconds, string operationName)
-        {
-            var timeoutTask = Task.Delay(System.TimeSpan.FromSeconds(timeoutSeconds));
-            var completedTask = await Task.WhenAny(task, timeoutTask);
-
-            if (completedTask == timeoutTask)
-            {
-                Debug.LogError($"⏱️ {operationName} 타임아웃 ({timeoutSeconds}초)");
-                throw new System.TimeoutException($"{operationName} 타임아웃");
-            }
-
-            return await task;
-        }
-
-        /// <summary>
         /// 로그인 성공 후 처리 (Coroutine 버전 - 타임아웃 적용)
         /// </summary>
         private IEnumerator OnLoginSuccessCoroutine()
@@ -549,7 +550,6 @@ namespace Manager
         private void SetMode(int mode)
         {
             currentMode = mode;
-            isLoginMode = (mode == 0);
 
             // 비밀번호 입력 필드 표시/숨김 (비밀번호 찾기 모드에서는 숨김)
             if (passwordLabel != null)
@@ -567,6 +567,9 @@ namespace Manager
 
             // 버튼 순서 변경
             SetButtonOrder(mode);
+
+            // InputField 순서 업데이트
+            UpdateInputFieldOrder();
         }
 
         /// <summary>
@@ -1092,6 +1095,91 @@ namespace Manager
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Tab 키로 다음 InputField로 포커스 이동
+        /// </summary>
+        private void HandleTabKey()
+        {
+            if (inputFieldOrder == null || inputFieldOrder.Length == 0)
+                return;
+
+            // 현재 포커스된 InputField 찾기
+            int currentIndex = -1;
+            for (int i = 0; i < inputFieldOrder.Length; i++)
+            {
+                if (inputFieldOrder[i] != null && inputFieldOrder[i].isFocused)
+                {
+                    currentIndex = i;
+                    break;
+                }
+            }
+
+            // 다음 InputField로 포커스 이동
+            if (currentIndex >= 0)
+            {
+                int nextIndex = (currentIndex + 1) % inputFieldOrder.Length;
+                inputFieldOrder[nextIndex]?.ActivateInputField();
+            }
+            else
+            {
+                // 포커스된 필드가 없으면 첫 번째 필드로
+                inputFieldOrder[0]?.ActivateInputField();
+            }
+        }
+
+        /// <summary>
+        /// 현재 모드에 따라 InputField 순서 업데이트
+        /// </summary>
+        private void UpdateInputFieldOrder()
+        {
+            switch (currentMode)
+            {
+                case 0: // 로그인 모드
+                    inputFieldOrder = new TMP_InputField[] { inputEmail, inputPassword };
+                    break;
+
+                case 1: // 회원가입 모드
+                    inputFieldOrder = new TMP_InputField[] { inputEmail, inputPassword, inputNickname };
+                    break;
+
+                case 2: // 비밀번호 찾기 모드
+                    inputFieldOrder = new TMP_InputField[] { inputEmail };
+                    break;
+
+                default:
+                    inputFieldOrder = new TMP_InputField[] { inputEmail, inputPassword };
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Enter 키로 현재 모드에 맞는 버튼 실행
+        /// </summary>
+        private void HandleEnterKey()
+        {
+            // 처리 중이거나 버튼이 비활성화된 경우 무시
+            if (isProcessing)
+                return;
+
+            switch (currentMode)
+            {
+                case 0: // 로그인 모드
+                    if (loginButton != null && loginButton.interactable)
+                        OnClickLoginButton();
+                    break;
+
+                case 1: // 회원가입 모드
+                    if (signupButton != null && signupButton.interactable)
+                        OnClickSignupButton();
+                    break;
+
+                case 2: // 비밀번호 찾기 모드
+                    if (forgotPasswordButton != null && forgotPasswordButton.interactable)
+                        OnClickForgotPasswordButton();
+                    break;
+            }
         }
         #endregion
     }
