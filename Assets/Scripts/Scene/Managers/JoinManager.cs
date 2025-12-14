@@ -1167,6 +1167,10 @@ namespace Manager
             if (UI.UIStackManager.Instance != null && UI.UIStackManager.Instance.HasOpenUI)
                 return;
 
+            // 이 프레임에서 이미 Enter 키가 소비되었으면 무시 (팝업에서 처리한 경우)
+            if (UI.UIStackManager.Instance != null && UI.UIStackManager.Instance.IsEnterKeyConsumed())
+                return;
+
             switch (currentMode)
             {
                 case 0: // 로그인 모드

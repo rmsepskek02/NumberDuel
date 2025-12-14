@@ -24,6 +24,10 @@ namespace UI
         /// 현재 스택의 UI 개수
         /// </summary>
         public int UICount => uiStack.Count;
+
+        // Enter 키 입력 소비 관리
+        private bool enterKeyConsumedThisFrame = false;
+        private int lastConsumedFrame = -1;
         #endregion
 
         #region Unity Lifecycle
@@ -93,6 +97,33 @@ namespace UI
         public void Clear()
         {
             uiStack.Clear();
+        }
+
+        /// <summary>
+        /// 현재 프레임에서 Enter 키 입력을 소비했다고 표시
+        /// (팝업 등에서 Enter 키를 처리한 경우 호출하여 다른 곳에서 중복 처리되지 않도록 방지)
+        /// </summary>
+        public void ConsumeEnterKey()
+        {
+            enterKeyConsumedThisFrame = true;
+            lastConsumedFrame = Time.frameCount;
+        }
+
+        /// <summary>
+        /// 현재 프레임에서 Enter 키가 이미 소비되었는지 확인
+        /// (다른 프레임이면 자동으로 false 반환)
+        /// </summary>
+        /// <returns>현재 프레임에서 Enter 키가 소비되었으면 true</returns>
+        public bool IsEnterKeyConsumed()
+        {
+            // 다른 프레임이면 자동으로 리셋
+            if (lastConsumedFrame != Time.frameCount)
+            {
+                enterKeyConsumedThisFrame = false;
+                return false;
+            }
+
+            return enterKeyConsumedThisFrame;
         }
         #endregion
 
