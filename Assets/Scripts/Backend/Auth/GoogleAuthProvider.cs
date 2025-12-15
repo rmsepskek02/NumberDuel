@@ -101,33 +101,11 @@ namespace Objects.Auth
 
         /// <summary>
         /// Firebase 에러 메시지를 사용자 친화적인 메시지로 변환
+        /// AuthManager의 통합 에러 메시지 처리 사용
         /// </summary>
         private string GetFirebaseErrorMessage(FirebaseException ex)
         {
-            string errorCode = ex.Message;
-
-            // 계정 이미 존재 (다른 Provider로 가입됨)
-            if (errorCode.Contains("account-exists-with-different-credential"))
-                return "ACCOUNT_EXISTS"; // 특별한 코드 반환
-
-            // 유효하지 않은 Credential
-            if (errorCode.Contains("invalid-credential"))
-                return "인증 정보가 유효하지 않습니다. 다시 시도해주세요.";
-
-            // 네트워크 오류
-            if (errorCode.Contains("network"))
-                return "네트워크 연결을 확인해주세요.";
-
-            // Too many requests
-            if (errorCode.Contains("too-many-requests"))
-                return "너무 많은 시도가 있었습니다. 잠시 후 다시 시도해주세요.";
-
-            // 팝업 차단
-            if (errorCode.Contains("popup-blocked"))
-                return "팝업이 차단되었습니다. 브라우저 설정을 확인해주세요.";
-
-            // 기타
-            return "Google 로그인 중 오류가 발생했습니다.";
+            return Manager.AuthManager.GetFirebaseErrorMessage(ex);
         }
 
         /// <summary>

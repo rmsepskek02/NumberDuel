@@ -385,6 +385,8 @@ namespace Manager
             isProcessing = true;
             SetButtonsInteractable(false);
 
+            bool shouldResetButtons = true; // 씬 전환 시 버튼 리셋 스킵용 플래그
+
             try
             {
                 // Firebase 초기화 대기
@@ -409,9 +411,22 @@ namespace Manager
                     }
                 }
 
-                // Google 로그인 시도
+                // Google 로그인 시도 (타임아웃 30초)
                 SystemMessageManager.Instance?.ShowMessage("GoogleLoginInProgress");
-                var result = await AuthManager.Instance.LoginWithGoogle();
+
+                var loginTask = AuthManager.Instance.LoginWithGoogle();
+                var timeoutTask = System.Threading.Tasks.Task.Delay(System.TimeSpan.FromSeconds(30));
+
+                var completedTask = await System.Threading.Tasks.Task.WhenAny(loginTask, timeoutTask);
+
+                if (completedTask == timeoutTask)
+                {
+                    SystemMessageManager.Instance?.ShowMessage("GoogleLoginFailed");
+                    Debug.LogWarning("[JoinManager] Google 로그인 타임아웃 (30초)");
+                    return;
+                }
+
+                var result = await loginTask;
 
                 if (!result.success)
                 {
@@ -437,11 +452,15 @@ namespace Manager
 
                 // Google 로그인 성공
                 await HandleGoogleLoginSuccess(result.email);
+                shouldResetButtons = false; // 성공 시 씬 전환되므로 버튼 리셋 불필요
             }
             finally
             {
                 isProcessing = false;
-                SetButtonsInteractable(true);
+                if (shouldResetButtons)
+                {
+                    SetButtonsInteractable(true);
+                }
             }
         }
         #endregion
@@ -1240,18 +1259,20 @@ namespace Manager
                 Debug.Log($"[JoinManager] Google 기존 사용자: {email}");
 
                 // Photon 닉네임 설정
-                var profile = await DatabaseManager.Instance.GetUserProfile(uid);
-                if (profile != null)
+                var profile = await Utils.ProfileExtensions.LoadProfileWithNullCheck(uid);
+                if (profile == null)
                 {
-                    PhotonNetwork.NickName = profile.Nickname;
-
-                    // Photon Custom Property에 Firebase UID 저장
-                    ExitGames.Client.Photon.Hashtable customProperties = new ExitGames.Client.Photon.Hashtable
-                    {
-                        { "FirebaseUID", uid }
-                    };
-                    PhotonNetwork.LocalPlayer.SetCustomProperties(customProperties);
+                    return;
                 }
+
+                PhotonNetwork.NickName = profile.Nickname;
+
+                // Photon Custom Property에 Firebase UID 저장
+                ExitGames.Client.Photon.Hashtable customProperties = new ExitGames.Client.Photon.Hashtable
+                {
+                    { "FirebaseUID", uid }
+                };
+                PhotonNetwork.LocalPlayer.SetCustomProperties(customProperties);
 
                 await ProceedToLobby(uid);
             }
