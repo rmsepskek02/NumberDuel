@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Firebase;
 using Firebase.Auth;
@@ -281,6 +283,21 @@ namespace Manager
             catch (FirebaseException ex)
             {
                 Debug.LogError($"로그인 에러: {ex.Message}");
+
+                // ⭐ 소셜 로그인 전용 계정 체크
+                if (ex.Message.Contains("INVALID_PASSWORD") || ex.Message.Contains("password is invalid"))
+                {
+                    // Provider 확인
+                    var providers = await GetProvidersForEmail(email);
+
+                    if (providers.Contains("google.com") && !providers.Contains("password"))
+                    {
+                        // Google로만 가입된 계정
+                        Debug.LogWarning($"[AuthManager] Google 전용 계정: {email}");
+                        return (false, "SOCIAL_LOGIN_ONLY::Google");
+                    }
+                }
+
                 return (false, GetFirebaseErrorMessage(ex));
             }
         }
@@ -471,6 +488,92 @@ namespace Manager
 
             Debug.Log("[AuthManager] 자동 로그인 불가: 저장된 세션 없음");
             return false;
+        }
+        #endregion
+
+        #region Public Methods - Google Login
+        /// <summary>
+        /// Google 계정으로 로그인
+        /// </summary>
+        /// <returns>성공 여부와 메시지</returns>
+        public async Task<(bool success, string message, string email)> LoginWithGoogle()
+        {
+            try
+            {
+                // Firebase 초기화 확인
+                if (!isInitialized || auth == null)
+                {
+                    return (false, "Firebase가 초기화되지 않았습니다.", string.Empty);
+                }
+
+                // GoogleAuthProvider 생성
+                var googleProvider = new Objects.Auth.GoogleAuthProvider(auth);
+
+                // Google 로그인 시도
+                var result = await googleProvider.SignIn();
+
+                if (!result.Success)
+                {
+                    // 취소된 경우 조용히 처리
+                    if (result.Message == "CANCELED")
+                    {
+                        Debug.Log("[AuthManager] Google 로그인 취소됨");
+                        return (false, "CANCELED", string.Empty);
+                    }
+
+                    // 계정이 이미 다른 방법으로 존재하는 경우
+                    if (result.Message == "ACCOUNT_EXISTS")
+                    {
+                        Debug.LogWarning("[AuthManager] 이미 다른 방법으로 가입된 이메일");
+                        return (false, "ACCOUNT_EXISTS", result.Email);
+                    }
+
+                    return (false, result.Message, string.Empty);
+                }
+
+                // 현재 사용자 업데이트
+                currentUser = auth.CurrentUser;
+
+                if (currentUser == null)
+                {
+                    return (false, "로그인에 실패했습니다.", string.Empty);
+                }
+
+                Debug.Log($"[AuthManager] Google 로그인 성공: {currentUser.Email}");
+                return (true, "Google 로그인 성공", currentUser.Email);
+            }
+            catch (FirebaseException ex)
+            {
+                Debug.LogError($"[AuthManager] Google 로그인 에러: {ex.Message}");
+                return (false, GetFirebaseErrorMessage(ex), string.Empty);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[AuthManager] Google 로그인 예외: {ex.Message}");
+                return (false, "Google 로그인 중 오류가 발생했습니다.", string.Empty);
+            }
+        }
+
+        /// <summary>
+        /// 이메일로 등록된 Provider 확인
+        /// </summary>
+        public async Task<List<string>> GetProvidersForEmail(string email)
+        {
+            try
+            {
+                if (!isInitialized || auth == null)
+                {
+                    return new List<string>();
+                }
+
+                var providers = await auth.FetchProvidersForEmailAsync(email);
+                return providers?.ToList() ?? new List<string>();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[AuthManager] Provider 조회 실패: {ex.Message}");
+                return new List<string>();
+            }
         }
         #endregion
 

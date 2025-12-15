@@ -37,6 +37,9 @@ namespace Manager
         public Button signupButton;          // 회원가입 버튼
         public Button forgotPasswordButton;  // 비밀번호 찾기 버튼
 
+        [Header("Social Login Buttons")]
+        public Button googleLoginButton;     // Google 로그인 버튼
+
         [Header("Mode Settings")]
         private int currentMode = 0; // 0: 로그인, 1: 회원가입, 2: 비밀번호 찾기
 
@@ -369,6 +372,75 @@ namespace Manager
             {
                 // 이미 비밀번호 찾기 모드였다면 → 이메일 발송 실행
                 await ExecutePasswordReset();
+            }
+        }
+
+        /// <summary>
+        /// Google 로그인 버튼 클릭
+        /// </summary>
+        public async void OnClickGoogleLoginButton()
+        {
+            if (isProcessing) return;
+
+            isProcessing = true;
+            SetButtonsInteractable(false);
+
+            try
+            {
+                // Firebase 초기화 대기
+                if (!AuthManager.Instance.IsInitialized)
+                {
+                    SystemMessageManager.Instance?.ShowMessage("InitializingFirebase");
+                    bool authReady = await AuthManager.Instance.WaitForInitialization(10f);
+                    if (!authReady)
+                    {
+                        SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
+                        return;
+                    }
+                }
+
+                if (!SessionManager.Instance.IsInitialized)
+                {
+                    bool sessionReady = await SessionManager.Instance.WaitForInitialization(10f);
+                    if (!sessionReady)
+                    {
+                        SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
+                        return;
+                    }
+                }
+
+                // Google 로그인 시도
+                SystemMessageManager.Instance?.ShowMessage("GoogleLoginInProgress");
+                var result = await AuthManager.Instance.LoginWithGoogle();
+
+                if (!result.success)
+                {
+                    // 사용자 취소 - 조용히 처리
+                    if (result.message == "CANCELED")
+                    {
+                        Debug.Log("[JoinManager] Google 로그인 취소됨");
+                        return;
+                    }
+
+                    // 계정이 이미 존재 (다른 방법으로 가입됨)
+                    if (result.message == "ACCOUNT_EXISTS")
+                    {
+                        SystemMessageManager.Instance?.ShowMessage("AccountExistsWithDifferentProvider");
+                        return;
+                    }
+
+                    // 기타 에러
+                    SystemMessageManager.Instance?.ShowMessage(result.message, MessageType.Error);
+                    return;
+                }
+
+                // Google 로그인 성공
+                await HandleGoogleLoginSuccess(result.email);
+            }
+            finally
+            {
+                isProcessing = false;
+                SetButtonsInteractable(true);
             }
         }
         #endregion
@@ -836,6 +908,24 @@ namespace Manager
                 }
                 else
                 {
+                    // ⭐ 소셜 로그인 전용 계정 체크
+                    if (result.message.StartsWith("SOCIAL_LOGIN_ONLY::"))
+                    {
+                        string provider = result.message.Split("::")[1];
+
+                        UI.Shared.ConfirmationPopup.Show(
+                            $"이 계정은 {provider} 로그인 전용입니다.\n\n" +
+                            $"'{email}'은(는)\n" +
+                            $"{provider}로 가입된 계정입니다.\n\n" +
+                            $"{provider} 버튼을 사용해주세요.",
+                            onConfirm: () => { },
+                            onCancel: null,
+                            confirmText: "확인",
+                            cancelText: null
+                        );
+                        return;
+                    }
+
                     SystemMessageManager.Instance?.ShowMessage(result.message, MessageType.Error);
                 }
             }
@@ -1095,6 +1185,128 @@ namespace Manager
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Google 로그인 성공 후 처리
+        /// </summary>
+        private async Task HandleGoogleLoginSuccess(string email)
+        {
+            string uid = AuthManager.Instance.CurrentUserUID;
+
+            // 프로필 존재 여부 확인
+            bool profileExists = await DatabaseManager.Instance.UserProfileExists(uid);
+
+            if (!profileExists)
+            {
+                // 신규 사용자 - 닉네임 입력 팝업 표시
+                Debug.Log($"[JoinManager] Google 신규 사용자: {email}");
+
+                UI.Shared.InputFieldPopup.ShowNicknameInput(
+                    onConfirm: async (nickname) =>
+                    {
+                        // 프로필 생성
+                        bool profileCreated = await DatabaseManager.Instance.CreateSocialUserProfile(
+                            uid,
+                            email,
+                            nickname,
+                            "Google",
+                            AuthManager.Instance.CurrentUser.PhotoUrl?.ToString() ?? ""
+                        );
+
+                        if (!profileCreated)
+                        {
+                            SystemMessageManager.Instance?.ShowMessage("ProfileCreateFailed");
+                            AuthManager.Instance.SignOutWithoutSessionClear();
+                            return;
+                        }
+
+                        // 세션 생성 및 로비 진입
+                        await ProceedToLobby(uid);
+                    },
+                    onCancel: () =>
+                    {
+                        // 닉네임 입력 취소 - 로그아웃
+                        AuthManager.Instance.SignOutWithoutSessionClear();
+                    }
+                );
+            }
+            else
+            {
+                // 기존 사용자 - 세션 체크 및 로비 진입
+                Debug.Log($"[JoinManager] Google 기존 사용자: {email}");
+
+                // Photon 닉네임 설정
+                var profile = await DatabaseManager.Instance.GetUserProfile(uid);
+                if (profile != null)
+                {
+                    PhotonNetwork.NickName = profile.Nickname;
+
+                    // Photon Custom Property에 Firebase UID 저장
+                    ExitGames.Client.Photon.Hashtable customProperties = new ExitGames.Client.Photon.Hashtable
+                    {
+                        { "FirebaseUID", uid }
+                    };
+                    PhotonNetwork.LocalPlayer.SetCustomProperties(customProperties);
+                }
+
+                await ProceedToLobby(uid);
+            }
+        }
+
+        /// <summary>
+        /// 세션 체크 후 로비 진입
+        /// </summary>
+        private async Task ProceedToLobby(string uid)
+        {
+            // 세션 체크 (중복 로그인 확인)
+            var sessionCheck = await SessionManager.Instance.CheckSession(uid);
+
+            if (sessionCheck.isDuplicate)
+            {
+                UI.Shared.ConfirmationPopup.Show(
+                    "이미 로그인 중인 계정입니다.\n기존 접속을 해제하고 로그인하시겠습니까?",
+                    onConfirm: async () =>
+                    {
+                        SystemMessageManager.Instance?.ShowMessage("ForceLoginInProgress");
+                        bool forceLoginSuccess = await SessionManager.Instance.ForceLogin(uid);
+
+                        if (forceLoginSuccess)
+                        {
+                            SessionManager.Instance.StartSessionMonitoring(uid);
+                            SystemMessageManager.Instance?.ShowMessage("LoginSuccess");
+                            await System.Threading.Tasks.Task.Delay(500);
+                            StartCoroutine(OnLoginSuccessCoroutine());
+                        }
+                        else
+                        {
+                            SystemMessageManager.Instance?.ShowMessage("SessionCreateFailed");
+                            AuthManager.Instance.Logout();
+                        }
+                    },
+                    onCancel: () =>
+                    {
+                        AuthManager.Instance.SignOutWithoutSessionClear();
+                    },
+                    confirmText: "확인",
+                    cancelText: "취소"
+                );
+                return;
+            }
+
+            // 세션 생성
+            bool sessionCreated = await SessionManager.Instance.CreateSession(uid);
+            if (!sessionCreated)
+            {
+                SystemMessageManager.Instance?.ShowMessage("SessionCreateFailed");
+                AuthManager.Instance.Logout();
+                return;
+            }
+
+            SessionManager.Instance.StartSessionMonitoring(uid);
+            SystemMessageManager.Instance?.ShowMessage("LoginSuccess");
+            await System.Threading.Tasks.Task.Delay(500);
+            StartCoroutine(OnLoginSuccessCoroutine());
         }
 
         /// <summary>

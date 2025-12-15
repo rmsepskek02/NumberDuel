@@ -131,7 +131,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// 새로운 사용자 프로필 생성
+        /// 새로운 사용자 프로필 생성 (이메일 로그인용)
         /// </summary>
         /// <param name="uid">Firebase UID</param>
         /// <param name="email">이메일</param>
@@ -165,6 +165,48 @@ namespace Manager
             catch (Exception ex)
             {
                 Debug.LogError($"사용자 프로필 생성 실패: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 소셜 로그인용 사용자 프로필 생성
+        /// </summary>
+        /// <param name="uid">Firebase UID</param>
+        /// <param name="email">이메일</param>
+        /// <param name="nickname">닉네임</param>
+        /// <param name="authProvider">인증 제공자 ("Google", "Kakao" 등)</param>
+        /// <param name="photoUrl">프로필 사진 URL (선택)</param>
+        /// <returns>성공 여부</returns>
+        public async Task<bool> CreateSocialUserProfile(string uid, string email, string nickname, string authProvider, string photoUrl = "")
+        {
+            if (!isInitialized)
+            {
+                Debug.LogError("Firestore가 초기화되지 않았습니다. 초기화를 시도합니다...");
+                await WaitForInitialization();
+
+                if (!isInitialized)
+                {
+                    Debug.LogError("Firestore 초기화 실패.");
+                    return false;
+                }
+            }
+
+            try
+            {
+                // 소셜 로그인용 프로필 생성
+                UserProfile profile = new UserProfile(email, nickname, authProvider, photoUrl);
+
+                // Firestore에 저장
+                DocumentReference docRef = db.Collection(USERS_COLLECTION).Document(uid);
+                await docRef.SetAsync(profile);
+
+                Debug.Log($"[DatabaseManager] 소셜 로그인 프로필 생성 성공: {email} ({authProvider})");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[DatabaseManager] 소셜 로그인 프로필 생성 실패: {ex.Message}");
                 return false;
             }
         }
