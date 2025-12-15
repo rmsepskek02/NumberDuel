@@ -430,7 +430,8 @@ namespace Manager
                     }
 
                     // 기타 에러
-                    SystemMessageManager.Instance?.ShowMessage(result.message, MessageType.Error);
+                    SystemMessageManager.Instance?.ShowMessage("GoogleLoginFailed");
+                    Debug.LogError($"[JoinManager] Google 로그인 실패: {result.message}");
                     return;
                 }
 
@@ -1192,6 +1193,8 @@ namespace Manager
         /// </summary>
         private async Task HandleGoogleLoginSuccess(string email)
         {
+            SystemMessageManager.Instance?.ShowMessage("GoogleLoginSuccess");
+
             string uid = AuthManager.Instance.CurrentUserUID;
 
             // 프로필 존재 여부 확인
