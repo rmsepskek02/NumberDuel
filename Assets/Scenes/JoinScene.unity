@@ -386,6 +386,7 @@ MonoBehaviour:
   signupButton: {fileID: 191816652}
   forgotPasswordButton: {fileID: 1732216686}
   googleLoginButton: {fileID: 791390437}
+  kakaoLoginButton: {fileID: 604498957}
 --- !u!1 &390694192
 GameObject:
   m_ObjectHideFlags: 0

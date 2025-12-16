@@ -39,6 +39,7 @@ namespace Manager
 
         [Header("Social Login Buttons")]
         public Button googleLoginButton;     // Google 로그인 버튼
+        public Button kakaoLoginButton;      // Kakao 로그인 버튼
 
         [Header("Mode Settings")]
         private int currentMode = 0; // 0: 로그인, 1: 회원가입, 2: 비밀번호 찾기
@@ -87,6 +88,9 @@ namespace Manager
 
             // InputField 순서 초기화
             UpdateInputFieldOrder();
+
+            // 플랫폼별 UI 설정 (PC에서는 SNS 버튼 숨김)
+            ConfigurePlatformSpecificUI();
 
             // 버튼 이벤트는 Unity Editor에서 등록
         }
@@ -1424,6 +1428,39 @@ namespace Manager
                         OnClickForgotPasswordButton();
                     break;
             }
+        }
+
+        /// <summary>
+        /// 플랫폼별 UI 설정
+        /// PC Standalone에서는 SNS 로그인 버튼 숨김 (에디터 포함)
+        /// </summary>
+        private void ConfigurePlatformSpecificUI()
+        {
+#if UNITY_STANDALONE
+            // PC Standalone 빌드 및 에디터에서 SNS 버튼 숨김
+            if (googleLoginButton != null)
+            {
+                googleLoginButton.gameObject.SetActive(false);
+                Debug.Log("[JoinManager] PC 플랫폼: Google 로그인 버튼 숨김");
+            }
+
+            if (kakaoLoginButton != null)
+            {
+                kakaoLoginButton.gameObject.SetActive(false);
+                Debug.Log("[JoinManager] PC 플랫폼: Kakao 로그인 버튼 숨김");
+            }
+#else
+            // 모바일 플랫폼
+            if (googleLoginButton != null)
+            {
+                googleLoginButton.gameObject.SetActive(true);
+            }
+
+            if (kakaoLoginButton != null)
+            {
+                kakaoLoginButton.gameObject.SetActive(true);
+            }
+#endif
         }
         #endregion
     }

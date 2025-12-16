@@ -30,6 +30,14 @@ namespace UI.Settings.Tabs
         // [SerializeField] private Button changeNicknameButton; // 보류: 추후 구현 예정
         // [SerializeField] private Button retryButton; // 보류: 에러 처리 간소화
 
+        [Header("Account Linking")]
+        [SerializeField] private GameObject linkingSection;              // 계정 연동 섹션
+        [SerializeField] private TextMeshProUGUI loginMethodText;       // "로그인 방식: Google"
+        [SerializeField] private Button linkPasswordButton;             // "🖥️ PC에서도 플레이하기" 버튼
+        [SerializeField] private Button linkSocialButton;               // "📱 SNS 계정 연동하기" 버튼
+        [SerializeField] private TextMeshProUGUI linkedCompleteText;    // "✅ 연동 완료" 텍스트
+        [SerializeField] private TextMeshProUGUI linkedDescriptionText; // "모든 플랫폼에서 로그인 가능" 설명
+
         [Header("Loading/Error UI")]
         // [SerializeField] private GameObject loadingIndicator; // 보류: 로딩 표시 간소화
         [SerializeField] private GameObject errorPanel; // 에러 패널
@@ -44,6 +52,10 @@ namespace UI.Settings.Tabs
             // changeNicknameButton?.onClick.AddListener(OnChangeNicknameClicked); // 보류: 닉네임 변경 기능
             // retryButton?.onClick.AddListener(OnRetryClicked); // 보류: 재시도 버튼
 
+            // 계정 연동 버튼 이벤트
+            linkPasswordButton?.onClick.AddListener(OnLinkPasswordClicked);
+            linkSocialButton?.onClick.AddListener(OnLinkSocialClicked);
+
             // 초기 상태 설정
             // if (loadingIndicator != null)
             //     loadingIndicator.SetActive(false); // 보류: 로딩 인디케이터
@@ -57,6 +69,9 @@ namespace UI.Settings.Tabs
             // 이벤트 해제
             // changeNicknameButton?.onClick.RemoveListener(OnChangeNicknameClicked); // 보류: 닉네임 변경 기능
             // retryButton?.onClick.RemoveListener(OnRetryClicked); // 보류: 재시도 버튼
+
+            linkPasswordButton?.onClick.RemoveListener(OnLinkPasswordClicked);
+            linkSocialButton?.onClick.RemoveListener(OnLinkSocialClicked);
         }
 
         private void OnEnable()
@@ -102,6 +117,9 @@ namespace UI.Settings.Tabs
                     currentProfile = profile;
                     UpdateUI(profile);
                     // ShowLoading(false); // 보류: 로딩 인디케이터
+
+                    // 계정 연동 상태 업데이트
+                    UpdateAccountLinkingUI();
                 }
                 else
                 {
@@ -273,6 +291,171 @@ namespace UI.Settings.Tabs
         {
             return dateTime.ToString("yyyy.MM.dd HH:mm");
         }
+        #endregion
+
+        #region Account Linking
+
+        /// <summary>
+        /// 계정 연동 UI 업데이트 (상황에 맞게 동적 표시)
+        /// </summary>
+        private void UpdateAccountLinkingUI()
+        {
+            if (Manager.AuthManager.Instance == null)
+                return;
+
+            // 로그인 방식 표시
+            if (loginMethodText != null)
+            {
+                string method = Manager.AuthManager.Instance.GetLoginMethodDisplayName();
+                loginMethodText.text = $"로그인 방식: {method}";
+            }
+
+            // 연동 상태 확인
+            bool hasGoogle = Manager.AuthManager.Instance.GetCurrentUserProviders().Contains("google.com");
+            bool hasPassword = Manager.AuthManager.Instance.GetCurrentUserProviders().Contains("password");
+
+            // 상태 A: Google만 (모바일에서 가입)
+            if (hasGoogle && !hasPassword)
+            {
+                ShowLinkPasswordButton();
+            }
+            // 상태 B: 이메일만 (PC에서 가입)
+            else if (!hasGoogle && hasPassword)
+            {
+                ShowLinkSocialButton();
+            }
+            // 상태 C: 모두 연동 완료
+            else if (hasGoogle && hasPassword)
+            {
+                ShowLinkedComplete();
+            }
+            // 그 외: 연동 섹션 숨김
+            else
+            {
+                HideAllLinkingUI();
+            }
+        }
+
+        /// <summary>
+        /// "PC에서도 플레이하기" 버튼 표시
+        /// </summary>
+        private void ShowLinkPasswordButton()
+        {
+            if (linkPasswordButton != null)
+                linkPasswordButton.gameObject.SetActive(true);
+
+            if (linkSocialButton != null)
+                linkSocialButton.gameObject.SetActive(false);
+
+            if (linkedCompleteText != null)
+                linkedCompleteText.gameObject.SetActive(false);
+
+            if (linkedDescriptionText != null)
+                linkedDescriptionText.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// "SNS 계정 연동하기" 버튼 표시
+        /// </summary>
+        private void ShowLinkSocialButton()
+        {
+            if (linkPasswordButton != null)
+                linkPasswordButton.gameObject.SetActive(false);
+
+            if (linkSocialButton != null)
+                linkSocialButton.gameObject.SetActive(true);
+
+            if (linkedCompleteText != null)
+                linkedCompleteText.gameObject.SetActive(false);
+
+            if (linkedDescriptionText != null)
+                linkedDescriptionText.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// "연동 완료" 텍스트 표시
+        /// </summary>
+        private void ShowLinkedComplete()
+        {
+            if (linkPasswordButton != null)
+                linkPasswordButton.gameObject.SetActive(false);
+
+            if (linkSocialButton != null)
+                linkSocialButton.gameObject.SetActive(false);
+
+            if (linkedCompleteText != null)
+            {
+                linkedCompleteText.gameObject.SetActive(true);
+                linkedCompleteText.text = "✅ 연동 완료";
+            }
+
+            if (linkedDescriptionText != null)
+            {
+                linkedDescriptionText.gameObject.SetActive(true);
+                linkedDescriptionText.text = "모든 플랫폼에서 로그인 가능";
+            }
+        }
+
+        /// <summary>
+        /// 모든 연동 UI 숨김
+        /// </summary>
+        private void HideAllLinkingUI()
+        {
+            if (linkPasswordButton != null)
+                linkPasswordButton.gameObject.SetActive(false);
+
+            if (linkSocialButton != null)
+                linkSocialButton.gameObject.SetActive(false);
+
+            if (linkedCompleteText != null)
+                linkedCompleteText.gameObject.SetActive(false);
+
+            if (linkedDescriptionText != null)
+                linkedDescriptionText.gameObject.SetActive(false);
+        }
+
+        /// <summary>
+        /// "PC에서도 플레이하기" 버튼 클릭 (Google → 비밀번호)
+        /// </summary>
+        private void OnLinkPasswordClicked()
+        {
+            string googleEmail = Manager.AuthManager.Instance.GetCurrentUserEmailFromProvider();
+            UI.Shared.LinkPasswordPopup.Show(googleEmail, OnPasswordLinked);
+        }
+
+        /// <summary>
+        /// "SNS 계정 연동하기" 버튼 클릭 (이메일 → SNS)
+        /// </summary>
+        private void OnLinkSocialClicked()
+        {
+            string currentEmail = Manager.AuthManager.Instance.GetCurrentUserEmailFromProvider();
+            UI.Shared.LinkSocialPopup.Show(currentEmail, OnSocialLinked);
+        }
+
+        /// <summary>
+        /// 비밀번호 연동 완료 콜백
+        /// </summary>
+        private void OnPasswordLinked(bool success)
+        {
+            if (success)
+            {
+                UpdateAccountLinkingUI();
+                Debug.Log("[ProfileSettingsTab] 비밀번호 연동 완료");
+            }
+        }
+
+        /// <summary>
+        /// SNS 연동 완료 콜백
+        /// </summary>
+        private void OnSocialLinked(bool success)
+        {
+            if (success)
+            {
+                UpdateAccountLinkingUI();
+                Debug.Log("[ProfileSettingsTab] SNS 연동 완료");
+            }
+        }
+
         #endregion
     }
 }
