@@ -14,7 +14,7 @@ namespace Utils
         /// <param name="uid">Firebase UID</param>
         /// <param name="onProfileNull">프로필이 null일 때 실행할 콜백 (선택)</param>
         /// <returns>UserProfile 또는 null</returns>
-        public static async Task<Objects.UserProfile> LoadProfileWithNullCheck(
+        public static async Task<Objects.Data.UserProfile> LoadProfileWithNullCheck(
             string uid,
             System.Action onProfileNull = null)
         {
