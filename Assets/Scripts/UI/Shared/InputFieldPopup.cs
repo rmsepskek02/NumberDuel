@@ -15,39 +15,17 @@ namespace UI.Shared
         private static GameObject popupObject;
         private const string PREFAB_PATH = "Prefabs/UI/InputFieldPopup";
 
+        #region Public Methods
         /// <summary>
         /// 닉네임 입력 팝업 표시
         /// </summary>
-        /// <param name="onConfirm">닉네임 확인 시 콜백</param>
-        /// <param name="onCancel">취소 시 콜백 (선택)</param>
         public static void ShowNicknameInput(Action<string> onConfirm, Action onCancel = null)
         {
             if (!EnsureInstance())
                 return;
 
-            // 닉네임 검증 함수
             async Task<(bool valid, string message)> ValidateNickname(string nickname)
             {
-                // 길이 검사
-                if (nickname.Length < 1)
-                    return (false, "닉네임은 최소 1자 이상이어야 합니다.");
-
-                if (nickname.Length > 12)
-                    return (false, "닉네임은 최대 12자까지 가능합니다.");
-
-                // 특수문자 확인
-                foreach (char c in nickname)
-                {
-                    bool isKorean = (c >= '가' && c <= '힣') || (c >= 'ㄱ' && c <= 'ㅎ') || (c >= 'ㅏ' && c <= 'ㅣ');
-                    bool isEnglish = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
-                    bool isNumber = (c >= '0' && c <= '9');
-                    bool isSpace = c == ' ';
-
-                    if (!isKorean && !isEnglish && !isNumber && !isSpace)
-                        return (false, "닉네임은 한글, 영문, 숫자, 공백만 사용할 수 있습니다.");
-                }
-
-                // 중복 검사
                 bool isAvailable = await Manager.DatabaseManager.Instance.IsNicknameAvailable(nickname);
 
                 if (!isAvailable)
@@ -58,7 +36,7 @@ namespace UI.Shared
 
             instance.Show(
                 "닉네임을 설정해주세요",
-                "1-12자, 한글/영문/숫자",
+                "닉네임을 설정해주세요",
                 TMP_InputField.ContentType.Standard,
                 onConfirm,
                 onCancel,
@@ -69,18 +47,14 @@ namespace UI.Shared
         /// <summary>
         /// 비밀번호 입력 팝업 표시
         /// </summary>
-        /// <param name="title">팝업 제목</param>
-        /// <param name="onConfirm">비밀번호 확인 시 콜백</param>
-        /// <param name="onCancel">취소 시 콜백 (선택)</param>
         public static void ShowPasswordInput(string title, Action<string> onConfirm, Action onCancel = null)
         {
             if (!EnsureInstance())
                 return;
 
-            // 비밀번호 검증 함수 (간단한 검증만)
             async Task<(bool valid, string message)> ValidatePassword(string password)
             {
-                await Task.Yield(); // async 경고 제거용
+                await Task.Yield();
 
                 if (password.Length < 6)
                     return (false, "비밀번호는 최소 6자 이상이어야 합니다.");
@@ -116,20 +90,28 @@ namespace UI.Shared
         }
 
         /// <summary>
-        /// 팝업 인스턴스 확인 및 로드
+        /// 팝업 인스턴스 제거
         /// </summary>
+        public static void Destroy()
+        {
+            if (popupObject != null)
+            {
+                UnityEngine.Object.Destroy(popupObject);
+                popupObject = null;
+                instance = null;
+            }
+        }
+        #endregion
+
+        #region Private Methods
         private static bool EnsureInstance()
         {
             if (instance == null)
-            {
                 return LoadPopup();
-            }
+
             return true;
         }
 
-        /// <summary>
-        /// Resources에서 Prefab 로드
-        /// </summary>
         private static bool LoadPopup()
         {
             var prefab = Resources.Load<GameObject>(PREFAB_PATH);
@@ -142,8 +124,6 @@ namespace UI.Shared
 
             popupObject = UnityEngine.Object.Instantiate(prefab);
             popupObject.name = "InputFieldPopup";
-
-            // DontDestroyOnLoad
             UnityEngine.Object.DontDestroyOnLoad(popupObject);
 
             instance = popupObject.GetComponent<InputFieldPopupUI>();
@@ -155,21 +135,8 @@ namespace UI.Shared
                 return false;
             }
 
-            Debug.Log("[InputFieldPopup] 팝업이 성공적으로 로드되었습니다.");
             return true;
         }
-
-        /// <summary>
-        /// 팝업 인스턴스 제거
-        /// </summary>
-        public static void Destroy()
-        {
-            if (popupObject != null)
-            {
-                UnityEngine.Object.Destroy(popupObject);
-                popupObject = null;
-                instance = null;
-            }
-        }
+        #endregion
     }
 }

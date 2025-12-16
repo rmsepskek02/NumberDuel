@@ -64,7 +64,8 @@
       "Bash(grep:*)",
       "Bash(while read commit)",
       "Bash(do git show $commit:Assets/Scripts/Objects/Card)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []
