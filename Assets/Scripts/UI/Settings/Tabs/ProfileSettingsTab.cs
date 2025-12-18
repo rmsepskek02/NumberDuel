@@ -420,7 +420,7 @@ namespace UI.Settings.Tabs
         private void OnLinkPasswordClicked()
         {
             string googleEmail = Manager.AuthManager.Instance.GetCurrentUserEmailFromProvider();
-            UI.Shared.LinkPasswordPopup.Show(googleEmail, OnPasswordLinked);
+            UI.Shared.LinkPasswordPopupManager.Show(googleEmail, OnPasswordLinked);
         }
 
         /// <summary>
@@ -429,7 +429,7 @@ namespace UI.Settings.Tabs
         private void OnLinkSocialClicked()
         {
             string currentEmail = Manager.AuthManager.Instance.GetCurrentUserEmailFromProvider();
-            UI.Shared.LinkSocialPopup.Show(currentEmail, OnSocialLinked);
+            UI.Shared.LinkSocialPopupManager.Show(currentEmail, OnSocialLinked);
         }
 
         /// <summary>

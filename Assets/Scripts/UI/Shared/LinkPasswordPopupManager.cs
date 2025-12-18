@@ -4,34 +4,34 @@ using UnityEngine;
 namespace UI.Shared
 {
     /// <summary>
-    /// 범용 SNS 연동 팝업 관리 (Static)
-    /// 게임 전체에서 LinkSocialPopup.Show() 호출로 사용 가능
+    /// 범용 비밀번호 연동 팝업 관리 (Static)
+    /// 게임 전체에서 LinkPasswordPopupManager.Show() 호출로 사용 가능
     /// </summary>
-    public static class LinkSocialPopup
+    public static class LinkPasswordPopupManager
     {
-        private static LinkSocialPopupUI instance;
+        private static LinkPasswordPopupUI instance;
         private static GameObject popupObject;
-        private const string PREFAB_PATH = "Prefabs/UI/LinkSocialPopup";
+        private const string PREFAB_PATH = "Prefabs/UI/LinkPasswordPopup";
 
         /// <summary>
-        /// SNS 연동 팝업 표시
+        /// 비밀번호 연동 팝업 표시
         /// </summary>
-        /// <param name="email">현재 계정 이메일</param>
+        /// <param name="googleEmail">Google 계정 이메일</param>
         /// <param name="onComplete">완료 콜백</param>
-        public static void Show(string email, Action<bool> onComplete)
+        public static void Show(string googleEmail, Action<bool> onComplete)
         {
             // 최초 1회만 로드
             if (instance == null)
             {
                 if (!LoadPopup())
                 {
-                    Debug.LogError("[LinkSocialPopup] 팝업 로드 실패!");
+                    Debug.LogError("[LinkPasswordPopupManager] 팝업 로드 실패!");
                     return;
                 }
             }
 
             // 팝업 표시
-            instance.Show(email, onComplete);
+            instance.Show(googleEmail, onComplete);
         }
 
         /// <summary>
@@ -47,33 +47,33 @@ namespace UI.Shared
         /// </summary>
         private static bool LoadPopup()
         {
-            // Resources/Prefabs/UI/LinkSocialPopup.prefab 로드
+            // Resources/Prefabs/UI/LinkPasswordPopup.prefab 로드
             var prefab = Resources.Load<GameObject>(PREFAB_PATH);
 
             if (prefab == null)
             {
-                Debug.LogError($"[LinkSocialPopup] Prefab을 찾을 수 없습니다! 경로: Resources/{PREFAB_PATH}");
+                Debug.LogError($"[LinkPasswordPopupManager] Prefab을 찾을 수 없습니다! 경로: Resources/{PREFAB_PATH}");
                 return false;
             }
 
             // 인스턴스 생성
             popupObject = UnityEngine.Object.Instantiate(prefab);
-            popupObject.name = "LinkSocialPopup"; // (Clone) 제거
+            popupObject.name = "LinkPasswordPopup"; // (Clone) 제거
 
             // DontDestroyOnLoad 설정 (씬 전환되어도 유지)
             UnityEngine.Object.DontDestroyOnLoad(popupObject);
 
-            // LinkSocialPopupUI 컴포넌트 가져오기
-            instance = popupObject.GetComponent<LinkSocialPopupUI>();
+            // LinkPasswordPopupUI 컴포넌트 가져오기
+            instance = popupObject.GetComponent<LinkPasswordPopupUI>();
 
             if (instance == null)
             {
-                Debug.LogError("[LinkSocialPopup] Prefab에 LinkSocialPopupUI 컴포넌트가 없습니다!");
+                Debug.LogError("[LinkPasswordPopupManager] Prefab에 LinkPasswordPopupUI 컴포넌트가 없습니다!");
                 UnityEngine.Object.Destroy(popupObject);
                 return false;
             }
 
-            Debug.Log("[LinkSocialPopup] 팝업이 성공적으로 로드되었습니다.");
+            Debug.Log("[LinkPasswordPopupManager] 팝업이 성공적으로 로드되었습니다.");
             return true;
         }
 
