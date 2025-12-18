@@ -28,6 +28,16 @@ namespace Manager
         protected override void Awake()
         {
             base.Awake();
+
+#if UNITY_EDITOR
+            // 에디터에서 빌드 중일 때는 Firestore 초기화 스킵
+            if (UnityEditor.BuildPipeline.isBuildingPlayer)
+            {
+                Debug.Log("[DatabaseManager] 빌드 중 - Firestore 초기화 스킵");
+                return;
+            }
+#endif
+
             InitializeFirestore();
         }
 

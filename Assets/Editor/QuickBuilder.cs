@@ -6,9 +6,9 @@ using Utills;
 
 public class QuickBuilder
 {
-    private static string buildPath = "Builds"; // ±âº» ºôµå °æ·Î
+    private static string buildPath = "Builds"; // ê¸°ë³¸ ë¹Œë“œ ê²½ë¡œ
 
-    // »õ·Î Ãß°¡: x1 ¸Ş´º
+    // ë©”ë‰´ ì¶”ê°€: x1 ë©”ë‰´
     [MenuItem("Tools/Build Clients/x1")]
     public static void BuildClientsX1() => BuildClients(1);
 
@@ -28,7 +28,7 @@ public class QuickBuilder
     {
         string[] scenes = GetEnabledScenes();
 
-        // ºôµå Àü ¸ğµç Å¬¶óÀÌ¾ğÆ®ÀÇ ÀÌÀü ·Î±× ÆÄÀÏ »èÁ¦
+        // ë¹Œë“œ ì „ ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ì˜ ê¸°ì¡´ ë¡œê·¸ íŒŒì¼ ì‚­ì œ
         CleanupOldLogs(clientCount);
 
         for (int i = 1; i <= clientCount; i++)
@@ -36,27 +36,27 @@ public class QuickBuilder
             string clientPath = Path.Combine(buildPath, $"Client{i}");
             string clientExe = Path.Combine(clientPath, $"Client{i}.exe");
 
-            // ºôµå ½ÇÇà
+            // ë¹Œë“œ ì‹¤í–‰
             BuildPipeline.BuildPlayer(scenes, clientExe, BuildTarget.StandaloneWindows64, BuildOptions.None);
-            Debug.Log($"Client {i} ºôµå ¿Ï·á! ({clientExe})");
+            Debug.Log($"Client {i} ë¹Œë“œ ì™„ë£Œ! ({clientExe})");
 
-            // Å¬¶óÀÌ¾ğÆ® ¼³Á¤ ÀúÀå
+            // í´ë¼ì´ì–¸íŠ¸ ì„¤ì • ì €ì¥
             SaveClientSettings(clientPath, i);
 
-            // ½ÇÇà ½Ã Ã¢ ¸ğµå ¹× ·Î±× °æ·Î ¼³Á¤ ÆÄÀÏ »ı¼º
+            // ì‹¤í–‰ ì‹œ ì°½ ëª¨ë“œ ë° ë¡œê·¸ íŒŒì¼ ê²½ë¡œ ì„¤ì • íŒŒì¼ ìƒì„±
             CreateWindowedConfig(clientPath, i);
         }
 
-        Debug.Log("=== ¸ğµç Å¬¶óÀÌ¾ğÆ® ºôµå ¿Ï·á! ÀÌÀü ·Î±× ÆÄÀÏÀÌ »èÁ¦µÇ¾ú½À´Ï´Ù. ===");
+        Debug.Log("=== ëª¨ë“  í´ë¼ì´ì–¸íŠ¸ ë¹Œë“œ ì™„ë£Œ! ìƒˆë¡œìš´ ë¡œê·¸ íŒŒì¼ì´ ìƒì„±ë©ë‹ˆë‹¤. ===");
 
-        // ºôµåµÈ Å¬¶óÀÌ¾ğÆ® ½ÇÇà
+        // ë¹Œë“œëœ í´ë¼ì´ì–¸íŠ¸ ì‹¤í–‰
         RunBuiltClients(clientCount);
     }
 
-    // ÀÌÀü ·Î±× ÆÄÀÏ »èÁ¦
+    // ê¸°ì¡´ ë¡œê·¸ íŒŒì¼ ì‚­ì œ
     private static void CleanupOldLogs(int clientCount)
     {
-        Debug.Log("=== ÀÌÀü ·Î±× ÆÄÀÏ Á¤¸® Áß... ===");
+        Debug.Log("=== ê¸°ì¡´ ë¡œê·¸ íŒŒì¼ ì‚­ì œ ì¤‘... ===");
 
         for (int i = 1; i <= clientCount; i++)
         {
@@ -68,23 +68,23 @@ public class QuickBuilder
                 try
                 {
                     File.Delete(logFile);
-                    Debug.Log($"Client {i}: ÀÌÀü ·Î±× »èÁ¦ ¿Ï·á");
+                    Debug.Log($"Client {i}: ê¸°ì¡´ ë¡œê·¸ ì‚­ì œ ì™„ë£Œ");
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogWarning($"Client {i}: ·Î±× »èÁ¦ ½ÇÆĞ - {e.Message}");
+                    Debug.LogWarning($"Client {i}: ë¡œê·¸ ì‚­ì œ ì‹¤íŒ¨ - {e.Message}");
                 }
             }
             else
             {
-                Debug.Log($"Client {i}: ÀÌÀü ·Î±× ¾øÀ½ (Ã³À½ ºôµå)");
+                Debug.Log($"Client {i}: ê¸°ì¡´ ë¡œê·¸ ì—†ìŒ (ì²˜ìŒ ë¹Œë“œ)");
             }
         }
 
-        Debug.Log("=== ·Î±× ÆÄÀÏ Á¤¸® ¿Ï·á! ===");
+        Debug.Log("=== ë¡œê·¸ íŒŒì¼ ì‚­ì œ ì™„ë£Œ! ===");
     }
 
-    // È°¼ºÈ­µÈ ¾À ¸ñ·Ï °¡Á®¿À±â
+    // í™œì„±í™”ëœ ì”¬ ëª©ë¡ ê°€ì ¸ì˜¤ê¸°
     private static string[] GetEnabledScenes()
     {
         return EditorBuildSettings.scenes
@@ -93,7 +93,7 @@ public class QuickBuilder
             .ToArray();
     }
 
-    // ¹«ÀÛÀ§ 30ÀÚ ¹®ÀÚ¿­ »ı¼º
+    // ëœë¤í•œ 30ì ë¬¸ìì—´ ìƒì„±
     private static string GenerateRandomString(int length = 30)
     {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -101,47 +101,47 @@ public class QuickBuilder
             .Select(s => s[Random.Range(0, s.Length)]).ToArray());
     }
 
-    // Å¬¶óÀÌ¾ğÆ® ¼³Á¤ ÀúÀå ¶Ç´Â ·Îµå
+    // í´ë¼ì´ì–¸íŠ¸ ì„¤ì • ì €ì¥ ë˜ëŠ” ë¡œë“œ
     private static void SaveClientSettings(string clientPath, int clientNumber)
     {
         string settingsFile = "ClientSettings.txt";
         string clientFolder = $"Client{clientNumber}";
 
-        // ±âÁ¸ ¼³Á¤ ÆÄÀÏÀÌ ÀÖ´Â °æ¿ì -> ºÒ·¯¿À±â
+        // ê¸°ì¡´ ì„¤ì • íŒŒì¼ì´ ìˆëŠ” ê²½ìš° -> ë¶ˆëŸ¬ì˜¤ê¸°
         if (File.Exists(Path.Combine(clientPath, settingsFile)))
         {
-            Debug.Log($"Client {clientNumber} ±âÁ¸ ¼³Á¤ ·Îµå");
+            Debug.Log($"Client {clientNumber} ê¸°ì¡´ ì„¤ì • ë¡œë“œ");
             ClientSettings settings = JsonUtils.LoadFromFile<ClientSettings>(clientFolder, settingsFile);
         }
         else
         {
-            // ÃÊ±â ºôµåÀÎ °æ¿ì -> »õ ¼³Á¤ »ı¼º
+            // ì´ˆê¸° ë¹Œë“œì¸ ê²½ìš° -> ìƒˆ ì„¤ì • ìƒì„±
             ClientSettings settings = new ClientSettings(GenerateRandomString(), 1280, 720);
             JsonUtils.SaveToFile(settings, clientFolder, settingsFile);
         }
     }
 
-    // Ã¢ ¸ğµå ¹× ·Î±× °æ·Î ¼³Á¤ ÆÄÀÏ »ı¼º
+    // ì°½ ëª¨ë“œ ë° ë¡œê·¸ íŒŒì¼ ê²½ë¡œ ì„¤ì • íŒŒì¼ ìƒì„±
     private static void CreateWindowedConfig(string clientPath, int clientNumber)
     {
         string settingsFile = Path.Combine(clientPath, "ClientSettings.txt");
         ClientSettings settings = JsonUtils.LoadFromFile<ClientSettings>($"Client{clientNumber}", "ClientSettings.txt");
 
-        // ·Î±× ÆÄÀÏ °æ·Î¸¦ Àı´ë °æ·Î·Î ¼³Á¤
+        // ë¡œê·¸ íŒŒì¼ ê²½ë¡œë¥¼ ì ˆëŒ€ ê²½ë¡œë¡œ ì„¤ì •
         string fullClientPath = Path.GetFullPath(clientPath);
         string logFilePath = Path.Combine(fullClientPath, "Player.log");
 
         string configPath = Path.Combine(clientPath, "windowed.txt");
 
-        // Ã¢ ¸ğµå + ·Î±× ÆÄÀÏ °æ·Î ÁöÁ¤
+        // ì°½ ëª¨ë“œ + ë¡œê·¸ íŒŒì¼ ê²½ë¡œ ì„¤ì •
         string arguments = $"-screen-width {settings.ScreenWidth} -screen-height {settings.ScreenHeight} -screen-fullscreen 0 -logFile \"{logFilePath}\"";
 
         File.WriteAllText(configPath, arguments);
 
-        Debug.Log($"Client {clientNumber} ·Î±× °æ·Î: {logFilePath}");
+        Debug.Log($"Client {clientNumber} ë¡œê·¸ ê²½ë¡œ: {logFilePath}");
     }
 
-    // ºôµåµÈ Å¬¶óÀÌ¾ğÆ® ½ÇÇà (Ã¢ ¸ğµå °­Á¦ Àû¿ë)
+    // ë¹Œë“œëœ í´ë¼ì´ì–¸íŠ¸ ì‹¤í–‰ (ì°½ ëª¨ë“œ ì„¤ì • ì ìš©)
     private static void RunBuiltClients(int clientCount)
     {
         for (int i = 1; i <= clientCount; i++)
@@ -151,13 +151,13 @@ public class QuickBuilder
 
             if (File.Exists(clientExe))
             {
-                // Ã¢ ¸ğµå ¼³Á¤ Àû¿ëÇÏ¿© ½ÇÇà
+                // ì°½ ëª¨ë“œ ì„¤ì • ì ìš©í•˜ì—¬ ì‹¤í–‰
                 System.Diagnostics.Process.Start(clientExe, File.ReadAllText(configPath));
-                Debug.Log($"Client {i} ½ÇÇà: {clientExe}");
+                Debug.Log($"Client {i} ì‹¤í–‰: {clientExe}");
             }
             else
             {
-                Debug.LogError($"Client {i} ½ÇÇà ÆÄÀÏÀ» Ã£À» ¼ö ¾ø½À´Ï´Ù: {clientExe}");
+                Debug.LogError($"Client {i} ë¹Œë“œ íŒŒì¼ì„ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤: {clientExe}");
             }
         }
     }
@@ -174,10 +174,10 @@ public class QuickBuilder
             scenes = scenes,
             locationPathName = path,
             target = BuildTarget.Android,
-            options = BuildOptions.AutoRunPlayer // ¿¬°áµÈ µğ¹ÙÀÌ½º ºôµå
+            options = BuildOptions.AutoRunPlayer // ì—°ê²°ëœ ë””ë°”ì´ìŠ¤ ì‹¤í–‰
         };
 
         BuildPipeline.BuildPlayer(options);
-        Debug.Log($"Android ºôµå ¿Ï·á: {path}");
+        Debug.Log($"Android ë¹Œë“œ ì™„ë£Œ: {path}");
     }
 }

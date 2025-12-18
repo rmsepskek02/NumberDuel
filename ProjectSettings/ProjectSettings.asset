@@ -146,6 +146,7 @@ PlayerSettings:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -9167291403580591109, guid: 8a7125149f04aca4ba45cacffbcc0268, type: 2}
   - {fileID: 11400000, guid: 142eb4b6fcd4dd548ad2a021ab866174, type: 2}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
@@ -168,7 +169,7 @@ PlayerSettings:
   androidMaxAspectRatio: 2.4
   androidMinAspectRatio: 1
   applicationIdentifier:
-    Android: com.numberduel.game
+    Android: com.GoroCompany.NumberDuel
     Standalone: com.UnityTechnologies.Mobile3DTemplate
     iPhone: com.UnityTechnologies.Mobile3DTemplate
   buildNumber:

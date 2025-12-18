@@ -50,6 +50,15 @@ namespace Manager
         #region Unity Lifecycle
         void Start()
         {
+#if UNITY_EDITOR
+            // 에디터에서 빌드 중일 때는 실행하지 않음
+            if (UnityEditor.BuildPipeline.isBuildingPlayer)
+            {
+                Debug.Log("[LobbyManager] 빌드 중 - 초기화 스킵");
+                return;
+            }
+#endif
+
             // 모든 버튼에 클릭 사운드 자동 등록
             UIHelper.RegisterAllButtonSounds();
 

@@ -64,6 +64,15 @@ namespace Manager
         #region Unity Lifecycle
         void Start()
         {
+#if UNITY_EDITOR
+            // 에디터에서 빌드 중일 때는 실행하지 않음
+            if (UnityEditor.BuildPipeline.isBuildingPlayer)
+            {
+                Debug.Log("[JoinManager] 빌드 중 - 초기화 스킵");
+                return;
+            }
+#endif
+
             // 로딩스크린 안전장치: JoinScene 진입 시 혹시 남아있는 로딩스크린 페이드아웃
             if (LoadingScreenManager.Instance != null)
             {
