@@ -720,10 +720,19 @@ namespace Manager
 
         public void OnClickQuit()
         {
+            // 확인 팝업 표시
+            UI.Shared.ConfirmationPopup.Show(
+                "게임을 종료하시겠습니까?",
+                onConfirm: () =>
+                {
 #if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
+                    UnityEditor.EditorApplication.isPlaying = false;
+#else
+                    Application.Quit();
 #endif
-            Application.Quit();
+                },
+                onCancel: () => { } // 취소 시 팝업만 닫힘
+            );
         }
         #endregion
 
