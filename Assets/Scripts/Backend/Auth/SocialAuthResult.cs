@@ -31,10 +31,11 @@ namespace Objects.Auth
         /// </summary>
         public string DisplayName { get; set; }
 
-        /// <summary>
-        /// 프로필 사진 URL
-        /// </summary>
-        public string PhotoUrl { get; set; }
+        // TODO: 프로필 사진 기능 - 추후 구현 예정
+        // /// <summary>
+        // /// 프로필 사진 URL
+        // /// </summary>
+        // public string PhotoUrl { get; set; }
 
         /// <summary>
         /// Firebase Credential
@@ -58,7 +59,7 @@ namespace Objects.Auth
             ProviderUserId = string.Empty;
             Email = string.Empty;
             DisplayName = string.Empty;
-            PhotoUrl = string.Empty;
+            // PhotoUrl = string.Empty; // TODO: 프로필 사진 기능 - 추후 구현 예정
             Credential = null;
             IdToken = string.Empty;
             AccessToken = string.Empty;
