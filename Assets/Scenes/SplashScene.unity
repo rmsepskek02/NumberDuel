@@ -4803,7 +4803,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: New Text
+  m_text: "Firebase \uCD08\uAE30\uD654 \uC2E4\uD328. \uB124\uD2B8\uC6CC\uD06C\uB97C
+    \uD655\uC778\uD558\uACE0 \uB2E4\uC2DC \uC2DC\uB3C4\uD574\uC8FC\uC138\uC694."
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: c7e6ee830097dff4f9310f46a3b6cd77, type: 2}
   m_sharedMaterial: {fileID: -1800040148378677894, guid: c7e6ee830097dff4f9310f46a3b6cd77, type: 2}
@@ -4812,8 +4813,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4283256319
+  m_fontColor: {r: 1, g: 0.3019608, b: 0.3019608, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -5817,7 +5818,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 0, y: 10}
+  m_AnchoredPosition: {x: 0, y: -20}
   m_SizeDelta: {x: 1000, y: 80}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!114 &1189710550
@@ -5866,7 +5867,7 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1189710548}
   m_Enabled: 1
-  m_Alpha: 1
+  m_Alpha: 0
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
@@ -8699,6 +8700,50 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
+--- !u!1 &1567451152
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1567451154}
+  - component: {fileID: 1567451153}
+  m_Layer: 0
+  m_Name: FirebaseInitializer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1567451153
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1567451152}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67df1ad14e5c51340b1f1aeb814452e0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &1567451154
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1567451152}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1573470169
 GameObject:
   m_ObjectHideFlags: 0
@@ -11810,6 +11855,12 @@ MonoBehaviour:
   statsText: {fileID: 1467227447}
   winRateText: {fileID: 370865018}
   lastLoginText: {fileID: 1960016381}
+  linkingSection: {fileID: 0}
+  loginMethodText: {fileID: 0}
+  linkPasswordButton: {fileID: 0}
+  linkSocialButton: {fileID: 0}
+  linkedCompleteText: {fileID: 0}
+  linkedDescriptionText: {fileID: 0}
   errorPanel: {fileID: 1476177990}
 --- !u!1 &2032673400
 GameObject:
@@ -12786,3 +12837,4 @@ SceneRoots:
   - {fileID: 1537268874}
   - {fileID: 1200112445}
   - {fileID: 478840061}
+  - {fileID: 1567451154}

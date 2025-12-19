@@ -12,7 +12,20 @@
           "package_name": "com.GoroCompany.NumberDuel"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "48353818417-u4jrc6111fq493qcr88475q40ld8988m.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.GoroCompany.NumberDuel",
+            "certificate_hash": "92fd44a80f252c2e45623f87d8d9bae46fa63a03"
+          }
+        },
+        {
+          "client_id": "48353818417-drfplr3ov7brp2iq9iau9mj85khta10m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCqMNppQyZheXdYFQbt21D-w_8UpZ52CAM"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "48353818417-drfplr3ov7brp2iq9iau9mj85khta10m.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

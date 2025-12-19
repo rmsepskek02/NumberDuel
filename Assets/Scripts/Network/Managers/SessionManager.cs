@@ -68,19 +68,63 @@ namespace Manager
                 return;
             }
 
-            FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task =>
+            // FirebaseInitializer가 이미 초기화를 완료했는지 확인
+            if (FirebaseInitializer.IsFirebaseReady)
             {
-                if (task.Result == DependencyStatus.Available)
-                {
-                    db = FirebaseFirestore.DefaultInstance;
-                    isInitialized = true;
-                }
-                else
-                {
-                    Debug.LogError($"Firestore 초기화 실패: {task.Result}");
-                    isInitialized = false;
-                }
-            });
+                // 즉시 사용 가능
+                InitializeFirestoreInstance();
+            }
+            else
+            {
+                // FirebaseInitializer 초기화 대기
+                StartCoroutine(WaitForFirebaseInitializer());
+            }
+        }
+
+        /// <summary>
+        /// Firestore 인스턴스 초기화 (FirebaseInitializer 초기화 완료 후 호출)
+        /// </summary>
+        private void InitializeFirestoreInstance()
+        {
+            try
+            {
+                db = FirebaseFirestore.DefaultInstance;
+                isInitialized = true;
+                Debug.Log("[SessionManager] ✅ SessionManager 초기화 완료");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[SessionManager] ❌ Firestore 인스턴스 초기화 실패: {ex.Message}");
+                isInitialized = false;
+            }
+        }
+
+        /// <summary>
+        /// FirebaseInitializer 초기화 완료 대기
+        /// </summary>
+        private System.Collections.IEnumerator WaitForFirebaseInitializer()
+        {
+            Debug.Log("[SessionManager] FirebaseInitializer 초기화 대기 중...");
+
+            float elapsedTime = 0f;
+            const float timeout = 15f; // 15초 타임아웃
+
+            while (!FirebaseInitializer.IsFirebaseReady && elapsedTime < timeout)
+            {
+                yield return new WaitForSeconds(0.1f);
+                elapsedTime += 0.1f;
+            }
+
+            if (FirebaseInitializer.IsFirebaseReady)
+            {
+                InitializeFirestoreInstance();
+            }
+            else
+            {
+                Debug.LogError($"[SessionManager] ⏱️ FirebaseInitializer 초기화 타임아웃 ({timeout}초)");
+                Debug.LogError($"[SessionManager]    마지막 상태: {FirebaseInitializer.DependencyStatus}");
+                isInitialized = false;
+            }
         }
 
         /// <summary>

@@ -43,6 +43,8 @@ namespace Objects.Auth
                 // provider.SetScopes(new string[] { "profile", "email" });
 
                 // Google 로그인 팝업 표시 및 인증
+                // 주의: Firebase SDK 내부 타임아웃은 약 60초 (변경 불가)
+                // 2단계 인증 계정은 60초 내에 완료해야 함
                 var authResult = await auth.SignInWithProviderAsync(provider);
 
                 if (authResult.User == null)
@@ -77,6 +79,26 @@ namespace Objects.Auth
                 {
                     Success = false,
                     Message = "CANCELED" // 특별한 메시지로 취소 표시
+                };
+            }
+            catch (TaskCanceledException)
+            {
+                // 타임아웃 발생 (60초 초과)
+                Debug.LogWarning("[GoogleAuthProvider] Google 로그인 타임아웃 (60초 초과)");
+                return new SocialAuthResult
+                {
+                    Success = false,
+                    Message = "TIMEOUT" // 타임아웃 특별 메시지
+                };
+            }
+            catch (FirebaseException ex) when (ex.Message.Contains("timeout") || ex.Message.Contains("TIMEOUT") || ex.Message.Contains("timed out"))
+            {
+                // Firebase 타임아웃
+                Debug.LogWarning("[GoogleAuthProvider] Google 로그인 타임아웃 (Firebase)");
+                return new SocialAuthResult
+                {
+                    Success = false,
+                    Message = "TIMEOUT" // 타임아웃 특별 메시지
                 };
             }
             catch (FirebaseException ex)

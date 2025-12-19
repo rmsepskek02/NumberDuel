@@ -162,22 +162,44 @@ public class QuickBuilder
         }
     }
 
-    [MenuItem("Tools/Build Android")]
-    public static void BuildAndroid()
+    [MenuItem("Tools/Build Android (Development)")]
+    public static void BuildAndroidDevelopment()
     {
         string[] scenes = GetEnabledScenes();
-
-        string path = "Builds/Android/MyGame.apk";
+        string path = "Builds/Android/NumberDuel_Dev.apk";
 
         BuildPlayerOptions options = new BuildPlayerOptions
         {
             scenes = scenes,
             locationPathName = path,
             target = BuildTarget.Android,
-            options = BuildOptions.AutoRunPlayer // 연결된 디바이스 실행
+            options = BuildOptions.Development |          // Development 빌드
+                      BuildOptions.AutoRunPlayer |        // 자동 실행
+                      BuildOptions.AllowDebugging |       // 디버깅 허용
+                      BuildOptions.ConnectWithProfiler    // Profiler 자동 연결
         };
 
         BuildPipeline.BuildPlayer(options);
-        Debug.Log($"Android 빌드 완료: {path}");
+        Debug.Log($"🔧 Development 빌드 완료: {path}");
+        Debug.Log("📱 Android Logcat을 열어 실시간 로그를 확인하세요!");
+        Debug.Log("   Window > Analysis > Android Logcat");
+    }
+
+    [MenuItem("Tools/Build Android (Release)")]
+    public static void BuildAndroidRelease()
+    {
+        string[] scenes = GetEnabledScenes();
+        string path = "Builds/Android/NumberDuel.apk";
+
+        BuildPlayerOptions options = new BuildPlayerOptions
+        {
+            scenes = scenes,
+            locationPathName = path,
+            target = BuildTarget.Android,
+            options = BuildOptions.None // 최적화 빌드
+        };
+
+        BuildPipeline.BuildPlayer(options);
+        Debug.Log($"🚀 Release 빌드 완료: {path}");
     }
 }

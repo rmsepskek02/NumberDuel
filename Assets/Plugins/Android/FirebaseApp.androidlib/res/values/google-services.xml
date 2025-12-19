@@ -1,9 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
-<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@string/gcm_defaultSenderId,@string/google_storage_bucket,@string/project_id,@string/google_api_key,@string/google_crash_reporting_api_key,@string/google_app_id">
+<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@string/gcm_defaultSenderId,@string/google_storage_bucket,@string/project_id,@string/google_api_key,@string/google_crash_reporting_api_key,@string/google_app_id,@string/default_android_client_id,@string/default_web_client_id">
   <string name="gcm_defaultSenderId" translatable="false">48353818417</string>
   <string name="google_storage_bucket" translatable="false">numberduel-81d38.firebasestorage.app</string>
   <string name="project_id" translatable="false">numberduel-81d38</string>
   <string name="google_api_key" translatable="false">AIzaSyCqMNppQyZheXdYFQbt21D-w_8UpZ52CAM</string>
   <string name="google_crash_reporting_api_key" translatable="false">AIzaSyCqMNppQyZheXdYFQbt21D-w_8UpZ52CAM</string>
   <string name="google_app_id" translatable="false">1:48353818417:android:371224b8f88e8881c7a210</string>
+  <string name="default_android_client_id" translatable="false">48353818417-u4jrc6111fq493qcr88475q40ld8988m.apps.googleusercontent.com</string>
+  <string name="default_web_client_id" translatable="false">48353818417-drfplr3ov7brp2iq9iau9mj85khta10m.apps.googleusercontent.com</string>
 </resources>

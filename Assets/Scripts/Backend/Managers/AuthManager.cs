@@ -81,32 +81,77 @@ namespace Manager
                 return;
             }
 
-            FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task =>
+            // FirebaseInitializer가 이미 초기화를 완료했는지 확인
+            if (FirebaseInitializer.IsFirebaseReady)
             {
-                if (task.Result == DependencyStatus.Available)
+                // 즉시 사용 가능
+                InitializeAuthInstance();
+            }
+            else
+            {
+                // FirebaseInitializer 초기화 대기
+                StartCoroutine(WaitForFirebaseInitializer());
+            }
+        }
+
+        /// <summary>
+        /// FirebaseAuth 인스턴스 초기화 (FirebaseInitializer 초기화 완료 후 호출)
+        /// </summary>
+        private void InitializeAuthInstance()
+        {
+            try
+            {
+                auth = FirebaseAuth.DefaultInstance;
+
+                // 인증 상태 변경 이벤트 등록
+                auth.StateChanged += OnAuthStateChanged;
+
+                // 이미 로그인되어 있는지 확인
+                OnAuthStateChanged(this, null);
+
+                isInitialized = true; // 초기화 완료 플래그 설정
+
+                Debug.Log("[AuthManager] ✅ AuthManager 초기화 완료");
+
+                // SessionManager의 강제 로그아웃 이벤트 구독
+                if (SessionManager.Instance != null)
                 {
-                    auth = FirebaseAuth.DefaultInstance;
-
-                    // 인증 상태 변경 이벤트 등록
-                    auth.StateChanged += OnAuthStateChanged;
-
-                    // 이미 로그인되어 있는지 확인
-                    OnAuthStateChanged(this, null);
-
-                    isInitialized = true; // 초기화 완료 플래그 설정
-
-                    // SessionManager의 강제 로그아웃 이벤트 구독
-                    if (SessionManager.Instance != null)
-                    {
-                        SessionManager.Instance.OnForceLogout += HandleForceLogout;
-                    }
+                    SessionManager.Instance.OnForceLogout += HandleForceLogout;
                 }
-                else
-                {
-                    Debug.LogError($"Firebase 초기화 실패: {task.Result}");
-                    isInitialized = false;
-                }
-            });
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[AuthManager] ❌ Auth 인스턴스 초기화 실패: {ex.Message}");
+                isInitialized = false;
+            }
+        }
+
+        /// <summary>
+        /// FirebaseInitializer 초기화 완료 대기
+        /// </summary>
+        private System.Collections.IEnumerator WaitForFirebaseInitializer()
+        {
+            Debug.Log("[AuthManager] FirebaseInitializer 초기화 대기 중...");
+
+            float elapsedTime = 0f;
+            const float timeout = 15f; // 15초 타임아웃
+
+            while (!FirebaseInitializer.IsFirebaseReady && elapsedTime < timeout)
+            {
+                yield return new WaitForSeconds(0.1f);
+                elapsedTime += 0.1f;
+            }
+
+            if (FirebaseInitializer.IsFirebaseReady)
+            {
+                InitializeAuthInstance();
+            }
+            else
+            {
+                Debug.LogError($"[AuthManager] ⏱️ FirebaseInitializer 초기화 타임아웃 ({timeout}초)");
+                Debug.LogError($"[AuthManager]    마지막 상태: {FirebaseInitializer.DependencyStatus}");
+                isInitialized = false;
+            }
         }
 
         /// <summary>

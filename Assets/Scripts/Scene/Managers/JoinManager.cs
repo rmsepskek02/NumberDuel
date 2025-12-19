@@ -450,6 +450,14 @@ namespace Manager
                         return;
                     }
 
+                    // 타임아웃 발생 (60초 초과)
+                    if (result.message == "TIMEOUT")
+                    {
+                        SystemMessageManager.Instance?.ShowMessage("GoogleLoginTimeout");
+                        Debug.LogWarning("[JoinManager] Google 로그인 타임아웃 (60초 초과)");
+                        return;
+                    }
+
                     // 계정이 이미 존재 (다른 방법으로 가입됨)
                     if (result.message == "ACCOUNT_EXISTS")
                     {
@@ -1445,29 +1453,31 @@ namespace Manager
         /// </summary>
         private void ConfigurePlatformSpecificUI()
         {
-#if UNITY_STANDALONE
-            // PC Standalone 빌드 및 에디터에서 SNS 버튼 숨김
-            if (googleLoginButton != null)
-            {
-                googleLoginButton.gameObject.SetActive(false);
-                Debug.Log("[JoinManager] PC 플랫폼: Google 로그인 버튼 숨김");
-            }
-
-            if (kakaoLoginButton != null)
-            {
-                kakaoLoginButton.gameObject.SetActive(false);
-                Debug.Log("[JoinManager] PC 플랫폼: Kakao 로그인 버튼 숨김");
-            }
-#else
-            // 모바일 플랫폼
+#if UNITY_ANDROID || UNITY_IOS
+            // 모바일 플랫폼: SNS 버튼 표시
             if (googleLoginButton != null)
             {
                 googleLoginButton.gameObject.SetActive(true);
+                Debug.Log("[JoinManager] 모바일 플랫폼: Google 로그인 버튼 표시");
             }
 
             if (kakaoLoginButton != null)
             {
                 kakaoLoginButton.gameObject.SetActive(true);
+                Debug.Log("[JoinManager] 모바일 플랫폼: Kakao 로그인 버튼 표시");
+            }
+#else
+            // PC/에디터: SNS 버튼 숨김
+            if (googleLoginButton != null)
+            {
+                googleLoginButton.gameObject.SetActive(false);
+                Debug.Log("[JoinManager] PC/에디터: Google 로그인 버튼 숨김");
+            }
+
+            if (kakaoLoginButton != null)
+            {
+                kakaoLoginButton.gameObject.SetActive(false);
+                Debug.Log("[JoinManager] PC/에디터: Kakao 로그인 버튼 숨김");
             }
 #endif
         }

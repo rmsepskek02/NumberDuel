@@ -38,15 +38,41 @@ namespace Manager
         /// </summary>
         private IEnumerator CheckAutoLoginAndNavigate()
         {
-            // Firebase 초기화 대기
-            if (!AuthManager.Instance.IsInitialized)
+            // FirebaseInitializer 초기화 대기 (최우선)
+            if (!FirebaseInitializer.IsFirebaseReady)
             {
-                Debug.Log("[SplashManager] Firebase 초기화 대기 중...");
+                Debug.Log("[SplashManager] FirebaseInitializer 초기화 대기 중...");
                 float elapsedTime = 0f;
-                while (!AuthManager.Instance.IsInitialized && elapsedTime < 5f)
+                while (!FirebaseInitializer.IsFirebaseReady && elapsedTime < 15f)
                 {
                     yield return new WaitForSeconds(0.1f);
                     elapsedTime += 0.1f;
+                }
+
+                if (!FirebaseInitializer.IsFirebaseReady)
+                {
+                    Debug.LogError($"[SplashManager] ❌ FirebaseInitializer 초기화 실패 ({FirebaseInitializer.DependencyStatus})");
+                    SceneManager.LoadScene(SceneNameExtensions.GetSceneName(SceneName.JoinScene));
+                    yield break;
+                }
+            }
+
+            // AuthManager 초기화 대기
+            if (!AuthManager.Instance.IsInitialized)
+            {
+                Debug.Log("[SplashManager] AuthManager 초기화 대기 중...");
+                float elapsedTime = 0f;
+                while (!AuthManager.Instance.IsInitialized && elapsedTime < 10f)
+                {
+                    yield return new WaitForSeconds(0.1f);
+                    elapsedTime += 0.1f;
+                }
+
+                if (!AuthManager.Instance.IsInitialized)
+                {
+                    Debug.LogError("[SplashManager] ❌ AuthManager 초기화 타임아웃");
+                    SceneManager.LoadScene(SceneNameExtensions.GetSceneName(SceneName.JoinScene));
+                    yield break;
                 }
             }
 
@@ -55,10 +81,17 @@ namespace Manager
             {
                 Debug.Log("[SplashManager] SessionManager 초기화 대기 중...");
                 float elapsedTime = 0f;
-                while (!SessionManager.Instance.IsInitialized && elapsedTime < 5f)
+                while (!SessionManager.Instance.IsInitialized && elapsedTime < 10f)
                 {
                     yield return new WaitForSeconds(0.1f);
                     elapsedTime += 0.1f;
+                }
+
+                if (!SessionManager.Instance.IsInitialized)
+                {
+                    Debug.LogError("[SplashManager] ❌ SessionManager 초기화 타임아웃");
+                    SceneManager.LoadScene(SceneNameExtensions.GetSceneName(SceneName.JoinScene));
+                    yield break;
                 }
             }
 

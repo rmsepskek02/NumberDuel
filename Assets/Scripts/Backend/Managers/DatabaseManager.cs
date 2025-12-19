@@ -43,29 +43,82 @@ namespace Manager
 
         private void InitializeFirestore()
         {
-            FirebaseApp.CheckAndFixDependenciesAsync().ContinueWithOnMainThread(task =>
+            // FirebaseInitializer가 이미 초기화를 완료했는지 확인
+            if (FirebaseInitializer.IsFirebaseReady)
             {
-                if (task.Result == DependencyStatus.Available)
-                {
-                    db = FirebaseFirestore.DefaultInstance;
+                // 즉시 사용 가능
+                InitializeFirestoreInstance();
+            }
+            else
+            {
+                // FirebaseInitializer 초기화 대기
+                StartCoroutine(WaitForFirebaseInitializer());
+            }
+        }
 
-                    // 오프라인 캐시 비활성화 (멀티 인스턴스 지원)
-                    try
-                    {
-                        db.Settings.PersistenceEnabled = false;
-                    }
-                    catch (System.Exception ex)
-                    {
-                        Debug.LogWarning($"Firestore 설정 변경 실패 (이미 사용 중): {ex.Message}");
-                    }
+        /// <summary>
+        /// Firestore 인스턴스 초기화 (FirebaseInitializer 초기화 완료 후 호출)
+        /// </summary>
+        private void InitializeFirestoreInstance()
+        {
+            try
+            {
+                db = FirebaseFirestore.DefaultInstance;
 
-                    isInitialized = true;
-                }
-                else
+                // 플랫폼별 오프라인 캐시 설정
+                try
                 {
-                    Debug.LogError($"Firestore 초기화 실패: {task.Result}");
+#if UNITY_ANDROID || UNITY_IOS
+                    // 모바일: 캐시 활성화 (성능 향상, 오프라인 지원)
+                    db.Settings.PersistenceEnabled = true;
+                    Debug.Log("[DatabaseManager] Firestore 캐시 활성화 (모바일)");
+#else
+                    // PC/에디터: 캐시 비활성화 (멀티 클라이언트 테스트 지원)
+                    db.Settings.PersistenceEnabled = false;
+                    Debug.Log("[DatabaseManager] Firestore 캐시 비활성화 (PC/Editor)");
+#endif
                 }
-            });
+                catch (System.Exception ex)
+                {
+                    Debug.LogWarning($"[DatabaseManager] Firestore 설정 변경 실패 (이미 사용 중): {ex.Message}");
+                }
+
+                isInitialized = true;
+                Debug.Log("[DatabaseManager] ✅ DatabaseManager 초기화 완료");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[DatabaseManager] ❌ Firestore 인스턴스 초기화 실패: {ex.Message}");
+                isInitialized = false;
+            }
+        }
+
+        /// <summary>
+        /// FirebaseInitializer 초기화 완료 대기
+        /// </summary>
+        private System.Collections.IEnumerator WaitForFirebaseInitializer()
+        {
+            Debug.Log("[DatabaseManager] FirebaseInitializer 초기화 대기 중...");
+
+            float elapsedTime = 0f;
+            const float timeout = 15f; // 15초 타임아웃
+
+            while (!FirebaseInitializer.IsFirebaseReady && elapsedTime < timeout)
+            {
+                yield return new WaitForSeconds(0.1f);
+                elapsedTime += 0.1f;
+            }
+
+            if (FirebaseInitializer.IsFirebaseReady)
+            {
+                InitializeFirestoreInstance();
+            }
+            else
+            {
+                Debug.LogError($"[DatabaseManager] ⏱️ FirebaseInitializer 초기화 타임아웃 ({timeout}초)");
+                Debug.LogError($"[DatabaseManager]    마지막 상태: {FirebaseInitializer.DependencyStatus}");
+                isInitialized = false;
+            }
         }
         #endregion
 
