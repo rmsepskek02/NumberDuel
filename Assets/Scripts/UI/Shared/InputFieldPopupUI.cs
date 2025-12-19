@@ -116,7 +116,6 @@ namespace UI.Shared
                 inputField.text = string.Empty;
                 inputField.onValueChanged.RemoveAllListeners();
                 inputField.onValueChanged.AddListener(OnInputValueChanged);
-                inputField.Select();
                 inputField.ActivateInputField();
             }
 
@@ -259,8 +258,15 @@ namespace UI.Shared
                 UpdateValidationText(message, new Color(1f, 0.3f, 0.3f));
                 isProcessing = false;
                 SetButtonsInteractable(true);
-                inputField?.Select();
+
+                // 커서를 맨 끝으로 이동 (재입력 시 텍스트 삭제 방지)
                 inputField?.ActivateInputField();
+                if (inputField != null)
+                {
+                    inputField.caretPosition = inputField.text.Length;
+                    inputField.selectionAnchorPosition = inputField.text.Length;
+                    inputField.selectionFocusPosition = inputField.text.Length;
+                }
                 return false; // 검증 실패
             }
 

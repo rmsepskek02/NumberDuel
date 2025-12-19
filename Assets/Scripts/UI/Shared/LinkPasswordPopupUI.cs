@@ -13,7 +13,7 @@ namespace UI.Shared
     public class LinkPasswordPopupUI : MonoBehaviour, ICloseable
     {
         [Header("UI References")]
-        [SerializeField] private TMP_InputField emailInputField;           // 읽기 전용 (Google 이메일 고정)
+        [SerializeField] private TextMeshProUGUI emailText;                // Google 이메일 표시
         [SerializeField] private TMP_InputField passwordInputField;
         [SerializeField] private TMP_InputField confirmPasswordInputField;
         [SerializeField] private Button linkButton;
@@ -68,16 +68,10 @@ namespace UI.Shared
         {
             onCompleteCallback = onComplete;
 
-            // Google 이메일 설정 (읽기 전용)
-            if (emailInputField != null)
+            // Google 이메일 표시
+            if (emailText != null)
             {
-                emailInputField.text = googleEmail;
-                emailInputField.interactable = false; // 수정 불가
-
-                // 시각적으로 비활성화 표시 (회색)
-                var colors = emailInputField.colors;
-                colors.normalColor = new Color(0.7f, 0.7f, 0.7f, 1f);
-                emailInputField.colors = colors;
+                emailText.text = googleEmail;
             }
 
             // 비밀번호 입력 필드 초기화
@@ -153,7 +147,7 @@ namespace UI.Shared
                 ConfirmationPopup.Show(
                     "✅ PC 로그인 연동 완료!\n\n" +
                     "이제 PC에서도\n" +
-                    $"{emailInputField.text}으로\n" +
+                    $"{emailText.text}으로\n" +
                     "로그인할 수 있습니다.",
                     onConfirm: () =>
                     {
