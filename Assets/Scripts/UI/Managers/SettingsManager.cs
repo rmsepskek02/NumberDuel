@@ -224,7 +224,13 @@ namespace Manager
         private void ShowConfirmation(ConfirmationType type)
         {
             string message = GetConfirmationMessage(type);
-            UI.Shared.ConfirmationPopup.Show(message, () => ExecuteConfirmationAction(type));
+
+            // 확인 + 취소 버튼 표시
+            UI.Shared.ConfirmationPopup.Show(
+                message,
+                onConfirm: () => ExecuteConfirmationAction(type),
+                onCancel: () => { } // 취소 시 팝업만 닫힘
+            );
         }
 
         /// <summary>

@@ -17,46 +17,19 @@ namespace UI.Shared
         private const string PREFAB_PATH = "Prefabs/UI/ConfirmationPopup";
 
         /// <summary>
-        /// 확인 팝업 표시
+        /// 확인 팝업 표시 (통합 메서드)
         /// </summary>
         /// <param name="message">표시할 메시지</param>
         /// <param name="onConfirm">확인 버튼 클릭 시 실행할 액션 (null 가능)</param>
-        public static void Show(string message, Action onConfirm = null)
-        {
-            // 최초 1회만 로드
-            if (instance == null)
-            {
-                if (!LoadPopup())
-                {
-                    Debug.LogError("[ConfirmationPopup] 팝업 로드 실패!");
-                    return;
-                }
-            }
-
-            // 팝업 표시
-            instance.Show(message, onConfirm);
-        }
-
-        /// <summary>
-        /// 확인 팝업 표시 (취소 콜백 포함)
-        /// </summary>
-        /// <param name="message">표시할 메시지</param>
-        /// <param name="onConfirm">확인 버튼 클릭 시 실행할 액션 (null 가능)</param>
-        /// <param name="onCancel">취소 버튼 클릭 시 실행할 액션 (null 가능)</param>
-        public static void Show(string message, Action onConfirm, Action onCancel)
-        {
-            Show(message, onConfirm, onCancel, "확인", "취소");
-        }
-
-        /// <summary>
-        /// 확인 팝업 표시 (버튼 텍스트 커스터마이징 포함)
-        /// </summary>
-        /// <param name="message">표시할 메시지</param>
-        /// <param name="onConfirm">확인 버튼 클릭 시 실행할 액션 (null 가능)</param>
-        /// <param name="onCancel">취소 버튼 클릭 시 실행할 액션 (null 가능)</param>
+        /// <param name="onCancel">취소 버튼 클릭 시 실행할 액션 (null = 취소 버튼 숨김)</param>
         /// <param name="confirmText">확인 버튼 텍스트 (기본값: "확인")</param>
         /// <param name="cancelText">취소 버튼 텍스트 (기본값: "취소")</param>
-        public static void Show(string message, Action onConfirm, Action onCancel, string confirmText, string cancelText)
+        public static void Show(
+            string message,
+            Action onConfirm = null,
+            Action onCancel = null,
+            string confirmText = "확인",
+            string cancelText = "취소")
         {
             // 최초 1회만 로드
             if (instance == null)
