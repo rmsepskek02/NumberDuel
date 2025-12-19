@@ -1253,8 +1253,8 @@ namespace Manager
                             uid,
                             email,
                             nickname,
-                            "Google",
-                            AuthManager.Instance.CurrentUser.PhotoUrl?.ToString() ?? ""
+                            "Google"
+                            // AuthManager.Instance.CurrentUser.PhotoUrl?.ToString() ?? ""
                         );
 
                         if (!profileCreated)

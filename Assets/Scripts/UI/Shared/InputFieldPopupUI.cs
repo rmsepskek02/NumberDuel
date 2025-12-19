@@ -228,19 +228,24 @@ namespace UI.Shared
                 return;
             }
 
+            // 서버 검증 (닉네임 중복 체크 등)
             if (customValidator != null)
             {
-                await ValidateWithServer(input);
-                if (!isValidationPassed)
+                bool validationResult = await ValidateWithServer(input);
+                if (!validationResult)
+                {
+                    // 검증 실패 (중복 닉네임 등) - 팝업 유지하고 재입력 유도
                     return;
+                }
             }
 
+            // 검증 성공 - 콜백 실행 및 팝업 닫기
             onConfirmed?.Invoke(input);
             await Task.Delay(300);
             Hide();
         }
 
-        private async Task ValidateWithServer(string input)
+        private async Task<bool> ValidateWithServer(string input)
         {
             isProcessing = true;
             SetButtonsInteractable(false);
@@ -256,7 +261,7 @@ namespace UI.Shared
                 SetButtonsInteractable(true);
                 inputField?.Select();
                 inputField?.ActivateInputField();
-                return;
+                return false; // 검증 실패
             }
 
             if (!string.IsNullOrEmpty(message))
@@ -264,6 +269,7 @@ namespace UI.Shared
 
             isProcessing = false;
             SetButtonsInteractable(true);
+            return true; // 검증 성공
         }
         #endregion
 
