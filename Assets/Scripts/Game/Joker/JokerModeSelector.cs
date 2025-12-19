@@ -125,9 +125,9 @@ namespace Objects
 
         private void InitializeTexts()
         {
-            if (drawText != null) drawText.text = "Draw\n2 Card";
-            if (deleteText != null) deleteText.text = "Delete\nCard";
-            if (swapText != null) swapText.text = "Swap\nCards";
+            if (drawText != null) drawText.text = "카드 2장\n뽑기";
+            if (deleteText != null) deleteText.text = "카드 삭제";
+            if (swapText != null) swapText.text = "카드 교환";
         }
         #endregion
 

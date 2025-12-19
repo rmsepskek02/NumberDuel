@@ -39,8 +39,8 @@ namespace Manager
 
         private PhotonManager pm;
 
-        [SerializeField] private string winText = "WIN";
-        [SerializeField] private string loseText = "LOSE";
+        [SerializeField] private string winText = "승리!!";
+        [SerializeField] private string loseText = "패배..";
         [SerializeField] private Color winColor = Color.green;
         [SerializeField] private Color loseColor = Color.red;
         #endregion

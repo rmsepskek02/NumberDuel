@@ -2709,12 +2709,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   startButton: {fileID: 990318040}
   endButton: {fileID: 1513172576}
-  leaveButton: {fileID: 1280466870}
   turn: {fileID: 689780279}
   playerText: {fileID: 1226129742}
   opponentText: {fileID: 849922469}
   enabledStartSprite: {fileID: 21300000, guid: 3c16c5118c1cc3d4d85314313f19093f, type: 3}
-  enabledLeaveSprite: {fileID: 21300000, guid: cb11616cce8547e4a943e1f2d71c6326, type: 3}
   enabledEndSprite: {fileID: 21300000, guid: 710e3ec11a21fad449812f9ea96987ac, type: 3}
   disabledSprite: {fileID: 21300000, guid: 74fb722ccf6e23f41af9f724316793a7, type: 3}
   isStart: 0
@@ -2724,8 +2722,8 @@ MonoBehaviour:
   pulseDuration: 0.8
   pulseCount: 3
   scaleEase: 27
-  winText: WIN
-  loseText: LOSE
+  winText: "\uC2B9\uB9AC!!"
+  loseText: "\uD328\uBC30.."
   winColor: {r: 0, g: 1, b: 0, a: 1}
   loseColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!1 &653544628
@@ -6013,7 +6011,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 1, z: 1}
-  m_LocalScale: {x: 1.8530805, y: 1, z: 1}
+  m_LocalScale: {x: 1.843602, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 696535037}
