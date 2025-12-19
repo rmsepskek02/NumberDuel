@@ -299,17 +299,27 @@ namespace UI.Settings
         /// </summary>
         private void UpdateTabVisibility()
         {
-            if (profileTabButton == null)
-                return;
-
-            // JoinScene에서는 Profile 탭 숨김
-            if (currentSceneName == SceneName.JoinScene.GetSceneName())
+            // Profile 탭: JoinScene에서는 숨김
+            if (profileTabButton != null)
             {
-                profileTabButton.gameObject.SetActive(false);
+                if (currentSceneName == SceneName.JoinScene.GetSceneName())
+                {
+                    profileTabButton.gameObject.SetActive(false);
+                }
+                else
+                {
+                    profileTabButton.gameObject.SetActive(true);
+                }
             }
-            else
+
+            // Display 탭: 모바일에서는 숨김
+            if (displayTabButton != null)
             {
-                profileTabButton.gameObject.SetActive(true);
+#if UNITY_ANDROID || UNITY_IOS
+                displayTabButton.gameObject.SetActive(false);
+#else
+                displayTabButton.gameObject.SetActive(true);
+#endif
             }
         }
         #endregion
