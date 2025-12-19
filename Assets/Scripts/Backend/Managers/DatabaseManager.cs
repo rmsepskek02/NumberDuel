@@ -239,9 +239,9 @@ namespace Manager
         /// <param name="email">이메일</param>
         /// <param name="nickname">닉네임</param>
         /// <param name="authProvider">인증 제공자 ("Google", "Kakao" 등)</param>
-        /// <param name="photoUrl">프로필 사진 URL (선택)</param>
+        /// <param name="photoUrl">프로필 사진 URL (선택) - TODO: 추후 구현 예정</param>
         /// <returns>성공 여부</returns>
-        public async Task<bool> CreateSocialUserProfile(string uid, string email, string nickname, string authProvider, string photoUrl = "")
+        public async Task<bool> CreateSocialUserProfile(string uid, string email, string nickname, string authProvider /*, string photoUrl = ""*/) // TODO: 프로필 사진 기능 - 추후 구현 예정
         {
             if (!isInitialized)
             {
@@ -258,7 +258,7 @@ namespace Manager
             try
             {
                 // 소셜 로그인용 프로필 생성
-                UserProfile profile = new UserProfile(email, nickname, authProvider, photoUrl);
+                UserProfile profile = new UserProfile(email, nickname, authProvider /*, photoUrl*/); // TODO: 프로필 사진 기능 - 추후 구현 예정
 
                 // Firestore에 저장
                 DocumentReference docRef = db.Collection(USERS_COLLECTION).Document(uid);

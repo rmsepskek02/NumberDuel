@@ -67,7 +67,7 @@ namespace Objects.Auth
                     ProviderUserId = user.UserId,
                     Email = user.Email ?? string.Empty,
                     DisplayName = user.DisplayName ?? string.Empty,
-                    PhotoUrl = user.PhotoUrl?.ToString() ?? string.Empty,
+                    // PhotoUrl = user.PhotoUrl?.ToString() ?? string.Empty, // TODO: 프로필 사진 기능 - 추후 구현 예정
                     Credential = null // FederatedOAuthProvider는 Credential 직접 제공 안 함
                 };
             }
