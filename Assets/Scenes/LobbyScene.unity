@@ -1045,7 +1045,7 @@ MonoBehaviour:
   m_CaretWidth: 3
   m_ReadOnly: 0
   m_RichText: 1
-  m_GlobalFontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_GlobalFontAsset: {fileID: 11400000, guid: 96af9a121e352e245859ce1ae3a13b2b, type: 2}
   m_OnFocusSelectAll: 1
   m_ResetOnDeActivation: 1
   m_KeepTextSelectionVisible: 0
@@ -2375,8 +2375,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\uBC29 \uBE44\uBC00\uBC88\uD638\uB97C \uC785\uB825\uD558\uC138\uC694"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 58c71976882d99940aedcaa81b1248c5, type: 2}
-  m_sharedMaterial: {fileID: -6419665919154685341, guid: 58c71976882d99940aedcaa81b1248c5, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 96af9a121e352e245859ce1ae3a13b2b, type: 2}
+  m_sharedMaterial: {fileID: -1800040148378677894, guid: 96af9a121e352e245859ce1ae3a13b2b, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -2976,7 +2976,7 @@ MonoBehaviour:
   m_CaretWidth: 3
   m_ReadOnly: 0
   m_RichText: 1
-  m_GlobalFontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_GlobalFontAsset: {fileID: 11400000, guid: 96af9a121e352e245859ce1ae3a13b2b, type: 2}
   m_OnFocusSelectAll: 1
   m_ResetOnDeActivation: 1
   m_KeepTextSelectionVisible: 0
