@@ -23,9 +23,6 @@ namespace Manager
         public TMP_InputField roomPasswordInputField;
         public Transform roomListContent;
         public GameObject roomItemFactory;
-        public Sprite enableRoomListSprite;
-        public Sprite fullRoomListSprite;
-        public Sprite lockRoomListSprite;
 
         [Header("빠른 매칭")]
         public UnityEngine.UI.Button quickMatchButton;
@@ -594,30 +591,33 @@ namespace Manager
                 {
                     itemComponent.SetInfo(roomInfo);
 
-                    // 방 상태에 따라 스프라이트 설정
+                    // 방 상태에 따라 색상 설정
                     int currentPlayers = roomInfo.CustomProperties.ContainsKey("currentPlayers") ? (int)roomInfo.CustomProperties["currentPlayers"] : 0;
                     int maxPlayers = roomInfo.MaxPlayers;
                     bool hasPassword = roomInfo.CustomProperties.ContainsKey("roomPassword") && !string.IsNullOrEmpty((string)roomInfo.CustomProperties["roomPassword"]);
 
-                    Sprite selectedSprite;
+                    Color selectedColor;
 
                     if (currentPlayers >= maxPlayers)
                     {
-                        selectedSprite = fullRoomListSprite;
+                        // Full: RGB(130, 255, 255)
+                        selectedColor = new Color(130f / 255f, 255f / 255f, 255f / 255f, 1f);
                     }
                     else if (hasPassword)
                     {
-                        selectedSprite = lockRoomListSprite;
+                        // Lock: RGB(255, 130, 130)
+                        selectedColor = new Color(255f / 255f, 130f / 255f, 130f / 255f, 1f);
                     }
                     else
                     {
-                        selectedSprite = enableRoomListSprite;
+                        // Enable: RGB(255, 255, 255)
+                        selectedColor = new Color(255f / 255f, 255f / 255f, 255f / 255f, 1f);
                     }
 
-                    // RoomItem의 Image 컴포넌트 설정
+                    // RoomItem의 Image 컴포넌트 색상 설정
                     if (itemComponent.TryGetComponent(out UnityEngine.UI.Image roomImage))
                     {
-                        roomImage.sprite = selectedSprite;
+                        roomImage.color = selectedColor;
                     }
 
                     // 방 클릭 시 처리 설정

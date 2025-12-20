@@ -278,3 +278,13 @@ MonoBehaviour:
     messageType: 1
     displayDuration: 3
     textColor: {r: 1, g: 0.92, b: 0.016, a: 1}
+  - messageKey: InputPasswordConfirm
+    messageText: "\uBE44\uBC00\uBC88\uD638 \uD655\uC778\uC744 \uC785\uB825\uD574\uC8FC\uC138\uC694."
+    messageType: 2
+    displayDuration: 3
+    textColor: {r: 1, g: 0.29803923, b: 0.29803923, a: 1}
+  - messageKey: PasswordMismatch
+    messageText: "\uBE44\uBC00\uBC88\uD638\uAC00 \uC77C\uCE58\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."
+    messageType: 2
+    displayDuration: 3
+    textColor: {r: 1, g: 0.29803923, b: 0.29803923, a: 1}

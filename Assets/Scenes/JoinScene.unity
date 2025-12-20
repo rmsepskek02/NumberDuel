@@ -375,11 +375,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   inputEmail: {fileID: 593546460}
   inputPassword: {fileID: 390694194}
+  inputPasswordConfirm: {fileID: 529577911}
   inputNickname: {fileID: 1165479508}
   emailLabel: {fileID: 1328282979}
   emailInputField: {fileID: 593546458}
   passwordLabel: {fileID: 806354995}
   passwordInputField: {fileID: 390694192}
+  passwordConfirmLabel: {fileID: 1307693459}
+  passwordConfirmInputField: {fileID: 529577909}
   nicknameLabel: {fileID: 1060331693}
   nicknameInputField: {fileID: 1165479506}
   loginButton: {fileID: 1041236294}

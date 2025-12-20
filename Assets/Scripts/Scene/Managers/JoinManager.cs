@@ -22,6 +22,7 @@ namespace Manager
         [Header("UI Elements - Input Components")]
         public TMP_InputField inputEmail;    // 이메일 입력 컴포넌트 (데이터 읽기용)
         public TMP_InputField inputPassword; // 비밀번호 입력 컴포넌트 (데이터 읽기용)
+        public TMP_InputField inputPasswordConfirm; // 비밀번호 확인 입력 컴포넌트 (데이터 읽기용)
         public TMP_InputField inputNickname; // 닉네임 입력 컴포넌트 (데이터 읽기용)
 
         [Header("UI Elements - Input Fields (GameObject)")]
@@ -29,6 +30,8 @@ namespace Manager
         public GameObject emailInputField;   // 이메일 입력 필드 (UI 제어용)
         public GameObject passwordLabel;     // 비밀번호 라벨 (UI 제어용)
         public GameObject passwordInputField; // 비밀번호 입력 필드 (UI 제어용)
+        public GameObject passwordConfirmLabel;     // 비밀번호 확인 라벨 (UI 제어용)
+        public GameObject passwordConfirmInputField; // 비밀번호 확인 입력 필드 (UI 제어용)
         public GameObject nicknameLabel;     // 닉네임 라벨 (UI 제어용)
         public GameObject nicknameInputField; // 닉네임 입력 필드 (UI 제어용)
 
@@ -671,6 +674,13 @@ namespace Manager
             if (passwordInputField != null)
                 passwordInputField.SetActive(mode != 2);
 
+            // 비밀번호 확인 입력 필드 표시/숨김 (회원가입 모드에서만 표시)
+            if (passwordConfirmLabel != null)
+                passwordConfirmLabel.SetActive(mode == 1);
+
+            if (passwordConfirmInputField != null)
+                passwordConfirmInputField.SetActive(mode == 1);
+
             // 닉네임 입력 필드 표시/숨김 (회원가입 모드에서만 표시)
             if (nicknameLabel != null)
                 nicknameLabel.SetActive(mode == 1);
@@ -986,12 +996,27 @@ namespace Manager
 
             string email = inputEmail?.text ?? "";
             string password = inputPassword?.text ?? "";
+            string passwordConfirm = inputPasswordConfirm?.text ?? "";
             string nickname = inputNickname?.text ?? "";
 
             // 입력 검증
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
             {
                 SystemMessageManager.Instance?.ShowMessage("InputEmailPassword");
+                return;
+            }
+
+            // 비밀번호 확인 입력 검증
+            if (string.IsNullOrEmpty(passwordConfirm))
+            {
+                SystemMessageManager.Instance?.ShowMessage("InputPasswordConfirm");
+                return;
+            }
+
+            // 비밀번호 일치 여부 확인
+            if (password != passwordConfirm)
+            {
+                SystemMessageManager.Instance?.ShowMessage("PasswordMismatch");
                 return;
             }
 
@@ -1398,7 +1423,7 @@ namespace Manager
                     break;
 
                 case 1: // 회원가입 모드
-                    inputFieldOrder = new TMP_InputField[] { inputEmail, inputPassword, inputNickname };
+                    inputFieldOrder = new TMP_InputField[] { inputEmail, inputPassword, inputPasswordConfirm, inputNickname };
                     break;
 
                 case 2: // 비밀번호 찾기 모드
