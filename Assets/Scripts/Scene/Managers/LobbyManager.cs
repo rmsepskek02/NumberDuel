@@ -194,8 +194,20 @@ namespace Manager
 
             isProcessingRoomRequest = true;
 
-            // 로딩 화면 없이 바로 호출 (성공 시 OnJoinedRoom에서 로딩 화면 표시)
-            PhotonNetwork.JoinRoom(roomName);
+            // 로딩 화면 먼저 표시한 후 방 참가 요청
+            if (LoadingScreenManager.Instance != null)
+            {
+                LoadingScreenManager.Instance.FadeInThenAction(() =>
+                {
+                    // 메시지 큐를 끄지 않고 방 참가 요청
+                    // (OnJoinedRoom 콜백을 받아야 하므로 메시지 큐는 켜진 상태로 유지)
+                    PhotonNetwork.JoinRoom(roomName);
+                });
+            }
+            else
+            {
+                PhotonNetwork.JoinRoom(roomName);
+            }
         }
         #endregion
 
@@ -297,11 +309,14 @@ namespace Manager
                 {
                     LoadingScreenManager.Instance.FadeInThenAction(() =>
                     {
+                        // 씬 전환 중 메시지 큐 일시 정지
+                        PhotonNetwork.IsMessageQueueRunning = false;
                         PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.GameScene));
                     });
                 }
                 else
                 {
+                    PhotonNetwork.IsMessageQueueRunning = false;
                     PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.GameScene));
                 }
             }
@@ -322,18 +337,13 @@ namespace Manager
             }
             else
             {
-                // 일반 방 참가 성공 시 로딩 화면과 함께 씬 전환
-                if (LoadingScreenManager.Instance != null)
-                {
-                    LoadingScreenManager.Instance.FadeInThenAction(() =>
-                    {
-                        PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.GameScene));
-                    });
-                }
-                else
-                {
-                    PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.GameScene));
-                }
+                // 일반 방 참가 성공 - 게스트가 방장의 방에 입장
+                Debug.Log($"[LobbyManager] OnJoinedRoom - 게스트 방 입장 성공, 씬 전환 시작");
+
+                // 이미 페이드인 되어 있으므로 바로 씬 전환
+                // 씬 전환 직전에 메시지 큐 끔 (PhotonView 찾기 에러 방지)
+                PhotonNetwork.IsMessageQueueRunning = false;
+                PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.GameScene));
             }
         }
 
