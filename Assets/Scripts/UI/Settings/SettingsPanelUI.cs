@@ -299,16 +299,21 @@ namespace UI.Settings
         /// </summary>
         private void UpdateTabVisibility()
         {
-            // Profile 탭: JoinScene에서는 숨김
+            // Profile 탭: JoinScene에서는 버튼과 콘텐츠 모두 숨김
+            bool shouldShowProfile = currentSceneName != SceneName.JoinScene.GetSceneName();
+
             if (profileTabButton != null)
             {
-                if (currentSceneName == SceneName.JoinScene.GetSceneName())
+                profileTabButton.gameObject.SetActive(shouldShowProfile);
+            }
+
+            // 프로필 콘텐츠도 함께 비활성화 (OnEnable 호출 방지)
+            if (profileContent != null)
+            {
+                // JoinScene에서는 프로필 콘텐츠를 아예 비활성화하여 LoadProfile() 호출 방지
+                if (!shouldShowProfile)
                 {
-                    profileTabButton.gameObject.SetActive(false);
-                }
-                else
-                {
-                    profileTabButton.gameObject.SetActive(true);
+                    profileContent.SetActive(false);
                 }
             }
 

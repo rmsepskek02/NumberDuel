@@ -87,10 +87,12 @@ namespace UI.Settings.Tabs
         /// </summary>
         private async void LoadProfile()
         {
-            // AuthManager 확인
+            // 로그인 상태가 아니면 조용히 리턴 (에러 표시 안 함)
+            // JoinScene에서 설정 패널을 열 때 프로필 탭이 실수로 활성화되는 경우 방지
             if (Manager.AuthManager.Instance == null || !Manager.AuthManager.Instance.IsLoggedIn)
             {
-                ShowError("로그인 정보를 찾을 수 없습니다.");
+                Debug.Log("[ProfileSettingsTab] 로그인되지 않아 프로필 로드 건너뜀");
+                HideError(); // 에러 숨김
                 return;
             }
 
