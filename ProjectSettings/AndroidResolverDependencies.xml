@@ -1,6 +1,8 @@
 <dependencies>
   <packages>
+    <package>com.google.android.gms:play-services-auth:21.2.0</package>
     <package>com.google.android.gms:play-services-base:18.9.0</package>
+    <package>com.google.android.gms:play-services-games-v2:20.1.2</package>
     <package>com.google.firebase:firebase-analytics:23.0.0</package>
     <package>com.google.firebase:firebase-app-unity:13.5.0</package>
     <package>com.google.firebase:firebase-auth:24.0.1</package>

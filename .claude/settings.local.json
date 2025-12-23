@@ -65,7 +65,9 @@
       "Bash(while read commit)",
       "Bash(do git show $commit:Assets/Scripts/Objects/Card)",
       "Bash(echo:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(copy \"D:\\\\Dmain\\\\dev\\\\Portfolio\\\\NumberDuel\\\\Assets\\\\GeneratedLocalRepo\\\\GooglePlayGames\\\\com.google.play.games\\\\Editor\\\\m2repository\\\\com\\\\google\\\\games\\\\gpgs-plugin-support\\\\2.1.0\\\\gpgs-plugin-support-2.1.0.aar\" \"D:\\\\Dmain\\\\dev\\\\Portfolio\\\\NumberDuel\\\\Library\\\\Bee\\\\Android\\\\Prj\\\\IL2CPP\\\\GeneratedLocalRepo\\\\GooglePlayGames\\\\com.google.play.games\\\\Editor\\\\m2repository\\\\com\\\\google\\\\games\\\\gpgs-plugin-support\\\\2.1.0\\\\gpgs-plugin-support-2.1.0.aar\")",
+      "Bash(keytool:*)"
     ],
     "deny": [],
     "ask": []
