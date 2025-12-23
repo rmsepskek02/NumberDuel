@@ -1262,6 +1262,13 @@ namespace Manager
 
             string uid = AuthManager.Instance.CurrentUserUID;
 
+            // 이메일이 비어있는 경우 ProviderData에서 가져오기 (Play Games 로그인 fallback)
+            if (string.IsNullOrEmpty(email))
+            {
+                email = AuthManager.Instance.GetCurrentUserEmailFromProvider();
+                Debug.LogWarning($"[JoinManager] 이메일 파라미터가 비어있어 ProviderData에서 가져옴: {email}");
+            }
+
             // 프로필 존재 여부 확인
             bool profileExists = await DatabaseManager.Instance.UserProfileExists(uid);
 

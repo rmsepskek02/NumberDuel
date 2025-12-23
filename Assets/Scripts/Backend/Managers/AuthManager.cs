@@ -594,7 +594,18 @@ namespace Manager
                     return (false, "로그인에 실패했습니다.", string.Empty);
                 }
 
-                Debug.Log($"[AuthManager] Google 로그인 성공: {currentUser.Email}");
+                // 디버그: Firebase 사용자 정보 상세 로그
+                Debug.Log($"[AuthManager] === Google 로그인 성공 ===");
+                Debug.Log($"[AuthManager] UID: {currentUser.UserId}");
+                Debug.Log($"[AuthManager] Email: {currentUser.Email}");
+                Debug.Log($"[AuthManager] DisplayName: {currentUser.DisplayName}");
+                Debug.Log($"[AuthManager] ProviderData Count: {currentUser.ProviderData.Count()}");
+
+                foreach (var provider in currentUser.ProviderData)
+                {
+                    Debug.Log($"[AuthManager] Provider: {provider.ProviderId}, Email: {provider.Email}, DisplayName: {provider.DisplayName}");
+                }
+
                 return (true, "Google 로그인 성공", currentUser.Email);
             }
             catch (FirebaseException ex)
@@ -1005,7 +1016,10 @@ namespace Manager
         }
 
         /// <summary>
-        /// 현재 로그인 방식 표시용 문자열
+        /// 현재 로그인 방식 표시용 문자열 반환
+        /// - "Google": Play Games Services로 로그인
+        /// - "이메일": 이메일/비밀번호로 로그인
+        /// - "Google + 이메일": 두 방식 모두 연동됨
         /// </summary>
         public string GetLoginMethodDisplayName()
         {
@@ -1014,18 +1028,31 @@ namespace Manager
 
             var providers = GetCurrentUserProviders();
 
+            // 디버그: Provider 목록 로그
+            Debug.Log($"[AuthManager] GetLoginMethodDisplayName - Provider count: {providers.Count}");
+            foreach (var p in providers)
+            {
+                Debug.Log($"[AuthManager] Provider in list: {p}");
+            }
+
             bool hasGoogle = providers.Contains("google.com");
             bool hasPassword = providers.Contains("password");
+            bool hasPlayGames = providers.Contains("playgames.google.com");
 
+            // 두 방식 모두 연동된 경우
             if (hasGoogle && hasPassword)
                 return "Google + 이메일";
 
-            if (hasGoogle)
+            // Google (Play Games) 로그인
+            if (hasGoogle || hasPlayGames)
                 return "Google";
 
+            // 이메일/비밀번호 로그인
             if (hasPassword)
                 return "이메일";
 
+            // 예외 상황 - 디버그 정보 포함
+            Debug.LogWarning($"[AuthManager] 알 수 없는 로그인 방식! Providers: {string.Join(", ", providers)}");
             return "알 수 없음";
         }
 
@@ -1039,8 +1066,11 @@ namespace Manager
 
             var providers = GetCurrentUserProviders();
 
-            // Google과 password 둘 다 있으면 완전 연동
-            return providers.Contains("google.com") && providers.Contains("password");
+            // Google (또는 Play Games)과 password 둘 다 있으면 완전 연동
+            bool hasGoogle = providers.Contains("google.com") || providers.Contains("playgames.google.com");
+            bool hasPassword = providers.Contains("password");
+
+            return hasGoogle && hasPassword;
         }
 
         #endregion

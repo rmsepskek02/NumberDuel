@@ -21,7 +21,7 @@ namespace Objects.Auth
     /// - PC/iOS/WebGL: Firebase FederatedOAuthProvider (WebView 기반 OAuth 2.0)
     ///
     /// 주요 특징:
-    /// - Android에서 MapleStory 스타일의 네이티브 Google 계정 선택 UI 제공
+    /// - Android에서 네이티브 Google 계정 선택 UI 제공
     /// - Firebase Authentication과 통합되어 모든 플랫폼에서 동일한 사용자 계정 관리
     /// - Server Auth Code 방식으로 안전한 인증 처리 (Android)
     /// </summary>
@@ -153,12 +153,23 @@ namespace Objects.Auth
                                     PlayGamesPlatform.Instance.GetUserDisplayName() ??
                                     string.Empty;
 
+                // 이메일 추출
+                // Firebase Authentication이 Play Games 인증 시 자동으로 이메일을 제공해야 합니다
+                string email = user.Email ?? string.Empty;
+
+                // 디버그: 이메일이 비어있는 경우 경고
+                if (string.IsNullOrEmpty(email))
+                {
+                    Debug.LogWarning("[GoogleAuthProvider] Firebase에서 이메일을 가져올 수 없습니다. " +
+                                   "Google Cloud Console에서 email scope이 활성화되어 있는지 확인하세요.");
+                }
+
                 return new SocialAuthResult
                 {
                     Success = true,
                     Message = "Google 로그인 성공",
                     ProviderUserId = user.UserId,
-                    Email = user.Email ?? string.Empty,
+                    Email = email,
                     DisplayName = displayName,
                     IdToken = serverAuthCode, // Server Auth Code 저장 (필요 시 서버 검증용)
                     Credential = credential
