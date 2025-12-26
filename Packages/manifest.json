@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "com.gamelovers.mcp-unity": "https://github.com/CoderGamester/mcp-unity.git",
+    "com.mopsicus.umi": "https://github.com/mopsicus/umi.git",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.adaptiveperformance.google.android": "5.1.6",
     "com.unity.collab-proxy": "2.9.3",
