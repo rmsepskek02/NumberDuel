@@ -54,12 +54,6 @@ namespace UI.Settings.Tabs
             resolutionDropdown?.onValueChanged.RemoveListener(OnResolutionChanged);
             screenModeDropdown?.onValueChanged.RemoveListener(OnScreenModeChanged);
         }
-
-        private void OnEnable()
-        {
-            // 탭 활성화 시 현재 설정 다시 로드
-            LoadCurrentSettings();
-        }
         #endregion
 
 
