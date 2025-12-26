@@ -67,7 +67,10 @@
       "Bash(echo:*)",
       "Bash(git restore:*)",
       "Bash(copy \"D:\\\\Dmain\\\\dev\\\\Portfolio\\\\NumberDuel\\\\Assets\\\\GeneratedLocalRepo\\\\GooglePlayGames\\\\com.google.play.games\\\\Editor\\\\m2repository\\\\com\\\\google\\\\games\\\\gpgs-plugin-support\\\\2.1.0\\\\gpgs-plugin-support-2.1.0.aar\" \"D:\\\\Dmain\\\\dev\\\\Portfolio\\\\NumberDuel\\\\Library\\\\Bee\\\\Android\\\\Prj\\\\IL2CPP\\\\GeneratedLocalRepo\\\\GooglePlayGames\\\\com.google.play.games\\\\Editor\\\\m2repository\\\\com\\\\google\\\\games\\\\gpgs-plugin-support\\\\2.1.0\\\\gpgs-plugin-support-2.1.0.aar\")",
-      "Bash(keytool:*)"
+      "Bash(keytool:*)",
+      "Bash(test:*)",
+      "Bash(tasklist:*)",
+      "Bash(copy \"%USERPROFILE%\\\\.android\\\\debug.keystore\" \"D:\\\\Dmain\\\\dev\\\\Portfolio\\\\NumberDuel\\\\Keystores\\\\debug.keystore\")"
     ],
     "deny": [],
     "ask": []

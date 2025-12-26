@@ -86,3 +86,13 @@ Assets/Plugins/tvOS/
 
 # Google services
 google-services.json
+
+# Keystore files (보안)
+# Release keystores는 절대 커밋하지 말 것!
+**/release.keystore
+**/release.jks
+*.keystore.pwd
+*.jks.pwd
+
+# Debug keystore는 팀 공유를 위해 포함
+!Keystores/debug.keystore
