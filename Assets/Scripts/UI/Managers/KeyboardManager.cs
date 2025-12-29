@@ -175,6 +175,16 @@ namespace Manager
         }
 
         /// <summary>
+        /// 런타임에 생성된 InputField를 수동으로 등록
+        /// 팝업이나 동적으로 생성되는 UI에서 사용
+        /// </summary>
+        /// <param name="inputField">등록할 InputField</param>
+        public void RegisterInputFieldRuntime(TMP_InputField inputField)
+        {
+            RegisterInputField(inputField);
+        }
+
+        /// <summary>
         /// 개별 InputField에 Select/Deselect 이벤트 등록
         /// </summary>
         private void RegisterInputField(TMP_InputField inputField)
@@ -183,9 +193,11 @@ namespace Manager
             if (inputField == null || registeredInputFields.Contains(inputField))
                 return;
 
+            Debug.Log($"[KeyboardManager] RegisterInputField: {inputField.name}");
+
             // InputField 선택/해제 이벤트 리스너 등록
-            inputField.onSelect.AddListener((string text) => OnInputFieldSelected(inputField));
-            inputField.onDeselect.AddListener((string text) => OnInputFieldDeselected(inputField));
+            inputField.onSelect.AddListener((eventData) => OnInputFieldSelected(inputField));
+            inputField.onDeselect.AddListener((eventData) => OnInputFieldDeselected(inputField));
 
             registeredInputFields.Add(inputField);
         }
@@ -221,6 +233,8 @@ namespace Manager
             if (inputField == null)
                 return;
 
+            Debug.Log($"[KeyboardManager] OnInputFieldSelected: {inputField.name}, isMoved={isMoved}, lastKeyboardHeight={lastKeyboardHeight}");
+
             currentInputField = inputField;
 
             // InputField가 속한 Canvas 탐색
@@ -240,8 +254,27 @@ namespace Manager
                 return;
             }
 
-            // 원래 위치 저장 (복원 시 사용)
-            originalPosition = targetRectTransform.anchoredPosition;
+            Debug.Log($"[KeyboardManager] targetRectTransform: {targetRectTransform.name}");
+
+            // 핵심: isMoved가 false일 때만 원래 위치 저장
+            // (이미 이동된 상태면 최초 원래 위치를 유지해야 함)
+            if (!isMoved)
+            {
+                originalPosition = targetRectTransform.anchoredPosition;
+                Debug.Log($"[KeyboardManager] 원래 위치 저장: {originalPosition}");
+            }
+            else
+            {
+                Debug.Log($"[KeyboardManager] 이미 이동된 상태 - 원래 위치 유지: {originalPosition}");
+            }
+
+            // 키보드가 이미 떠있으면 즉시 위치 재계산
+            // (다른 InputField에서 전환된 경우)
+            if (lastKeyboardHeight > 0)
+            {
+                Debug.Log($"[KeyboardManager] 키보드 떠있음 - 위치 재계산 실행");
+                MoveCanvasUp();
+            }
         }
 
         /// <summary>
@@ -277,16 +310,48 @@ namespace Manager
 
         /// <summary>
         /// InputField 포커스 해제 시 호출
-        /// UI를 원위치로 복원
+        /// 다른 InputField로 전환되는지 체크 후 UI 복원 결정
         /// </summary>
         private void OnInputFieldDeselected(TMP_InputField inputField)
         {
+            Debug.Log($"[KeyboardManager] OnInputFieldDeselected: {inputField?.name}, currentInputField={currentInputField?.name}");
+
             // 현재 포커스된 InputField가 아니면 무시
             if (inputField != currentInputField)
                 return;
 
             currentInputField = null;
-            RestoreCanvas();
+
+            // 즉시 UI 복원하지 않고, 다음 프레임에 다른 InputField로 전환되는지 확인
+            Debug.Log($"[KeyboardManager] CheckIfShouldRestoreUI 코루틴 시작");
+            StartCoroutine(CheckIfShouldRestoreUI());
+        }
+
+        /// <summary>
+        /// 다음 프레임에 UI 복원이 필요한지 체크
+        /// - currentInputField가 null이면: 완전히 포커스 해제 → UI 복원
+        /// - currentInputField가 있으면: 다른 InputField로 전환됨 → UI 유지
+        /// </summary>
+        private IEnumerator CheckIfShouldRestoreUI()
+        {
+            yield return null; // 1프레임 대기
+
+            Debug.Log($"[KeyboardManager] CheckIfShouldRestoreUI: currentInputField={currentInputField?.name}");
+
+            // 1프레임 후에도 currentInputField가 null이면
+            // → 다른 InputField로 전환되지 않음 → UI 복원 필요
+            if (currentInputField == null)
+            {
+                Debug.Log($"[KeyboardManager] 다른 InputField로 전환 안됨 - UI 복원");
+                RestoreCanvas();
+            }
+            else
+            {
+                Debug.Log($"[KeyboardManager] 다른 InputField({currentInputField.name})로 전환됨 - UI 유지");
+            }
+            // currentInputField가 null이 아니면
+            // → 다른 InputField로 전환됨 → OnInputFieldSelected가 이미 호출됨
+            // → 그 InputField 기준으로 위치 재계산됨
         }
 
         #endregion
@@ -300,13 +365,15 @@ namespace Manager
         /// - 현재 포커스된 InputField가 있다면 UI 이동 시도
         ///
         /// 키보드 숨김:
-        /// - 이동된 UI를 원위치로 복원
-        /// - InputField 포커스 해제
+        /// - 키보드 높이 초기화
+        /// - 이동된 UI 복원은 InputField deselect 이벤트에서 자동 처리됨
         /// </summary>
         /// <param name="isShow">키보드 표시 여부</param>
         /// <param name="height">키보드 높이 (픽셀 단위)</param>
         private void OnKeyboardHeightChanged(bool isShow, int height)
         {
+            Debug.Log($"[KeyboardManager] OnKeyboardHeightChanged: isShow={isShow}, height={height}");
+
             if (isShow && height > 0)
             {
                 // 키보드 표시됨
@@ -320,15 +387,15 @@ namespace Manager
             else
             {
                 // 키보드 숨겨짐
-                if (isMoved)
-                {
-                    RestoreCanvas();
-                }
+                Debug.Log($"[KeyboardManager] 키보드 숨겨짐");
+                lastKeyboardHeight = 0; // 키보드 높이 초기화
 
-                if (currentInputField != null)
-                {
-                    OnInputFieldDeselected(currentInputField);
-                }
+                // ❌ 제거: OnInputFieldDeselected 호출하지 않음
+                // InputField의 onDeselect 이벤트가 자연스럽게 발생하므로
+                // 여기서 중복 호출하면 문제 발생
+                // (InputField 간 전환 시 키보드가 잠깐 내려갔다 올라가는 경우)
+
+                // UI 복원은 OnInputFieldDeselected의 CheckIfShouldRestoreUI에서 처리됨
             }
         }
 
@@ -350,18 +417,27 @@ namespace Manager
             if (targetCanvas == null || currentInputField == null || targetRectTransform == null)
                 return;
 
-            // 필요한 이동 거리 계산
+            // 필요한 이동 거리 계산 (현재 위치 기준)
             float requiredOffset = CalculateRequiredOffset();
+
+            Debug.Log($"[KeyboardManager] MoveCanvasUp: requiredOffset={requiredOffset}");
 
             // InputField가 키보드에 가려지지 않으면 이동 불필요
             if (requiredOffset <= 0f)
+            {
+                Debug.Log($"[KeyboardManager] InputField가 키보드에 가려지지 않음 - 이동 불필요");
                 return;
+            }
 
             // 이전 애니메이션이 진행 중이면 중단
             targetRectTransform.DOKill();
 
-            // 목표 위치 계산 (원래 위치 + 이동 거리)
+            // 목표 위치 계산
+            // isMoved=true이면 현재 위치에서 추가 이동, false이면 원래 위치에서 이동
+            Vector2 currentPosition = targetRectTransform.anchoredPosition;
             Vector2 targetPosition = originalPosition + new Vector2(0f, requiredOffset);
+
+            Debug.Log($"[KeyboardManager] currentPosition={currentPosition}, targetPosition={targetPosition}");
 
             // 이동 플래그 즉시 설정 (애니메이션 중 키보드가 내려가도 복원 가능하도록)
             isMoved = true;
@@ -424,10 +500,11 @@ namespace Manager
         /// InputField를 키보드 위로 이동시키기 위해 필요한 거리 계산
         ///
         /// 계산 과정:
-        /// 1. InputField와 키보드의 스크린 좌표 비교
-        /// 2. InputField 하단이 키보드보다 아래에 있으면 가려진 것으로 판단
-        /// 3. InputField를 키보드 상단 + additionalOffset 위치로 이동시키기 위한 거리 계산
-        /// 4. 스크린 픽셀 단위를 Canvas 좌표 단위로 변환하여 반환
+        /// 1. UI를 원래 위치로 임시 복원하여 InputField의 원래 스크린 좌표 계산
+        /// 2. InputField와 키보드의 스크린 좌표 비교
+        /// 3. InputField 하단이 키보드보다 아래에 있으면 가려진 것으로 판단
+        /// 4. InputField를 키보드 상단 + additionalOffset 위치로 이동시키기 위한 거리 계산
+        /// 5. 스크린 픽셀 단위를 Canvas 좌표 단위로 변환하여 반환
         /// </summary>
         /// <returns>Canvas 좌표 단위의 이동 거리 (가려지지 않으면 0 이하)</returns>
         private float CalculateRequiredOffset()
@@ -437,9 +514,18 @@ namespace Manager
 
             RectTransform inputRect = currentInputField.GetComponent<RectTransform>();
 
-            // InputField의 월드 좌표 모서리 가져오기
+            // 현재 UI 위치 저장
+            Vector2 currentUIPosition = targetRectTransform.anchoredPosition;
+
+            // InputField의 원래 위치를 계산하기 위해 UI를 임시로 원위치로 이동
+            targetRectTransform.anchoredPosition = originalPosition;
+
+            // InputField의 월드 좌표 모서리 가져오기 (원래 위치 기준)
             Vector3[] inputCorners = new Vector3[4];
             inputRect.GetWorldCorners(inputCorners);
+
+            // UI를 원래 위치로 복원
+            targetRectTransform.anchoredPosition = currentUIPosition;
 
             // 월드 좌표를 스크린 픽셀 좌표로 변환
             // ScreenSpaceOverlay 모드면 카메라 null, ScreenSpaceCamera 모드면 worldCamera 사용
@@ -447,16 +533,21 @@ namespace Manager
                 ? null
                 : targetCanvas.worldCamera;
 
-            // InputField 하단(왼쪽 아래 모서리)의 스크린 Y 좌표
+            // InputField 하단(왼쪽 아래 모서리)의 스크린 Y 좌표 (원래 위치 기준)
             Vector2 inputBottomScreen = RectTransformUtility.WorldToScreenPoint(cam, inputCorners[0]);
             float inputBottomY = inputBottomScreen.y;
 
             // 키보드 상단의 스크린 Y 좌표
             float keyboardTopY = lastKeyboardHeight;
 
+            Debug.Log($"[KeyboardManager] CalculateRequiredOffset: inputBottomY(원래위치기준)={inputBottomY}, keyboardTopY={keyboardTopY}");
+
             // InputField가 키보드보다 위에 있으면 이동 불필요
             if (inputBottomY > keyboardTopY)
+            {
+                Debug.Log($"[KeyboardManager] InputField가 키보드 위에 있음 - 이동 불필요");
                 return 0f;
+            }
 
             // 목표 위치: 키보드 상단 + 여유 공간(additionalOffset)
             float targetInputBottomY = keyboardTopY + additionalOffset;
@@ -468,6 +559,8 @@ namespace Manager
             // Canvas의 scaleFactor는 디바이스 해상도에 따라 달라짐
             float canvasScaleFactor = targetCanvas.scaleFactor;
             float offsetInCanvasUnits = offsetInPixels / canvasScaleFactor;
+
+            Debug.Log($"[KeyboardManager] offsetInPixels={offsetInPixels}, canvasScaleFactor={canvasScaleFactor}, offsetInCanvasUnits={offsetInCanvasUnits}");
 
             return offsetInCanvasUnits;
         }

@@ -52,6 +52,9 @@ namespace UI.Shared
                 canvasGroup.blocksRaycasts = false;
             }
 
+            // KeyboardManager에 InputField 등록 (모바일 키보드 대응)
+            RegisterInputFieldToKeyboardManager();
+
             gameObject.SetActive(false);
         }
 
@@ -299,6 +302,27 @@ namespace UI.Shared
 
             if (inputField != null)
                 inputField.interactable = interactable;
+        }
+        #endregion
+
+        #region Keyboard Manager Integration
+        /// <summary>
+        /// KeyboardManager에 InputField 등록
+        /// 팝업이 생성될 때 호출되어 모바일 키보드 대응 활성화
+        /// </summary>
+        private void RegisterInputFieldToKeyboardManager()
+        {
+            if (inputField == null)
+                return;
+
+#if UNITY_ANDROID || UNITY_IOS
+            // 모바일 플랫폼에서만 KeyboardManager에 등록
+            var keyboardManager = Manager.KeyboardManager.Instance;
+            if (keyboardManager != null)
+            {
+                keyboardManager.RegisterInputFieldRuntime(inputField);
+            }
+#endif
         }
         #endregion
 
