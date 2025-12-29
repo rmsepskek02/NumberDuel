@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "48353818417-u4jrc6111fq493qcr88475q40ld8988m.apps.googleusercontent.com",
+          "client_id": "48353818417-b15ne9qd4uoa3ovguiu89sk98lldru6n.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.GoroCompany.NumberDuel",
-            "certificate_hash": "92fd44a80f252c2e45623f87d8d9bae46fa63a03"
+            "certificate_hash": "a09d932a3b6a5b1b992a4b086ad3467312d701e3"
           }
         },
         {
