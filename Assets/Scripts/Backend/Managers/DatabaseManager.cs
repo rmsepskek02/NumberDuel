@@ -200,7 +200,8 @@ namespace Manager
         /// <param name="email">이메일</param>
         /// <param name="nickname">닉네임</param>
         /// <param name="emailVerified">이메일 인증 상태 (기본값: false)</param>
-        public async Task<bool> CreateUserProfile(string uid, string email, string nickname, bool emailVerified = false)
+        /// <param name="authProvider">인증 제공자 (기본값: "Email")</param>
+        public async Task<bool> CreateUserProfile(string uid, string email, string nickname, bool emailVerified = false, string authProvider = "Email")
         {
             if (!isInitialized)
             {
@@ -217,11 +218,22 @@ namespace Manager
             try
             {
                 // 새 프로필 생성
-                UserProfile profile = new UserProfile(email, nickname, emailVerified);
+                UserProfile profile = new UserProfile(email, nickname, emailVerified, authProvider);
+
+                // 디버그: 프로필 생성 정보 로깅
+                Debug.Log($"[DatabaseManager] === CreateUserProfile 호출 ===");
+                Debug.Log($"[DatabaseManager] UID: {uid}");
+                Debug.Log($"[DatabaseManager] Email: {email}");
+                Debug.Log($"[DatabaseManager] Nickname: {nickname}");
+                Debug.Log($"[DatabaseManager] EmailVerified (파라미터): {emailVerified}");
+                Debug.Log($"[DatabaseManager] EmailVerified (객체): {profile.EmailVerified}");
+                Debug.Log($"[DatabaseManager] AuthProvider: {authProvider}");
 
                 // Firestore에 저장
                 DocumentReference docRef = db.Collection(USERS_COLLECTION).Document(uid);
                 await docRef.SetAsync(profile);
+
+                Debug.Log($"[DatabaseManager] Firestore 저장 완료");
 
                 return true;
             }
@@ -239,9 +251,8 @@ namespace Manager
         /// <param name="email">이메일</param>
         /// <param name="nickname">닉네임</param>
         /// <param name="authProvider">인증 제공자 ("Google", "Kakao" 등)</param>
-        /// <param name="photoUrl">프로필 사진 URL (선택) - TODO: 추후 구현 예정</param>
         /// <returns>성공 여부</returns>
-        public async Task<bool> CreateSocialUserProfile(string uid, string email, string nickname, string authProvider /*, string photoUrl = ""*/) // TODO: 프로필 사진 기능 - 추후 구현 예정
+        public async Task<bool> CreateSocialUserProfile(string uid, string email, string nickname, string authProvider)
         {
             if (!isInitialized)
             {
@@ -257,8 +268,8 @@ namespace Manager
 
             try
             {
-                // 소셜 로그인용 프로필 생성
-                UserProfile profile = new UserProfile(email, nickname, authProvider /*, photoUrl*/); // TODO: 프로필 사진 기능 - 추후 구현 예정
+                // 소셜 로그인용 프로필 생성 (소셜 로그인은 기본적으로 이메일 인증됨)
+                UserProfile profile = new UserProfile(email, nickname, emailVerified: true, authProvider: authProvider);
 
                 // Firestore에 저장
                 DocumentReference docRef = db.Collection(USERS_COLLECTION).Document(uid);

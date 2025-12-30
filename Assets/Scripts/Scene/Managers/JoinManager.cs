@@ -41,6 +41,7 @@ namespace Manager
         public Button forgotPasswordButton;  // 비밀번호 찾기 버튼
 
         [Header("Social Login Buttons")]
+        public Button guestLoginButton;      // 게스트 로그인 버튼
         public Button googleLoginButton;     // Google 로그인 버튼
         public Button kakaoLoginButton;      // Kakao 로그인 버튼
 
@@ -392,6 +393,113 @@ namespace Manager
         }
 
         /// <summary>
+        /// 게스트 로그인 버튼 클릭
+        /// </summary>
+        public void OnClickGuestLoginButton()
+        {
+            // 확인 팝업 표시
+            UI.Shared.ConfirmationPopup.Show(
+                "게스트로 시작하시겠습니까?\n\n주의사항\n• 앱 삭제 시 데이터가 손실됩니다\n• 이메일/구글 계정과 연동 가능합니다",
+                onConfirm: async () => await OnGuestLoginConfirm(),
+                onCancel: () => { }, // 빈 액션 전달 (취소 버튼 표시)
+                confirmText: "확인",
+                cancelText: "취소"
+            );
+        }
+
+        /// <summary>
+        /// 게스트 로그인 확인 (팝업에서 확인 버튼 클릭 시)
+        /// </summary>
+        private async Task OnGuestLoginConfirm()
+        {
+            if (isProcessing) return;
+
+            isProcessing = true;
+            SetButtonsInteractable(false);
+
+            bool shouldResetButtons = true;
+
+            try
+            {
+                // Firebase 초기화 대기
+                if (!AuthManager.Instance.IsInitialized)
+                {
+                    SystemMessageManager.Instance?.ShowMessage("InitializingFirebase");
+                    bool authReady = await AuthManager.Instance.WaitForInitialization(10f);
+                    if (!authReady)
+                    {
+                        SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
+                        return;
+                    }
+                }
+
+                if (!SessionManager.Instance.IsInitialized)
+                {
+                    bool sessionReady = await SessionManager.Instance.WaitForInitialization(10f);
+                    if (!sessionReady)
+                    {
+                        SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
+                        return;
+                    }
+                }
+
+                // 게스트 로그인 시도
+                bool success = await AuthManager.Instance.SignInAnonymously();
+
+                if (!success)
+                {
+                    // 에러 팝업
+                    UI.Shared.ConfirmationPopup.Show(
+                        "게스트 로그인에 실패했습니다.\n\n네트워크 연결을 확인하고\n다시 시도해주세요.",
+                        onConfirm: null,
+                        onCancel: null,
+                        confirmText: "확인",
+                        cancelText: null
+                    );
+                    return;
+                }
+
+                // 로그인 성공 - 세션 생성 및 로비 진입
+                string uid = AuthManager.Instance.CurrentUserUID;
+
+                // 세션 생성 (익명 계정도 세션 필요)
+                bool sessionCreated = await SessionManager.Instance.CreateSession(uid);
+                if (!sessionCreated)
+                {
+                    SystemMessageManager.Instance?.ShowMessage("SessionCreateFailed");
+                    await AuthManager.Instance.DeleteAccount(); // 생성된 익명 계정 삭제
+                    return;
+                }
+
+                SessionManager.Instance.StartSessionMonitoring(uid);
+                await System.Threading.Tasks.Task.Delay(500);
+
+                // Photon 연결 및 로비 진입
+                StartCoroutine(OnLoginSuccessCoroutine());
+                shouldResetButtons = false; // 성공 시 씬 전환되므로 버튼 리셋 불필요
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[JoinManager] 게스트 로그인 예외: {ex.Message}");
+                UI.Shared.ConfirmationPopup.Show(
+                    "게스트 로그인 중 오류가 발생했습니다.\n다시 시도해주세요.",
+                    onConfirm: null,
+                    onCancel: null,
+                    confirmText: "확인",
+                    cancelText: null
+                );
+            }
+            finally
+            {
+                isProcessing = false;
+                if (shouldResetButtons)
+                {
+                    SetButtonsInteractable(true);
+                }
+            }
+        }
+
+        /// <summary>
         /// Google 로그인 버튼 클릭
         /// </summary>
         public async void OnClickGoogleLoginButton()
@@ -579,20 +687,28 @@ namespace Manager
 
             if (profile != null)
             {
-                // ✅ 이메일 인증 상태 업데이트 (로그인 성공 시 true로 설정)
-                var updateEmailVerifiedTask = DatabaseManager.Instance.UpdateEmailVerified(uid, true);
-                elapsedTime = 0f;
-
-                while (!updateEmailVerifiedTask.IsCompleted && elapsedTime < TASK_TIMEOUT)
+                // ✅ 이메일 인증 상태 업데이트 (익명 로그인이 아닌 경우만 true로 설정)
+                // 익명 로그인은 EmailVerified가 항상 false여야 함
+                if (!AuthManager.Instance.IsAnonymous)
                 {
-                    yield return new WaitForSeconds(0.1f);
-                    elapsedTime += 0.1f;
+                    var updateEmailVerifiedTask = DatabaseManager.Instance.UpdateEmailVerified(uid, true);
+                    elapsedTime = 0f;
+
+                    while (!updateEmailVerifiedTask.IsCompleted && elapsedTime < TASK_TIMEOUT)
+                    {
+                        yield return new WaitForSeconds(0.1f);
+                        elapsedTime += 0.1f;
+                    }
+
+                    // 업데이트 실패해도 로그인은 진행 (치명적 아님)
+                    if (!updateEmailVerifiedTask.IsCompleted)
+                    {
+                        Debug.LogWarning($"⏱️ 마지막 로그인 업데이트 타임아웃 ({TASK_TIMEOUT}초) - 무시하고 진행");
+                    }
                 }
-
-                // 업데이트 실패해도 로그인은 진행 (치명적 아님)
-                if (!updateEmailVerifiedTask.IsCompleted)
+                else
                 {
-                    Debug.LogWarning($"⏱️ 마지막 로그인 업데이트 타임아웃 ({TASK_TIMEOUT}초) - 무시하고 진행");
+                    Debug.Log($"[JoinManager] 익명 로그인 - EmailVerified 업데이트 건너뜀 (false 유지)");
                 }
 
                 // Photon 닉네임 설정

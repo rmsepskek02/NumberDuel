@@ -288,3 +288,28 @@ MonoBehaviour:
     messageType: 2
     displayDuration: 3
     textColor: {r: 1, g: 0.29803923, b: 0.29803923, a: 1}
+  - messageKey: GuestLoginInProgress
+    messageText: "\uAC8C\uC2A4\uD2B8 \uB85C\uADF8\uC778 \uC911..."
+    messageType: 0
+    displayDuration: 1
+    textColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  - messageKey: GuestLoginSuccess
+    messageText: "\uAC8C\uC2A4\uD2B8 \uB85C\uADF8\uC778 \uC131\uACF5!"
+    messageType: 3
+    displayDuration: 1
+    textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}
+  - messageKey: SessionRestored
+    messageText: "\uC774\uC804 \uACC4\uC815\uC73C\uB85C \uC790\uB3D9 \uB85C\uADF8\uC778\uB418\uC5C8\uC2B5\uB2C8\uB2E4"
+    messageType: 3
+    displayDuration: 2
+    textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}
+  - messageKey: AccountDeletionInProgress
+    messageText: "\uACC4\uC815 \uC0AD\uC81C \uC911..."
+    messageType: 0
+    displayDuration: 1
+    textColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  - messageKey: AccountDeletionComplete
+    messageText: "\uACC4\uC815\uC774 \uC0AD\uC81C\uB418\uC5C8\uC2B5\uB2C8\uB2E4"
+    messageType: 3
+    displayDuration: 2
+    textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}

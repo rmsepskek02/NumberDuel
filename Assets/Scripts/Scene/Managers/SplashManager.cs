@@ -100,6 +100,12 @@ namespace Manager
             {
                 Debug.Log("[SplashManager] 자동 로그인 가능 - 로비로 이동 시도");
 
+                // 시스템 메시지: 세션 복원
+                if (SystemMessageManager.Instance != null)
+                {
+                    SystemMessageManager.Instance.ShowMessage("SessionRestored");
+                }
+
                 // 세션 체크
                 string uid = AuthManager.Instance.CurrentUserUID;
                 var sessionCheckTask = SessionManager.Instance.CheckSession(uid);

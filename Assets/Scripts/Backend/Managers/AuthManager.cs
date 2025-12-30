@@ -53,6 +53,11 @@ namespace Manager
         /// 이메일 인증 여부 확인
         /// </summary>
         public bool IsEmailVerified => currentUser?.IsEmailVerified ?? false;
+
+        /// <summary>
+        /// 익명 로그인 여부 확인
+        /// </summary>
+        public bool IsAnonymous => currentUser?.IsAnonymous ?? false;
         #endregion
 
         #region Initialization
@@ -228,6 +233,191 @@ namespace Manager
                 {
                     Debug.Log($"사용자 로그인: {currentUser.Email} (UID: {currentUser.UserId})");
                 }
+            }
+        }
+        #endregion
+
+        #region Public Methods - Anonymous Login
+        /// <summary>
+        /// 익명 로그인
+        /// </summary>
+        /// <returns>성공 여부</returns>
+        public async Task<bool> SignInAnonymously()
+        {
+            try
+            {
+                // Firebase 초기화 확인
+                if (!isInitialized || auth == null)
+                {
+                    Debug.LogError("[AuthManager] Firebase가 초기화되지 않았습니다.");
+                    return false;
+                }
+
+                // 시스템 메시지: 로그인 중
+                if (SystemMessageManager.Instance != null)
+                {
+                    SystemMessageManager.Instance.ShowMessage("GuestLoginInProgress");
+                }
+
+                // Firebase 익명 로그인
+                var result = await auth.SignInAnonymouslyAsync();
+
+                if (result.User != null)
+                {
+                    currentUser = result.User;
+                    string userId = currentUser.UserId;
+
+                    Debug.Log($"[AuthManager] 익명 로그인 성공: UID = {userId}");
+
+                    // Firestore에 익명 사용자 프로필 생성
+                    string nickname = await GenerateUniqueGuestNickname();
+                    bool profileCreated = await CreateAnonymousUserProfile(userId, nickname);
+
+                    if (!profileCreated)
+                    {
+                        Debug.LogError("[AuthManager] 익명 사용자 프로필 생성 실패");
+                        return false;
+                    }
+
+                    // 시스템 메시지: 로그인 성공
+                    if (SystemMessageManager.Instance != null)
+                    {
+                        SystemMessageManager.Instance.ShowMessage("GuestLoginSuccess");
+                    }
+
+                    return true;
+                }
+
+                return false;
+            }
+            catch (FirebaseException ex)
+            {
+                Debug.LogError($"[AuthManager] 익명 로그인 실패: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 고유한 게스트 닉네임 생성 (Guest_xxxxxx 형식, 6자리 영숫자)
+        /// Firestore에서 중복 확인
+        /// </summary>
+        private async Task<string> GenerateUniqueGuestNickname()
+        {
+            const string chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+            int maxAttempts = 10; // 최대 10번 시도
+
+            for (int attempt = 0; attempt < maxAttempts; attempt++)
+            {
+                // 6자리 랜덤 문자열 생성
+                string randomSuffix = "";
+                for (int i = 0; i < 6; i++)
+                {
+                    randomSuffix += chars[UnityEngine.Random.Range(0, chars.Length)];
+                }
+
+                string nickname = $"Guest_{randomSuffix}";
+
+                // Firestore에서 중복 확인
+                if (DatabaseManager.Instance != null)
+                {
+                    bool isAvailable = await DatabaseManager.Instance.IsNicknameAvailable(nickname);
+
+                    if (isAvailable)
+                    {
+                        Debug.Log($"[AuthManager] 고유 닉네임 생성 성공: {nickname}");
+                        return nickname;
+                    }
+
+                    Debug.Log($"[AuthManager] 닉네임 중복 발견: {nickname}, 재생성 중...");
+                }
+            }
+
+            // 최대 시도 횟수 초과 시 타임스탬프 추가
+            long timestamp = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            string fallbackNickname = $"Guest_{timestamp.ToString().Substring(timestamp.ToString().Length - 6)}";
+            Debug.LogWarning($"[AuthManager] 최대 시도 횟수 초과, 타임스탬프 사용: {fallbackNickname}");
+            return fallbackNickname;
+        }
+
+        /// <summary>
+        /// 익명 사용자 Firestore 프로필 생성
+        /// </summary>
+        private async Task<bool> CreateAnonymousUserProfile(string userId, string nickname)
+        {
+            try
+            {
+                if (DatabaseManager.Instance != null)
+                {
+                    // DatabaseManager의 CreateUserProfile 메서드 사용
+                    // 이메일은 빈 문자열, emailVerified는 false, authProvider는 "Anonymous"
+                    bool created = await DatabaseManager.Instance.CreateUserProfile(
+                        userId,
+                        "", // 익명 계정은 이메일 없음
+                        nickname,
+                        emailVerified: false,
+                        authProvider: "Anonymous" // 익명 로그인
+                    );
+
+                    if (created)
+                    {
+                        Debug.Log($"[AuthManager] 익명 사용자 프로필 생성 완료: {nickname}");
+                    }
+
+                    return created;
+                }
+
+                Debug.LogError("[AuthManager] DatabaseManager를 찾을 수 없습니다.");
+                return false;
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[AuthManager] 익명 사용자 프로필 생성 실패: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 계정 삭제 (익명 계정 탈퇴 및 일반 계정 탈퇴)
+        /// </summary>
+        public async Task<bool> DeleteAccount()
+        {
+            var user = currentUser;
+
+            if (user == null)
+            {
+                Debug.LogError("[AuthManager] 로그인된 사용자가 없습니다.");
+                return false;
+            }
+
+            try
+            {
+                // 시스템 메시지: 처리 중
+                if (SystemMessageManager.Instance != null)
+                {
+                    SystemMessageManager.Instance.ShowMessage("AccountDeletionInProgress");
+                }
+
+                string userId = user.UserId;
+
+                // Firebase Auth 계정 삭제
+                await user.DeleteAsync();
+                currentUser = null;
+
+                Debug.Log("[AuthManager] Firebase Auth 계정 삭제 완료");
+
+                // 시스템 메시지: 탈퇴 완료
+                if (SystemMessageManager.Instance != null)
+                {
+                    SystemMessageManager.Instance.ShowMessage("AccountDeletionComplete");
+                }
+
+                Debug.Log("[AuthManager] 계정 삭제 완료");
+                return true;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[AuthManager] 계정 삭제 실패: {e.Message}");
+                return false;
             }
         }
         #endregion
@@ -819,7 +1009,7 @@ namespace Manager
 
         /// <summary>
         /// Google 계정에 비밀번호 연동 가능 여부 확인
-        /// (Google으로 로그인했지만 아직 password provider가 없는 경우)
+        /// (Google 또는 Play Games로 로그인했지만 아직 password provider가 없는 경우)
         /// </summary>
         public bool CanLinkPasswordToGoogle()
         {
@@ -828,13 +1018,16 @@ namespace Manager
 
             var providers = GetCurrentUserProviders();
 
-            // Google은 있고, password는 없어야 함
-            return providers.Contains("google.com") && !providers.Contains("password");
+            // Google 또는 Play Games는 있고, password는 없어야 함
+            bool hasGoogle = providers.Contains("google.com") || providers.Contains("playgames.google.com");
+            bool hasPassword = providers.Contains("password");
+
+            return hasGoogle && !hasPassword;
         }
 
         /// <summary>
         /// 이메일 계정에 Google 연동 가능 여부 확인
-        /// (email/password로 로그인했지만 아직 Google provider가 없는 경우)
+        /// (email/password로 로그인했지만 아직 Google 또는 Play Games provider가 없는 경우)
         /// </summary>
         public bool CanLinkGoogleToEmail()
         {
@@ -843,17 +1036,21 @@ namespace Manager
 
             var providers = GetCurrentUserProviders();
 
-            // password는 있고, Google은 없어야 함
-            return providers.Contains("password") && !providers.Contains("google.com");
+            // password는 있고, Google/Play Games는 없어야 함
+            bool hasGoogle = providers.Contains("google.com") || providers.Contains("playgames.google.com");
+            bool hasPassword = providers.Contains("password");
+
+            return hasPassword && !hasGoogle;
         }
 
         /// <summary>
         /// Google 계정에 비밀번호 연동
         /// (모바일: Google 로그인 → PC에서도 플레이하기)
         /// </summary>
+        /// <param name="email">연동할 이메일 주소 (Play Games는 이메일 미제공이므로 사용자 입력 필요)</param>
         /// <param name="password">설정할 비밀번호</param>
         /// <returns>성공 여부, 메시지</returns>
-        public async Task<(bool success, string message)> LinkPasswordToGoogle(string password)
+        public async Task<(bool success, string message)> LinkPasswordToGoogle(string email, string password)
         {
             try
             {
@@ -869,6 +1066,12 @@ namespace Manager
                     return (false, "Google 계정이 아니거나 이미 연동되어 있습니다.");
                 }
 
+                // 이메일 검증
+                if (string.IsNullOrEmpty(email))
+                {
+                    return (false, "이메일을 입력해주세요.");
+                }
+
                 // 비밀번호 검증
                 if (string.IsNullOrEmpty(password))
                 {
@@ -880,23 +1083,15 @@ namespace Manager
                     return (false, "비밀번호는 최소 6자 이상이어야 합니다.");
                 }
 
-                // Google 이메일 가져오기
-                string googleEmail = GetCurrentUserEmailFromProvider();
-
-                if (string.IsNullOrEmpty(googleEmail))
-                {
-                    return (false, "Google 계정 이메일을 찾을 수 없습니다.");
-                }
-
-                // Credential 생성
-                Firebase.Auth.Credential credential = Firebase.Auth.EmailAuthProvider.GetCredential(googleEmail, password);
+                // Credential 생성 (사용자가 입력한 이메일 사용)
+                Firebase.Auth.Credential credential = Firebase.Auth.EmailAuthProvider.GetCredential(email, password);
 
                 // 연동 시도
                 var result = await currentUser.LinkWithCredentialAsync(credential);
 
                 if (result.User != null)
                 {
-                    Debug.Log($"[AuthManager] Google 계정에 비밀번호 연동 성공: {googleEmail}");
+                    Debug.Log($"[AuthManager] Google 계정에 비밀번호 연동 성공: {email}");
 
                     // 사용자 정보 새로고침
                     await ReloadUserInfo();
@@ -978,7 +1173,11 @@ namespace Manager
                     return (false, googleResult.Message);
                 }
 
-                // Google 계정의 이메일 확인
+#if UNITY_ANDROID
+                // Android (Play Games)는 이메일을 제공하지 않으므로 이메일 확인 건너뜀
+                Debug.Log("[AuthManager] Android Play Games 연동 - 이메일 확인 건너뜀 (Play Games는 이메일 미제공)");
+#else
+                // PC/iOS는 Firebase OAuth를 사용하므로 이메일 일치 확인
                 string googleEmail = googleResult.Email;
 
                 if (string.IsNullOrEmpty(googleEmail))
@@ -993,6 +1192,9 @@ namespace Manager
                     return (false, $"이메일이 일치하지 않습니다.\n\n현재 계정: {currentEmail}\nGoogle 계정: {googleEmail}");
                 }
 
+                Debug.Log($"[AuthManager] 이메일 일치 확인 완료: {googleEmail}");
+#endif
+
                 // Google Credential로 연동
                 if (googleResult.Credential != null)
                 {
@@ -1000,7 +1202,7 @@ namespace Manager
 
                     if (result.User != null)
                     {
-                        Debug.Log($"[AuthManager] Google 계정 연동 성공: {googleEmail}");
+                        Debug.Log($"[AuthManager] Google 계정 연동 성공");
 
                         // 사용자 정보 새로고침
                         await ReloadUserInfo();

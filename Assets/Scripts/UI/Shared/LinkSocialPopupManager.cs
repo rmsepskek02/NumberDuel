@@ -14,13 +14,25 @@ namespace UI.Shared
         private const string PREFAB_PATH = "Prefabs/UI/LinkSocialPopup";
 
         /// <summary>
+        /// 팝업 미리 로드 (최초 지연 방지)
+        /// 설정 화면 진입 시 호출 권장
+        /// </summary>
+        public static void PreloadPopup()
+        {
+            if (instance == null)
+            {
+                LoadPopup();
+            }
+        }
+
+        /// <summary>
         /// SNS 연동 팝업 표시
         /// </summary>
         /// <param name="email">현재 계정 이메일</param>
         /// <param name="onComplete">완료 콜백</param>
         public static void Show(string email, Action<bool> onComplete)
         {
-            // 최초 1회만 로드
+            // 최초 1회만 로드 (Preload 안 한 경우 대비)
             if (instance == null)
             {
                 if (!LoadPopup())

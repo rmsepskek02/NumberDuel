@@ -13,7 +13,7 @@ namespace UI.Shared
     public class LinkPasswordPopupUI : MonoBehaviour, ICloseable
     {
         [Header("UI References")]
-        [SerializeField] private TextMeshProUGUI emailText;                // Google 이메일 표시
+        [SerializeField] private TMP_InputField emailInputField;           // 이메일 입력 (Play Games는 이메일 미제공)
         [SerializeField] private TMP_InputField passwordInputField;
         [SerializeField] private TMP_InputField confirmPasswordInputField;
         [SerializeField] private Button linkButton;
@@ -46,6 +46,9 @@ namespace UI.Shared
                 canvasGroup.blocksRaycasts = false;
             }
 
+            // KeyboardManager에 InputField 등록 (모바일 키보드 대응)
+            RegisterInputFieldsToKeyboardManager();
+
             gameObject.SetActive(false);
         }
 
@@ -62,16 +65,17 @@ namespace UI.Shared
         /// <summary>
         /// 팝업 표시
         /// </summary>
-        /// <param name="googleEmail">Google 계정 이메일 (수정 불가)</param>
+        /// <param name="googleEmail">Google 계정 이메일 (Play Games는 빈 문자열)</param>
         /// <param name="onComplete">완료 콜백</param>
         public void Show(string googleEmail, Action<bool> onComplete)
         {
             onCompleteCallback = onComplete;
 
-            // Google 이메일 표시
-            if (emailText != null)
+            // 이메일 입력 필드 초기화 (Play Games는 이메일 없으므로 사용자 입력 필요)
+            if (emailInputField != null)
             {
-                emailText.text = googleEmail;
+                emailInputField.text = googleEmail; // PC Google은 이메일 미리 채움, Play Games는 빈 문자열
+                emailInputField.interactable = string.IsNullOrEmpty(googleEmail); // Play Games면 수정 가능
             }
 
             // 비밀번호 입력 필드 초기화
@@ -127,9 +131,18 @@ namespace UI.Shared
 
             isProcessing = true;
 
-            // 비밀번호 입력값 가져오기
+            // 입력값 가져오기
+            string email = emailInputField?.text?.Trim() ?? string.Empty;
             string password = passwordInputField?.text ?? string.Empty;
             string confirmPassword = confirmPasswordInputField?.text ?? string.Empty;
+
+            // 이메일 검증
+            if (string.IsNullOrEmpty(email))
+            {
+                ShowError("이메일을 입력해주세요.");
+                isProcessing = false;
+                return;
+            }
 
             // 유효성 검증
             if (!ValidatePassword(password, confirmPassword))
@@ -138,8 +151,8 @@ namespace UI.Shared
                 return;
             }
 
-            // 계정 연동 시도
-            var result = await Manager.AuthManager.Instance.LinkPasswordToGoogle(password);
+            // 계정 연동 시도 (이메일 + 비밀번호)
+            var result = await Manager.AuthManager.Instance.LinkPasswordToGoogle(email, password);
 
             if (result.success)
             {
@@ -147,7 +160,7 @@ namespace UI.Shared
                 ConfirmationPopup.Show(
                     "✅ PC 로그인 연동 완료!\n\n" +
                     "이제 PC에서도\n" +
-                    $"{emailText.text}으로\n" +
+                    $"{email}으로\n" +
                     "로그인할 수 있습니다.",
                     onConfirm: () =>
                     {
@@ -231,6 +244,31 @@ namespace UI.Shared
         public bool CanClose()
         {
             return !isAnimating;
+        }
+        #endregion
+
+        #region Keyboard Manager Integration
+        /// <summary>
+        /// KeyboardManager에 InputField 등록
+        /// 팝업이 생성될 때 호출되어 모바일 키보드 대응 활성화
+        /// </summary>
+        private void RegisterInputFieldsToKeyboardManager()
+        {
+#if UNITY_ANDROID || UNITY_IOS
+            // 모바일 플랫폼에서만 KeyboardManager에 등록
+            var keyboardManager = Manager.KeyboardManager.Instance;
+            if (keyboardManager != null)
+            {
+                if (emailInputField != null)
+                    keyboardManager.RegisterInputFieldRuntime(emailInputField);
+
+                if (passwordInputField != null)
+                    keyboardManager.RegisterInputFieldRuntime(passwordInputField);
+
+                if (confirmPasswordInputField != null)
+                    keyboardManager.RegisterInputFieldRuntime(confirmPasswordInputField);
+            }
+#endif
         }
         #endregion
 
