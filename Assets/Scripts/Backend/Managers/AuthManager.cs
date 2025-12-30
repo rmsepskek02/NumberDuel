@@ -606,7 +606,14 @@ namespace Manager
                     Debug.Log($"[AuthManager] Provider: {provider.ProviderId}, Email: {provider.Email}, DisplayName: {provider.DisplayName}");
                 }
 
-                return (true, "Google 로그인 성공", currentUser.Email);
+                // ⭐ Google 로그인 시 이메일은 ProviderData에서 가져와야 함
+                string email = GetCurrentUserEmailFromProvider();
+                if (string.IsNullOrEmpty(email))
+                    email = currentUser.Email ?? string.Empty;
+
+                Debug.Log($"[AuthManager] 최종 이메일: {email}");
+
+                return (true, "Google 로그인 성공", email);
             }
             catch (FirebaseException ex)
             {
@@ -794,6 +801,20 @@ namespace Manager
 
             // Firebase User 이메일
             return currentUser.Email ?? string.Empty;
+        }
+
+        /// <summary>
+        /// 현재 Google 로그인 상태인지 확인
+        /// </summary>
+        /// <returns>Google 또는 Play Games로 로그인한 경우 true</returns>
+        public bool IsGoogleLogin()
+        {
+            if (currentUser == null)
+                return false;
+
+            var providers = currentUser.ProviderData;
+            return providers?.Any(p => p.ProviderId == "playgames.google.com" ||
+                                      p.ProviderId == "google.com") ?? false;
         }
 
         /// <summary>

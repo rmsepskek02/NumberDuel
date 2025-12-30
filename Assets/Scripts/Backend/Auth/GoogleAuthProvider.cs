@@ -86,15 +86,15 @@ namespace Objects.Auth
                 {
                     if (signInStatus == SignInStatus.Success)
                     {
-                        // 인증 성공 - Server Auth Code 요청
                         // forceRefreshToken=true: 항상 새로운 Server Auth Code 발급
                         // Web Client ID는 GooglePlayGameSettings.txt에서 자동으로 사용됨
-                        PlayGamesPlatform.Instance.RequestServerSideAccess(true, (serverAuthCode) =>
+                        PlayGamesPlatform.Instance.RequestServerSideAccess(true, (authCode) =>
                         {
-                            if (!string.IsNullOrEmpty(serverAuthCode))
+                            if (!string.IsNullOrEmpty(authCode))
                             {
                                 // Server Auth Code 획득 성공
-                                authCodeTaskSource.SetResult(serverAuthCode);
+                                Debug.Log($"[GoogleAuthProvider] Server Auth Code 획득 성공");
+                                authCodeTaskSource.SetResult(authCode);
                             }
                             else
                             {
@@ -153,16 +153,8 @@ namespace Objects.Auth
                                     PlayGamesPlatform.Instance.GetUserDisplayName() ??
                                     string.Empty;
 
-                // 이메일 추출
-                // Firebase Authentication이 Play Games 인증 시 자동으로 이메일을 제공해야 합니다
-                string email = user.Email ?? string.Empty;
-
-                // 디버그: 이메일이 비어있는 경우 경고
-                if (string.IsNullOrEmpty(email))
-                {
-                    Debug.LogWarning("[GoogleAuthProvider] Firebase에서 이메일을 가져올 수 없습니다. " +
-                                   "Google Cloud Console에서 email scope이 활성화되어 있는지 확인하세요.");
-                }
+                // Play Games 로그인은 이메일을 제공하지 않음
+                string email = string.Empty;
 
                 return new SocialAuthResult
                 {

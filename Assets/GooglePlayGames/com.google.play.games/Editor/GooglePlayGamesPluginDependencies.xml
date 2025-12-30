@@ -2,8 +2,8 @@
 <dependencies>
   <!-- Play Games Services SDK v2 dependencies -->
   <androidPackages>
-    <!-- Play Games Services SDK v2 -->
-    <androidPackage spec="com.google.android.gms:play-services-games-v2:20.1.2" />
+    <!-- Play Games Services SDK v2 - Updated for AuthScope support -->
+    <androidPackage spec="com.google.android.gms:play-services-games-v2:21.0.0" />
     <androidPackage spec="com.google.android.gms:play-services-auth:21.2.0" />
   </androidPackages>
 </dependencies>

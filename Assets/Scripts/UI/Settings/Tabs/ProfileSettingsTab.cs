@@ -114,11 +114,28 @@ namespace UI.Settings.Tabs
 
             if (emailText != null)
             {
-                // Firebase Auth의 실제 이메일 사용 (Google 로그인 포함)
                 string email = profile.Email;
-                if (Manager.AuthManager.Instance != null)
-                    email = Manager.AuthManager.Instance.CurrentUserEmail;
-                emailText.text = email;
+
+                // Google 로그인인 경우 하드코딩된 텍스트 표시
+                if (Manager.AuthManager.Instance != null && Manager.AuthManager.Instance.IsGoogleLogin())
+                {
+                    emailText.text = "Google Email";
+                }
+                else
+                {
+                    // 이메일/비밀번호 로그인인 경우 실제 이메일 표시
+                    if (Manager.AuthManager.Instance != null)
+                    {
+                        email = Manager.AuthManager.Instance.GetCurrentUserEmailFromProvider();
+
+                        if (string.IsNullOrEmpty(email))
+                            email = Manager.AuthManager.Instance.CurrentUserEmail;
+
+                        if (string.IsNullOrEmpty(email))
+                            email = profile.Email;
+                    }
+                    emailText.text = email ?? string.Empty;
+                }
             }
 
             if (createdAtText != null)
