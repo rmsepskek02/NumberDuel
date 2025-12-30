@@ -70,7 +70,8 @@
       "Bash(keytool:*)",
       "Bash(test:*)",
       "Bash(tasklist:*)",
-      "Bash(copy \"%USERPROFILE%\\\\.android\\\\debug.keystore\" \"D:\\\\Dmain\\\\dev\\\\Portfolio\\\\NumberDuel\\\\Keystores\\\\debug.keystore\")"
+      "Bash(copy \"%USERPROFILE%\\\\.android\\\\debug.keystore\" \"D:\\\\Dmain\\\\dev\\\\Portfolio\\\\NumberDuel\\\\Keystores\\\\debug.keystore\")",
+      "Bash(iconv:*)"
     ],
     "deny": [],
     "ask": []

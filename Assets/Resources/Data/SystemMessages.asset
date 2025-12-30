@@ -313,3 +313,63 @@ MonoBehaviour:
     messageType: 3
     displayDuration: 2
     textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}
+  - messageKey: EmailRequired
+    messageText: "\uC774\uBA54\uC77C\uC744 \uC785\uB825\uD574\uC8FC\uC138\uC694"
+    messageType: 2
+    displayDuration: 2
+    textColor: {r: 1, g: 0.3019608, b: 0.3019608, a: 1}
+  - messageKey: LoginInProgress
+    messageText: "\uB85C\uADF8\uC778 \uC911..."
+    messageType: 0
+    displayDuration: 1
+    textColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  - messageKey: InvalidCredentials
+    messageText: "\uACC4\uC815 \uC815\uBCF4\uB97C \uD655\uC778\uD574\uC8FC\uC138\uC694"
+    messageType: 2
+    displayDuration: 3
+    textColor: {r: 1, g: 0.3019608, b: 0.3019608, a: 1}
+  - messageKey: SendingVerificationEmail
+    messageText: "\uC778\uC99D \uBA54\uC77C\uC744 \uBC1C\uC1A1\uD558\uB294 \uC911..."
+    messageType: 0
+    displayDuration: 1
+    textColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  - messageKey: EmailVerificationSuccess
+    messageText: "\uC774\uBA54\uC77C \uC778\uC99D\uC774 \uC644\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4!"
+    messageType: 3
+    displayDuration: 3
+    textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}
+  - messageKey: ResendCooldown
+    messageText: "\uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574\uC8FC\uC138\uC694"
+    messageType: 1
+    displayDuration: 2
+    textColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  - messageKey: ResendingVerificationEmail
+    messageText: "\uC778\uC99D \uBA54\uC77C\uC744 \uC7AC\uBC1C\uC1A1\uD558\uB294 \uC911..."
+    messageType: 0
+    displayDuration: 1
+    textColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  - messageKey: VerificationEmailResent
+    messageText: "\uC778\uC99D \uBA54\uC77C\uC774 \uC7AC\uBC1C\uC1A1\uB418\uC5C8\uC2B5\uB2C8\uB2E4"
+    messageType: 3
+    displayDuration: 2
+    textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}
+  - messageKey: PasswordSetSuccess
+    messageText: "\uBE44\uBC00\uBC88\uD638\uAC00 \uC124\uC815\uB418\uC5C8\uC2B5\uB2C8\uB2E4"
+    messageType: 3
+    displayDuration: 2
+    textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}
+  - messageKey: CheckingNickname
+    messageText: "\uB2C9\uB124\uC784 \uC911\uBCF5 \uD655\uC778 \uC911..."
+    messageType: 0
+    displayDuration: 1
+    textColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  - messageKey: CreatingAccount
+    messageText: "\uACC4\uC815\uC744 \uC0DD\uC131\uD558\uB294 \uC911..."
+    messageType: 0
+    displayDuration: 1
+    textColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  - messageKey: SignupSuccess
+    messageText: "\uD68C\uC6D0\uAC00\uC785\uC774 \uC644\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4!"
+    messageType: 3
+    displayDuration: 2
+    textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}

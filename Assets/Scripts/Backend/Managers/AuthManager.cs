@@ -707,6 +707,33 @@ namespace Manager
                 return false;
             }
         }
+
+        /// <summary>
+        /// 현재 사용자의 비밀번호 업데이트
+        /// Step 2에서 사용 (이메일 인증 후 비밀번호 설정)
+        /// </summary>
+        /// <param name="newPassword">새로운 비밀번호</param>
+        /// <returns>성공 여부</returns>
+        public async Task<bool> UpdatePassword(string newPassword)
+        {
+            if (currentUser == null)
+            {
+                Debug.LogError("[AuthManager] 로그인된 사용자가 없습니다");
+                return false;
+            }
+
+            try
+            {
+                await currentUser.UpdatePasswordAsync(newPassword);
+                Debug.Log("[AuthManager] 비밀번호 업데이트 성공");
+                return true;
+            }
+            catch (FirebaseException ex)
+            {
+                Debug.LogError($"[AuthManager] 비밀번호 업데이트 실패: {ex.Message}");
+                return false;
+            }
+        }
         #endregion
 
         #region Public Methods - Auto Login
