@@ -28,7 +28,7 @@ namespace Objects.Data
         public UserStats Stats { get; set; }
 
         [FirestoreProperty]
-        public string AuthProvider { get; set; } // "Email", "Google", "Anonymous", "Kakao" 등
+        public string AuthProvider { get; set; } // "Email", "Google", "Guest", "Kakao" 등
 
         public UserProfile()
         {

@@ -114,26 +114,33 @@ namespace UI.Settings.Tabs
 
             if (emailText != null)
             {
-                string email = profile.Email;
-
-                // Google 로그인인 경우 하드코딩된 텍스트 표시
-                if (Manager.AuthManager.Instance != null && Manager.AuthManager.Instance.IsGoogleLogin())
+                // AuthProvider 기준으로 이메일 표시 분기
+                if (profile.AuthProvider == "Guest")
                 {
-                    emailText.text = "Google Email";
+                    // 게스트 계정
+                    emailText.text = "손님";
+                }
+                else if (profile.AuthProvider == "Google")
+                {
+                    // Google 계정
+                    emailText.text = "구글 이메일";
                 }
                 else
                 {
-                    // 이메일/비밀번호 로그인인 경우 실제 이메일 표시
+                    // 이메일/비밀번호 계정 - 실제 이메일 표시
+                    string email = profile.Email;
+
                     if (Manager.AuthManager.Instance != null)
                     {
-                        email = Manager.AuthManager.Instance.GetCurrentUserEmailFromProvider();
+                        // Provider에서 이메일 가져오기 (더 정확함)
+                        string providerEmail = Manager.AuthManager.Instance.GetCurrentUserEmailFromProvider();
 
-                        if (string.IsNullOrEmpty(email))
+                        if (!string.IsNullOrEmpty(providerEmail))
+                            email = providerEmail;
+                        else if (string.IsNullOrEmpty(email))
                             email = Manager.AuthManager.Instance.CurrentUserEmail;
-
-                        if (string.IsNullOrEmpty(email))
-                            email = profile.Email;
                     }
+
                     emailText.text = email ?? string.Empty;
                 }
             }

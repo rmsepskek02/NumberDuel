@@ -325,13 +325,13 @@ namespace Manager
                 if (DatabaseManager.Instance != null)
                 {
                     // DatabaseManager의 CreateUserProfile 메서드 사용
-                    // 이메일은 빈 문자열, emailVerified는 false, authProvider는 "Anonymous"
+                    // 이메일은 빈 문자열, emailVerified는 false, authProvider는 "Guest"
                     bool created = await DatabaseManager.Instance.CreateUserProfile(
                         userId,
                         "", // 익명 계정은 이메일 없음
                         nickname,
                         emailVerified: false,
-                        authProvider: "Anonymous" // 익명 로그인
+                        authProvider: "Guest" // 게스트 로그인
                     );
 
                     return created;
@@ -1191,14 +1191,19 @@ namespace Manager
 
         /// <summary>
         /// 현재 로그인 방식 표시용 문자열 반환
-        /// - "Google": Play Games Services로 로그인
+        /// - "구글": Play Games Services로 로그인
         /// - "이메일": 이메일/비밀번호로 로그인
-        /// - "Google + 이메일": 두 방식 모두 연동됨
+        /// - "구글 + 이메일": 두 방식 모두 연동됨
+        /// - "손님": 게스트 로그인
         /// </summary>
         public string GetLoginMethodDisplayName()
         {
             if (currentUser == null)
                 return "로그인 안됨";
+
+            // 익명(게스트) 로그인 체크
+            if (IsAnonymous)
+                return "손님";
 
             var providers = GetCurrentUserProviders();
 
@@ -1208,11 +1213,11 @@ namespace Manager
 
             // 두 방식 모두 연동된 경우
             if (hasGoogle && hasPassword)
-                return "Google + 이메일";
+                return "구글 + 이메일";
 
             // Google (Play Games) 로그인
             if (hasGoogle || hasPlayGames)
-                return "Google";
+                return "구글";
 
             // 이메일/비밀번호 로그인
             if (hasPassword)
