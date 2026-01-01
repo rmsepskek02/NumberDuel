@@ -52,7 +52,6 @@ namespace Manager
             // 에디터에서 빌드 중일 때는 Firestore 초기화 스킵
             if (UnityEditor.BuildPipeline.isBuildingPlayer)
             {
-                Debug.Log("[SessionManager] 빌드 중 - Firestore 초기화 스킵");
                 return;
             }
 #endif
@@ -90,7 +89,6 @@ namespace Manager
             {
                 db = FirebaseFirestore.DefaultInstance;
                 isInitialized = true;
-                Debug.Log("[SessionManager] ✅ SessionManager 초기화 완료");
             }
             catch (System.Exception ex)
             {
@@ -104,8 +102,6 @@ namespace Manager
         /// </summary>
         private System.Collections.IEnumerator WaitForFirebaseInitializer()
         {
-            Debug.Log("[SessionManager] FirebaseInitializer 초기화 대기 중...");
-
             float elapsedTime = 0f;
             const float timeout = 15f; // 15초 타임아웃
 
@@ -290,7 +286,6 @@ namespace Manager
             {
                 if (string.IsNullOrEmpty(currentSessionId))
                 {
-                    Debug.LogWarning("현재 세션 ID가 없습니다.");
                     return false;
                 }
 
@@ -325,7 +320,6 @@ namespace Manager
             {
                 if (string.IsNullOrEmpty(uid))
                 {
-                    Debug.LogWarning("UID가 비어있습니다.");
                     return false;
                 }
 
@@ -412,7 +406,6 @@ namespace Manager
 
             if (string.IsNullOrEmpty(uid))
             {
-                Debug.LogWarning("UID가 비어있습니다.");
                 return;
             }
 
@@ -453,7 +446,6 @@ namespace Manager
         {
             if (snapshot == null)
             {
-                Debug.LogWarning("세션 스냅샷이 null입니다.");
                 return;
             }
 
@@ -467,7 +459,6 @@ namespace Manager
             // 세션 문서가 삭제되었거나 존재하지 않는 경우
             if (!snapshot.Exists)
             {
-                Debug.LogWarning("세션이 삭제되었습니다. 강제 로그아웃 처리합니다.");
                 HandleForceLogout();
                 return;
             }
@@ -481,8 +472,6 @@ namespace Manager
                 // 현재 세션 ID와 다르면 강제 로그아웃
                 if (!string.IsNullOrEmpty(currentSessionId) && newSessionId != currentSessionId)
                 {
-                    Debug.LogWarning($"세션 ID가 변경되었습니다. (현재: {currentSessionId}, 새로운: {newSessionId})");
-                    Debug.LogWarning("다른 곳에서 로그인되었습니다. 강제 로그아웃 처리합니다.");
                     HandleForceLogout();
                 }
             }

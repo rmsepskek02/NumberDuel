@@ -12,9 +12,6 @@ namespace Manager
     /// </summary>
     public class MobileInputManager : SingletonDontDestroy<MobileInputManager>
     {
-        [Header("Debug")]
-        [SerializeField] private bool enableDebugLog = true;
-
         #region Unity Lifecycle
         protected override void Awake()
         {
@@ -35,28 +32,12 @@ namespace Manager
             try
             {
                 MobileInput.Init();
-                LogDebug("[MobileInputManager] UMI 초기화 완료");
             }
             catch (System.Exception e)
             {
                 Debug.LogError($"[MobileInputManager] UMI 초기화 실패: {e.Message}");
             }
-#else
-            LogDebug("[MobileInputManager] 에디터 환경 - UMI 초기화 스킵");
 #endif
-        }
-        #endregion
-
-        #region Debug
-        /// <summary>
-        /// 디버그 로그 출력
-        /// </summary>
-        private void LogDebug(string message)
-        {
-            if (enableDebugLog)
-            {
-                Debug.Log(message);
-            }
         }
         #endregion
     }

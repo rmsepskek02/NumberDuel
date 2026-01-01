@@ -109,7 +109,6 @@ public class SoundTestUI : SingletonDontDestroy<SoundTestUI>
         UpdateAllUI();
 
         isInitialized = true;
-        Debug.Log("[SoundTestUI] UI 초기화 완료");
     }
     #endregion
 
@@ -133,8 +132,6 @@ public class SoundTestUI : SingletonDontDestroy<SoundTestUI>
         {
             UpdateAllUI();
         }
-
-        Debug.Log($"[SoundTestUI] UI 토글: {!isActive}");
     }
 
     /// <summary>

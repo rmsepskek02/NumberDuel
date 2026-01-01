@@ -20,7 +20,6 @@ namespace Manager
             // 에디터에서 빌드 중일 때는 실행하지 않음
             if (UnityEditor.BuildPipeline.isBuildingPlayer)
             {
-                Debug.Log("[SplashManager] 빌드 중 - 초기화 스킵");
                 return;
             }
 #endif
@@ -41,7 +40,6 @@ namespace Manager
             // FirebaseInitializer 초기화 대기 (최우선)
             if (!FirebaseInitializer.IsFirebaseReady)
             {
-                Debug.Log("[SplashManager] FirebaseInitializer 초기화 대기 중...");
                 float elapsedTime = 0f;
                 while (!FirebaseInitializer.IsFirebaseReady && elapsedTime < 15f)
                 {
@@ -60,7 +58,6 @@ namespace Manager
             // AuthManager 초기화 대기
             if (!AuthManager.Instance.IsInitialized)
             {
-                Debug.Log("[SplashManager] AuthManager 초기화 대기 중...");
                 float elapsedTime = 0f;
                 while (!AuthManager.Instance.IsInitialized && elapsedTime < 10f)
                 {
@@ -79,7 +76,6 @@ namespace Manager
             // SessionManager 초기화 대기
             if (!SessionManager.Instance.IsInitialized)
             {
-                Debug.Log("[SplashManager] SessionManager 초기화 대기 중...");
                 float elapsedTime = 0f;
                 while (!SessionManager.Instance.IsInitialized && elapsedTime < 10f)
                 {
@@ -98,8 +94,6 @@ namespace Manager
             // 자동 로그인 가능 여부 확인
             if (AuthManager.Instance.CanAutoLogin())
             {
-                Debug.Log("[SplashManager] 자동 로그인 가능 - 로비로 이동 시도");
-
                 // 시스템 메시지: 세션 복원
                 if (SystemMessageManager.Instance != null)
                 {
@@ -115,7 +109,6 @@ namespace Manager
 
                 if (sessionCheck.isDuplicate)
                 {
-                    Debug.Log("[SplashManager] 중복 로그인 감지 - 로그인 화면으로 이동");
                     AuthManager.Instance.Logout();
                     SceneManager.LoadScene(SceneNameExtensions.GetSceneName(SceneName.JoinScene));
                     yield break;
@@ -127,7 +120,6 @@ namespace Manager
 
                 if (!sessionCreateTask.Result)
                 {
-                    Debug.Log("[SplashManager] 세션 생성 실패 - 로그인 화면으로 이동");
                     AuthManager.Instance.Logout();
                     SceneManager.LoadScene(SceneNameExtensions.GetSceneName(SceneName.JoinScene));
                     yield break;
@@ -141,7 +133,6 @@ namespace Manager
 
                 if (profile == null)
                 {
-                    Debug.Log("[SplashManager] 프로필 로드 실패 - 로그인 화면으로 이동");
                     AuthManager.Instance.Logout();
                     SceneManager.LoadScene(SceneNameExtensions.GetSceneName(SceneName.JoinScene));
                     yield break;
@@ -186,7 +177,6 @@ namespace Manager
                 float joinLobbyElapsedTime = 0f;
                 const float JOIN_LOBBY_TIMEOUT = 10f;
 
-                Debug.Log("[SplashManager] 로비 진입 대기 중...");
                 while (!PhotonNetwork.InLobby && joinLobbyElapsedTime < JOIN_LOBBY_TIMEOUT)
                 {
                     yield return new WaitForSeconds(0.1f);
@@ -205,7 +195,6 @@ namespace Manager
             }
             else
             {
-                Debug.Log("[SplashManager] 자동 로그인 불가 - 로그인 화면으로 이동");
                 SceneManager.LoadScene(SceneNameExtensions.GetSceneName(SceneName.JoinScene));
             }
         }

@@ -33,7 +33,6 @@ namespace Manager
             // 에디터에서 빌드 중일 때는 Firestore 초기화 스킵
             if (UnityEditor.BuildPipeline.isBuildingPlayer)
             {
-                Debug.Log("[DatabaseManager] 빌드 중 - Firestore 초기화 스킵");
                 return;
             }
 #endif
@@ -71,11 +70,9 @@ namespace Manager
 #if UNITY_ANDROID || UNITY_IOS
                     // 모바일: 캐시 활성화 (성능 향상, 오프라인 지원)
                     db.Settings.PersistenceEnabled = true;
-                    Debug.Log("[DatabaseManager] Firestore 캐시 활성화 (모바일)");
 #else
                     // PC/에디터: 캐시 비활성화 (멀티 클라이언트 테스트 지원)
                     db.Settings.PersistenceEnabled = false;
-                    Debug.Log("[DatabaseManager] Firestore 캐시 비활성화 (PC/Editor)");
 #endif
                 }
                 catch (System.Exception ex)
@@ -84,7 +81,6 @@ namespace Manager
                 }
 
                 isInitialized = true;
-                Debug.Log("[DatabaseManager] ✅ DatabaseManager 초기화 완료");
             }
             catch (System.Exception ex)
             {
@@ -98,8 +94,6 @@ namespace Manager
         /// </summary>
         private System.Collections.IEnumerator WaitForFirebaseInitializer()
         {
-            Debug.Log("[DatabaseManager] FirebaseInitializer 초기화 대기 중...");
-
             float elapsedTime = 0f;
             const float timeout = 15f; // 15초 타임아웃
 
@@ -220,20 +214,9 @@ namespace Manager
                 // 새 프로필 생성
                 UserProfile profile = new UserProfile(email, nickname, emailVerified, authProvider);
 
-                // 디버그: 프로필 생성 정보 로깅
-                Debug.Log($"[DatabaseManager] === CreateUserProfile 호출 ===");
-                Debug.Log($"[DatabaseManager] UID: {uid}");
-                Debug.Log($"[DatabaseManager] Email: {email}");
-                Debug.Log($"[DatabaseManager] Nickname: {nickname}");
-                Debug.Log($"[DatabaseManager] EmailVerified (파라미터): {emailVerified}");
-                Debug.Log($"[DatabaseManager] EmailVerified (객체): {profile.EmailVerified}");
-                Debug.Log($"[DatabaseManager] AuthProvider: {authProvider}");
-
                 // Firestore에 저장
                 DocumentReference docRef = db.Collection(USERS_COLLECTION).Document(uid);
                 await docRef.SetAsync(profile);
-
-                Debug.Log($"[DatabaseManager] Firestore 저장 완료");
 
                 return true;
             }
@@ -275,7 +258,6 @@ namespace Manager
                 DocumentReference docRef = db.Collection(USERS_COLLECTION).Document(uid);
                 await docRef.SetAsync(profile);
 
-                Debug.Log($"[DatabaseManager] 소셜 로그인 프로필 생성 성공: {email} ({authProvider})");
                 return true;
             }
             catch (Exception ex)

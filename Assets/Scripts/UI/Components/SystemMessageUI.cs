@@ -58,13 +58,16 @@ namespace Objects
             Initialize();
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
             // DOTween 정리
             if (canvasGroup != null)
                 canvasGroup.DOKill();
             if (messagePanel != null)
                 messagePanel.DOKill();
+
+            // 부모 클래스 정리 (Singleton instance 초기화)
+            base.OnDestroy();
         }
         #endregion
 

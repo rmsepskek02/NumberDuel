@@ -91,7 +91,6 @@ namespace Manager
 
             if (!IsGameEnded && PhotonNetwork.InRoom && isGameInProgress)
             {
-                Debug.Log("[InGameManager] 앱 종료 → 패배 기록");
                 RecordDefeatOnDisconnect();
             }
         }
@@ -770,8 +769,6 @@ namespace Manager
 
                 // 닉네임 가져오기
                 opponentNickname = opponent.NickName;
-
-                Debug.Log($"[InGameManager] 상대방 정보 캐싱 완료: {opponentNickname} ({opponentUID})");
             }
             else
             {
@@ -789,8 +786,6 @@ namespace Manager
                 Debug.LogWarning("[InGameManager] 이미 게임이 종료되었습니다.");
                 return;
             }
-
-            Debug.Log("[InGameManager] 상대방 연결 끊김 → 승리 처리");
 
             // 내가 승리
             CardZone.OwnerType winner = CardZone.OwnerType.Player;
@@ -834,8 +829,6 @@ namespace Manager
                 return; // 이미 종료된 게임이면 무시
             }
 
-            Debug.Log("[InGameManager] 내가 연결 끊김 → 패배 기록");
-
             IsGameEnded = true;
             GameWinner = CardZone.OwnerType.Opponent;
 
@@ -871,8 +864,6 @@ namespace Manager
 
                 // 간단한 전적 업데이트 (상대방 정보 없이)
                 await DatabaseManager.Instance.UpdatePlayerStats(myUID, isWinner);
-
-                Debug.Log($"[InGameManager] 게임 결과 기록: {(isWinner ? "승리" : "패배")}");
             }
             catch (Exception ex)
             {
@@ -911,7 +902,6 @@ namespace Manager
             // 상대방 정보가 없으면 통계만 업데이트
             if (string.IsNullOrEmpty(opponentUID))
             {
-                Debug.LogWarning("[InGameManager] 상대방 정보 없음 → 통계만 기록");
                 RecordGameResultLocal(isWinner);
                 return;
             }
@@ -946,8 +936,6 @@ namespace Manager
                 );
 
                 // Firestore에 저장
-                Debug.Log($"[InGameManager] GameRecord 저장 시작: {myNickname} vs {opponentNickname}, 승자: {(isWinner ? myNickname : opponentNickname)}");
-
                 bool success = await DatabaseManager.Instance.SaveGameRecord(record);
 
                 if (!success)

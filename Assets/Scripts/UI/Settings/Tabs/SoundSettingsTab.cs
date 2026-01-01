@@ -300,8 +300,6 @@ namespace UI.Settings.Tabs
 
             // 사운드 재생
             Manager.SoundManager.Instance?.PlaySFX(SoundType.UI_ButtonClick);
-
-            Debug.Log("[SoundSettingsTab] 사운드 설정이 기본값으로 복원되었습니다.");
         }
         #endregion
 

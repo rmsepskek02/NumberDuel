@@ -93,7 +93,6 @@ namespace Objects.Auth
                             if (!string.IsNullOrEmpty(authCode))
                             {
                                 // Server Auth Code 획득 성공
-                                Debug.Log($"[GoogleAuthProvider] Server Auth Code 획득 성공");
                                 authCodeTaskSource.SetResult(authCode);
                             }
                             else
@@ -236,7 +235,6 @@ namespace Objects.Auth
             catch (FirebaseException ex) when (ex.Message.Contains("canceled") || ex.Message.Contains("CANCELED"))
             {
                 // 사용자가 WebView에서 로그인을 취소한 경우
-                Debug.Log("[GoogleAuthProvider] 사용자가 Google 로그인을 취소했습니다.");
                 return new SocialAuthResult
                 {
                     Success = false,
@@ -246,7 +244,6 @@ namespace Objects.Auth
             catch (TaskCanceledException)
             {
                 // 타임아웃 발생 (일반적으로 60초 초과 시)
-                Debug.LogWarning("[GoogleAuthProvider] Google 로그인 타임아웃이 발생했습니다.");
                 return new SocialAuthResult
                 {
                     Success = false,
@@ -256,7 +253,6 @@ namespace Objects.Auth
             catch (FirebaseException ex) when (ex.Message.Contains("timeout") || ex.Message.Contains("TIMEOUT") || ex.Message.Contains("timed out"))
             {
                 // Firebase 레벨 타임아웃
-                Debug.LogWarning("[GoogleAuthProvider] Firebase 로그인 타임아웃이 발생했습니다.");
                 return new SocialAuthResult
                 {
                     Success = false,
@@ -315,9 +311,8 @@ namespace Objects.Auth
                 var providers = await auth.FetchProvidersForEmailAsync(email);
                 return providers?.ToList() ?? new List<string>();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Debug.LogWarning($"[GoogleAuthProvider] Provider 조회 실패: {ex.Message}");
                 return new List<string>();
             }
         }

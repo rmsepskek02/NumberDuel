@@ -338,8 +338,6 @@ namespace Manager
             else
             {
                 // 일반 방 참가 성공 - 게스트가 방장의 방에 입장
-                Debug.Log($"[LobbyManager] OnJoinedRoom - 게스트 방 입장 성공, 씬 전환 시작");
-
                 // 이미 페이드인 되어 있으므로 바로 씬 전환
                 // 씬 전환 직전에 메시지 큐 끔 (PhotonView 찾기 에러 방지)
                 PhotonNetwork.IsMessageQueueRunning = false;
@@ -372,13 +370,11 @@ namespace Manager
             {
                 MatchmakingManager.Instance.OnLeftMatchmakingRoom();
                 // 매칭 취소는 씬 전환하지 않고 현재 로비에 유지
-                Debug.Log("[LobbyManager] 매칭 취소로 인한 방 나가기 - 씬 전환 없음");
                 return;
             }
 
             // 일반 방 나가기인 경우에만 로비로 돌아감
             // (게임 중에 방을 나가는 경우)
-            Debug.Log("[LobbyManager] 일반 방 나가기 - 로비로 씬 전환");
             if (LoadingScreenManager.Instance != null)
             {
                 // Lobby는 로컬 전환이면 usePhoton = false로 호출
@@ -513,8 +509,6 @@ namespace Manager
                 .DORotate(new Vector3(0, 0, -360), 1f, RotateMode.FastBeyond360)
                 .SetEase(Ease.Linear)
                 .SetLoops(-1, LoopType.Restart);
-
-            Debug.Log("[LobbyManager] 매칭 아이콘 회전 시작");
         }
 
         /// <summary>
@@ -539,8 +533,6 @@ namespace Manager
 
             // 아이콘 비활성화
             matchingIcon.SetActive(false);
-
-            Debug.Log("[LobbyManager] 매칭 아이콘 회전 중지");
         }
 
         private void OnDestroy()
@@ -667,7 +659,6 @@ namespace Manager
             float timeSinceLastClick = Time.time - lastQuickMatchClickTime;
             if (lastQuickMatchClickTime >= 0 && timeSinceLastClick < QUICK_MATCH_COOLDOWN)
             {
-                Debug.Log($"[LobbyManager] 버튼 쿨다운 중: {QUICK_MATCH_COOLDOWN - timeSinceLastClick:F1}초 남음");
                 return;
             }
 
@@ -779,8 +770,6 @@ namespace Manager
                 // 연결 성공 확인
                 if (PhotonNetwork.IsConnectedAndReady && PhotonNetwork.InLobby)
                 {
-                    Debug.Log("[LobbyManager] Photon 재연결 성공!");
-
                     // 로딩스크린 페이드아웃
                     if (LoadingScreenManager.Instance != null)
                     {

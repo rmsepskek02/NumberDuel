@@ -34,8 +34,6 @@ namespace Utills
                 button.gameObject.AddComponent<ButtonSound>();
                 addedCount++;
             }
-
-            Debug.Log($"[UIHelper] ButtonSound 등록 완료 - 추가: {addedCount}개, 스킵: {skippedCount}개 (총 {buttons.Length}개)");
         }
 
         /// <summary>
@@ -79,8 +77,6 @@ namespace Utills
                     addedCount++;
                 }
             }
-
-            Debug.Log($"[UIHelper] {parent.name} 하위 ButtonSound 등록 완료 - 추가: {addedCount}개");
         }
 
         /// <summary>
@@ -97,7 +93,6 @@ namespace Utills
             }
 
             Object.DontDestroyOnLoad(gameObject);
-            Debug.Log($"[UIHelper] {gameObject.name}을(를) DontDestroyOnLoad로 설정했습니다.");
         }
 
         /// <summary>

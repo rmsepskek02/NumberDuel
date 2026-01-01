@@ -537,14 +537,12 @@ namespace Manager
             // 첫 라운드에서는 공격 불가
             if (TurnManager.Instance.IsFirstRound)
             {
-                Debug.Log("[FieldAttackManager] 첫 라운드에서는 공격이 불가능합니다.");
                 return false;
             }
 
             // 턴 체크
             if (!TurnManager.Instance.IsLocalPlayerTurn)
             {
-                Debug.Log("[FieldAttackManager] 내 턴이 아닙니다.");
                 return false;
             }
 
@@ -591,7 +589,6 @@ namespace Manager
             }
 
             bool isEmpty = opponentFieldZone.GetCardCount() == 0;
-
 
             return isEmpty;
         }

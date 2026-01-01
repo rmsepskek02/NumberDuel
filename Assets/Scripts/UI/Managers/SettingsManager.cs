@@ -65,10 +65,13 @@ namespace Manager
             UpdateSettingsButtonVisibility(SceneManager.GetActiveScene().name);
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
             // 씬 변경 이벤트 해제
             SceneManager.sceneLoaded -= OnSceneLoaded;
+
+            // 부모 클래스 정리 (Singleton instance 초기화)
+            base.OnDestroy();
         }
 
         /// <summary>
@@ -281,8 +284,6 @@ namespace Manager
         /// </summary>
         private void ExitToLobby()
         {
-            Debug.Log("[SettingsManager] 로비로 나가기...");
-
             // Photon 방 나가기
             if (PhotonNetwork.InRoom)
             {
@@ -308,8 +309,6 @@ namespace Manager
         /// </summary>
         private void QuitGame()
         {
-            Debug.Log("[SettingsManager] 게임 종료...");
-
             #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
             #else
@@ -322,8 +321,6 @@ namespace Manager
         /// </summary>
         private void Logout()
         {
-            Debug.Log("[SettingsManager] 로그아웃...");
-
             // AuthManager 로그아웃
             if (AuthManager.Instance != null)
             {

@@ -38,16 +38,11 @@ namespace Manager.Network.Sync
 
             var networkCard = card.GetComponent<NetworkCard>();
             if (networkCard == null)
-            {
-                Debug.LogWarning("[NetworkIconSyncManager] NetworkCard 컴포넌트를 찾을 수 없습니다.");
                 return;
-            }
 
             string cardId = networkCard.UniqueId;
             string ownerType = card.CurrentOwnerType.ToString();
             string iconTypeString = iconType.ToString();
-
-            Debug.Log($"[NetworkIconSyncManager] SyncCardIcon 전송: cardId={cardId}, iconType={iconTypeString}, ownerType={ownerType}, cardName={card.gameObject.name}");
 
             // RPC 호출 (iconType을 문자열로 변환하여 전송)
             hub.photonView.RPC("RPC_SyncCardIcon", RpcTarget.Others, cardId, iconTypeString, ownerType);
@@ -67,10 +62,7 @@ namespace Manager.Network.Sync
 
             var networkCard = card.GetComponent<NetworkCard>();
             if (networkCard == null)
-            {
-                Debug.LogWarning("[NetworkIconSyncManager] NetworkCard 컴포넌트를 찾을 수 없습니다.");
                 return;
-            }
 
             string cardId = networkCard.UniqueId;
             string ownerType = card.CurrentOwnerType.ToString();
@@ -84,20 +76,15 @@ namespace Manager.Network.Sync
         /// </summary>
         public void ApplyRemoteCardIcon(string cardId, string iconType, string ownerType)
         {
-            Debug.Log($"[NetworkIconSyncManager] RPC_SyncCardIcon 수신: cardId={cardId}, iconType={iconType}, ownerType={ownerType}");
-
             // Owner type 변환 (Player ↔ Opponent)
             CardZone.OwnerType senderOwner = Enum.Parse<CardZone.OwnerType>(ownerType);
             CardZone.OwnerType displayOwner = senderOwner == CardZone.OwnerType.Player
                 ? CardZone.OwnerType.Opponent
                 : CardZone.OwnerType.Player;
 
-            Debug.Log($"[NetworkIconSyncManager] Owner 변환: {senderOwner} → {displayOwner}");
-
             // 문자열을 CardIconType으로 변환
             if (!Enum.TryParse<CardIconType>(iconType, true, out CardIconType parsedIconType))
             {
-                Debug.LogWarning($"[NetworkIconSyncManager] 잘못된 아이콘 타입: {iconType}");
                 return;
             }
 
@@ -108,7 +95,6 @@ namespace Manager.Network.Sync
                 var card = networkCard.GetComponent<Card>();
                 if (card != null)
                 {
-                    Debug.Log($"[NetworkIconSyncManager] 카드 찾음: {card.gameObject.name}, CurrentOwner={card.CurrentOwnerType}");
                     // 아이콘 표시 (CardIconType으로 변환하여 전달)
                     card.ShowSelectionIcon(parsedIconType);
                 }
@@ -116,10 +102,6 @@ namespace Manager.Network.Sync
                 {
                     Debug.LogError($"[NetworkIconSyncManager] Card 컴포넌트가 없음: {networkCard.gameObject.name}");
                 }
-            }
-            else
-            {
-                Debug.LogWarning($"[NetworkIconSyncManager] 카드를 찾을 수 없습니다: {cardId}");
             }
         }
 
@@ -144,10 +126,6 @@ namespace Manager.Network.Sync
                     // 아이콘 숨김
                     card.HideSelectionIcon();
                 }
-            }
-            else
-            {
-                Debug.LogWarning($"[NetworkIconSyncManager] 카드를 찾을 수 없습니다: {cardId}");
             }
         }
         #endregion

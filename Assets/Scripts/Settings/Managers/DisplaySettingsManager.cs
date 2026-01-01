@@ -61,8 +61,6 @@ namespace Manager
 
             // 로드한 설정 적용
             ApplySettings();
-
-            Debug.Log($"[DisplaySettingsManager] 설정 로드됨 - 해상도: {ScreenWidth}x{ScreenHeight}, 모드: {ScreenMode}");
         }
 
         /// <summary>
@@ -74,8 +72,6 @@ namespace Manager
             PlayerPrefs.SetInt(PREF_SCREEN_HEIGHT, ScreenHeight);
             PlayerPrefs.SetInt(PREF_SCREEN_MODE, (int)ScreenMode);
             PlayerPrefs.Save();
-
-            Debug.Log($"[DisplaySettingsManager] 설정 저장됨 - 해상도: {ScreenWidth}x{ScreenHeight}, 모드: {ScreenMode}");
         }
         #endregion
 
@@ -107,7 +103,6 @@ namespace Manager
         public void ApplySettings()
         {
             Screen.SetResolution(ScreenWidth, ScreenHeight, ScreenMode);
-            Debug.Log($"[DisplaySettingsManager] 화면 설정 적용 - {ScreenWidth}x{ScreenHeight}, {ScreenMode}");
         }
 
         /// <summary>
@@ -120,8 +115,6 @@ namespace Manager
             ScreenMode = DEFAULT_MODE;
             ApplySettings();
             SaveSettings();
-
-            Debug.Log("[DisplaySettingsManager] 기본값으로 복원됨");
         }
         #endregion
 

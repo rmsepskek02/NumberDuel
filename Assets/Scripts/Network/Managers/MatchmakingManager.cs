@@ -61,7 +61,6 @@ namespace Manager
             // 이미 매칭 중이면 무시
             if (CurrentState == MatchmakingState.Searching)
             {
-                Debug.LogWarning("[MatchmakingManager] 이미 매칭 중입니다.");
                 return;
             }
 
@@ -81,7 +80,6 @@ namespace Manager
                 return;
             }
 
-            Debug.Log("[MatchmakingManager] 빠른 매칭 시작");
             ChangeState(MatchmakingState.Searching);
 
             // 매칭 전용 방 검색
@@ -101,19 +99,15 @@ namespace Manager
         {
             if (CurrentState != MatchmakingState.Searching)
             {
-                Debug.LogWarning("[MatchmakingManager] 매칭 중이 아닙니다.");
                 return;
             }
 
             // 방 생성 중이면 취소 요청만 예약
             if (isCreatingMatchmakingRoom)
             {
-                Debug.Log("[MatchmakingManager] 방 생성 중이므로 취소 예약됨");
                 pendingCancel = true;
                 return;
             }
-
-            Debug.Log("[MatchmakingManager] 매칭 취소");
 
             // 방에서 나가기
             if (PhotonNetwork.InRoom)
@@ -141,11 +135,9 @@ namespace Manager
             // 중복 방 생성 방지
             if (isCreatingMatchmakingRoom)
             {
-                Debug.LogWarning("[MatchmakingManager] 이미 매칭 방 생성 중입니다.");
                 return;
             }
 
-            Debug.Log($"[MatchmakingManager] 매칭 방을 찾지 못했습니다. 새로운 매칭 방 생성. (Code: {returnCode})");
             isCreatingMatchmakingRoom = true;
 
             // 매칭 전용 방 생성
@@ -167,7 +159,6 @@ namespace Manager
             // 방 생성 중 취소 요청이 있었으면 즉시 방 나가기
             if (pendingCancel)
             {
-                Debug.Log("[MatchmakingManager] 방 생성 완료 후 예약된 취소 실행");
                 pendingCancel = false;
 
                 if (PhotonNetwork.InRoom)
@@ -179,8 +170,6 @@ namespace Manager
                 SystemMessageManager.Instance?.ShowMessage("MatchmakingCancelled");
                 return;
             }
-
-            Debug.Log("[MatchmakingManager] 매칭 방 생성 완료. 상대방 대기 중...");
 
             // "매칭 중..." 메시지 표시
             SystemMessageManager.Instance?.ShowMessage("Matching");
@@ -210,8 +199,6 @@ namespace Manager
             }
 
             // 매칭 방에 입장 성공 (두 번째 플레이어)
-            Debug.Log("[MatchmakingManager] 매칭 방에 입장했습니다.");
-
             // 이미 2명이면 즉시 매칭 완료 처리
             if (PhotonNetwork.CurrentRoom.PlayerCount >= 2)
             {
@@ -228,8 +215,6 @@ namespace Manager
             {
                 return;
             }
-
-            Debug.Log($"[MatchmakingManager] 플레이어 입장: {newPlayer.NickName}");
 
             // 2명이 되면 매칭 완료
             if (PhotonNetwork.CurrentRoom.PlayerCount >= 2)
@@ -253,7 +238,6 @@ namespace Manager
                 matchVerificationCoroutine = null;
             }
 
-            Debug.Log("[MatchmakingManager] 매칭 방에서 퇴장했습니다.");
             // 상태 변경은 CancelMatchmaking에서 이미 처리됨
         }
         #endregion
@@ -279,7 +263,6 @@ namespace Manager
                 var (color1, color2) = ResourcesManager.Instance.SelectRandomColors();
                 masterColor = color1;
                 guestColor = color2;
-                Debug.Log($"[MatchmakingManager] 매칭 방 색상 선택: Master={masterColor}, Guest={guestColor}");
             }
 
             RoomOptions roomOptions = new RoomOptions
@@ -303,7 +286,6 @@ namespace Manager
                 CustomRoomPropertiesForLobby = new[] { "isMatchmaking", "roomPassword", "currentPlayers" }
             };
 
-            Debug.Log($"[MatchmakingManager] 매칭 방 생성 시도: {roomName}");
             PhotonNetwork.CreateRoom(roomName, roomOptions);
         }
 
@@ -312,8 +294,6 @@ namespace Manager
         /// </summary>
         private void OnMatchingComplete()
         {
-            Debug.Log("[MatchmakingManager] 매칭 감지. 검증 시작...");
-
             // 기존 검증 코루틴이 있으면 중지
             if (matchVerificationCoroutine != null)
             {
@@ -330,8 +310,6 @@ namespace Manager
         /// </summary>
         private System.Collections.IEnumerator VerifyAndCompleteMatch()
         {
-            Debug.Log($"[MatchmakingManager] {MATCH_VERIFICATION_DELAY}초 후 매칭 검증 예정");
-
             // 1초 대기
             yield return new WaitForSeconds(MATCH_VERIFICATION_DELAY);
 
@@ -377,12 +355,9 @@ namespace Manager
                     matchVerificationCoroutine = null;
                     yield break;
                 }
-
-                Debug.Log($"[MatchmakingManager] 검증 성공: 서로 다른 플레이어 확인 ({userId1} vs {userId2})");
             }
 
             // 검증 통과: 매칭 완료 처리
-            Debug.Log("[MatchmakingManager] 매칭 완료! 게임 시작");
             ChangeState(MatchmakingState.Matched);
 
             // "상대를 찾았습니다!" 메시지 표시
@@ -414,7 +389,6 @@ namespace Manager
                 return;
             }
 
-            Debug.Log($"[MatchmakingManager] 상태 변경: {CurrentState} -> {newState}");
             CurrentState = newState;
             OnMatchmakingStateChanged?.Invoke(newState);
         }

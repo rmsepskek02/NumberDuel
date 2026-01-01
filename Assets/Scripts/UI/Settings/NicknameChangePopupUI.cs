@@ -265,7 +265,6 @@ namespace UI.Settings
 
                 if (success)
                 {
-                    Debug.Log($"[NicknameChangePopupUI] 닉네임이 '{newNickname}'으로 변경되었습니다.");
                     return true;
                 }
                 else

@@ -54,11 +54,8 @@ namespace Manager
             // 이미 초기화 중이거나 완료된 경우 중복 호출 방지
             if (isFirebaseReady)
             {
-                Debug.Log("[FirebaseInitializer] 이미 초기화 완료됨");
                 return;
             }
-
-            Debug.Log("[FirebaseInitializer] Firebase 초기화 시작...");
 
             try
             {
@@ -69,7 +66,6 @@ namespace Manager
                 if (dependencyStatus == DependencyStatus.Available)
                 {
                     isFirebaseReady = true;
-                    Debug.Log("[FirebaseInitializer] ✅ Firebase 초기화 완료!");
                 }
                 else
                 {
@@ -116,11 +112,9 @@ namespace Manager
         {
             if (isFirebaseReady)
             {
-                Debug.Log("[FirebaseInitializer] 이미 초기화 완료됨 - 재초기화 불필요");
                 return;
             }
 
-            Debug.Log("[FirebaseInitializer] Firebase 재초기화 시도...");
             InitializeFirebaseOnce();
         }
         #endregion

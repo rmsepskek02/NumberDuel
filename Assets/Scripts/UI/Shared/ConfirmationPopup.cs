@@ -84,7 +84,6 @@ namespace UI.Shared
                 return false;
             }
 
-            Debug.Log("[ConfirmationPopup] 팝업이 성공적으로 로드되었습니다.");
             return true;
         }
 

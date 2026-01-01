@@ -226,8 +226,6 @@ namespace UI.Settings.Tabs
                     var selectedResolution = Manager.DisplaySettingsManager.AvailableResolutions[index];
                     Manager.DisplaySettingsManager.Instance.SetResolution(selectedResolution.width, selectedResolution.height);
                     originalResolutionIndex = index;
-
-                    Debug.Log($"[DisplaySettingsTab] 해상도 적용: {selectedResolution.width}x{selectedResolution.height}");
                 }
             }
 
@@ -238,8 +236,6 @@ namespace UI.Settings.Tabs
                 FullScreenMode mode = Manager.DisplaySettingsManager.GetScreenModeFromIndex(index);
                 Manager.DisplaySettingsManager.Instance.SetScreenMode(mode);
                 originalScreenModeIndex = index;
-
-                Debug.Log($"[DisplaySettingsTab] 화면 모드 적용: {mode}");
             }
 
             // 변경사항 초기화
@@ -293,8 +289,6 @@ namespace UI.Settings.Tabs
 
                     // 사운드 재생
                     Manager.SoundManager.Instance?.PlaySFX(SoundType.UI_ButtonClick);
-
-                    Debug.Log("[DisplaySettingsTab] 화면 설정이 기본값으로 복원되었습니다.");
                 }
             );
         }

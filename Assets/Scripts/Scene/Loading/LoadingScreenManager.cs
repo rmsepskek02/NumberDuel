@@ -151,8 +151,6 @@ namespace Manager
                 return;
             }
 
-            string sceneName = SceneManager.GetActiveScene().name;
-            Debug.Log($"[LoadingScreen] State: {currentState} → {newState} (Scene: {sceneName})");
             currentState = newState;
         }
         #endregion

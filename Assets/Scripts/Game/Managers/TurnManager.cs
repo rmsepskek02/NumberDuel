@@ -50,7 +50,8 @@ namespace Manager
         #region Fields and Properties
         // 턴 시스템 설정
         [Header("턴 시스템 설정")]
-        [SerializeField] private float turnTimeLimit = 60f; // 턴 제한 시간 (초)
+        // TODO: 턴 제한 시간 기능 구현 필요
+        // [SerializeField] private float turnTimeLimit = 60f; // 턴 제한 시간 (초)
 
         // 게임 상태
         private bool isGameStarted = false;
@@ -231,7 +232,6 @@ namespace Manager
                 if (!pendingEndTurn)
                 {
                     pendingEndTurn = true;
-                    Debug.Log("[TurnManager] 프로세스 진행 중 - 턴 종료 대기 상태로 전환");
                 }
                 return;
             }
@@ -261,7 +261,6 @@ namespace Manager
             if (isProcessingTurn) return;
             if (InGameManager.Instance.IsProcessing) return;
 
-            Debug.Log("[TurnManager] 프로세스 완료 - 대기 중인 턴 종료 실행");
             ExecuteEndTurn();
         }
 

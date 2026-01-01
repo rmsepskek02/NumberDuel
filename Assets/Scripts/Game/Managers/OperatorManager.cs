@@ -64,7 +64,6 @@ namespace Manager
             // 턴 검증: 내 턴인지 확인
             if (!TurnManager.Instance.IsLocalPlayerTurn)
             {
-                Debug.Log("[OperatorManager] 내 턴이 아닙니다.");
                 return;
             }
 

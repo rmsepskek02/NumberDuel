@@ -210,8 +210,6 @@ namespace Manager
             {
                 messageUI.HideMessageInstantly();
             }
-
-            Debug.Log("[SystemMessageManager] 메시지 큐를 초기화했습니다.");
         }
         #endregion
 
@@ -249,7 +247,6 @@ namespace Manager
                 // 마지막 메시지와 동일하면 추가하지 않음
                 if (lastMessage.text == request.text)
                 {
-                    Debug.Log($"[SystemMessageManager] 중복 메시지 방지: {text}");
                     return;
                 }
             }
@@ -281,7 +278,6 @@ namespace Manager
             // 중요 메시지(Error, Success) 표시 중이면 Info 메시지는 대기
             if (isShowingMessage)
             {
-                Debug.Log($"[SystemMessageManager] 중요 메시지 표시 중이므로 Info 메시지는 대기: {request.text}");
                 return;
             }
 
@@ -297,8 +293,6 @@ namespace Manager
 
             // ✅ 3초 후 자동으로 사라지도록 타이머 시작
             infoMessageHideCoroutine = StartCoroutine(HideInfoMessageAfterDuration(request.duration));
-
-            Debug.Log($"[SystemMessageManager] Info 메시지 즉시 교체: {request.text} (지속 시간: {request.duration}초)");
         }
 
         /// <summary>
@@ -313,7 +307,6 @@ namespace Manager
             {
                 messageUI.HideMessageInstantly();
                 currentInfoMessage = null;
-                Debug.Log("[SystemMessageManager] Info 메시지 자동 숨김");
             }
 
             infoMessageHideCoroutine = null;
@@ -370,7 +363,6 @@ namespace Manager
             if (currentInfoMessage != null)
             {
                 messageUI.ReplaceMessageInstantly(currentInfoMessage.text, currentInfoMessage.color);
-                Debug.Log($"[SystemMessageManager] Info 메시지 재표시: {currentInfoMessage.text}");
             }
         }
 

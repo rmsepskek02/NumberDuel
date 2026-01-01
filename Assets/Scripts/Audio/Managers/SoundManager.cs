@@ -321,8 +321,6 @@ namespace Manager
             isMasterMuted = PlayerPrefs.GetInt(PREF_MASTER_MUTE, 0) == 1;
             isBGMMuted = PlayerPrefs.GetInt(PREF_BGM_MUTE, 0) == 1;
             isSFXMuted = PlayerPrefs.GetInt(PREF_SFX_MUTE, 0) == 1;
-
-            Debug.Log($"[SoundManager] 설정 로드됨 - Master: {masterVolume:F2} (Mute:{isMasterMuted}), BGM: {bgmVolume:F2} (Mute:{isBGMMuted}), SFX: {sfxVolume:F2} (Mute:{isSFXMuted})");
         }
         #endregion
 
@@ -337,12 +335,8 @@ namespace Manager
             // 첫 프레임이 렌더링된 후 실행 (로딩 화면이 먼저 표시되도록)
             yield return new WaitForEndOfFrame();
 
-            Debug.Log("[SoundManager] 사운드 사전 로드 시작...");
-
             // 자주 사용하는 사운드 로드
             PreloadFrequentSounds();
-
-            Debug.Log("[SoundManager] 사운드 사전 로드 완료!");
         }
 
         /// <summary>
@@ -375,8 +369,6 @@ namespace Manager
             // UI 사운드
             PreloadSingleSound(SoundType.UI_ButtonClick);
             PreloadSingleSound(SoundType.UI_TurnStart);
-
-            Debug.Log($"[SoundManager] 사전 로드 완료: {audioClipCache.Count}개 사운드");
         }
 
         /// <summary>
@@ -501,8 +493,6 @@ namespace Manager
                 bgmSource.volume = EffectiveBGMVolume;
                 bgmSource.Play();
             }
-
-            Debug.Log($"[SoundManager] BGM 재생: {bgmType}");
         }
 
         /// <summary>
@@ -526,8 +516,6 @@ namespace Manager
                 bgmSource.Stop();
                 currentBGM = null;
             }
-
-            Debug.Log("[SoundManager] BGM 정지");
         }
 
         /// <summary>

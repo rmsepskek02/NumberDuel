@@ -75,7 +75,7 @@ namespace Manager
 #endif
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
             // Scene 전환 이벤트 구독 해제
             SceneManager.sceneLoaded -= OnSceneLoaded;
@@ -87,6 +87,9 @@ namespace Manager
 
             // 등록된 모든 InputField 이벤트 해제
             UnregisterAllInputFields();
+
+            // 부모 클래스 정리 (Singleton instance 초기화)
+            base.OnDestroy();
         }
 
         private void Update()
@@ -193,8 +196,6 @@ namespace Manager
             if (inputField == null || registeredInputFields.Contains(inputField))
                 return;
 
-            Debug.Log($"[KeyboardManager] RegisterInputField: {inputField.name}");
-
             // InputField 선택/해제 이벤트 리스너 등록
             inputField.onSelect.AddListener((eventData) => OnInputFieldSelected(inputField));
             inputField.onDeselect.AddListener((eventData) => OnInputFieldDeselected(inputField));
@@ -233,8 +234,6 @@ namespace Manager
             if (inputField == null)
                 return;
 
-            Debug.Log($"[KeyboardManager] OnInputFieldSelected: {inputField.name}, isMoved={isMoved}, lastKeyboardHeight={lastKeyboardHeight}");
-
             currentInputField = inputField;
 
             // InputField가 속한 Canvas 탐색
@@ -254,25 +253,17 @@ namespace Manager
                 return;
             }
 
-            Debug.Log($"[KeyboardManager] targetRectTransform: {targetRectTransform.name}");
-
             // 핵심: isMoved가 false일 때만 원래 위치 저장
             // (이미 이동된 상태면 최초 원래 위치를 유지해야 함)
             if (!isMoved)
             {
                 originalPosition = targetRectTransform.anchoredPosition;
-                Debug.Log($"[KeyboardManager] 원래 위치 저장: {originalPosition}");
-            }
-            else
-            {
-                Debug.Log($"[KeyboardManager] 이미 이동된 상태 - 원래 위치 유지: {originalPosition}");
             }
 
             // 키보드가 이미 떠있으면 즉시 위치 재계산
             // (다른 InputField에서 전환된 경우)
             if (lastKeyboardHeight > 0)
             {
-                Debug.Log($"[KeyboardManager] 키보드 떠있음 - 위치 재계산 실행");
                 MoveCanvasUp();
             }
         }
@@ -314,8 +305,6 @@ namespace Manager
         /// </summary>
         private void OnInputFieldDeselected(TMP_InputField inputField)
         {
-            Debug.Log($"[KeyboardManager] OnInputFieldDeselected: {inputField?.name}, currentInputField={currentInputField?.name}");
-
             // 현재 포커스된 InputField가 아니면 무시
             if (inputField != currentInputField)
                 return;
@@ -323,7 +312,6 @@ namespace Manager
             currentInputField = null;
 
             // 즉시 UI 복원하지 않고, 다음 프레임에 다른 InputField로 전환되는지 확인
-            Debug.Log($"[KeyboardManager] CheckIfShouldRestoreUI 코루틴 시작");
             StartCoroutine(CheckIfShouldRestoreUI());
         }
 
@@ -336,18 +324,11 @@ namespace Manager
         {
             yield return null; // 1프레임 대기
 
-            Debug.Log($"[KeyboardManager] CheckIfShouldRestoreUI: currentInputField={currentInputField?.name}");
-
             // 1프레임 후에도 currentInputField가 null이면
             // → 다른 InputField로 전환되지 않음 → UI 복원 필요
             if (currentInputField == null)
             {
-                Debug.Log($"[KeyboardManager] 다른 InputField로 전환 안됨 - UI 복원");
                 RestoreCanvas();
-            }
-            else
-            {
-                Debug.Log($"[KeyboardManager] 다른 InputField({currentInputField.name})로 전환됨 - UI 유지");
             }
             // currentInputField가 null이 아니면
             // → 다른 InputField로 전환됨 → OnInputFieldSelected가 이미 호출됨
@@ -372,8 +353,6 @@ namespace Manager
         /// <param name="height">키보드 높이 (픽셀 단위)</param>
         private void OnKeyboardHeightChanged(bool isShow, int height)
         {
-            Debug.Log($"[KeyboardManager] OnKeyboardHeightChanged: isShow={isShow}, height={height}");
-
             if (isShow && height > 0)
             {
                 // 키보드 표시됨
@@ -387,7 +366,6 @@ namespace Manager
             else
             {
                 // 키보드 숨겨짐
-                Debug.Log($"[KeyboardManager] 키보드 숨겨짐");
                 lastKeyboardHeight = 0; // 키보드 높이 초기화
 
                 // ❌ 제거: OnInputFieldDeselected 호출하지 않음
@@ -420,12 +398,9 @@ namespace Manager
             // 필요한 이동 거리 계산 (현재 위치 기준)
             float requiredOffset = CalculateRequiredOffset();
 
-            Debug.Log($"[KeyboardManager] MoveCanvasUp: requiredOffset={requiredOffset}");
-
             // InputField가 키보드에 가려지지 않으면 이동 불필요
             if (requiredOffset <= 0f)
             {
-                Debug.Log($"[KeyboardManager] InputField가 키보드에 가려지지 않음 - 이동 불필요");
                 return;
             }
 
@@ -434,10 +409,7 @@ namespace Manager
 
             // 목표 위치 계산
             // isMoved=true이면 현재 위치에서 추가 이동, false이면 원래 위치에서 이동
-            Vector2 currentPosition = targetRectTransform.anchoredPosition;
             Vector2 targetPosition = originalPosition + new Vector2(0f, requiredOffset);
-
-            Debug.Log($"[KeyboardManager] currentPosition={currentPosition}, targetPosition={targetPosition}");
 
             // 이동 플래그 즉시 설정 (애니메이션 중 키보드가 내려가도 복원 가능하도록)
             isMoved = true;
@@ -540,12 +512,9 @@ namespace Manager
             // 키보드 상단의 스크린 Y 좌표
             float keyboardTopY = lastKeyboardHeight;
 
-            Debug.Log($"[KeyboardManager] CalculateRequiredOffset: inputBottomY(원래위치기준)={inputBottomY}, keyboardTopY={keyboardTopY}");
-
             // InputField가 키보드보다 위에 있으면 이동 불필요
             if (inputBottomY > keyboardTopY)
             {
-                Debug.Log($"[KeyboardManager] InputField가 키보드 위에 있음 - 이동 불필요");
                 return 0f;
             }
 
@@ -559,8 +528,6 @@ namespace Manager
             // Canvas의 scaleFactor는 디바이스 해상도에 따라 달라짐
             float canvasScaleFactor = targetCanvas.scaleFactor;
             float offsetInCanvasUnits = offsetInPixels / canvasScaleFactor;
-
-            Debug.Log($"[KeyboardManager] offsetInPixels={offsetInPixels}, canvasScaleFactor={canvasScaleFactor}, offsetInCanvasUnits={offsetInCanvasUnits}");
 
             return offsetInCanvasUnits;
         }

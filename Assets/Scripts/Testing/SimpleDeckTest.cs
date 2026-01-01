@@ -6,8 +6,8 @@ using Manager;
 namespace Testing
 {
     /// <summary>
-    /// New Input SystemÀ» »ç¿ëÇÑ µ¦ ½Ã½ºÅÛ Å×½ºÆ® ½ºÅ©¸³Æ®
-    /// UI ¼³Á¤ ¾øÀÌ ¹Ù·Î Å×½ºÆ® °¡´É
+    /// New Input Systemì„ ì‚¬ìš©í•œ ë± ì‹œìŠ¤í…œ í…ŒìŠ¤íŠ¸ ìŠ¤í¬ë¦½íŠ¸
+    /// UI ì—†ì´ ë¹ ë¥¸ ë°”ë¡œ í…ŒìŠ¤íŠ¸ ê°€ëŠ¥
     /// </summary>
     public class SimpleDeckTest : MonoBehaviour
     {
@@ -47,25 +47,16 @@ namespace Testing
 
         private void Start()
         {
-            Debug.Log("=== New Input System µ¦ Å×½ºÆ® ½ÃÀÛ ===");
-            Debug.Log("Å°º¸µå Á¶ÀÛ¹ı:");
-            Debug.Log("I : µ¦ ÃÊ±âÈ­");
-            Debug.Log("P : ÇÃ·¹ÀÌ¾î Ä«µå 1Àå µå·Î¿ì");
-            Debug.Log("O : »ó´ë Ä«µå 1Àå µå·Î¿ì");
-            Debug.Log("M : ÇÃ·¹ÀÌ¾î Ä«µå 5Àå µå·Î¿ì");
-            Debug.Log("R : µ¦ ¸®¼Â");
-            Debug.Log("S : µ¦ »óÅÂ Ãâ·Â");
-            Debug.Log("T : ÀÚµ¿ Å×½ºÆ® ½ÇÇà");
         }
         #endregion
 
         #region Input Setup
         /// <summary>
-        /// Input Actions ¼³Á¤
+        /// Input Actions ì„¤ì •
         /// </summary>
         private void SetupInputActions()
         {
-            // InputActionAssetÀÌ ¾øÀ¸¸é ÄÚµå·Î Á÷Á¢ »ı¼º
+            // InputActionAssetì´ ì—†ìœ¼ë©´ ìë™ë¡œ ì•¡ì…˜ ìƒì„±
             if (inputActions == null)
             {
                 CreateInputActionsInCode();
@@ -75,12 +66,12 @@ namespace Testing
                 GetInputActionsFromAsset();
             }
 
-            // ÀÌº¥Æ® ¿¬°á
+            // ì´ë²¤íŠ¸ ë°”ì¸ë”©
             ConnectInputEvents();
         }
 
         /// <summary>
-        /// ÄÚµå·Î Á÷Á¢ Input Actions »ı¼º (InputActionAsset ¾øÀ» ¶§)
+        /// ìë™ë¡œ ìƒì„± Input Actions ìƒì„± (InputActionAsset ì—†ì„ ë•Œ)
         /// </summary>
         private void CreateInputActionsInCode()
         {
@@ -94,7 +85,7 @@ namespace Testing
         }
 
         /// <summary>
-        /// InputActionAsset¿¡¼­ Actions °¡Á®¿À±â
+        /// InputActionAssetì—ì„œ Actions ê°€ì ¸ì˜¤ê¸°
         /// </summary>
         private void GetInputActionsFromAsset()
         {
@@ -108,7 +99,7 @@ namespace Testing
         }
 
         /// <summary>
-        /// Input ÀÌº¥Æ® ¿¬°á
+        /// Input ì´ë²¤íŠ¸ ë°”ì¸ë”©
         /// </summary>
         private void ConnectInputEvents()
         {
@@ -135,7 +126,7 @@ namespace Testing
         }
 
         /// <summary>
-        /// Input Actions È°¼ºÈ­
+        /// Input Actions í™œì„±í™”
         /// </summary>
         private void EnableInputActions()
         {
@@ -149,7 +140,7 @@ namespace Testing
         }
 
         /// <summary>
-        /// Input Actions ºñÈ°¼ºÈ­
+        /// Input Actions ë¹„í™œì„±í™”
         /// </summary>
         private void DisableInputActions()
         {
@@ -173,24 +164,18 @@ namespace Testing
         {
             if (isInitialized)
                 DrawPlayerCard();
-            else
-                Debug.Log("¸ÕÀú µ¦À» ÃÊ±âÈ­ÇØÁÖ¼¼¿ä (IÅ°)");
         }
 
         private void OnDrawOpponent(InputAction.CallbackContext context)
         {
             if (isInitialized)
                 DrawOpponentCard();
-            else
-                Debug.Log("¸ÕÀú µ¦À» ÃÊ±âÈ­ÇØÁÖ¼¼¿ä (IÅ°)");
         }
 
         private void OnDrawMultiple(InputAction.CallbackContext context)
         {
             if (isInitialized)
                 DrawMultipleCards(5);
-            else
-                Debug.Log("¸ÕÀú µ¦À» ÃÊ±âÈ­ÇØÁÖ¼¼¿ä (IÅ°)");
         }
 
         private void OnResetDeck(InputAction.CallbackContext context)
@@ -211,15 +196,13 @@ namespace Testing
 
         #region Deck Test Methods
         /// <summary>
-        /// µ¦ ÃÊ±âÈ­
+        /// ë± ì´ˆê¸°í™”
         /// </summary>
         private void InitializeDeck()
         {
-            Debug.Log("--- µ¦ ÃÊ±âÈ­ ½ÃÀÛ ---");
-
             if (DeckManager.Instance == null)
             {
-                Debug.LogError("DeckManager.Instance°¡ nullÀÔ´Ï´Ù!");
+                Debug.LogError("DeckManager.Instanceê°€ nullì…ë‹ˆë‹¤!");
                 return;
             }
 
@@ -227,75 +210,56 @@ namespace Testing
             {
                 DeckManager.Instance.InitializeDecks();
                 isInitialized = true;
-
-                Debug.Log($" µ¦ ÃÊ±âÈ­ ¿Ï·á!");
-                Debug.Log($"   ÇÃ·¹ÀÌ¾î µ¦: {DeckManager.Instance.PlayerDeckCount}Àå");
-                Debug.Log($"   »ó´ë µ¦: {DeckManager.Instance.OpponentDeckCount}Àå");
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"µ¦ ÃÊ±âÈ­ ½ÇÆĞ: {e.Message}");
+                Debug.LogError($"ë± ì´ˆê¸°í™” ì‹¤íŒ¨: {e.Message}");
             }
         }
 
         /// <summary>
-        /// ÇÃ·¹ÀÌ¾î Ä«µå µå·Î¿ì
+        /// í”Œë ˆì´ì–´ ì¹´ë“œ ë“œë¡œìš°
         /// </summary>
         private void DrawPlayerCard()
         {
-            Debug.Log("--- ÇÃ·¹ÀÌ¾î Ä«µå µå·Î¿ì ---");
-
             try
             {
                 if (InGameManager.Instance != null)
                 {
-                    // InGameManager¸¦ ÅëÇÑ µå·Î¿ì (±ÇÀå)
+                    // InGameManagerë¥¼ í†µí•œ ë“œë¡œìš° (ê¶Œì¥)
                     InGameManager.Instance.DrawCardsToHand(1, CardZone.OwnerType.Player);
-                    Debug.Log($" ÇÃ·¹ÀÌ¾î µå·Î¿ì ¿Ï·á (³²Àº µ¦: {DeckManager.Instance.PlayerDeckCount}Àå)");
                 }
                 else
                 {
-                    // Á÷Á¢ DeckManager »ç¿ë
+                    // ì§ì ‘ DeckManager ì‚¬ìš©
                     var cardData = DeckManager.Instance.DrawPlayerCard();
                     if (cardData.HasValue)
                     {
-                        // Ä«µå ¿ÀºêÁ§Æ® »ı¼º
+                        // ì¹´ë“œ ì˜¤ë¸Œì íŠ¸ ìƒì„±
                         var cardObj = DeckManager.Instance.CreateCardObject(
                             cardData.Value,
                             CardZone.OwnerType.Player,
                             playerHandZone
                         );
-
-                        if (cardObj != null)
-                        {
-                            Debug.Log($" Ä«µå »ı¼º: {GetCardDescription(cardData.Value)}");
-                        }
-                    }
-                    else
-                    {
-                        Debug.Log(" µå·Î¿ì ½ÇÆĞ (µ¦ÀÌ ºñ¾îÀÖÀ½)");
                     }
                 }
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"µå·Î¿ì ½ÇÆĞ: {e.Message}");
+                Debug.LogError($"ë“œë¡œìš° ì‹¤íŒ¨: {e.Message}");
             }
         }
 
         /// <summary>
-        /// »ó´ë Ä«µå µå·Î¿ì
+        /// ìƒëŒ€ ì¹´ë“œ ë“œë¡œìš°
         /// </summary>
         private void DrawOpponentCard()
         {
-            Debug.Log("--- »ó´ë Ä«µå µå·Î¿ì ---");
-
             try
             {
                 if (InGameManager.Instance != null)
                 {
                     InGameManager.Instance.DrawCardsToHand(1, CardZone.OwnerType.Opponent);
-                    Debug.Log($" »ó´ë µå·Î¿ì ¿Ï·á (³²Àº µ¦: {DeckManager.Instance.OpponentDeckCount}Àå)");
                 }
                 else
                 {
@@ -307,160 +271,105 @@ namespace Testing
                             CardZone.OwnerType.Opponent,
                             opponentHandZone
                         );
-
-                        if (cardObj != null)
-                        {
-                            Debug.Log($" »ó´ë Ä«µå »ı¼º: {GetCardDescription(cardData.Value)}");
-                        }
-                    }
-                    else
-                    {
-                        Debug.Log(" »ó´ë µå·Î¿ì ½ÇÆĞ (µ¦ÀÌ ºñ¾îÀÖÀ½)");
                     }
                 }
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"»ó´ë µå·Î¿ì ½ÇÆĞ: {e.Message}");
+                Debug.LogError($"ìƒëŒ€ ë“œë¡œìš° ì‹¤íŒ¨: {e.Message}");
             }
         }
 
         /// <summary>
-        /// ¿©·¯ Àå µå·Î¿ì
+        /// ì—¬ëŸ¬ ì¥ ë“œë¡œìš°
         /// </summary>
         private void DrawMultipleCards(int count)
         {
-            Debug.Log($"--- {count}Àå µå·Î¿ì ---");
-
             try
             {
                 if (InGameManager.Instance != null)
                 {
                     InGameManager.Instance.DrawCardsToHand(count, CardZone.OwnerType.Player);
-                    Debug.Log($" {count}Àå µå·Î¿ì ¿Ï·á (³²Àº µ¦: {DeckManager.Instance.PlayerDeckCount}Àå)");
                 }
                 else
                 {
                     var cards = DeckManager.Instance.DrawPlayerCards(count);
-                    Debug.Log($" {cards.Count}Àå µå·Î¿ì ¿Ï·á");
-
-                    foreach (var card in cards)
-                    {
-                        Debug.Log($"   - {GetCardDescription(card)}");
-                    }
                 }
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"´ÙÁß µå·Î¿ì ½ÇÆĞ: {e.Message}");
+                Debug.LogError($"ë‹¤ì¤‘ ë“œë¡œìš° ì‹¤íŒ¨: {e.Message}");
             }
         }
 
         /// <summary>
-        /// µ¦ ¸®¼Â
+        /// ë± ë¦¬ì…‹
         /// </summary>
         private void ResetDeck()
         {
-            Debug.Log("--- µ¦ ¸®¼Â ---");
-
             try
             {
                 if (DeckManager.Instance != null)
                 {
                     DeckManager.Instance.ResetDecks();
                     isInitialized = false;
-                    Debug.Log(" µ¦ ¸®¼Â ¿Ï·á");
                 }
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"µ¦ ¸®¼Â ½ÇÆĞ: {e.Message}");
+                Debug.LogError($"ë± ë¦¬ì…‹ ì‹¤íŒ¨: {e.Message}");
             }
         }
 
         /// <summary>
-        /// µ¦ »óÅÂ Ãâ·Â (¼ÕÆĞ °³¼ö Æ÷ÇÔ)
+        /// ë± ìƒíƒœ ì¶œë ¥ (ë””ë²„ê·¸ ì½˜ì†” ì¶œë ¥)
         /// </summary>
         private void PrintDeckStatus()
         {
             if (DeckManager.Instance != null && isInitialized)
             {
-                Debug.Log("=== ÇöÀç µ¦ »óÅÂ ===");
-                Debug.Log($"ÇÃ·¹ÀÌ¾î µ¦: {DeckManager.Instance.PlayerDeckCount}Àå");
-                Debug.Log($"»ó´ë µ¦: {DeckManager.Instance.OpponentDeckCount}Àå");
-                Debug.Log($"ÇÃ·¹ÀÌ¾î µ¦ ºñ¾îÀÖÀ½: {DeckManager.Instance.IsPlayerDeckEmpty}");
-                Debug.Log($"»ó´ë µ¦ ºñ¾îÀÖÀ½: {DeckManager.Instance.IsOpponentDeckEmpty}");
-
-                // ¼ÕÆĞ Á¤º¸ »ó¼¼ Ãâ·Â
-                if (playerHandZone != null)
-                {
-                    int playerHandCount = playerHandZone.GetCardCount();
-                    string handStatus = playerHandCount >= 10 ? " (°¡µæÂü)" : "";
-                    Debug.Log($"ÇÃ·¹ÀÌ¾î ¼ÕÆĞ: {playerHandCount}/10Àå{handStatus}");
-                }
-
-                if (opponentHandZone != null)
-                {
-                    int opponentHandCount = opponentHandZone.GetCardCount();
-                    string handStatus = opponentHandCount >= 10 ? " (°¡µæÇÔ)" : "";
-                    Debug.Log($"»ó´ë ¼ÕÆĞ: {opponentHandCount}/10Àå{handStatus}");
-                }
-            }
-            else
-            {
-                Debug.Log("µ¦ÀÌ ÃÊ±âÈ­µÇÁö ¾Ê¾Ò½À´Ï´Ù. IÅ°¸¦ ´­·¯ ÃÊ±âÈ­ÇÏ¼¼¿ä.");
+                // Status information removed for production
             }
         }
 
-        // ¼ÕÆĞ Á¦ÇÑ Å×½ºÆ®¸¦ À§ÇÑ ¸Ş¼­µå Ãß°¡
-        [ContextMenu("¼ÕÆĞ Á¦ÇÑ Å×½ºÆ®")]
+        // ì†íŒ¨ ì œí•œ í…ŒìŠ¤íŠ¸ë¥¼ ìœ„í•œ ë©”ì„œë“œ ì¶”ê°€
+        [ContextMenu("ì†íŒ¨ ì œí•œ í…ŒìŠ¤íŠ¸")]
         public void TestHandLimit()
         {
             if (!isInitialized)
             {
-                Debug.Log("¸ÕÀú µ¦À» ÃÊ±âÈ­ÇÏ¼¼¿ä.");
                 return;
             }
 
-            Debug.Log("=== ¼ÕÆĞ Á¦ÇÑ Å×½ºÆ® ½ÃÀÛ ===");
-
-            // ÇÃ·¹ÀÌ¾î ¼ÕÆĞ¿¡ 12Àå µå·Î¿ì ½Ãµµ (2ÀåÀº ÆÄ±«µÇ¾î¾ß ÇÔ)
+            // í”Œë ˆì´ì–´ ì†íŒ¨ì— 12ì¥ ë“œë¡œìš° ì‹œë„ (2ì¥ì€ íŒŒê´´ë˜ì–´ì•¼ í•¨)
             for (int i = 0; i < 12; i++)
             {
-                Debug.Log($"--- {i + 1}¹øÂ° µå·Î¿ì ---");
                 DrawPlayerCard();
-
-                if (playerHandZone != null)
-                {
-                    int handCount = playerHandZone.GetCardCount();
-                    Debug.Log($"ÇöÀç ¼ÕÆĞ: {handCount}Àå");
-                }
             }
 
-            Debug.Log("=== ¼ÕÆĞ Á¦ÇÑ Å×½ºÆ® ¿Ï·á ===");
             PrintDeckStatus();
         }
         #endregion
 
         #region Utility Methods
         /// <summary>
-        /// Ä«µå ¼³¸í ¹®ÀÚ¿­ »ı¼º
+        /// ì¹´ë“œ ì •ë³´ ë¬¸ìì—´ ë°˜í™˜
         /// </summary>
         private string GetCardDescription(CardData cardData)
         {
             return cardData.cardType switch
             {
-                CardType.Number => $"¼ıÀÚ({cardData.numberValue})",
-                CardType.Operator => $"¿¬»êÀÚ({cardData.operatorType})",
-                CardType.Joker => "Á¶Ä¿",
-                _ => "¾Ë ¼ö ¾øÀ½"
+                CardType.Number => $"ìˆ«ì({cardData.numberValue})",
+                CardType.Operator => $"ì—°ì‚°ì({cardData.operatorType})",
+                CardType.Joker => "ì¡°ì»¤",
+                _ => "ì•Œ ìˆ˜ ì—†ìŒ"
             };
         }
 
         /// <summary>
-        /// ÀÚµ¿ Å×½ºÆ® (TÅ°·Î ½ÇÇà)
+        /// ìë™ í…ŒìŠ¤íŠ¸ (Tí‚¤ë¡œ ì‹¤í–‰)
         /// </summary>
-        [ContextMenu("ÀÚµ¿ Å×½ºÆ® ½ÇÇà")]
+        [ContextMenu("ìë™ í…ŒìŠ¤íŠ¸ ì‹¤í–‰")]
         public void RunAutoTest()
         {
             if (gameObject.activeInHierarchy)
@@ -471,67 +380,54 @@ namespace Testing
 
         private System.Collections.IEnumerator AutoTestRoutine()
         {
-            Debug.Log("=== ÀÚµ¿ Å×½ºÆ® ½ÃÀÛ ===");
-
-            // 1. µ¦ ÃÊ±âÈ­
+            // 1. ë± ì´ˆê¸°í™”
             InitializeDeck();
             yield return new WaitForSeconds(1f);
 
-            // 2. ÇÃ·¹ÀÌ¾î Ä«µå 3Àå µå·Î¿ì
-            Debug.Log("ÇÃ·¹ÀÌ¾î Ä«µå 3Àå µå·Î¿ì Å×½ºÆ®...");
+            // 2. í”Œë ˆì´ì–´ ì¹´ë“œ 3ì¥ ë“œë¡œìš°
             for (int i = 0; i < 3; i++)
             {
                 DrawPlayerCard();
                 yield return new WaitForSeconds(0.5f);
             }
 
-            // 3. »ó´ë Ä«µå 3Àå µå·Î¿ì
-            Debug.Log("»ó´ë Ä«µå 3Àå µå·Î¿ì Å×½ºÆ®...");
+            // 3. ìƒëŒ€ ì¹´ë“œ 3ì¥ ë“œë¡œìš°
             for (int i = 0; i < 3; i++)
             {
                 DrawOpponentCard();
                 yield return new WaitForSeconds(0.5f);
             }
 
-            // 4. ´ÙÁß µå·Î¿ì Å×½ºÆ®
-            Debug.Log("´ÙÁß µå·Î¿ì Å×½ºÆ®...");
+            // 4. ë‹¤ì¤‘ ë“œë¡œìš° í…ŒìŠ¤íŠ¸
             DrawMultipleCards(3);
             yield return new WaitForSeconds(1f);
 
-            // 5. »óÅÂ Ãâ·Â
+            // 5. ìƒíƒœ ì¶œë ¥
             PrintDeckStatus();
-
-            Debug.Log("=== ÀÚµ¿ Å×½ºÆ® ¿Ï·á ===");
         }
 
         /// <summary>
-        /// µ¦ ¿ÏÀü ¼ÒÁø Å×½ºÆ® (µğ¹ö±ë¿ë)
+        /// ë± ì†Œì§„ ìƒí™© í…ŒìŠ¤íŠ¸ (ì‹¬í™”í¸)
         /// </summary>
-        [ContextMenu("µ¦ ¿ÏÀü ¼ÒÁø Å×½ºÆ®")]
+        [ContextMenu("ë± ì†Œì§„ ìƒí™© í…ŒìŠ¤íŠ¸")]
         public void TestDeckDepletion()
         {
             if (!isInitialized)
             {
-                Debug.Log("¸ÕÀú µ¦À» ÃÊ±âÈ­ÇÏ¼¼¿ä.");
                 return;
             }
 
-            Debug.Log("=== µ¦ ¿ÏÀü ¼ÒÁø Å×½ºÆ® ½ÃÀÛ ===");
-
             int drawCount = 0;
-            while (!DeckManager.Instance.IsPlayerDeckEmpty && drawCount < 35) // ¾ÈÀüÀåÄ¡
+            while (!DeckManager.Instance.IsPlayerDeckEmpty && drawCount < 35) // ì•ˆì „ì¥ì¹˜
             {
                 DrawPlayerCard();
                 drawCount++;
 
-                if (drawCount % 5 == 0) // 5Àå¸¶´Ù »óÅÂ Ãâ·Â
+                if (drawCount % 5 == 0) // 5ì¥ë§ˆë‹¤ ìƒíƒœ ì¶œë ¥
                 {
-                    Debug.Log($"--- {drawCount}Àå µå·Î¿ì ¿Ï·á ---");
                     PrintDeckStatus();
                 }
             }
-
-            Debug.Log($"=== µ¦ ¼ÒÁø Å×½ºÆ® ¿Ï·á: ÃÑ {drawCount}Àå µå·Î¿ì ===");
         }
         #endregion
 
@@ -540,7 +436,7 @@ namespace Testing
         {
             DisableInputActions();
 
-            // ÀÌº¥Æ® ¿¬°á ÇØÁ¦
+            // ì´ë²¤íŠ¸ ë°”ì¸ë”© í•´ì œ
             if (initDeckAction != null)
                 initDeckAction.performed -= OnInitDeck;
             if (drawPlayerAction != null)

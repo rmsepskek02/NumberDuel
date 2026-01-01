@@ -138,7 +138,6 @@ namespace Manager
             // 에디터에서 빌드 중일 때는 실행하지 않음
             if (UnityEditor.BuildPipeline.isBuildingPlayer)
             {
-                Debug.Log("[JoinManager] 빌드 중 - 초기화 스킵");
                 return;
             }
 #endif
@@ -193,7 +192,6 @@ namespace Manager
             if (loadingManager != null)
             {
                 loadingManager.ForceHide();
-                Debug.Log("[JoinManager] 로딩스크린 안전장치 실행: ForceHide() 호출");
             }
         }
 
@@ -274,7 +272,6 @@ namespace Manager
             {
                 StopCoroutine(photonTimeoutCoroutine);
                 photonTimeoutCoroutine = null;
-                Debug.Log("[JoinManager] Photon 연결 성공");
             }
         }
 
@@ -284,8 +281,6 @@ namespace Manager
         public override void OnJoinedLobby()
         {
             base.OnJoinedLobby();
-
-            Debug.Log("[JoinManager] OnJoinedLobby 호출됨");
 
             // Photon 연결 추적 중지
             isTrackingPhotonConnection = false;
@@ -311,11 +306,8 @@ namespace Manager
 
             if (remainingTime > 0)
             {
-                Debug.Log($"[JoinManager] 최소 로딩 시간 대기 중... ({remainingTime:F2}초)");
                 yield return new WaitForSeconds(remainingTime);
             }
-
-            Debug.Log("[JoinManager] LobbyScene으로 전환");
 
             // 씬 전환
             UnityEngine.SceneManagement.SceneManager.LoadScene(SceneNameExtensions.GetSceneName(SceneName.LobbyScene));
@@ -381,7 +373,6 @@ namespace Manager
             }
 
             LoadingScreenManager.Instance.UpdateProgress(progress, statusMessage);
-            Debug.Log($"[JoinManager] Photon 상태: {state} ({progress * 100}%)");
         }
 
         /// <summary>
@@ -613,7 +604,6 @@ namespace Manager
                 if (completedTask == timeoutTask)
                 {
                     SystemMessageManager.Instance?.ShowMessage("GoogleLoginFailed");
-                    Debug.LogWarning("[JoinManager] Google 로그인 타임아웃 (30초)");
                     return;
                 }
 
@@ -624,7 +614,6 @@ namespace Manager
                     // 사용자 취소 - 조용히 처리
                     if (result.message == "CANCELED")
                     {
-                        Debug.Log("[JoinManager] Google 로그인 취소됨");
                         return;
                     }
 
@@ -632,7 +621,6 @@ namespace Manager
                     if (result.message == "TIMEOUT")
                     {
                         SystemMessageManager.Instance?.ShowMessage("GoogleLoginTimeout");
-                        Debug.LogWarning("[JoinManager] Google 로그인 타임아웃 (60초 초과)");
                         return;
                     }
 
@@ -645,7 +633,6 @@ namespace Manager
 
                     // 기타 에러
                     SystemMessageManager.Instance?.ShowMessage("GoogleLoginFailed");
-                    Debug.LogError($"[JoinManager] Google 로그인 실패: {result.message}");
                     return;
                 }
 
@@ -1160,10 +1147,6 @@ namespace Manager
                         Debug.LogWarning($"⏱️ 마지막 로그인 업데이트 타임아웃 ({TASK_TIMEOUT}초) - 무시하고 진행");
                     }
                 }
-                else
-                {
-                    Debug.Log($"[JoinManager] 익명 로그인 - EmailVerified 업데이트 건너뜀 (false 유지)");
-                }
 
                 // Photon 닉네임 설정
                 PhotonNetwork.NickName = profile.Nickname;
@@ -1175,12 +1158,9 @@ namespace Manager
                 };
                 PhotonNetwork.LocalPlayer.SetCustomProperties(customProperties);
 
-                Debug.Log($"[JoinManager] Photon 상태: {PhotonNetwork.NetworkClientState}, InLobby: {PhotonNetwork.InLobby}");
-
                 // 이미 로비에 있는지 확인
                 if (PhotonNetwork.InLobby)
                 {
-                    Debug.Log("[JoinManager] 이미 로비에 있음 - 바로 LobbyScene 전환");
 
                     if (LoadingScreenManager.Instance != null)
                     {
@@ -1195,8 +1175,6 @@ namespace Manager
                 isTrackingPhotonConnection = true;
                 photonConnectionStartTime = Time.time;
                 lastClientState = PhotonNetwork.NetworkClientState;
-
-                Debug.Log($"[JoinManager] Photon 연결 추적 시작 - 현재 상태: {lastClientState}");
 
                 // 로딩스크린 상태 업데이트
                 if (LoadingScreenManager.Instance != null)
@@ -1400,12 +1378,10 @@ namespace Manager
                 if (!AuthManager.Instance.IsInitialized)
                 {
                     SystemMessageManager.Instance?.ShowMessage("InitializingFirebase");
-                    Debug.Log("[JoinManager] Firebase 초기화 대기 중...");
 
                     bool authReady = await AuthManager.Instance.WaitForInitialization(10f);
                     if (!authReady)
                     {
-                        Debug.Log("[JoinManager] Firebase 재초기화 시도...");
                         AuthManager.Instance.RetryInitialization();
                         authReady = await AuthManager.Instance.WaitForInitialization(10f);
                         if (!authReady)
@@ -1415,7 +1391,6 @@ namespace Manager
                             return;
                         }
                     }
-                    Debug.Log("[JoinManager] AuthManager 초기화 완료");
                 }
 
                 if (!SessionManager.Instance.IsInitialized)
@@ -1423,7 +1398,6 @@ namespace Manager
                     bool sessionReady = await SessionManager.Instance.WaitForInitialization(10f);
                     if (!sessionReady)
                     {
-                        Debug.Log("[JoinManager] SessionManager 재초기화 시도...");
                         SessionManager.Instance.RetryInitialization();
                         sessionReady = await SessionManager.Instance.WaitForInitialization(10f);
                         if (!sessionReady)
@@ -1433,7 +1407,6 @@ namespace Manager
                             return;
                         }
                     }
-                    Debug.Log("[JoinManager] SessionManager 초기화 완료");
                 }
 
                 // 로그인 처리
@@ -1442,8 +1415,8 @@ namespace Manager
 
                 if (result.success)
                 {
-                    // 이메일 인증 체크 (테스트 계정 제외)
-                    if (!AuthManager.Instance.IsEmailVerified && !IsTestAccount(email))
+                    // 이메일 인증 체크
+                    if (!AuthManager.Instance.IsEmailVerified)
                     {
                         UI.Shared.ConfirmationPopup.Show(
                             "이메일 인증이 필요합니다.\n\n" +
@@ -1767,38 +1740,6 @@ namespace Manager
             }
         }
 
-        /// <summary>
-        /// 테스트 계정 여부 확인 (이메일 인증 제외 대상)
-        /// </summary>
-        /// <param name="email">확인할 이메일 주소</param>
-        /// <returns>테스트 계정이면 true</returns>
-        private bool IsTestAccount(string email)
-        {
-            if (string.IsNullOrEmpty(email))
-                return false;
-
-            // 테스트 계정 목록
-            string[] testAccounts = new string[]
-            {
-                "a@a.com",
-                "b@b.com",
-                "c@c.com",
-                "d@d.com",
-                "e@e.com"
-            };
-
-            // 이메일이 테스트 계정 목록에 있는지 확인
-            foreach (var testEmail in testAccounts)
-            {
-                if (email.Equals(testEmail, System.StringComparison.OrdinalIgnoreCase))
-                {
-                    Debug.LogWarning($"[JoinManager] 테스트 계정 감지: {email} - 이메일 인증 건너뜀");
-                    return true;
-                }
-            }
-
-            return false;
-        }
 
         /// <summary>
         /// Google 로그인 성공 후 처리
@@ -1813,7 +1754,6 @@ namespace Manager
             if (string.IsNullOrEmpty(email))
             {
                 email = AuthManager.Instance.GetCurrentUserEmailFromProvider();
-                Debug.LogWarning($"[JoinManager] 이메일 파라미터가 비어있어 ProviderData에서 가져옴: {email}");
             }
 
             // 프로필 존재 여부 확인
@@ -1822,8 +1762,6 @@ namespace Manager
             if (!profileExists)
             {
                 // 신규 사용자 - 닉네임 입력 팝업 표시
-                Debug.Log($"[JoinManager] Google 신규 사용자: {email}");
-
                 UI.Shared.InputFieldPopup.ShowNicknameInput(
                     onConfirm: async (nickname) =>
                     {
@@ -1856,8 +1794,6 @@ namespace Manager
             else
             {
                 // 기존 사용자 - 세션 체크 및 로비 진입
-                Debug.Log($"[JoinManager] Google 기존 사용자: {email}");
-
                 // Photon 닉네임 설정
                 var profile = await Utils.ProfileExtensions.LoadProfileWithNullCheck(uid);
                 if (profile == null)
@@ -2081,26 +2017,22 @@ namespace Manager
             if (googleLoginButton != null)
             {
                 googleLoginButton.gameObject.SetActive(true);
-                Debug.Log("[JoinManager] 모바일 플랫폼: Google 로그인 버튼 표시");
             }
 
             if (kakaoLoginButton != null)
             {
                 kakaoLoginButton.gameObject.SetActive(true);
-                Debug.Log("[JoinManager] 모바일 플랫폼: Kakao 로그인 버튼 표시");
             }
 #else
             // PC/에디터: SNS 버튼 숨김
             if (googleLoginButton != null)
             {
                 googleLoginButton.gameObject.SetActive(false);
-                Debug.Log("[JoinManager] PC/에디터: Google 로그인 버튼 숨김");
             }
 
             if (kakaoLoginButton != null)
             {
                 kakaoLoginButton.gameObject.SetActive(false);
-                Debug.Log("[JoinManager] PC/에디터: Kakao 로그인 버튼 숨김");
             }
 #endif
         }

@@ -69,7 +69,6 @@ namespace Manager
             // 에디터에서 빌드 중일 때는 Firebase 초기화 스킵
             if (UnityEditor.BuildPipeline.isBuildingPlayer)
             {
-                Debug.Log("[AuthManager] 빌드 중 - Firebase 초기화 스킵");
                 return;
             }
 #endif
@@ -82,7 +81,6 @@ namespace Manager
             // 이미 초기화 중이거나 완료된 경우 중복 호출 방지
             if (isInitialized)
             {
-                Debug.Log("[AuthManager] 이미 초기화 완료됨");
                 return;
             }
 
@@ -116,8 +114,6 @@ namespace Manager
 
                 isInitialized = true; // 초기화 완료 플래그 설정
 
-                Debug.Log("[AuthManager] ✅ AuthManager 초기화 완료");
-
                 // SessionManager의 강제 로그아웃 이벤트 구독
                 if (SessionManager.Instance != null)
                 {
@@ -136,8 +132,6 @@ namespace Manager
         /// </summary>
         private System.Collections.IEnumerator WaitForFirebaseInitializer()
         {
-            Debug.Log("[AuthManager] FirebaseInitializer 초기화 대기 중...");
-
             float elapsedTime = 0f;
             const float timeout = 15f; // 15초 타임아웃
 
@@ -166,11 +160,9 @@ namespace Manager
         {
             if (isInitialized)
             {
-                Debug.Log("[AuthManager] 이미 초기화 완료됨 - 재초기화 불필요");
                 return;
             }
 
-            Debug.Log("[AuthManager] Firebase 재초기화 시도...");
             InitializeFirebase();
         }
 
@@ -222,17 +214,7 @@ namespace Manager
             {
                 bool signedIn = currentUser != auth.CurrentUser && auth.CurrentUser != null;
 
-                if (!signedIn && currentUser != null)
-                {
-                    Debug.Log("사용자 로그아웃");
-                }
-
                 currentUser = auth.CurrentUser;
-
-                if (signedIn)
-                {
-                    Debug.Log($"사용자 로그인: {currentUser.Email} (UID: {currentUser.UserId})");
-                }
             }
         }
         #endregion
@@ -266,8 +248,6 @@ namespace Manager
                 {
                     currentUser = result.User;
                     string userId = currentUser.UserId;
-
-                    Debug.Log($"[AuthManager] 익명 로그인 성공: UID = {userId}");
 
                     // Firestore에 익명 사용자 프로필 생성
                     string nickname = await GenerateUniqueGuestNickname();
@@ -324,18 +304,14 @@ namespace Manager
 
                     if (isAvailable)
                     {
-                        Debug.Log($"[AuthManager] 고유 닉네임 생성 성공: {nickname}");
                         return nickname;
                     }
-
-                    Debug.Log($"[AuthManager] 닉네임 중복 발견: {nickname}, 재생성 중...");
                 }
             }
 
             // 최대 시도 횟수 초과 시 타임스탬프 추가
             long timestamp = System.DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             string fallbackNickname = $"Guest_{timestamp.ToString().Substring(timestamp.ToString().Length - 6)}";
-            Debug.LogWarning($"[AuthManager] 최대 시도 횟수 초과, 타임스탬프 사용: {fallbackNickname}");
             return fallbackNickname;
         }
 
@@ -357,11 +333,6 @@ namespace Manager
                         emailVerified: false,
                         authProvider: "Anonymous" // 익명 로그인
                     );
-
-                    if (created)
-                    {
-                        Debug.Log($"[AuthManager] 익명 사용자 프로필 생성 완료: {nickname}");
-                    }
 
                     return created;
                 }
@@ -403,15 +374,12 @@ namespace Manager
                 await user.DeleteAsync();
                 currentUser = null;
 
-                Debug.Log("[AuthManager] Firebase Auth 계정 삭제 완료");
-
                 // 시스템 메시지: 탈퇴 완료
                 if (SystemMessageManager.Instance != null)
                 {
                     SystemMessageManager.Instance.ShowMessage("AccountDeletionComplete");
                 }
 
-                Debug.Log("[AuthManager] 계정 삭제 완료");
                 return true;
             }
             catch (System.Exception e)
@@ -538,7 +506,6 @@ namespace Manager
                     if (providers.Contains("google.com") && !providers.Contains("password"))
                     {
                         // Google로만 가입된 계정
-                        Debug.LogWarning($"[AuthManager] Google 전용 계정: {email}");
                         return (false, "SOCIAL_LOGIN_ONLY::Google");
                     }
                 }
@@ -562,7 +529,6 @@ namespace Manager
                 if (SessionManager.Instance != null)
                 {
                     SessionManager.Instance.StopSessionMonitoring();
-                    Debug.Log("[AuthManager] 세션 모니터링 중지");
                 }
 
                 // ✅ 2. Firestore 세션 정리
@@ -612,7 +578,6 @@ namespace Manager
             try
             {
                 await currentUser.SendEmailVerificationAsync();
-                Debug.Log($"[AuthManager] 인증 이메일 발송 성공: {currentUser.Email}");
                 return (true, "인증 이메일을 발송했습니다");
             }
             catch (FirebaseException ex)
@@ -623,7 +588,6 @@ namespace Manager
                 // Rate Limiting 에러인 경우 (이미 이메일이 발송되었을 가능성 높음)
                 if (errorMessage.Contains("unusual activity") || errorMessage.Contains("blocked"))
                 {
-                    Debug.LogWarning("[AuthManager] Firebase Rate Limiting 감지 - 이메일은 발송되었을 수 있습니다");
                     return (true, "인증 이메일을 발송했습니다");
                 }
 
@@ -659,7 +623,6 @@ namespace Manager
 
                 // 비밀번호 재설정 이메일 발송
                 await auth.SendPasswordResetEmailAsync(email);
-                Debug.Log($"[AuthManager] 비밀번호 재설정 이메일 발송 성공: {email}");
                 return (true, "비밀번호 재설정 이메일을 발송했습니다");
             }
             catch (FirebaseException ex)
@@ -670,7 +633,6 @@ namespace Manager
                 // Rate Limiting 에러인 경우 (이미 이메일이 발송되었을 가능성 높음)
                 if (errorMessage.Contains("unusual activity") || errorMessage.Contains("blocked"))
                 {
-                    Debug.LogWarning("[AuthManager] Firebase Rate Limiting 감지 - 이메일은 발송되었을 수 있습니다");
                     return (true, "비밀번호 재설정 이메일을 발송했습니다");
                 }
 
@@ -698,7 +660,6 @@ namespace Manager
             try
             {
                 await currentUser.ReloadAsync();
-                Debug.Log($"[AuthManager] 사용자 정보 새로고침 완료 (IsEmailVerified: {currentUser.IsEmailVerified})");
                 return true;
             }
             catch (Exception ex)
@@ -725,7 +686,6 @@ namespace Manager
             try
             {
                 await currentUser.UpdatePasswordAsync(newPassword);
-                Debug.Log("[AuthManager] 비밀번호 업데이트 성공");
                 return true;
             }
             catch (FirebaseException ex)
@@ -746,7 +706,6 @@ namespace Manager
             // Firebase 초기화 완료 여부 확인
             if (!isInitialized)
             {
-                Debug.Log("[AuthManager] Firebase 초기화 대기 중...");
                 return false;
             }
 
@@ -754,11 +713,9 @@ namespace Manager
             if (auth != null && auth.CurrentUser != null)
             {
                 currentUser = auth.CurrentUser;
-                Debug.Log($"[AuthManager] 자동 로그인 가능: {currentUser.Email}");
                 return true;
             }
 
-            Debug.Log("[AuthManager] 자동 로그인 불가: 저장된 세션 없음");
             return false;
         }
         #endregion
@@ -789,14 +746,12 @@ namespace Manager
                     // 취소된 경우 조용히 처리
                     if (result.Message == "CANCELED")
                     {
-                        Debug.Log("[AuthManager] Google 로그인 취소됨");
                         return (false, "CANCELED", string.Empty);
                     }
 
                     // 계정이 이미 다른 방법으로 존재하는 경우
                     if (result.Message == "ACCOUNT_EXISTS")
                     {
-                        Debug.LogWarning("[AuthManager] 이미 다른 방법으로 가입된 이메일");
                         return (false, "ACCOUNT_EXISTS", result.Email);
                     }
 
@@ -811,24 +766,10 @@ namespace Manager
                     return (false, "로그인에 실패했습니다.", string.Empty);
                 }
 
-                // 디버그: Firebase 사용자 정보 상세 로그
-                Debug.Log($"[AuthManager] === Google 로그인 성공 ===");
-                Debug.Log($"[AuthManager] UID: {currentUser.UserId}");
-                Debug.Log($"[AuthManager] Email: {currentUser.Email}");
-                Debug.Log($"[AuthManager] DisplayName: {currentUser.DisplayName}");
-                Debug.Log($"[AuthManager] ProviderData Count: {currentUser.ProviderData.Count()}");
-
-                foreach (var provider in currentUser.ProviderData)
-                {
-                    Debug.Log($"[AuthManager] Provider: {provider.ProviderId}, Email: {provider.Email}, DisplayName: {provider.DisplayName}");
-                }
-
                 // ⭐ Google 로그인 시 이메일은 ProviderData에서 가져와야 함
                 string email = GetCurrentUserEmailFromProvider();
                 if (string.IsNullOrEmpty(email))
                     email = currentUser.Email ?? string.Empty;
-
-                Debug.Log($"[AuthManager] 최종 이메일: {email}");
 
                 return (true, "Google 로그인 성공", email);
             }
@@ -918,13 +859,10 @@ namespace Manager
         /// </summary>
         private void HandleForceLogout()
         {
-            Debug.LogWarning("⚠️ 다른 곳에서 로그인되어 강제 로그아웃됩니다.");
-
             // 설정 UI가 열려있으면 닫기
             if (SettingsManager.Instance != null && SettingsManager.Instance.IsSettingsOpen)
             {
                 SettingsManager.Instance.HideSettings();
-                Debug.Log("[AuthManager] 설정 UI 닫기 완료");
             }
 
             // 🔥 중요: Logout() 대신 SignOutWithoutSessionClear() 사용!
@@ -971,10 +909,6 @@ namespace Manager
             if (SystemMessageManager.Instance != null)
             {
                 SystemMessageManager.Instance.ShowMessage("DuplicateLoginDetected");
-            }
-            else
-            {
-                Debug.LogWarning("⚠️ SystemMessageManager를 찾을 수 없습니다.");
             }
         }
         #endregion
@@ -1118,8 +1052,6 @@ namespace Manager
 
                 if (result.User != null)
                 {
-                    Debug.Log($"[AuthManager] Google 계정에 비밀번호 연동 성공: {email}");
-
                     // 사용자 정보 새로고침
                     await ReloadUserInfo();
 
@@ -1183,8 +1115,6 @@ namespace Manager
                     return (false, "계정 이메일을 찾을 수 없습니다.");
                 }
 
-                Debug.Log($"[AuthManager] Google 연동 시작: 현재 이메일 = {currentEmail}");
-
                 // GoogleAuthProvider를 통해 Google 로그인 수행
                 var googleProvider = new Objects.Auth.GoogleAuthProvider(auth);
                 var googleResult = await googleProvider.SignIn();
@@ -1202,7 +1132,6 @@ namespace Manager
 
 #if UNITY_ANDROID
                 // Android (Play Games)는 이메일을 제공하지 않으므로 이메일 확인 건너뜀
-                Debug.Log("[AuthManager] Android Play Games 연동 - 이메일 확인 건너뜀 (Play Games는 이메일 미제공)");
 #else
                 // PC/iOS는 Firebase OAuth를 사용하므로 이메일 일치 확인
                 string googleEmail = googleResult.Email;
@@ -1215,11 +1144,8 @@ namespace Manager
                 // 이메일 일치 여부 확인
                 if (!currentEmail.Equals(googleEmail, StringComparison.OrdinalIgnoreCase))
                 {
-                    Debug.LogWarning($"[AuthManager] 이메일 불일치: 현재={currentEmail}, Google={googleEmail}");
                     return (false, $"이메일이 일치하지 않습니다.\n\n현재 계정: {currentEmail}\nGoogle 계정: {googleEmail}");
                 }
-
-                Debug.Log($"[AuthManager] 이메일 일치 확인 완료: {googleEmail}");
 #endif
 
                 // Google Credential로 연동
@@ -1229,8 +1155,6 @@ namespace Manager
 
                     if (result.User != null)
                     {
-                        Debug.Log($"[AuthManager] Google 계정 연동 성공");
-
                         // 사용자 정보 새로고침
                         await ReloadUserInfo();
 
@@ -1278,13 +1202,6 @@ namespace Manager
 
             var providers = GetCurrentUserProviders();
 
-            // 디버그: Provider 목록 로그
-            Debug.Log($"[AuthManager] GetLoginMethodDisplayName - Provider count: {providers.Count}");
-            foreach (var p in providers)
-            {
-                Debug.Log($"[AuthManager] Provider in list: {p}");
-            }
-
             bool hasGoogle = providers.Contains("google.com");
             bool hasPassword = providers.Contains("password");
             bool hasPlayGames = providers.Contains("playgames.google.com");
@@ -1301,8 +1218,7 @@ namespace Manager
             if (hasPassword)
                 return "이메일";
 
-            // 예외 상황 - 디버그 정보 포함
-            Debug.LogWarning($"[AuthManager] 알 수 없는 로그인 방식! Providers: {string.Join(", ", providers)}");
+            // 예외 상황
             return "알 수 없음";
         }
 

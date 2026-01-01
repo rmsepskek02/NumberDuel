@@ -21,7 +21,7 @@ namespace Manager
         public event Action LeavePlayer;
         public event Action<int> UpdatePlayerCount;
         #endregion
-
+//
         #region Unity Lifecycle
         void Start()
         {
@@ -71,7 +71,6 @@ namespace Manager
                 if (!string.IsNullOrEmpty(masterColorName) && !string.IsNullOrEmpty(guestColorName))
                 {
                     ResourcesManager.Instance.SetPlayerColors(masterColorName, guestColorName);
-                    Debug.Log($"[PhotonManager] 방장 색상 로드 완료 (기존): Player={masterColorName}, Opponent={guestColorName}");
                     return;
                 }
             }
@@ -91,8 +90,6 @@ namespace Manager
 
                 // 방장 자신의 색상 적용
                 ResourcesManager.Instance.SetPlayerColors(playerSpriteName, opponentSpriteName);
-
-                Debug.Log($"[PhotonManager] 방장 색상 설정 완료 (신규): Player={playerSpriteName}, Opponent={opponentSpriteName}");
             }
         }
 
@@ -118,8 +115,6 @@ namespace Manager
 
                 // 게스트는 반대 색상 사용 (guestColor = Player, masterColor = Opponent)
                 ResourcesManager.Instance.SetPlayerColors(guestColorName, masterColorName);
-
-                Debug.Log($"[PhotonManager] 게스트 색상 설정 완료: Player={guestColorName}, Opponent={masterColorName}");
             }
             else
             {
@@ -223,8 +218,6 @@ namespace Manager
         {
             base.OnPlayerLeftRoom(otherPlayer);
 
-            Debug.Log($"[PhotonManager] 플레이어 퇴장: {otherPlayer.NickName}");
-
             UpdateRoomPlayerCount();
             LeavePlayer?.Invoke();
 
@@ -235,7 +228,6 @@ namespace Manager
                 !InGameManager.Instance.IsGameEnded &&
                 isGameInProgress)
             {
-                Debug.Log("[PhotonManager] 게임 중 상대방 이탈 감지 → 승리 처리");
                 InGameManager.Instance.ForceEndGameByOpponentDisconnect();
                 return; // ResetGame 호출 안 함 (게임 종료 UI 유지)
             }
@@ -254,8 +246,6 @@ namespace Manager
         {
             base.OnDisconnected(cause);
 
-            Debug.Log($"[PhotonManager] 연결 끊김: {cause}");
-
             // 게임 진행 중이면 패배 기록
             bool isGameInProgress = TurnManager.Instance?.IsGameStarted ?? false;
 
@@ -263,7 +253,6 @@ namespace Manager
                 !InGameManager.Instance.IsGameEnded &&
                 isGameInProgress)
             {
-                Debug.Log("[PhotonManager] 게임 중 내가 연결 끊김 → 패배 기록");
                 InGameManager.Instance.RecordDefeatOnDisconnect();
             }
         }
@@ -342,8 +331,6 @@ namespace Manager
 
             if (wasGameStarted)
             {
-                Debug.Log("[PhotonManager] 게임 도중 플레이어 퇴장 - 게임 전체 초기화");
-
                 // 시스템 메시지 표시
                 if (SystemMessageManager.Instance != null)
                 {

@@ -105,8 +105,6 @@ namespace Manager
 
             ShuffleDeck(playerDeck);
             ShuffleDeck(opponentDeck);
-
-            Debug.Log($"[DeckManager] 덱 초기화 완료 - 플레이어: {playerDeck.Count}장, 상대: {opponentDeck.Count}장");
         }
 
         /// <summary>
@@ -255,8 +253,6 @@ namespace Manager
                 playerDeckStacker.ResetDeck();
             if (opponentDeckStacker != null)
                 opponentDeckStacker.ResetDeck();
-
-            Debug.Log("[DeckManager] 덱 리셋 완료");
         }
         #endregion
 

@@ -239,7 +239,6 @@ namespace Manager
         public void StartRemoteAction()
         {
             pendingRemoteActions++;
-            Debug.Log($"[NetworkGameManager] 원격 액션 시작 - 진행 중인 액션: {pendingRemoteActions}개");
         }
 
         /// <summary>
@@ -250,7 +249,6 @@ namespace Manager
         {
             pendingRemoteActions--;
             if (pendingRemoteActions < 0) pendingRemoteActions = 0; // 안전장치
-            Debug.Log($"[NetworkGameManager] 원격 액션 완료 - 남은 액션: {pendingRemoteActions}개");
 
             // 모든 원격 액션이 완료되었고, 대기 중인 턴 종료가 있으면 실행
             if (pendingRemoteActions == 0 && TurnManager.Instance != null)
@@ -267,7 +265,6 @@ namespace Manager
         {
             if (pendingRemoteActions > 0)
             {
-                Debug.Log($"[NetworkGameManager] 원격 액션 큐 강제 클리어 - {pendingRemoteActions}개 제거됨");
                 pendingRemoteActions = 0;
             }
         }
