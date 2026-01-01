@@ -1768,7 +1768,7 @@ Canvas:
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
-  m_VertexColorAlwaysGammaSpace: 0
+  m_VertexColorAlwaysGammaSpace: 1
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
@@ -5184,7 +5184,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 894130833}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 2023648442}
+        m_TargetAssemblyTypeName: UI.Settings.Tabs.ProfileSettingsTab, Assembly-CSharp
+        m_MethodName: OnLinkPasswordClicked
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &894130833
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6704,8 +6716,6 @@ MonoBehaviour:
   additionalOffset: 50
   animationDuration: 0.3
   animationEase: 9
-  enableDebugLog: 1
-  keyboardHeightThreshold: 100
 --- !u!4 &1083005032
 Transform:
   m_ObjectHideFlags: 0
@@ -8204,7 +8214,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a92617e0eb0d95e43ae7dbb8aef361b3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enableDebugLog: 0
 --- !u!1 &1295831413
 GameObject:
   m_ObjectHideFlags: 0
@@ -8755,7 +8764,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1326232872}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 2023648442}
+        m_TargetAssemblyTypeName: UI.Settings.Tabs.ProfileSettingsTab, Assembly-CSharp
+        m_MethodName: OnLinkSocialClicked
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1326232872
 MonoBehaviour:
   m_ObjectHideFlags: 0

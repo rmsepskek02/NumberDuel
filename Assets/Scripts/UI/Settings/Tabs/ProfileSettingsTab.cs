@@ -40,17 +40,10 @@ namespace UI.Settings.Tabs
         #region Unity Lifecycle
         private void Start()
         {
-            linkPasswordButton?.onClick.AddListener(OnLinkPasswordClicked);
-            linkSocialButton?.onClick.AddListener(OnLinkSocialClicked);
+            // 버튼 이벤트는 Unity 에디터에서 수동으로 연결
 
             if (errorPanel != null)
                 errorPanel.SetActive(false);
-        }
-
-        private void OnDestroy()
-        {
-            linkPasswordButton?.onClick.RemoveListener(OnLinkPasswordClicked);
-            linkSocialButton?.onClick.RemoveListener(OnLinkSocialClicked);
         }
 
         private void OnEnable()
@@ -208,30 +201,66 @@ namespace UI.Settings.Tabs
                 loginMethodText.text = $"로그인 방식: {method}";
             }
 
-            var providers = Manager.AuthManager.Instance.GetCurrentUserProviders();
-            bool hasGoogle = providers.Contains("google.com") || providers.Contains("playgames.google.com");
-            bool hasPassword = providers.Contains("password");
-            bool isAndroid = Application.platform == RuntimePlatform.Android;
+            bool isAnonymous = Manager.AuthManager.Instance.IsAnonymous;
 
-            if (hasGoogle && !hasPassword)
+            if (isAnonymous)
             {
-                ShowLinkPasswordButton();
-            }
-            else if (!hasGoogle && hasPassword)
-            {
-                if (isAndroid)
-                    ShowLinkSocialButton();
-                else
-                    ShowLinkUnavailableMessage();
-            }
-            else if (hasGoogle && hasPassword)
-            {
-                ShowLinkedComplete();
+                // 게스트: "계정 연동하기" 버튼 표시
+                ShowGuestLinkAccountButton();
             }
             else
             {
-                HideAllLinkingUI();
+                var providers = Manager.AuthManager.Instance.GetCurrentUserProviders();
+                bool hasGoogle = providers.Contains("google.com") || providers.Contains("playgames.google.com");
+                bool hasPassword = providers.Contains("password");
+                bool isAndroid = Application.platform == RuntimePlatform.Android;
+
+                if (hasGoogle && !hasPassword)
+                {
+                    ShowLinkPasswordButton();
+                }
+                else if (!hasGoogle && hasPassword)
+                {
+                    if (isAndroid)
+                        ShowLinkSocialButton();
+                    else
+                        ShowLinkUnavailableMessage();
+                }
+                else if (hasGoogle && hasPassword)
+                {
+                    ShowLinkedComplete();
+                }
+                else
+                {
+                    HideAllLinkingUI();
+                }
             }
+        }
+
+        /// <summary>
+        /// 게스트: "계정 연동하기" 버튼 표시
+        /// </summary>
+        private void ShowGuestLinkAccountButton()
+        {
+            // linkSocialButton을 재활용
+            if (linkSocialButton != null)
+            {
+                linkSocialButton.gameObject.SetActive(true);
+
+                // 버튼 텍스트 변경
+                var buttonText = linkSocialButton.GetComponentInChildren<TextMeshProUGUI>();
+                if (buttonText != null)
+                    buttonText.text = "계정 연동하기";
+            }
+
+            if (linkPasswordButton != null)
+                linkPasswordButton.gameObject.SetActive(false);
+
+            if (linkedCompleteText != null)
+                linkedCompleteText.gameObject.SetActive(false);
+
+            if (linkedDescriptionText != null)
+                linkedDescriptionText.gameObject.SetActive(false);
         }
 
         /// <summary>
@@ -333,28 +362,61 @@ namespace UI.Settings.Tabs
             }
         }
 
-        private void OnLinkPasswordClicked()
+        /// <summary>
+        /// linkPasswordButton 클릭
+        /// Unity 에디터에서 이벤트 연결
+        /// </summary>
+        public void OnLinkPasswordClicked()
         {
             string googleEmail = Manager.AuthManager.Instance.GetCurrentUserEmailFromProvider();
             UI.Shared.LinkPasswordPopupManager.Show(googleEmail, OnPasswordLinked);
         }
 
-        private void OnLinkSocialClicked()
+        /// <summary>
+        /// linkSocialButton 클릭 (게스트 또는 이메일 계정 모드 분기)
+        /// Unity 에디터에서 이벤트 연결
+        /// </summary>
+        public void OnLinkSocialClicked()
         {
-            string currentEmail = Manager.AuthManager.Instance.GetCurrentUserEmailFromProvider();
-            UI.Shared.LinkSocialPopupManager.Show(currentEmail, OnSocialLinked);
+            bool isAnonymous = Manager.AuthManager.Instance.IsAnonymous;
+
+            if (isAnonymous)
+            {
+                // 게스트: "손님 계정" 텍스트와 게스트 모드 플래그 전달
+                UI.Shared.LinkSocialPopupManager.Show("손님 계정", true, OnAccountLinked);
+            }
+            else
+            {
+                // 이메일 계정: 실제 이메일과 일반 모드 플래그 전달
+                string currentEmail = Manager.AuthManager.Instance.GetCurrentUserEmailFromProvider();
+                UI.Shared.LinkSocialPopupManager.Show(currentEmail, false, OnAccountLinked);
+            }
         }
 
+        /// <summary>
+        /// 비밀번호 연동 완료 콜백
+        /// </summary>
         private void OnPasswordLinked(bool success)
         {
             if (success)
+            {
+                // 프로필 재로드 및 UI 갱신
+                LoadProfile();
                 UpdateAccountLinkingUI();
+            }
         }
 
-        private void OnSocialLinked(bool success)
+        /// <summary>
+        /// 계정 연동 완료 콜백 (게스트 → SNS 또는 이메일 → SNS)
+        /// </summary>
+        private void OnAccountLinked(bool success)
         {
             if (success)
+            {
+                // 프로필 재로드 및 UI 갱신
+                LoadProfile();
                 UpdateAccountLinkingUI();
+            }
         }
 
         #endregion

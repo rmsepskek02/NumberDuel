@@ -8,13 +8,16 @@ namespace UI.Shared
 {
     /// <summary>
     /// SNS 계정 연동 팝업 UI
-    /// 이메일 계정 사용자가 SNS 계정을 추가로 연동
+    /// - 게스트: SNS 또는 이메일로 계정 전환
+    /// - 이메일 계정 사용자: SNS 계정을 추가로 연동
     /// </summary>
     public class LinkSocialPopupUI : MonoBehaviour, ICloseable
     {
         [Header("UI References")]
         [SerializeField] private TextMeshProUGUI titleText;
+        [SerializeField] private TextMeshProUGUI emailText;             // 이메일 표시 텍스트 (이메일 계정 전용)
         [SerializeField] private TextMeshProUGUI descriptionText;
+        [SerializeField] private Button emailButton;            // 이메일 연동 버튼 (게스트 전용)
         [SerializeField] private Button googleButton;           // Google 연동 버튼
         [SerializeField] private Button kakaoButton;            // Kakao 연동 버튼 (향후 구현)
         [SerializeField] private Button closeButton;
@@ -26,7 +29,8 @@ namespace UI.Shared
         [SerializeField] private float showDuration = 0.2f;
         [SerializeField] private float hideDuration = 0.15f;
 
-        private string currentEmail;
+        private bool isGuestMode = false;                       // 게스트 모드 플래그
+        private string displayText;                             // 표시 텍스트 ("손님 계정" 또는 실제 이메일)
         private Action<bool> onCompleteCallback;
         private bool isProcessing = false;
         private bool isAnimating = false;
@@ -35,10 +39,7 @@ namespace UI.Shared
 
         private void Awake()
         {
-            // 버튼 이벤트 등록
-            googleButton?.onClick.AddListener(OnGoogleButtonClicked);
-            kakaoButton?.onClick.AddListener(OnKakaoButtonClicked);
-            closeButton?.onClick.AddListener(OnCloseButtonClicked);
+            // 버튼 이벤트는 Unity 에디터에서 수동으로 연결
 
             // 초기 상태: 숨김
             if (canvasGroup != null)
@@ -56,42 +57,84 @@ namespace UI.Shared
             // Tween 정리
             showTween?.Kill();
             hideTween?.Kill();
-
-            googleButton?.onClick.RemoveListener(OnGoogleButtonClicked);
-            kakaoButton?.onClick.RemoveListener(OnKakaoButtonClicked);
-            closeButton?.onClick.RemoveListener(OnCloseButtonClicked);
         }
 
         /// <summary>
         /// 팝업 표시
         /// </summary>
-        /// <param name="email">현재 계정 이메일</param>
+        /// <param name="displayText">표시할 텍스트 (이메일 계정: 실제 이메일, 게스트: "손님 계정")</param>
+        /// <param name="isGuestMode">게스트 모드 여부</param>
         /// <param name="onComplete">완료 콜백</param>
-        public void Show(string email, Action<bool> onComplete)
+        public void Show(string displayText, bool isGuestMode, Action<bool> onComplete)
         {
-            currentEmail = email;
+            this.displayText = displayText;
+            this.isGuestMode = isGuestMode;
             onCompleteCallback = onComplete;
 
-            // 타이틀 및 설명 표시
-            if (titleText != null)
-                titleText.text = "SNS 계정 연동";
+            // UI 텍스트 업데이트
+            if (isGuestMode)
+            {
+                // 게스트 모드
+                if (titleText != null)
+                    titleText.text = "계정 연동하기";
 
-            if (descriptionText != null)
-                descriptionText.text = $"현재 이메일: {email}\n\nSNS 계정의 이메일이 일치해야 연동됩니다.";
+                // 게스트는 이메일 텍스트 숨김
+                if (emailText != null)
+                    emailText.gameObject.SetActive(false);
 
-            if (errorText != null)
-                errorText.text = string.Empty;
+                if (descriptionText != null)
+                    descriptionText.text = $"현재: {displayText}\n\nSNS 또는 이메일로 계정을 연동하면\n게임 데이터를 안전하게 보관할 수 있습니다.";
 
-            // Kakao 버튼 비활성화 (향후 구현)
+                // 이메일 버튼 표시
+                if (emailButton != null)
+                    emailButton.gameObject.SetActive(true);
+            }
+            else
+            {
+                // 이메일 계정 모드 (기존 로직)
+                if (titleText != null)
+                    titleText.text = "SNS 계정 연동";
+
+                // 이메일 계정은 이메일 텍스트 표시
+                if (emailText != null)
+                {
+                    emailText.gameObject.SetActive(true);
+                    emailText.text = displayText;
+                }
+
+                if (descriptionText != null)
+                    descriptionText.text = $"현재 이메일: {displayText}\n\nSNS 계정의 이메일이 일치해야 연동됩니다.";
+
+                // 이메일 버튼 숨김
+                if (emailButton != null)
+                    emailButton.gameObject.SetActive(false);
+            }
+
+            // 공통: Kakao 버튼 비활성화
             if (kakaoButton != null)
             {
                 kakaoButton.interactable = false;
 
-                // "준비 중" 표시
                 var kakaoText = kakaoButton.GetComponentInChildren<TextMeshProUGUI>();
                 if (kakaoText != null)
                     kakaoText.text = "Kakao (준비 중)";
             }
+
+            // 공통: PC/Editor에서는 Google 버튼 비활성화
+            #if !UNITY_ANDROID
+            if (googleButton != null)
+            {
+                googleButton.interactable = false;
+
+                var googleText = googleButton.GetComponentInChildren<TextMeshProUGUI>();
+                if (googleText != null)
+                    googleText.text = "Google (모바일 전용)";
+            }
+            #endif
+
+            // 에러 텍스트 초기화
+            if (errorText != null)
+                errorText.text = string.Empty;
 
             isProcessing = false;
 
@@ -127,10 +170,28 @@ namespace UI.Shared
         }
 
         /// <summary>
-        /// Google 버튼 클릭
+        /// 이메일 버튼 클릭 (게스트 → 이메일 계정 전환, 향후 구현)
+        /// Unity 에디터에서 이벤트 연결
         /// </summary>
-        private async void OnGoogleButtonClicked()
+        public void OnEmailButtonClicked()
         {
+            ShowError("이메일 연동은 준비 중입니다.");
+
+            Manager.SoundManager.Instance?.PlaySFX(Objects.SoundType.UI_ButtonClick);
+        }
+
+        /// <summary>
+        /// Google 버튼 클릭 (Android만 지원)
+        /// Unity 에디터에서 이벤트 연결
+        /// </summary>
+        public async void OnGoogleButtonClicked()
+        {
+            #if !UNITY_ANDROID
+            // PC/Editor에서는 동작하지 않음 (버튼이 비활성화되어 있음)
+            ShowError("Google 연동은 모바일 앱에서만 가능합니다.");
+            return;
+            #else
+
             if (isProcessing)
                 return;
 
@@ -139,48 +200,133 @@ namespace UI.Shared
             // 사운드 재생
             Manager.SoundManager.Instance?.PlaySFX(Objects.SoundType.UI_ButtonClick);
 
-            // Google 연동 확인 팝업
-            ConfirmationPopup.Show(
-                $"Google 계정을 연동하시겠습니까?\n\n" +
-                $"현재 이메일: {currentEmail}\n\n" +
-                $"Google 계정의 이메일이\n일치해야 연동됩니다.",
-                onConfirm: async () =>
-                {
-                    // Google 연동 시도
-                    var result = await Manager.AuthManager.Instance.LinkGoogleToEmail();
+            if (isGuestMode)
+            {
+                // ===== 게스트 → Google 전환 (Android만) =====
+                ConfirmationPopup.Show(
+                    $"Google 계정으로 전환하시겠습니까?\n\n" +
+                    $"게스트 계정의 데이터가\n" +
+                    $"Google 계정으로 이전됩니다.",
+                    onConfirm: async () =>
+                    {
+                        // AuthManager의 게스트 → Google 전환 메서드 호출
+                        var result = await Manager.AuthManager.Instance.ConvertGuestToGoogle();
 
-                    if (result.success)
+                        if (result.success)
+                        {
+                            // 성공: 닉네임 입력 팝업 표시
+                            InputFieldPopup.ShowNicknameInput(
+                                onConfirm: async (nickname) =>
+                                {
+                                    // 닉네임을 Firebase에 저장
+                                    string uid = Manager.AuthManager.Instance.CurrentUserUID;
+                                    bool nicknameUpdated = await Manager.DatabaseManager.Instance.UpdateNickname(uid, nickname);
+
+                                    if (nicknameUpdated)
+                                    {
+                                        // Firebase User의 DisplayName도 업데이트
+                                        var user = Manager.AuthManager.Instance.CurrentUser;
+                                        if (user != null)
+                                        {
+                                            var profile = new Firebase.Auth.UserProfile { DisplayName = nickname };
+                                            await user.UpdateUserProfileAsync(profile);
+                                        }
+
+                                        // 성공 팝업
+                                        ConfirmationPopup.Show(
+                                            "Google 계정 전환 완료!\n\n" +
+                                            $"닉네임: {nickname}\n\n" +
+                                            "이제 Google 계정으로\n" +
+                                            "안전하게 로그인할 수 있습니다.",
+                                            onConfirm: () =>
+                                            {
+                                                Hide();
+                                                onCompleteCallback?.Invoke(true);
+                                            }
+                                        );
+                                    }
+                                    else
+                                    {
+                                        ShowError("닉네임 저장에 실패했습니다.");
+                                        isProcessing = false;
+                                    }
+                                },
+                                onCancel: () =>
+                                {
+                                    // 닉네임 입력 취소 - 전환은 완료되었으므로 기본 닉네임으로 진행
+                                    ConfirmationPopup.Show(
+                                        "✅ Google 계정 전환 완료!\n\n" +
+                                        "이제 Google 계정으로\n" +
+                                        "안전하게 로그인할 수 있습니다.",
+                                        onConfirm: () =>
+                                        {
+                                            Hide();
+                                            onCompleteCallback?.Invoke(true);
+                                        }
+                                    );
+                                }
+                            );
+                        }
+                        else
+                        {
+                            // 실패: 에러 메시지 표시
+                            ShowError(result.message);
+                            isProcessing = false;
+                        }
+                    },
+                    onCancel: () =>
                     {
-                        // 성공
-                        ConfirmationPopup.Show(
-                            "✅ Google 계정 연동 완료!\n\n" +
-                            "이제 모바일에서도\n" +
-                            "Google 간편 로그인을 사용할 수 있습니다.",
-                            onConfirm: () =>
-                            {
-                                Hide();
-                                onCompleteCallback?.Invoke(true);
-                            }
-                        );
-                    }
-                    else
-                    {
-                        // 실패: 에러 메시지 표시
-                        ShowError(result.message);
                         isProcessing = false;
                     }
-                },
-                onCancel: () =>
-                {
-                    isProcessing = false;
-                }
-            );
+                );
+            }
+            else
+            {
+                // ===== 이메일 계정 → Google 연동 (Android만) =====
+                ConfirmationPopup.Show(
+                    $"Google 계정을 연동하시겠습니까?\n\n" +
+                    $"현재 이메일: {displayText}\n\n" +
+                    $"Google 계정의 이메일이\n일치해야 연동됩니다.",
+                    onConfirm: async () =>
+                    {
+                        // Google 연동 시도
+                        var result = await Manager.AuthManager.Instance.LinkGoogleToEmail();
+
+                        if (result.success)
+                        {
+                            // 성공
+                            ConfirmationPopup.Show(
+                                "✅ Google 계정 연동 완료!\n\n" +
+                                "이제 모바일에서도\n" +
+                                "Google 간편 로그인을 사용할 수 있습니다.",
+                                onConfirm: () =>
+                                {
+                                    Hide();
+                                    onCompleteCallback?.Invoke(true);
+                                }
+                            );
+                        }
+                        else
+                        {
+                            // 실패: 에러 메시지 표시
+                            ShowError(result.message);
+                            isProcessing = false;
+                        }
+                    },
+                    onCancel: () =>
+                    {
+                        isProcessing = false;
+                    }
+                );
+            }
+            #endif
         }
 
         /// <summary>
         /// Kakao 버튼 클릭 (향후 구현)
+        /// Unity 에디터에서 이벤트 연결
         /// </summary>
-        private void OnKakaoButtonClicked()
+        public void OnKakaoButtonClicked()
         {
             ShowError("Kakao 연동은 준비 중입니다.");
 
@@ -189,8 +335,9 @@ namespace UI.Shared
 
         /// <summary>
         /// 닫기 버튼 클릭
+        /// Unity 에디터에서 이벤트 연결
         /// </summary>
-        private void OnCloseButtonClicked()
+        public void OnCloseButtonClicked()
         {
             Hide();
             onCompleteCallback?.Invoke(false);

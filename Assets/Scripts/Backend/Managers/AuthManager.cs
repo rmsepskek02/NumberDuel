@@ -1244,6 +1244,94 @@ namespace Manager
             return hasGoogle && hasPassword;
         }
 
+        /// <summary>
+        /// 게스트 계정을 Google 계정으로 전환
+        /// (Anonymous Auth → Google Auth with Link)
+        /// </summary>
+        public async Task<(bool success, string message)> ConvertGuestToGoogle()
+        {
+            try
+            {
+                // 1. 게스트 확인
+                if (currentUser == null)
+                    return (false, "로그인이 필요합니다.");
+
+                if (!IsAnonymous)
+                    return (false, "게스트 계정이 아닙니다.");
+
+                // 2. 이미 Google 연동되어 있는지 체크
+                var providers = currentUser.ProviderData;
+                foreach (var provider in providers)
+                {
+                    if (provider.ProviderId == "google.com" || provider.ProviderId == "playgames.google.com")
+                    {
+                        return (false, "이미 Google 계정이 연동되어 있습니다.");
+                    }
+                }
+
+                // 3. 게스트 UID 저장 (연동 후에도 유지됨)
+                string guestUID = currentUser.UserId;
+                Debug.Log($"[AuthManager] 게스트 UID: {guestUID}");
+
+                // 4. Google Credential만 획득 (새 계정 생성 안 함)
+                var googleProvider = new Objects.Auth.GoogleAuthProvider(auth);
+                var googleResult = await googleProvider.GetCredentialOnly();
+
+                if (!googleResult.Success)
+                    return (false, googleResult.Message);
+
+                var googleCredential = googleResult.Credential;
+
+                if (googleCredential == null)
+                    return (false, "Google 인증 정보를 가져올 수 없습니다.");
+
+                // 5. 게스트 계정에 Google Credential 연결 (UID 유지)
+                var linkResult = await currentUser.LinkWithCredentialAsync(googleCredential);
+
+                if (linkResult == null || linkResult.User == null)
+                    return (false, "Google 계정 전환에 실패했습니다.");
+
+                // 6. currentUser 업데이트 및 UID 유지 확인
+                currentUser = linkResult.User;
+                Debug.Log($"[AuthManager] 연동 후 UID: {currentUser.UserId} (유지: {guestUID == currentUser.UserId})");
+
+                // 7. Firebase Display Name 업데이트 (Play Games Display Name)
+                if (!string.IsNullOrEmpty(googleResult.DisplayName))
+                {
+                    var profile = new UserProfile { DisplayName = googleResult.DisplayName };
+                    await currentUser.UpdateUserProfileAsync(profile);
+                    Debug.Log($"[AuthManager] Display Name 업데이트: {googleResult.DisplayName}");
+                }
+
+                // 8. Firebase Database의 AuthProvider 업데이트 (같은 UID)
+                if (DatabaseManager.Instance != null)
+                {
+                    // UserProfile의 AuthProvider를 "Google"로 변경
+                    await DatabaseManager.Instance.UpdateUserAuthProvider(guestUID, "Google");
+
+                    Debug.Log($"[AuthManager] 게스트 계정이 Google 계정으로 전환되었습니다. UID: {guestUID}");
+                }
+
+                return (true, "Google 계정으로 전환되었습니다.");
+            }
+            catch (FirebaseException ex)
+            {
+                // 중복 연동 에러 체크
+                if (ex.ErrorCode == (int)AuthError.ProviderAlreadyLinked)
+                {
+                    return (false, "이미 Google 계정이 연동되어 있습니다.");
+                }
+
+                Debug.LogError($"[AuthManager] Google 전환 실패: {ex.Message}");
+                return (false, GetFirebaseErrorMessage(ex));
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[AuthManager] Google 전환 실패: {ex.Message}");
+                return (false, $"오류가 발생했습니다: {ex.Message}");
+            }
+        }
+
         #endregion
     }
 }

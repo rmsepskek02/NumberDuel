@@ -363,6 +363,40 @@ namespace Manager
         }
 
         /// <summary>
+        /// 사용자의 AuthProvider 업데이트 (게스트 → SNS 전환 시)
+        /// </summary>
+        /// <param name="uid">Firebase UID</param>
+        /// <param name="newAuthProvider">새로운 AuthProvider 값 (예: "Google", "Email")</param>
+        public async Task UpdateUserAuthProvider(string uid, string newAuthProvider)
+        {
+            if (!isInitialized)
+            {
+                Debug.LogError("[DatabaseManager] Firestore가 초기화되지 않았습니다.");
+                throw new InvalidOperationException("Firestore가 초기화되지 않았습니다.");
+            }
+
+            try
+            {
+                DocumentReference docRef = db.Collection(USERS_COLLECTION).Document(uid);
+
+                var updates = new System.Collections.Generic.Dictionary<string, object>
+                {
+                    { "AuthProvider", newAuthProvider },
+                    { "LastLoginAt", DateTime.UtcNow }
+                };
+
+                await docRef.UpdateAsync(updates);
+
+                Debug.Log($"[DatabaseManager] AuthProvider 업데이트 완료: {uid} → {newAuthProvider}");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[DatabaseManager] AuthProvider 업데이트 실패: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
         /// 이메일 인증 상태 업데이트 (로그인 시 호출)
         /// </summary>
         /// <param name="uid">Firebase UID</param>

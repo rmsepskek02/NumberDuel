@@ -51,6 +51,30 @@ namespace Objects.Auth
 #endif
         }
 
+        /// <summary>
+        /// Firebase 로그인 없이 Google Credential만 획득 (게스트 계정 연동용)
+        ///
+        /// 중요:
+        /// - SignIn()과 달리 SignInWithCredentialAsync()를 호출하지 않습니다.
+        /// - Credential만 반환하여 LinkWithCredentialAsync()에서 사용합니다.
+        /// - 이를 통해 게스트 UID가 유지되면서 Google 계정이 연동됩니다.
+        /// - Android 플랫폼에서만 지원됩니다.
+        /// </summary>
+        /// <returns>Credential 정보만 포함된 SocialAuthResult</returns>
+        public async Task<SocialAuthResult> GetCredentialOnly()
+        {
+#if UNITY_ANDROID
+            return await GetPlayGamesCredentialOnly();
+#else
+            // PC/Editor에서는 Google 연동 불가
+            return new SocialAuthResult
+            {
+                Success = false,
+                Message = "Google 연동은 모바일 앱에서만 가능합니다."
+            };
+#endif
+        }
+
 #if UNITY_ANDROID
         /// <summary>
         /// Play Games Services v2를 사용한 네이티브 Google 로그인 (Android 전용)
@@ -173,6 +197,88 @@ namespace Objects.Auth
                 {
                     Success = false,
                     Message = "Google 로그인 중 오류가 발생했습니다."
+                };
+            }
+        }
+
+        /// <summary>
+        /// Play Games Services Credential만 획득 (Firebase 로그인 없이)
+        ///
+        /// SignInWithPlayGames()와의 차이점:
+        /// - SignInWithCredentialAsync() 호출을 생략합니다.
+        /// - Credential만 반환하여 호출자가 LinkWithCredentialAsync()에 사용할 수 있습니다.
+        /// - 게스트 계정 연동 시 게스트 UID를 유지하면서 Google 계정을 추가할 수 있습니다.
+        /// </summary>
+        private async Task<SocialAuthResult> GetPlayGamesCredentialOnly()
+        {
+            try
+            {
+                PlayGamesPlatform.Activate();
+
+                var authCodeTaskSource = new TaskCompletionSource<string>();
+
+                PlayGamesPlatform.Instance.Authenticate((signInStatus) =>
+                {
+                    if (signInStatus == SignInStatus.Success)
+                    {
+                        PlayGamesPlatform.Instance.RequestServerSideAccess(true, (authCode) =>
+                        {
+                            if (!string.IsNullOrEmpty(authCode))
+                            {
+                                authCodeTaskSource.SetResult(authCode);
+                            }
+                            else
+                            {
+                                Debug.LogError("[GoogleAuthProvider] Server Auth Code 반환값이 null입니다. " +
+                                             "Unity Play Games Plugin 설정에서 Web Client ID가 올바르게 구성되었는지 확인하세요.");
+                                authCodeTaskSource.SetResult(null);
+                            }
+                        });
+                    }
+                    else
+                    {
+                        Debug.LogError($"[GoogleAuthProvider] Play Games 인증 실패: {signInStatus}");
+                        authCodeTaskSource.SetResult(null);
+                    }
+                });
+
+                string serverAuthCode = await authCodeTaskSource.Task;
+
+                if (string.IsNullOrEmpty(serverAuthCode))
+                {
+                    Debug.LogError("[GoogleAuthProvider] Server Auth Code를 가져올 수 없습니다.");
+                    return new SocialAuthResult
+                    {
+                        Success = false,
+                        Message = "Server Auth Code를 가져올 수 없습니다."
+                    };
+                }
+
+                // ✅ Firebase 로그인 단계 생략! Credential만 생성
+                Credential credential = PlayGamesAuthProvider.GetCredential(serverAuthCode);
+
+                // Play Games Display Name 가져오기 (SoftestUniform836 등)
+                // 참고: Play Games Services v2는 GetUserEmail()을 제공하지 않음
+                // 이메일은 Firebase 연동 후 Firebase User에서 가져와야 함
+                string displayName = PlayGamesPlatform.Instance.GetUserDisplayName() ?? string.Empty;
+
+                Debug.Log($"[GoogleAuthProvider] Play Games DisplayName: {displayName}");
+
+                return new SocialAuthResult
+                {
+                    Success = true,
+                    Message = "Google 인증 정보 획득 완료",
+                    Credential = credential,
+                    DisplayName = displayName
+                };
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[GoogleAuthProvider] GetCredentialOnly 실패: {ex.Message}\n{ex.StackTrace}");
+                return new SocialAuthResult
+                {
+                    Success = false,
+                    Message = "Google 인증 중 오류가 발생했습니다."
                 };
             }
         }

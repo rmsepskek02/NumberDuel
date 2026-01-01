@@ -28,9 +28,10 @@ namespace UI.Shared
         /// <summary>
         /// SNS 연동 팝업 표시
         /// </summary>
-        /// <param name="email">현재 계정 이메일</param>
+        /// <param name="displayText">표시할 텍스트 (이메일 계정: 실제 이메일, 게스트: "손님 계정")</param>
+        /// <param name="isGuestMode">게스트 모드 여부</param>
         /// <param name="onComplete">완료 콜백</param>
-        public static void Show(string email, Action<bool> onComplete)
+        public static void Show(string displayText, bool isGuestMode, Action<bool> onComplete)
         {
             // 최초 1회만 로드 (Preload 안 한 경우 대비)
             if (instance == null)
@@ -43,7 +44,7 @@ namespace UI.Shared
             }
 
             // 팝업 표시
-            instance.Show(email, onComplete);
+            instance.Show(displayText, isGuestMode, onComplete);
         }
 
         /// <summary>
