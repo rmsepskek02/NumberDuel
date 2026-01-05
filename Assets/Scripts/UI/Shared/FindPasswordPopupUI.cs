@@ -20,6 +20,7 @@ namespace UI.Shared
         [SerializeField] private Button sendButton;
         [SerializeField] private Button cancelButton;
         [SerializeField] private TextMeshProUGUI sendButtonText;
+        [SerializeField] private TextMeshProUGUI cancelButtonText;
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private RectTransform popupRect;
 
@@ -182,12 +183,18 @@ namespace UI.Shared
             if (errorText != null)
             {
                 errorText.text = "";
+                errorText.color = Color.red; // 기본 색상으로 복원
             }
 
             // 버튼 텍스트 초기화
             if (sendButtonText != null)
             {
                 sendButtonText.text = "발송";
+            }
+
+            if (cancelButtonText != null)
+            {
+                cancelButtonText.text = "취소";
             }
 
             // 발송 상태 초기화
@@ -250,10 +257,17 @@ namespace UI.Shared
                         sendButtonText.text = "재발송";
                     }
 
-                    // 에러 텍스트 비우기
+                    // CancelButton 텍스트를 "닫기"로 변경
+                    if (cancelButtonText != null)
+                    {
+                        cancelButtonText.text = "닫기";
+                    }
+
+                    // errorText를 안내 메시지로 변경
                     if (errorText != null)
                     {
-                        errorText.text = "";
+                        errorText.text = "비밀번호를 재설정하면 창을 닫고\n다시 로그인을 진행해주세요";
+                        errorText.color = new Color(0.2f, 0.6f, 1f); // 파란색 계열
                     }
 
                     // ConfirmationPopup으로 성공 안내

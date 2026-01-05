@@ -847,6 +847,7 @@ MonoBehaviour:
   passwordConfirmButton: {fileID: 144434821}
   nicknameConfirmButton: {fileID: 1542303633}
   backToSocialButton: {fileID: 645306163}
+  findPasswordButton: {fileID: 992970098}
   validationErrorText: {fileID: 89169315}
 --- !u!1 &214739655
 GameObject:
@@ -4600,13 +4601,13 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 199671813}
-        m_TargetAssemblyTypeName: 
-        m_MethodName: 
+      - m_Target: {fileID: 199671815}
+        m_TargetAssemblyTypeName: Manager.JoinManager, Assembly-CSharp
+        m_MethodName: OnFindPasswordButtonClicked
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: 
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 

@@ -140,7 +140,6 @@ namespace Manager
                 return;
 
             // 계정 연동 팝업 미리 로드 (최초 지연 방지)
-            UI.Shared.LinkPasswordPopupManager.PreloadPopup();
             UI.Shared.LinkSocialPopupManager.PreloadPopup();
 
             settingsPanelUI.Show();

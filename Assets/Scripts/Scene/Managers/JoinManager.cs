@@ -103,6 +103,7 @@ namespace Manager
         // ============================================
         [Header("Other Buttons")]
         public Button backToSocialButton;           // "다른 방식으로 로그인하기"
+        public Button findPasswordButton;           // "비밀번호 찾기"
 
         // ============================================
         // UI Text
@@ -2108,6 +2109,16 @@ namespace Manager
 #endif
         }
 
+        #endregion
+
+        #region Password Reset
+        /// <summary>
+        /// 비밀번호 찾기 버튼 클릭 (Unity Editor에서 연결)
+        /// </summary>
+        public void OnFindPasswordButtonClicked()
+        {
+            UI.Shared.FindPasswordPopup.Show();
+        }
         #endregion
     }
 }
