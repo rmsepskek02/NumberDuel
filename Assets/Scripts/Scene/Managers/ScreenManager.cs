@@ -11,10 +11,11 @@ namespace Manager
         #region Unity Lifecycle
         void Start()
         {
-            // 저장된 해상도값을 불러와서 설정
-            int width = PlayerPrefs.GetInt("ScreenWidth", 1280);
-            int height = PlayerPrefs.GetInt("ScreenHeight", 720);
-            Screen.SetResolution(width, height, false);
+            // DisplaySettingsManager를 통해 저장된 해상도 적용
+            if (DisplaySettingsManager.Instance != null)
+            {
+                DisplaySettingsManager.Instance.ApplySettings();
+            }
         }
 
         void Update()

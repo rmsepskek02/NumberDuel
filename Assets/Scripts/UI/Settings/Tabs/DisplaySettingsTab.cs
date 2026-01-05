@@ -46,6 +46,16 @@ namespace UI.Settings.Tabs
             LoadCurrentSettings();
         }
 
+        private void OnEnable()
+        {
+            // 탭이 활성화될 때마다 현재 설정으로 드롭다운 값 재설정
+            // (GameObject 재활성화 시 Dropdown이 onValueChanged를 발생시키는 것을 방지)
+            if (resolutionDropdown != null && screenModeDropdown != null)
+            {
+                LoadCurrentSettings();
+            }
+        }
+
         private void OnDestroy()
         {
             // 이벤트 해제
@@ -163,6 +173,8 @@ namespace UI.Settings.Tabs
         /// </summary>
         private void OnResolutionChanged(int index)
         {
+            Debug.Log($"[DisplaySettingsTab] OnResolutionChanged 호출: index={index}, isInitializing={isInitializing}");
+
             if (isInitializing)
                 return;
 
@@ -178,6 +190,8 @@ namespace UI.Settings.Tabs
         /// </summary>
         private void OnScreenModeChanged(int index)
         {
+            Debug.Log($"[DisplaySettingsTab] OnScreenModeChanged 호출: index={index}, isInitializing={isInitializing}");
+
             if (isInitializing)
                 return;
 
@@ -205,6 +219,10 @@ namespace UI.Settings.Tabs
                 {
                     // 확인 클릭 시 설정 적용
                     ApplySettings();
+                },
+                () =>
+                {
+                    // 취소 클릭 시 팝업만 닫힘
                 }
             );
         }

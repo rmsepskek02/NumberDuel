@@ -45,6 +45,8 @@ namespace Manager
         protected override void Awake()
         {
             base.Awake();
+            // 설정만 로드 (화면 적용은 하지 않음)
+            // 실제 화면 적용은 게임 시작 시 ScreenManager나 다른 곳에서 명시적으로 호출해야 함
             LoadSettings();
         }
         #endregion
@@ -59,7 +61,16 @@ namespace Manager
             ScreenHeight = PlayerPrefs.GetInt(PREF_SCREEN_HEIGHT, DEFAULT_HEIGHT);
             ScreenMode = (FullScreenMode)PlayerPrefs.GetInt(PREF_SCREEN_MODE, (int)DEFAULT_MODE);
 
-            // 로드한 설정 적용
+            // 로드한 설정 적용 (Awake 시에만)
+            // UI 탭에서 LoadSettings 호출 시에는 적용하지 않음
+        }
+
+        /// <summary>
+        /// 설정 로드 및 적용
+        /// </summary>
+        public void LoadAndApplySettings()
+        {
+            LoadSettings();
             ApplySettings();
         }
 
@@ -102,6 +113,7 @@ namespace Manager
         /// </summary>
         public void ApplySettings()
         {
+            Debug.Log($"[DisplaySettingsManager] ApplySettings 호출: {ScreenWidth}x{ScreenHeight}, Mode={ScreenMode}\nStackTrace: {System.Environment.StackTrace}");
             Screen.SetResolution(ScreenWidth, ScreenHeight, ScreenMode);
         }
 
