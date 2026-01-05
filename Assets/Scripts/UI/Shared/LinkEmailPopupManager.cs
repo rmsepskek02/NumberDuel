@@ -29,7 +29,8 @@ namespace UI.Shared
         /// 이메일 연동 팝업 표시
         /// </summary>
         /// <param name="onComplete">완료 콜백 (성공 여부 전달)</param>
-        public static void Show(Action<bool> onComplete)
+        /// <param name="mode">전환 모드 (기본: 게스트)</param>
+        public static void Show(Action<bool> onComplete, ConversionMode mode = ConversionMode.Guest)
         {
             // 최초 1회만 로드 (Preload 안 한 경우 대비)
             if (instance == null)
@@ -43,7 +44,7 @@ namespace UI.Shared
             }
 
             // 팝업 표시
-            instance.Show(onComplete);
+            instance.Show(onComplete, mode);
         }
 
         /// <summary>

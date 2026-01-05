@@ -9,6 +9,7 @@ namespace UI.Shared
 {
     /// <summary>
     /// 게스트 계정 → 이메일 계정 연동 팝업 UI
+    /// Google 계정 → 이메일 provider 연동 팝업 UI
     /// Step 1: 이메일 + 비밀번호 입력
     /// Step 2: 닉네임 입력
     /// Step 3: 이메일 인증 (필수)
@@ -18,6 +19,15 @@ namespace UI.Shared
         EmailAndPassword = 1,  // Step 1: 이메일 + 비밀번호
         Nickname = 2,          // Step 2: 닉네임
         EmailVerification = 3  // Step 3: 이메일 인증
+    }
+
+    /// <summary>
+    /// 계정 전환 모드
+    /// </summary>
+    public enum ConversionMode
+    {
+        Guest,           // 게스트 → 이메일
+        GoogleToEmail    // Google → 이메일 (Link)
     }
 
     public class LinkEmailPopupUI : MonoBehaviour
@@ -65,6 +75,7 @@ namespace UI.Shared
 
         // 데이터 저장
         private LinkEmailStep currentStep = LinkEmailStep.EmailAndPassword;
+        private ConversionMode currentMode = ConversionMode.Guest; // 전환 모드
         private string enteredEmail;
         private string enteredPassword;
         private string enteredNickname;
@@ -96,9 +107,12 @@ namespace UI.Shared
         /// <summary>
         /// 팝업 표시
         /// </summary>
-        public void Show(Action<bool> callback)
+        /// <param name="callback">완료 콜백</param>
+        /// <param name="mode">전환 모드 (기본: 게스트)</param>
+        public void Show(Action<bool> callback, ConversionMode mode = ConversionMode.Guest)
         {
             onComplete = callback;
+            currentMode = mode;
             popupRoot.SetActive(true);
 
             // 초기화
@@ -169,7 +183,17 @@ namespace UI.Shared
                 case LinkEmailStep.EmailAndPassword:
                     backButtonText.text = "취소";
                     nextButtonText.text = "다음";
-                    messageText.text = "";
+
+                    // 모드에 따라 안내 문구 변경
+                    if (currentMode == ConversionMode.GoogleToEmail)
+                    {
+                        messageText.text = "PC에서 사용할 이메일과 비밀번호를 설정하세요.\n\nGoogle 로그인은 계속 사용할 수 있습니다.";
+                    }
+                    else
+                    {
+                        messageText.text = "";
+                    }
+
                     emailInputField.Select();
                     break;
 
@@ -525,24 +549,45 @@ namespace UI.Shared
 
                 string userId = AuthManager.Instance.CurrentUserUID;
 
-                // 1. 계정 전환
-                SystemMessageManager.Instance?.ShowMessage("ConvertingAccount");
+                // 모드에 따라 다른 처리
+                if (currentMode == ConversionMode.GoogleToEmail)
+                {
+                    // Google → Email Link
+                    SystemMessageManager.Instance?.ShowMessage("LinkingAccount");
 
-                var credential = Firebase.Auth.EmailAuthProvider.GetCredential(enteredEmail, enteredPassword);
-                await AuthManager.Instance.CurrentUser.LinkWithCredentialAsync(credential);
+                    var result = await AuthManager.Instance.LinkEmailToGoogle(enteredEmail, enteredPassword, enteredNickname);
 
-                // 2. Firestore 업데이트
-                await DatabaseManager.Instance.UpdateUserEmail(userId, enteredEmail);
-                await DatabaseManager.Instance.UpdateUserAuthProvider(userId, "email");
-                await DatabaseManager.Instance.UpdateUserNickname(userId, enteredNickname);
+                    if (!result.success)
+                    {
+                        throw new Exception(result.message);
+                    }
 
-                // 3. 인증 메일 발송
-                await AuthManager.Instance.SendEmailVerification();
+                    // 자동 로그아웃
+                    AuthManager.Instance.SignOutWithoutSessionClear();
 
-                // 4. 자동 로그아웃
-                AuthManager.Instance.SignOutWithoutSessionClear();
+                    SystemMessageManager.Instance?.ShowMessage("GoogleToEmailLinkSuccess");
+                }
+                else
+                {
+                    // 게스트 → 이메일 전환 (기존 로직)
+                    SystemMessageManager.Instance?.ShowMessage("ConvertingAccount");
 
-                SystemMessageManager.Instance?.ShowMessage("EmailLinkSuccess");
+                    var credential = Firebase.Auth.EmailAuthProvider.GetCredential(enteredEmail, enteredPassword);
+                    await AuthManager.Instance.CurrentUser.LinkWithCredentialAsync(credential);
+
+                    // Firestore 업데이트
+                    await DatabaseManager.Instance.UpdateUserEmail(userId, enteredEmail);
+                    await DatabaseManager.Instance.UpdateUserAuthProvider(userId, "email");
+                    await DatabaseManager.Instance.UpdateUserNickname(userId, enteredNickname);
+
+                    // 인증 메일 발송
+                    await AuthManager.Instance.SendEmailVerification();
+
+                    // 자동 로그아웃
+                    AuthManager.Instance.SignOutWithoutSessionClear();
+
+                    SystemMessageManager.Instance?.ShowMessage("EmailLinkSuccess");
+                }
 
                 // 5. 이메일 발송 완료 팝업 표시
                 ConfirmationPopup.Show(

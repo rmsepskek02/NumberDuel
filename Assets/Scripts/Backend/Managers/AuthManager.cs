@@ -25,6 +25,14 @@ namespace Manager
         private const float INIT_TIMEOUT = 10f; // 초기화 타임아웃 (10초)
 
         /// <summary>
+        /// 현재 세션에서 사용한 로그인 방식 저장
+        /// "google", "password", "anonymous" 등
+        /// </summary>
+        private string currentSessionLoginProvider = string.Empty;
+
+        private const string PREF_KEY_LOGIN_PROVIDER = "LastLoginProvider";
+
+        /// <summary>
         /// 현재 로그인한 사용자
         /// </summary>
         public FirebaseUser CurrentUser => currentUser;
@@ -127,6 +135,34 @@ namespace Manager
         {
             OnAccountLinked?.Invoke();
         }
+
+        /// <summary>
+        /// 로그인 방식 저장 (PlayerPrefs)
+        /// </summary>
+        private void SaveLoginProvider(string providerId)
+        {
+            currentSessionLoginProvider = providerId;
+            UnityEngine.PlayerPrefs.SetString(PREF_KEY_LOGIN_PROVIDER, providerId);
+            UnityEngine.PlayerPrefs.Save();
+        }
+
+        /// <summary>
+        /// 저장된 로그인 방식 불러오기 (PlayerPrefs)
+        /// </summary>
+        private void LoadLoginProvider()
+        {
+            currentSessionLoginProvider = UnityEngine.PlayerPrefs.GetString(PREF_KEY_LOGIN_PROVIDER, string.Empty);
+        }
+
+        /// <summary>
+        /// 저장된 로그인 방식 삭제 (로그아웃 시)
+        /// </summary>
+        private void ClearLoginProvider()
+        {
+            currentSessionLoginProvider = string.Empty;
+            UnityEngine.PlayerPrefs.DeleteKey(PREF_KEY_LOGIN_PROVIDER);
+            UnityEngine.PlayerPrefs.Save();
+        }
         #endregion
 
         #region Initialization
@@ -180,6 +216,9 @@ namespace Manager
 
                 // 이미 로그인되어 있는지 확인
                 OnAuthStateChanged(this, null);
+
+                // ⭐ 저장된 로그인 방식 불러오기
+                LoadLoginProvider();
 
                 isInitialized = true; // 초기화 완료 플래그 설정
 
@@ -316,6 +355,7 @@ namespace Manager
                 if (result.User != null)
                 {
                     currentUser = result.User;
+                    SaveLoginProvider("anonymous"); // 세션 로그인 방식 저장
                     string userId = currentUser.UserId;
 
                     // Firestore에 익명 사용자 프로필 생성
@@ -550,6 +590,7 @@ namespace Manager
                 if (result.User != null)
                 {
                     currentUser = result.User;
+                    SaveLoginProvider("password"); // 세션 로그인 방식 저장
 
                     // 이메일 인증 확인 (선택사항)
                     // if (!currentUser.IsEmailVerified)
@@ -609,6 +650,9 @@ namespace Manager
                 // ✅ 3. Firebase 세션 종료
                 auth.SignOut();
                 currentUser = null;
+
+                // ✅ 4. 저장된 로그인 방식 삭제
+                ClearLoginProvider();
             }
         }
 
@@ -625,6 +669,9 @@ namespace Manager
                 // Firebase 세션만 종료
                 auth.SignOut();
                 currentUser = null;
+
+                // ⚠️ 로그인 방식은 유지 (재로그인 시 복구용)
+                // ClearLoginProvider()를 호출하지 않음
             }
         }
 
@@ -834,6 +881,13 @@ namespace Manager
                 {
                     return (false, "로그인에 실패했습니다.", string.Empty);
                 }
+
+                // ⭐ 세션 로그인 방식 저장 (google.com 또는 playgames.google.com)
+                var providers = GetCurrentUserProviders();
+                if (providers.Contains("playgames.google.com"))
+                    SaveLoginProvider("playgames.google.com");
+                else if (providers.Contains("google.com"))
+                    SaveLoginProvider("google.com");
 
                 // ⭐ Google 로그인 시 이메일은 ProviderData에서 가져와야 함
                 string email = GetCurrentUserEmailFromProvider();
@@ -1259,13 +1313,107 @@ namespace Manager
         }
 
         /// <summary>
+        /// Google 계정에 이메일 provider 연동 (게스트 전환과 동일한 프로세스)
+        /// Step 1: 이메일/비밀번호 입력
+        /// Step 2: 닉네임 설정 (선택)
+        /// Step 3: 이메일 인증
+        /// (모바일: Google 로그인 → PC에서도 플레이하기)
+        /// </summary>
+        /// <param name="email">연동할 이메일</param>
+        /// <param name="password">설정할 비밀번호</param>
+        /// <param name="nickname">닉네임 (선택)</param>
+        /// <returns>성공 여부, 메시지, 이메일</returns>
+        public async Task<(bool success, string message, string email)> LinkEmailToGoogle(string email, string password, string nickname = null)
+        {
+            try
+            {
+                // 1. 로그인 확인
+                if (currentUser == null)
+                {
+                    return (false, "로그인이 필요합니다.", null);
+                }
+
+                // 2. Google provider 확인
+                if (!CanLinkPasswordToGoogle())
+                {
+                    return (false, "Google 계정이 아니거나 이미 연동되어 있습니다.", null);
+                }
+
+                // 3. 이메일/비밀번호 검증
+                if (string.IsNullOrEmpty(email))
+                {
+                    return (false, "이메일을 입력해주세요.", null);
+                }
+
+                if (string.IsNullOrEmpty(password) || password.Length < 6)
+                {
+                    return (false, "비밀번호는 최소 6자 이상이어야 합니다.", null);
+                }
+
+                // 4. Credential 생성
+                Firebase.Auth.Credential credential = Firebase.Auth.EmailAuthProvider.GetCredential(email, password);
+
+                // 5. Email provider 연동
+                var result = await currentUser.LinkWithCredentialAsync(credential);
+
+                if (result.User == null)
+                {
+                    return (false, "계정 연동에 실패했습니다.", null);
+                }
+
+                // 6. 닉네임 업데이트 (제공된 경우)
+                if (!string.IsNullOrEmpty(nickname))
+                {
+                    string uid = currentUser.UserId;
+                    bool nicknameUpdated = await DatabaseManager.Instance.UpdateNickname(uid, nickname);
+
+                    if (nicknameUpdated)
+                    {
+                        // Firebase User의 DisplayName도 업데이트
+                        var profile = new Firebase.Auth.UserProfile { DisplayName = nickname };
+                        await currentUser.UpdateUserProfileAsync(profile);
+                    }
+                }
+
+                // 7. 이메일 인증 메일 발송
+                await currentUser.SendEmailVerificationAsync();
+
+                // 8. 사용자 정보 새로고침
+                await ReloadUserInfo();
+
+                return (true, "이메일 인증 메일이 발송되었습니다.", email);
+            }
+            catch (FirebaseException ex)
+            {
+                Debug.LogError($"[AuthManager] Google → Email 연동 에러: {ex.Message}");
+
+                if (ex.Message.Contains("PROVIDER_ALREADY_LINKED"))
+                {
+                    return (false, "이미 연동되어 있습니다.", null);
+                }
+
+                if (ex.Message.Contains("EMAIL_EXISTS") || ex.Message.Contains("already in use"))
+                {
+                    return (false, "이 이메일은 다른 계정에서 사용 중입니다.", null);
+                }
+
+                return (false, GetFirebaseErrorMessage(ex), null);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[AuthManager] Google → Email 연동 예외: {ex.Message}");
+                return (false, "계정 연동 중 오류가 발생했습니다.", null);
+            }
+        }
+
+        /// <summary>
         /// 현재 로그인 방식 표시용 문자열 반환
         /// - "구글": Play Games Services로 로그인
         /// - "이메일": 이메일/비밀번호로 로그인
         /// - "구글 + 이메일": 두 방식 모두 연동됨
         /// - "손님": 게스트 로그인
         /// </summary>
-        public string GetLoginMethodDisplayName()
+        public string GetLoginMethodDisplayName(bool showCurrentSessionOnly = false)
         {
             if (currentUser == null)
                 return "로그인 안됨";
@@ -1281,8 +1429,25 @@ namespace Manager
             bool hasPlayGames = providers.Contains("playgames.google.com");
 
             // 두 방식 모두 연동된 경우
-            if (hasGoogle && hasPassword)
-                return "구글 + 이메일";
+            if ((hasGoogle || hasPlayGames) && hasPassword)
+            {
+                if (showCurrentSessionOnly)
+                {
+                    // ⭐ 현재 세션에서 사용한 로그인 방식만 표시
+                    if (currentSessionLoginProvider == "password")
+                        return "이메일";
+                    else if (currentSessionLoginProvider == "google.com" || currentSessionLoginProvider == "playgames.google.com")
+                        return "구글";
+                    else
+                        // 세션 정보가 없으면 Email 우선 (PC 로그인 가능)
+                        return "이메일";
+                }
+                else
+                {
+                    // 둘 다 표시
+                    return "구글 + 이메일";
+                }
+            }
 
             // Google (Play Games) 로그인
             if (hasGoogle || hasPlayGames)

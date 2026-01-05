@@ -30,7 +30,7 @@ namespace UI.Settings.Tabs
         [SerializeField] private TextMeshProUGUI loginMethodText;       // "로그인 방식: Google"
         [SerializeField] private Button linkPasswordButton;             // "🖥️ PC에서도 플레이하기" 버튼
         [SerializeField] private Button linkSocialButton;               // "📱 SNS 계정 연동하기" 버튼
-        [SerializeField] private TextMeshProUGUI linkedCompleteText;    // "✅ 연동 완료" 텍스트
+        [SerializeField] private TextMeshProUGUI linkedCompleteText;    // "연동 완료" 텍스트
         [SerializeField] private TextMeshProUGUI linkedDescriptionText; // "모든 플랫폼에서 로그인 가능" 설명
 
         [Header("Error UI")]
@@ -137,28 +137,38 @@ namespace UI.Settings.Tabs
                     // 게스트 계정
                     emailText.text = "손님";
                 }
-                else if (profile.AuthProvider == "Google")
-                {
-                    // Google 계정
-                    emailText.text = "구글 이메일";
-                }
                 else
                 {
-                    // 이메일/비밀번호 계정 - 실제 이메일 표시
-                    string email = profile.Email;
-
+                    // Google, Email, 또는 Google+Email 계정
+                    // ⭐ ProviderData에서 실제 연동된 provider 확인
                     if (Manager.AuthManager.Instance != null)
                     {
-                        // Provider에서 이메일 가져오기 (더 정확함)
-                        string providerEmail = Manager.AuthManager.Instance.GetCurrentUserEmailFromProvider();
+                        var providers = Manager.AuthManager.Instance.GetCurrentUserProviders();
+                        bool hasPassword = providers.Contains("password");
+                        bool hasGoogle = providers.Contains("google.com") || providers.Contains("playgames.google.com");
 
-                        if (!string.IsNullOrEmpty(providerEmail))
-                            email = providerEmail;
-                        else if (string.IsNullOrEmpty(email))
-                            email = Manager.AuthManager.Instance.CurrentUserEmail;
+                        if (hasPassword)
+                        {
+                            // Email provider가 있으면 해당 이메일 표시 (Google+Email 또는 Email만)
+                            string email = Manager.AuthManager.Instance.GetCurrentUserEmailFromProvider();
+                            emailText.text = !string.IsNullOrEmpty(email) ? email : "이메일";
+                        }
+                        else if (hasGoogle)
+                        {
+                            // Google만 있는 경우
+                            emailText.text = "구글 이메일";
+                        }
+                        else
+                        {
+                            // Fallback: Firestore 프로필 이메일
+                            emailText.text = !string.IsNullOrEmpty(profile.Email) ? profile.Email : "이메일 없음";
+                        }
                     }
-
-                    emailText.text = email ?? string.Empty;
+                    else
+                    {
+                        // AuthManager 없는 경우 Fallback
+                        emailText.text = !string.IsNullOrEmpty(profile.Email) ? profile.Email : "이메일 없음";
+                    }
                 }
             }
 
@@ -221,7 +231,8 @@ namespace UI.Settings.Tabs
 
             if (loginMethodText != null)
             {
-                string method = Manager.AuthManager.Instance.GetLoginMethodDisplayName();
+                // ⭐ Google+Email 연동 계정의 경우 현재 세션 로그인 방식만 표시
+                string method = Manager.AuthManager.Instance.GetLoginMethodDisplayName(showCurrentSessionOnly: true);
                 loginMethodText.text = $"로그인 방식: {method}";
             }
 
@@ -337,7 +348,7 @@ namespace UI.Settings.Tabs
             if (linkedCompleteText != null)
             {
                 linkedCompleteText.gameObject.SetActive(true);
-                linkedCompleteText.text = "✅ 연동 완료";
+                linkedCompleteText.text = "연동 완료";
             }
 
             if (linkedDescriptionText != null)
@@ -392,8 +403,16 @@ namespace UI.Settings.Tabs
         /// </summary>
         public void OnLinkPasswordClicked()
         {
-            string googleEmail = Manager.AuthManager.Instance.GetCurrentUserEmailFromProvider();
-            UI.Shared.LinkPasswordPopupManager.Show(googleEmail, OnPasswordLinked);
+            // Google → Email Link (게스트 전환과 동일한 3단계 프로세스)
+            UI.Shared.LinkEmailPopupManager.Show((success) =>
+            {
+                if (success)
+                {
+                    // 프로필 재로드 및 UI 갱신
+                    LoadProfile();
+                    UpdateAccountLinkingUI();
+                }
+            }, UI.Shared.ConversionMode.GoogleToEmail);
         }
 
         /// <summary>

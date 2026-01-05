@@ -88,11 +88,23 @@ namespace UI.Shared
         /// </summary>
         private void OnAccountLinked()
         {
-            // 팝업이 현재 표시 중일 때만 UI 갱신
+            // 팝업이 현재 표시 중일 때만 처리
             if (!gameObject.activeSelf)
                 return;
 
-            RefreshAccountInfo();
+            // 이메일 연동이 완료된 경우 팝업 닫기
+            // (Google 연동은 기존 콜백 방식으로 처리되므로 여기서는 이메일만 처리)
+            if (!isProcessing)
+            {
+                // 이메일 연동 완료로 인한 이벤트 → 팝업 닫기
+                Hide();
+                onCompleteCallback?.Invoke(true);
+            }
+            else
+            {
+                // 처리 중이면 UI만 갱신 (Google 연동 중)
+                RefreshAccountInfo();
+            }
         }
 
         /// <summary>

@@ -384,7 +384,17 @@ MonoBehaviour:
     displayDuration: 1
     textColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   - messageKey: EmailLinkSuccess
-    messageText: "\uC774\uBA54\uC77C \uACC4\uC815\uC73C\uB85C \uC804\uD658\uB418\uC5C8\uC2B5\uB2C8\uB2E4!"
+    messageText: "\uC774\uBA54\uC77C \uACC4\uC815\uC73C\uB85C \uC804\uD658\uB418\uC5C1\uC2B5\uB2C8\uB2E4!"
+    messageType: 3
+    displayDuration: 3
+    textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}
+  - messageKey: LinkingAccount
+    messageText: "\uACC4\uC815\uC744 \uC5F0\uB3D9\uD558\uB294 \uC911..."
+    messageType: 0
+    displayDuration: 1
+    textColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  - messageKey: GoogleToEmailLinkSuccess
+    messageText: "PC \uB85C\uADF8\uC778 \uC5F0\uB3D9\uC774 \uC644\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4!"
     messageType: 3
     displayDuration: 3
     textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}
