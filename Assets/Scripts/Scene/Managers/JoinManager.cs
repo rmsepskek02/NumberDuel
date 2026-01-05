@@ -1036,6 +1036,91 @@ namespace Manager
                 resendEmailButton.gameObject.SetActive(false);
             }
         }
+
+        /// <summary>
+        /// 이메일 로그인 섹션으로 전환 (회원가입 완료 후 로그인 유도)
+        /// </summary>
+        private void ShowEmailLoginSection()
+        {
+            // 회원가입 상태 초기화
+            isVerificationEmailSent = false;
+            verifiedEmail = "";
+
+            // 소셜 로그인 패널 숨기기
+            if (socialLoginButtonsPanel != null)
+            {
+                socialLoginButtonsPanel.SetActive(false);
+            }
+
+            // 이메일 로그인 패널 보이기
+            if (emailLoginPanel != null)
+            {
+                emailLoginPanel.SetActive(true);
+            }
+
+            // 로그인 섹션만 활성화
+            if (loginSection != null)
+            {
+                loginSection.SetActive(true);
+            }
+
+            // 나머지 섹션들은 비활성화
+            if (emailVerificationSection != null)
+            {
+                emailVerificationSection.SetActive(false);
+            }
+            if (passwordSection != null)
+            {
+                passwordSection.SetActive(false);
+            }
+            if (nicknameSection != null)
+            {
+                nicknameSection.SetActive(false);
+            }
+
+            // "다른 방식으로 로그인하기" 버튼 표시
+            if (backToSocialButton != null)
+            {
+                backToSocialButton.gameObject.SetActive(true);
+            }
+
+            // 입력 필드 초기화
+            if (loginEmailInput != null)
+            {
+                loginEmailInput.text = "";
+                loginEmailInput.ActivateInputField();
+            }
+            if (loginPasswordInput != null)
+            {
+                loginPasswordInput.text = "";
+            }
+
+            // 검증 에러 텍스트 초기화
+            if (validationErrorText != null)
+            {
+                validationErrorText.text = "";
+            }
+
+            // 회원가입 관련 입력 필드 초기화
+            if (verificationEmailInput != null) verificationEmailInput.text = "";
+            if (passwordEmailInput != null) passwordEmailInput.text = "";
+            if (passwordInput != null) passwordInput.text = "";
+            if (passwordConfirmInput != null) passwordConfirmInput.text = "";
+            if (nicknameInput != null) nicknameInput.text = "";
+
+            // 버튼 텍스트 초기화 (인증하기로 복원)
+            if (verifyEmailButton != null)
+            {
+                var buttonText = verifyEmailButton.GetComponentInChildren<TextMeshProUGUI>();
+                if (buttonText != null) buttonText.text = "인증하기";
+            }
+
+            // 재발송 버튼 숨기기
+            if (resendEmailButton != null)
+            {
+                resendEmailButton.gameObject.SetActive(false);
+            }
+        }
         #endregion
 
         #region Private Methods
@@ -1620,28 +1705,16 @@ namespace Manager
                     return;
                 }
 
-                // 세션 생성
-                bool sessionCreated = await SessionManager.Instance.CreateSession(uid);
-                if (!sessionCreated)
-                {
-                    UI.Shared.ConfirmationPopup.Show(
-                        "세션 생성에 실패했습니다.\n\n다시 시도해주세요.",
-                        onConfirm: () => { },
-                        onCancel: null,
-                        confirmText: "확인",
-                        cancelText: null
-                    );
-                    return;
-                }
-
-                SessionManager.Instance.StartSessionMonitoring(uid);
-
+                // ⭐ 회원가입 완료 - 세션 생성 없이 로그인 유도
                 UI.Shared.ConfirmationPopup.Show(
                     "회원가입을 환영합니다!\n\n로그인을 진행해주세요.",
                     onConfirm: () =>
                     {
-                        // 로비로 이동
-                        StartCoroutine(OnLoginSuccessCoroutine());
+                        // 회원가입 완료 후 로그아웃 처리
+                        AuthManager.Instance.SignOutWithoutSessionClear();
+
+                        // 이메일 로그인 화면으로 복귀
+                        ShowEmailLoginSection();
                     },
                     onCancel: null,
                     confirmText: "확인",
@@ -1771,7 +1844,7 @@ namespace Manager
                             email,
                             nickname,
                             "Google"
-                            // AuthManager.Instance.CurrentUser.PhotoUrl?.ToString() ?? ""
+                        // AuthManager.Instance.CurrentUser.PhotoUrl?.ToString() ?? ""
                         );
 
                         if (!profileCreated)
