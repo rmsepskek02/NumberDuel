@@ -173,8 +173,6 @@ namespace UI.Settings.Tabs
         /// </summary>
         private void OnResolutionChanged(int index)
         {
-            Debug.Log($"[DisplaySettingsTab] OnResolutionChanged 호출: index={index}, isInitializing={isInitializing}");
-
             if (isInitializing)
                 return;
 
@@ -190,8 +188,6 @@ namespace UI.Settings.Tabs
         /// </summary>
         private void OnScreenModeChanged(int index)
         {
-            Debug.Log($"[DisplaySettingsTab] OnScreenModeChanged 호출: index={index}, isInitializing={isInitializing}");
-
             if (isInitializing)
                 return;
 

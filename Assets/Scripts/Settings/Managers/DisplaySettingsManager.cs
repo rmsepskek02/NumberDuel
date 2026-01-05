@@ -113,7 +113,6 @@ namespace Manager
         /// </summary>
         public void ApplySettings()
         {
-            Debug.Log($"[DisplaySettingsManager] ApplySettings 호출: {ScreenWidth}x{ScreenHeight}, Mode={ScreenMode}\nStackTrace: {System.Environment.StackTrace}");
             Screen.SetResolution(ScreenWidth, ScreenHeight, ScreenMode);
         }
 
