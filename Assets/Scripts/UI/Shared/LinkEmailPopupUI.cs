@@ -89,6 +89,9 @@ namespace UI.Shared
         private System.DateTime lastResendTime;
         private const int RESEND_COOLDOWN = 60; // 60초
 
+        // Tab 키 네비게이션 (PC 전용)
+        private TMP_InputField[] inputFieldOrder;
+
         private void Awake()
         {
             // 실시간 비밀번호 검증
@@ -101,7 +104,32 @@ namespace UI.Shared
             // 모바일 키보드 대응 (Android/iOS만)
             RegisterInputFieldsToKeyboardManager();
 
+            // InputField 순서 설정
+            UpdateInputFieldOrder();
+
             Hide();
+        }
+
+        private void Update()
+        {
+            // PC에서만 Tab 키 및 Enter 키 처리
+            #if !UNITY_ANDROID && !UNITY_IOS
+            if (popupRoot.activeSelf && UnityEngine.InputSystem.Keyboard.current != null)
+            {
+                // Tab 키로 다음 InputField 이동
+                if (UnityEngine.InputSystem.Keyboard.current.tabKey.wasPressedThisFrame)
+                {
+                    HandleTabKey();
+                }
+
+                // Enter 키로 다음 버튼 클릭 (Step 1, 2에서만)
+                if (UnityEngine.InputSystem.Keyboard.current.enterKey.wasPressedThisFrame ||
+                    UnityEngine.InputSystem.Keyboard.current.numpadEnterKey.wasPressedThisFrame)
+                {
+                    HandleEnterKey();
+                }
+            }
+            #endif
         }
 
         /// <summary>
@@ -730,6 +758,118 @@ namespace UI.Shared
             }
         }
 
+        #endregion
+
+        #region Tab Navigation (PC Only)
+        /// <summary>
+        /// Tab 키로 다음 InputField로 포커스 이동 (PC 전용)
+        /// </summary>
+        private void HandleTabKey()
+        {
+            if (inputFieldOrder == null || inputFieldOrder.Length == 0)
+                return;
+
+            // 현재 활성화된 필드만 필터링
+            var activeFields = new System.Collections.Generic.List<TMP_InputField>();
+            foreach (var field in inputFieldOrder)
+            {
+                if (field != null && field.gameObject.activeInHierarchy && field.interactable)
+                {
+                    activeFields.Add(field);
+                }
+            }
+
+            if (activeFields.Count == 0)
+                return;
+
+            // 현재 포커스된 InputField 찾기
+            int currentIndex = -1;
+            for (int i = 0; i < activeFields.Count; i++)
+            {
+                if (activeFields[i].isFocused)
+                {
+                    currentIndex = i;
+                    break;
+                }
+            }
+
+            // 다음 InputField로 포커스 이동
+            if (currentIndex >= 0)
+            {
+                int nextIndex = (currentIndex + 1) % activeFields.Count;
+                activeFields[nextIndex].ActivateInputField();
+            }
+            else
+            {
+                // 포커스된 필드가 없으면 첫 번째 활성 필드로
+                activeFields[0].ActivateInputField();
+            }
+        }
+
+        /// <summary>
+        /// Enter 키로 다음 버튼 클릭 (PC 전용)
+        /// Step 1과 Step 2에서 모든 입력이 완료된 경우에만 동작
+        /// </summary>
+        private void HandleEnterKey()
+        {
+            if (nextButton == null || !nextButton.interactable)
+                return;
+
+            // Step 1: 이메일 + 비밀번호 입력 완료 확인
+            if (currentStep == LinkEmailStep.EmailAndPassword)
+            {
+                // 모든 필드가 입력되었는지 확인
+                if (string.IsNullOrWhiteSpace(emailInputField.text) ||
+                    string.IsNullOrWhiteSpace(passwordInputField.text) ||
+                    string.IsNullOrWhiteSpace(confirmPasswordInputField.text))
+                {
+                    return; // 입력 미완료 시 동작 안 함
+                }
+
+                // 비밀번호 일치 여부 확인
+                if (passwordInputField.text != confirmPasswordInputField.text)
+                {
+                    return; // 비밀번호 불일치 시 동작 안 함
+                }
+
+                // "다음" 버튼 클릭
+                nextButton.onClick?.Invoke();
+            }
+            // Step 2: 닉네임 입력 완료 확인
+            else if (currentStep == LinkEmailStep.Nickname)
+            {
+                // 닉네임이 입력되었는지 확인
+                if (string.IsNullOrWhiteSpace(newNicknameInputField.text))
+                {
+                    return; // 입력 미완료 시 동작 안 함
+                }
+
+                // "다음" 버튼 클릭
+                nextButton.onClick?.Invoke();
+            }
+            // Step 3: 이메일 인증은 Enter 키 사용 안 함 (수동으로 인증 버튼 클릭 필요)
+        }
+
+        /// <summary>
+        /// InputField 순서 업데이트
+        /// </summary>
+        private void UpdateInputFieldOrder()
+        {
+            // 모든 InputField를 단계별로 정렬
+            inputFieldOrder = new TMP_InputField[]
+            {
+                // Step 1: 이메일 + 비밀번호
+                emailInputField,
+                passwordInputField,
+                confirmPasswordInputField,
+
+                // Step 2: 닉네임
+                newNicknameInputField,
+
+                // Step 3: 이메일 인증 (읽기 전용이지만 포함)
+                emailVerificationField
+            };
+        }
         #endregion
 
         #region Keyboard Manager Integration

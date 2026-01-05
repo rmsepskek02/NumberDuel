@@ -203,7 +203,12 @@ namespace Manager
                 HandleTabKey();
             }
 
-            // Enter 키 처리는 각 섹션별 버튼에서 처리 (구식 HandleEnterKey 제거됨)
+            // Enter 키로 현재 활성 섹션의 버튼 클릭
+            if (Keyboard.current != null &&
+                (Keyboard.current.enterKey.wasPressedThisFrame || Keyboard.current.numpadEnterKey.wasPressedThisFrame))
+            {
+                HandleEnterKey();
+            }
 
             // Photon 연결 상태 추적 중일 때만
             if (!isTrackingPhotonConnection)
@@ -1971,6 +1976,67 @@ namespace Manager
             {
                 // 포커스된 필드가 없으면 첫 번째 필드로
                 inputFieldOrder[0]?.ActivateInputField();
+            }
+        }
+
+        /// <summary>
+        /// Enter 키로 현재 활성 섹션의 확인/다음 버튼 클릭
+        /// </summary>
+        private void HandleEnterKey()
+        {
+            // 로그인 섹션 활성화 시 - 로그인 버튼 클릭
+            if (loginSection != null && loginSection.activeSelf)
+            {
+                // 이메일과 비밀번호가 입력되었는지 확인
+                if (loginEmailInput != null && !string.IsNullOrWhiteSpace(loginEmailInput.text) &&
+                    loginPasswordInput != null && !string.IsNullOrWhiteSpace(loginPasswordInput.text))
+                {
+                    if (emailLoginExecuteButton != null && emailLoginExecuteButton.interactable)
+                    {
+                        emailLoginExecuteButton.onClick?.Invoke();
+                    }
+                }
+            }
+            // 이메일 인증 섹션 활성화 시 - 인증하기 버튼 클릭
+            else if (emailVerificationSection != null && emailVerificationSection.activeSelf)
+            {
+                // 이메일이 입력되었는지 확인
+                if (verificationEmailInput != null && !string.IsNullOrWhiteSpace(verificationEmailInput.text))
+                {
+                    if (verifyEmailButton != null && verifyEmailButton.interactable)
+                    {
+                        verifyEmailButton.onClick?.Invoke();
+                    }
+                }
+            }
+            // 비밀번호 설정 섹션 활성화 시 - 확인 버튼 클릭
+            else if (passwordSection != null && passwordSection.activeSelf)
+            {
+                // 비밀번호와 비밀번호 확인이 입력되었는지 확인
+                if (passwordInput != null && !string.IsNullOrWhiteSpace(passwordInput.text) &&
+                    passwordConfirmInput != null && !string.IsNullOrWhiteSpace(passwordConfirmInput.text))
+                {
+                    // 비밀번호 일치 여부 확인
+                    if (passwordInput.text == passwordConfirmInput.text)
+                    {
+                        if (passwordConfirmButton != null && passwordConfirmButton.interactable)
+                        {
+                            passwordConfirmButton.onClick?.Invoke();
+                        }
+                    }
+                }
+            }
+            // 닉네임 설정 섹션 활성화 시 - 확인 버튼 클릭
+            else if (nicknameSection != null && nicknameSection.activeSelf)
+            {
+                // 닉네임이 입력되었는지 확인
+                if (nicknameInput != null && !string.IsNullOrWhiteSpace(nicknameInput.text))
+                {
+                    if (nicknameConfirmButton != null && nicknameConfirmButton.interactable)
+                    {
+                        nicknameConfirmButton.onClick?.Invoke();
+                    }
+                }
             }
         }
 

@@ -825,7 +825,7 @@ MonoBehaviour:
   titleText: {fileID: 1224938099830708422}
   descriptionText: {fileID: 5608407987804904758}
   emailButton: {fileID: 3033174547731945703}
-  googleButton: {fileID: 3033174547731945703}
+  googleButton: {fileID: 4427210956139668829}
   kakaoButton: {fileID: 8873185936066636587}
   closeButton: {fileID: 4420698512005938920}
   errorText: {fileID: 2456501499093409951}
