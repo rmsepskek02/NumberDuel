@@ -18,122 +18,100 @@ namespace Manager
     /// </summary>
     public class JoinManager : MonoBehaviourPunCallbacks
     {
-        #region Fields and Properties
+        #region Constants
+        private const float ENTER_KEY_COOLDOWN = 0.3f;
+        private const float PHOTON_CONNECT_TIMEOUT = 10f;
+        private const float TASK_TIMEOUT = 10f;
+        private const float MIN_LOADING_DURATION = 1.5f;
+        private const int RESEND_COOLDOWN = 60;
+        private const float LOGIN_TRANSITION_DELAY = 0.5f;
+        private const int MAX_NICKNAME_PIXEL_LENGTH = 24;
+        private const int MIN_PASSWORD_LENGTH = 6;
+        #endregion
 
-        // ============================================
-        // Panels
-        // ============================================
+        #region UI References - Panels
         [Header("Panels")]
-        public GameObject emailLoginPanel;          // 이메일 로그인 전체 패널
-        public GameObject socialLoginButtonsPanel;  // 소셜 로그인 버튼 패널
+        public GameObject emailLoginPanel;
+        public GameObject socialLoginButtonsPanel;
+        #endregion
 
-        // ============================================
-        // Sections
-        // ============================================
+        #region UI References - Sections
         [Header("Sections")]
-        public GameObject loginSection;             // 로그인 섹션
-        public GameObject emailVerificationSection; // 이메일 인증 섹션 (Step 1)
-        public GameObject passwordSection;          // 비밀번호 설정 섹션 (Step 2)
-        public GameObject nicknameSection;          // 닉네임 설정 섹션 (Step 3)
+        public GameObject loginSection;
+        public GameObject emailVerificationSection;
+        public GameObject passwordSection;
+        public GameObject nicknameSection;
+        #endregion
 
-        // ============================================
-        // Login Section - Input Fields
-        // ============================================
+        #region UI References - Input Fields
         [Header("Login Section - Inputs")]
-        public TMP_InputField loginEmailInput;      // 로그인 이메일 입력
-        public TMP_InputField loginPasswordInput;   // 로그인 비밀번호 입력
+        public TMP_InputField loginEmailInput;
+        public TMP_InputField loginPasswordInput;
 
-        // ============================================
-        // Email Verification Section - Input Fields
-        // ============================================
         [Header("Email Verification Section - Inputs")]
-        public TMP_InputField verificationEmailInput; // 인증 이메일 입력
+        public TMP_InputField verificationEmailInput;
 
-        // ============================================
-        // Password Section - Input Fields
-        // ============================================
         [Header("Password Section - Inputs")]
-        public TMP_InputField passwordEmailInput;        // 비밀번호 설정 이메일 입력 (읽기 전용)
-        public TMP_InputField passwordInput;             // 비밀번호 입력
-        public TMP_InputField passwordConfirmInput;      // 비밀번호 확인 입력
+        public TMP_InputField passwordEmailInput;
+        public TMP_InputField passwordInput;
+        public TMP_InputField passwordConfirmInput;
 
-        // ============================================
-        // Nickname Section - Input Fields
-        // ============================================
         [Header("Nickname Section - Inputs")]
-        public TMP_InputField nicknameInput;        // 닉네임 입력
+        public TMP_InputField nicknameInput;
+        #endregion
 
-        // ============================================
-        // Social Login Buttons
-        // ============================================
+        #region UI References - Buttons
         [Header("Social Login Buttons")]
-        public Button guestLoginButton;             // 게스트 로그인 버튼
-        public Button emailLoginModeButton;         // "이메일 로그인" 전환 버튼
-        public Button googleLoginButton;            // Google 로그인 버튼
-        public Button kakaoLoginButton;             // Kakao 로그인 버튼
+        public Button guestLoginButton;
+        public Button emailLoginModeButton;
+        public Button googleLoginButton;
+        public Button kakaoLoginButton;
 
-        // ============================================
-        // Login Section Buttons
-        // ============================================
         [Header("Login Section Buttons")]
-        public Button emailLoginExecuteButton;      // "로그인" 실행 버튼
-        public Button emailSignupButton;            // "회원가입" 모드 전환 버튼
+        public Button emailLoginExecuteButton;
+        public Button emailSignupButton;
 
-        // ============================================
-        // Email Verification Section Buttons
-        // ============================================
         [Header("Email Verification Section Buttons")]
-        public Button verifyEmailButton;            // "인증하기/인증확인" 버튼
-        public Button resendEmailButton;            // "재발송" 버튼
+        public Button verifyEmailButton;
+        public Button resendEmailButton;
 
-        // ============================================
-        // Password Section Buttons
-        // ============================================
         [Header("Password Section Buttons")]
-        public Button passwordConfirmButton;        // 비밀번호 설정 "확인" 버튼
+        public Button passwordConfirmButton;
 
-        // ============================================
-        // Nickname Section Buttons
-        // ============================================
         [Header("Nickname Section Buttons")]
-        public Button nicknameConfirmButton;        // 닉네임 설정 "확인" 버튼
+        public Button nicknameConfirmButton;
 
-        // ============================================
-        // Other Buttons
-        // ============================================
         [Header("Other Buttons")]
-        public Button backToSocialButton;           // "다른 방식으로 로그인하기"
-        public Button findPasswordButton;           // "비밀번호 찾기"
+        public Button backToSocialButton;
+        public Button findPasswordButton;
+        #endregion
 
-        // ============================================
-        // UI Text
-        // ============================================
+        #region UI References - Text
         [Header("UI Text")]
-        public TextMeshProUGUI validationErrorText; // 검증 오류 메시지 텍스트
+        public TextMeshProUGUI validationErrorText;
+        #endregion
 
+        #region State Variables
         private bool isProcessing = false;
-        private Coroutine photonTimeoutCoroutine = null;
+        private bool isVerificationEmailSent = false;
+        private string verifiedEmail = "";
+        #endregion
 
-        // Photon 연결 상태 추적
+        #region Photon Connection Tracking
         private bool isTrackingPhotonConnection = false;
         private float photonConnectionStartTime = 0f;
-        private float loadingScreenStartTime = 0f; // 로딩스크린 시작 시간
-
-        // Tab 키로 InputField 순회
-        private TMP_InputField[] inputFieldOrder;
+        private float loadingScreenStartTime = 0f;
         private Photon.Realtime.ClientState lastClientState;
+        private Coroutine photonTimeoutCoroutine = null;
+        #endregion
 
-        // Enter 키 쿨다운
+        #region Input Field Navigation
+        private TMP_InputField[] inputFieldOrder;
         private float lastEnterKeyPressTime = 0f;
-        private const float ENTER_KEY_COOLDOWN = 0.3f; // Enter 키 쿨다운 (0.3초)
+        #endregion
 
-        private const float PHOTON_CONNECT_TIMEOUT = 10f; // Photon 연결 타임아웃 (10초)
-        private const float TASK_TIMEOUT = 10f; // Firebase Task 타임아웃 (10초)
-        private const float MIN_LOADING_DURATION = 1.5f; // 최소 로딩 시간 (페이드인 + 여유)
-
-        // 재발송 쿨다운
+        #region Email Resend Tracking
         private System.DateTime lastResendTime;
-        private const int RESEND_COOLDOWN = 60; // 60초
         #endregion
 
         #region Unity Lifecycle
@@ -261,23 +239,10 @@ namespace Manager
         #endregion
 
         #region Photon Callbacks
-        /// <summary>
-        /// 서버 연결 완료 시점에 호출 (Lobby에 진입한 후 가능 상황)
-        /// </summary>
-        public override void OnConnected()
-        {
-            base.OnConnected();
-            // 서버 연결 메시지는 표시하지 않음 (너무 많은 메시지 방지)
-        }
-
-        /// <summary>
-        /// 서버와 마스터 연결 성공 시점에 호출 (Lobby에 진입할 수 있는 상황 후 첫 호출가능)
-        /// </summary>
         public override void OnConnectedToMaster()
         {
             base.OnConnectedToMaster();
 
-            // Photon 연결 성공 시 타임아웃 코루틴 중지
             if (photonTimeoutCoroutine != null)
             {
                 StopCoroutine(photonTimeoutCoroutine);
@@ -285,17 +250,10 @@ namespace Manager
             }
         }
 
-        /// <summary>
-        /// 로비 진입 성공 시점에 호출
-        /// </summary>
         public override void OnJoinedLobby()
         {
             base.OnJoinedLobby();
-
-            // Photon 연결 추적 중지
             isTrackingPhotonConnection = false;
-
-            // 최소 로딩 시간 보장을 위한 코루틴 시작
             StartCoroutine(TransitionToLobbyAfterMinDelay());
         }
 
@@ -403,16 +361,11 @@ namespace Manager
             // 시스템 메시지 표시
             SystemMessageManager.Instance?.ShowMessage("ConnectionFailed");
 
-            // 버튼 활성화
-            // 버튼 활성화 (구식 시스템 제거됨)
         }
         #endregion
 
-        #region Button Events
+        #region Button Events - Navigation
 
-        /// <summary>
-        /// 이메일 로그인 모드 전환 버튼 클릭
-        /// </summary>
         public void OnClickEmailLoginModeButton()
         {
             // 소셜 로그인 패널 숨기기
@@ -453,16 +406,15 @@ namespace Manager
                 backToSocialButton.gameObject.SetActive(true);
             }
 
-            // 로그인 섹션의 첫 번째 입력 필드에 포커스
             if (loginEmailInput != null)
             {
                 loginEmailInput.ActivateInputField();
             }
         }
+        #endregion
 
-        /// <summary>
-        /// 게스트 로그인 버튼 클릭
-        /// </summary>
+        #region Button Events - Social Login
+
         public void OnClickGuestLoginButton()
         {
             // 확인 팝업 표시
@@ -489,41 +441,15 @@ namespace Manager
 
             try
             {
-                // Firebase 초기화 대기
-                if (!AuthManager.Instance.IsInitialized)
-                {
-                    SystemMessageManager.Instance?.ShowMessage("InitializingFirebase");
-                    bool authReady = await AuthManager.Instance.WaitForInitialization(10f);
-                    if (!authReady)
-                    {
-                        SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
-                        return;
-                    }
-                }
-
-                if (!SessionManager.Instance.IsInitialized)
-                {
-                    bool sessionReady = await SessionManager.Instance.WaitForInitialization(10f);
-                    if (!sessionReady)
-                    {
-                        SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
-                        return;
-                    }
-                }
+                if (!await WaitForFirebaseInitialization())
+                    return;
 
                 // 게스트 로그인 시도
                 bool success = await AuthManager.Instance.SignInAnonymously();
 
                 if (!success)
                 {
-                    // 에러 팝업
-                    UI.Shared.ConfirmationPopup.Show(
-                        "게스트 로그인에 실패했습니다.\n\n네트워크 연결을 확인하고\n다시 시도해주세요.",
-                        onConfirm: null,
-                        onCancel: null,
-                        confirmText: "확인",
-                        cancelText: null
-                    );
+                    ShowSimpleAlert("게스트 로그인에 실패했습니다.\n\n네트워크 연결을 확인하고\n다시 시도해주세요.");
                     return;
                 }
 
@@ -540,7 +466,7 @@ namespace Manager
                 }
 
                 SessionManager.Instance.StartSessionMonitoring(uid);
-                await System.Threading.Tasks.Task.Delay(500);
+                await System.Threading.Tasks.Task.Delay((int)(LOGIN_TRANSITION_DELAY * 1000));
 
                 // Photon 연결 및 로비 진입
                 StartCoroutine(OnLoginSuccessCoroutine());
@@ -549,13 +475,7 @@ namespace Manager
             catch (System.Exception ex)
             {
                 Debug.LogError($"[JoinManager] 게스트 로그인 예외: {ex.Message}");
-                UI.Shared.ConfirmationPopup.Show(
-                    "게스트 로그인 중 오류가 발생했습니다.\n다시 시도해주세요.",
-                    onConfirm: null,
-                    onCancel: null,
-                    confirmText: "확인",
-                    cancelText: null
-                );
+                ShowSimpleAlert("게스트 로그인 중 오류가 발생했습니다.\n다시 시도해주세요.");
             }
             finally
             {
@@ -581,27 +501,8 @@ namespace Manager
 
             try
             {
-                // Firebase 초기화 대기
-                if (!AuthManager.Instance.IsInitialized)
-                {
-                    SystemMessageManager.Instance?.ShowMessage("InitializingFirebase");
-                    bool authReady = await AuthManager.Instance.WaitForInitialization(10f);
-                    if (!authReady)
-                    {
-                        SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
-                        return;
-                    }
-                }
-
-                if (!SessionManager.Instance.IsInitialized)
-                {
-                    bool sessionReady = await SessionManager.Instance.WaitForInitialization(10f);
-                    if (!sessionReady)
-                    {
-                        SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
-                        return;
-                    }
-                }
+                if (!await WaitForFirebaseInitialization())
+                    return;
 
                 // Google 로그인 시도 (타임아웃 30초)
                 SystemMessageManager.Instance?.ShowMessage("GoogleLoginInProgress");
@@ -660,17 +561,6 @@ namespace Manager
             }
         }
 
-        /// <summary>
-        /// 이메일 로그인 실행 버튼 클릭
-        /// </summary>
-        public async void OnClickEmailLoginExecuteButton()
-        {
-            await ExecuteLogin();
-        }
-
-        /// <summary>
-        /// 회원가입 모드 전환 버튼 클릭
-        /// </summary>
         public void OnClickEmailSignupButton()
         {
             // 로그인 섹션 숨기기
@@ -685,23 +575,24 @@ namespace Manager
                 emailVerificationSection.SetActive(true);
             }
 
-            // 입력 필드 초기화
             if (verificationEmailInput != null)
             {
                 verificationEmailInput.text = "";
                 verificationEmailInput.ActivateInputField();
             }
         }
+        #endregion
 
-        // 회원가입 상태 추적
-        private bool isVerificationEmailSent = false;
-        private string verifiedEmail = "";
+        #region Button Events - Email Login
 
-        /// <summary>
-        /// 이메일 인증 버튼 클릭 ("인증하기" 또는 "인증확인")
-        /// Step 1: 이메일 발송 → "인증확인" 버튼으로 변경
-        /// Step 2: 인증 확인 → 비밀번호 섹션으로 이동
-        /// </summary>
+        public async void OnClickEmailLoginExecuteButton()
+        {
+            await ExecuteLogin();
+        }
+        #endregion
+
+        #region Button Events - Email Signup
+
         public async void OnClickVerifyEmailButton()
         {
             if (isProcessing) return;
@@ -871,12 +762,12 @@ namespace Manager
                 return;
             }
 
-            // 비밀번호 최소 길이 검증 (Firebase 기본: 6자)
-            if (password.Length < 6)
+            // 비밀번호 최소 길이 검증
+            if (password.Length < MIN_PASSWORD_LENGTH)
             {
                 if (validationErrorText != null)
                 {
-                    validationErrorText.text = "비밀번호는 최소 6자 이상이어야 합니다";
+                    validationErrorText.text = $"비밀번호는 최소 {MIN_PASSWORD_LENGTH}자 이상이어야 합니다";
                     validationErrorText.color = Color.red;
                 }
                 return;
@@ -1133,7 +1024,62 @@ namespace Manager
         }
         #endregion
 
-        #region Private Methods
+        #region Private Methods - Core Helpers
+        /// <summary>
+        /// Firebase 초기화 대기 (AuthManager 및 SessionManager)
+        /// </summary>
+        private async Task<bool> WaitForFirebaseInitialization()
+        {
+            if (!AuthManager.Instance.IsInitialized)
+            {
+                SystemMessageManager.Instance?.ShowMessage("InitializingFirebase");
+                bool authReady = await AuthManager.Instance.WaitForInitialization(TASK_TIMEOUT);
+                if (!authReady)
+                {
+                    AuthManager.Instance.RetryInitialization();
+                    authReady = await AuthManager.Instance.WaitForInitialization(TASK_TIMEOUT);
+                    if (!authReady)
+                    {
+                        SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
+                        Debug.LogError("[JoinManager] AuthManager 초기화 재시도 실패");
+                        return false;
+                    }
+                }
+            }
+
+            if (!SessionManager.Instance.IsInitialized)
+            {
+                bool sessionReady = await SessionManager.Instance.WaitForInitialization(TASK_TIMEOUT);
+                if (!sessionReady)
+                {
+                    SessionManager.Instance.RetryInitialization();
+                    sessionReady = await SessionManager.Instance.WaitForInitialization(TASK_TIMEOUT);
+                    if (!sessionReady)
+                    {
+                        SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
+                        Debug.LogError("[JoinManager] SessionManager 초기화 재시도 실패");
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 간단한 알림 팝업 표시
+        /// </summary>
+        private void ShowSimpleAlert(string message)
+        {
+            UI.Shared.ConfirmationPopup.Show(
+                message,
+                onConfirm: () => { },
+                onCancel: null,
+                confirmText: "확인",
+                cancelText: null
+            );
+        }
+
         /// <summary>
         /// Photon 연결 타임아웃 체크
         /// </summary>
@@ -1143,7 +1089,7 @@ namespace Manager
 
             if (!PhotonNetwork.IsConnectedAndReady)
             {
-                Debug.LogError($"⏱️ Photon 연결 타임아웃 ({PHOTON_CONNECT_TIMEOUT}초)");
+                Debug.LogError($"Photon 연결 타임아웃 ({PHOTON_CONNECT_TIMEOUT}초)");
                 SystemMessageManager.Instance?.ShowMessage("PhotonConnectionTimeout");
             }
 
@@ -1179,10 +1125,9 @@ namespace Manager
 
             if (!checkTask.IsCompleted)
             {
-                Debug.LogError($"⏱️ 프로필 존재 확인 타임아웃 ({TASK_TIMEOUT}초)");
+                Debug.LogError($"프로필 존재 확인 타임아웃 ({TASK_TIMEOUT}초)");
                 SystemMessageManager.Instance?.ShowMessage("NetworkTimeout");
-                // 버튼 활성화 (구식 시스템 제거됨)
-                yield break;
+                    yield break;
             }
 
             bool profileExists = checkTask.Result;
@@ -1190,15 +1135,14 @@ namespace Manager
 
             if (!profileExists)
             {
-                // ⚠️ 프로필이 없는 경우: 정상적인 경우 발생하지 않아야 함
+                // 프로필이 없는 경우: 정상적인 경우 발생하지 않아야 함
                 // (회원가입 시 프로필 생성하므로)
                 Debug.LogError($"[JoinManager] 프로필이 존재하지 않습니다: {uid}");
                 if (SystemMessageManager.Instance != null)
                 {
                     SystemMessageManager.Instance.ShowMessage("ProfileNotFound");
                 }
-                // 버튼 활성화 (구식 시스템 제거됨)
-                yield break;
+                    yield break;
             }
 
             // 프로필 로드 (타임아웃 적용)
@@ -1213,17 +1157,16 @@ namespace Manager
 
             if (!loadTask.IsCompleted)
             {
-                Debug.LogError($"⏱️ 프로필 로드 타임아웃 ({TASK_TIMEOUT}초)");
+                Debug.LogError($"프로필 로드 타임아웃 ({TASK_TIMEOUT}초)");
                 SystemMessageManager.Instance?.ShowMessage("NetworkTimeout");
-                // 버튼 활성화 (구식 시스템 제거됨)
-                yield break;
+                    yield break;
             }
 
             profile = loadTask.Result;
 
             if (profile != null)
             {
-                // ✅ 이메일 인증 상태 업데이트 (익명 로그인이 아닌 경우만 true로 설정)
+                // 이메일 인증 상태 업데이트 (익명 로그인이 아닌 경우만 true로 설정)
                 // 익명 로그인은 EmailVerified가 항상 false여야 함
                 if (!AuthManager.Instance.IsAnonymous)
                 {
@@ -1239,7 +1182,7 @@ namespace Manager
                     // 업데이트 실패해도 로그인은 진행 (치명적 아님)
                     if (!updateEmailVerifiedTask.IsCompleted)
                     {
-                        Debug.LogWarning($"⏱️ 마지막 로그인 업데이트 타임아웃 ({TASK_TIMEOUT}초) - 무시하고 진행");
+                        Debug.LogWarning($"마지막 로그인 업데이트 타임아웃 ({TASK_TIMEOUT}초) - 무시하고 진행");
                     }
                 }
 
@@ -1280,8 +1223,7 @@ namespace Manager
                 // Photon 로비 진입
                 PhotonNetwork.JoinLobby();
 
-                // 버튼 활성화 (구식 시스템 제거됨)
-            }
+                }
             else
             {
                 // 로딩스크린 숨김
@@ -1291,8 +1233,7 @@ namespace Manager
                 }
 
                 SystemMessageManager.Instance?.ShowMessage("ProfileLoadFailed");
-                // 버튼 활성화 (구식 시스템 제거됨)
-            }
+                }
         }
 
         /// <summary>
@@ -1469,40 +1410,8 @@ namespace Manager
 
             try
             {
-                // Firebase 초기화 대기
-                if (!AuthManager.Instance.IsInitialized)
-                {
-                    SystemMessageManager.Instance?.ShowMessage("InitializingFirebase");
-
-                    bool authReady = await AuthManager.Instance.WaitForInitialization(10f);
-                    if (!authReady)
-                    {
-                        AuthManager.Instance.RetryInitialization();
-                        authReady = await AuthManager.Instance.WaitForInitialization(10f);
-                        if (!authReady)
-                        {
-                            SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
-                            Debug.LogError("[JoinManager] AuthManager 초기화 재시도 실패");
-                            return;
-                        }
-                    }
-                }
-
-                if (!SessionManager.Instance.IsInitialized)
-                {
-                    bool sessionReady = await SessionManager.Instance.WaitForInitialization(10f);
-                    if (!sessionReady)
-                    {
-                        SessionManager.Instance.RetryInitialization();
-                        sessionReady = await SessionManager.Instance.WaitForInitialization(10f);
-                        if (!sessionReady)
-                        {
-                            SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
-                            Debug.LogError("[JoinManager] SessionManager 초기화 재시도 실패");
-                            return;
-                        }
-                    }
-                }
+                if (!await WaitForFirebaseInitialization())
+                    return;
 
                 // 로그인 처리
                 SystemMessageManager.Instance?.ShowMessage("LoggingIn");
@@ -1548,7 +1457,7 @@ namespace Manager
                                 {
                                     SessionManager.Instance.StartSessionMonitoring(uid);
                                     SystemMessageManager.Instance?.ShowMessage("LoginSuccess");
-                                    await System.Threading.Tasks.Task.Delay(500);
+                                    await System.Threading.Tasks.Task.Delay((int)(LOGIN_TRANSITION_DELAY * 1000));
                                     StartCoroutine(OnLoginSuccessCoroutine());
                                 }
                                 else
@@ -1558,15 +1467,13 @@ namespace Manager
                                 }
 
                                 isProcessing = false;
-                                // 버튼 활성화 (구식 시스템 제거됨)
-                            },
+                                                },
                             onCancel: () =>
                             {
                                 AuthManager.Instance.SignOutWithoutSessionClear();
                                 SystemMessageManager.Instance?.ShowMessage("LoginCanceled");
                                 isProcessing = false;
-                                // 버튼 활성화 (구식 시스템 제거됨)
-                            },
+                                                },
                             confirmText: "확인",
                             cancelText: "취소"
                         );
@@ -1584,12 +1491,12 @@ namespace Manager
 
                     SessionManager.Instance.StartSessionMonitoring(uid);
                     SystemMessageManager.Instance?.ShowMessage("LoginSuccess");
-                    await System.Threading.Tasks.Task.Delay(500);
+                    await System.Threading.Tasks.Task.Delay((int)(LOGIN_TRANSITION_DELAY * 1000));
                     StartCoroutine(OnLoginSuccessCoroutine());
                 }
                 else
                 {
-                    // ⭐ 소셜 로그인 전용 계정 체크
+                    // 소셜 로그인 전용 계정 체크
                     if (result.message.StartsWith("SOCIAL_LOGIN_ONLY::"))
                     {
                         string provider = result.message.Split("::")[1];
@@ -1636,7 +1543,7 @@ namespace Manager
 
             // 픽셀 길이 검증
             int pixelLength = CalculatePixelLength(nickname);
-            if (pixelLength > 24)
+            if (pixelLength > MAX_NICKNAME_PIXEL_LENGTH)
             {
                 if (validationErrorText != null)
                 {
@@ -1651,53 +1558,18 @@ namespace Manager
 
             try
             {
-                // Firebase 초기화 대기
-                if (!AuthManager.Instance.IsInitialized)
-                {
-                    SystemMessageManager.Instance?.ShowMessage("InitializingFirebase");
-                    bool authReady = await AuthManager.Instance.WaitForInitialization(10f);
-                    if (!authReady)
-                    {
-                        AuthManager.Instance.RetryInitialization();
-                        authReady = await AuthManager.Instance.WaitForInitialization(10f);
-                        if (!authReady)
-                        {
-                            SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
-                            return;
-                        }
-                    }
-                }
-
-                if (!SessionManager.Instance.IsInitialized)
-                {
-                    bool sessionReady = await SessionManager.Instance.WaitForInitialization(10f);
-                    if (!sessionReady)
-                    {
-                        SessionManager.Instance.RetryInitialization();
-                        sessionReady = await SessionManager.Instance.WaitForInitialization(10f);
-                        if (!sessionReady)
-                        {
-                            SystemMessageManager.Instance?.ShowMessage("FirebaseInitTimeout");
-                            return;
-                        }
-                    }
-                }
+                if (!await WaitForFirebaseInitialization())
+                    return;
 
                 // 닉네임 중복 확인
                 bool isNicknameAvailable = await DatabaseManager.Instance.IsNicknameAvailable(nickname);
                 if (!isNicknameAvailable)
                 {
-                    UI.Shared.ConfirmationPopup.Show(
-                        $"'{nickname}' 닉네임은 이미 사용 중입니다.\n\n다른 닉네임을 입력해주세요.",
-                        onConfirm: () => { },
-                        onCancel: null,
-                        confirmText: "확인",
-                        cancelText: null
-                    );
+                    ShowSimpleAlert($"'{nickname}' 닉네임은 이미 사용 중입니다.\n\n다른 닉네임을 입력해주세요.");
                     return;
                 }
 
-                // ⭐ Step 1에서 이미 계정 생성되었으므로 UID 가져오기
+                // Step 1에서 이미 계정 생성되었으므로 UID 가져오기
                 string uid = AuthManager.Instance.CurrentUserUID;
                 string email = verifiedEmail; // Step 1에서 저장한 이메일
 
@@ -1715,7 +1587,7 @@ namespace Manager
                     return;
                 }
 
-                // ⭐ 회원가입 완료 - 세션 생성 없이 로그인 유도
+                // 회원가입 완료 - 세션 생성 없이 로그인 유도
                 UI.Shared.ConfirmationPopup.Show(
                     "회원가입을 환영합니다!\n\n로그인을 진행해주세요.",
                     onConfirm: () =>
@@ -1832,7 +1704,7 @@ namespace Manager
                         {
                             SessionManager.Instance.StartSessionMonitoring(uid);
                             SystemMessageManager.Instance?.ShowMessage("LoginSuccess");
-                            await System.Threading.Tasks.Task.Delay(500);
+                            await System.Threading.Tasks.Task.Delay((int)(LOGIN_TRANSITION_DELAY * 1000));
                             StartCoroutine(OnLoginSuccessCoroutine());
                         }
                         else
@@ -1909,7 +1781,7 @@ namespace Manager
                 return;
             }
 
-            // ⭐ 팝업이 떠있으면 Enter 키 처리 안 함 (팝업의 확인 버튼이 처리하도록)
+            // 팝업이 떠있으면 Enter 키 처리 안 함 (팝업의 확인 버튼이 처리하도록)
             if (UI.UIStackManager.Instance != null && UI.UIStackManager.Instance.HasOpenUI)
             {
                 return;
@@ -2041,15 +1913,15 @@ namespace Manager
             // 픽셀 길이 계산
             int pixelLength = CalculatePixelLength(input);
 
-            // 24픽셀 초과 시 경고
-            if (pixelLength > 24)
+            // 최대 픽셀 길이 초과 시 경고
+            if (pixelLength > MAX_NICKNAME_PIXEL_LENGTH)
             {
-                validationErrorText.text = $"닉네임이 너무 깁니다 ({pixelLength}/24)";
+                validationErrorText.text = $"닉네임이 너무 깁니다 ({pixelLength}/{MAX_NICKNAME_PIXEL_LENGTH})";
                 validationErrorText.color = Color.red;
             }
             else
             {
-                validationErrorText.text = $"{pixelLength}/24";
+                validationErrorText.text = $"{pixelLength}/{MAX_NICKNAME_PIXEL_LENGTH}";
                 validationErrorText.color = Color.blue;
             }
         }
@@ -2112,10 +1984,7 @@ namespace Manager
         #endregion
 
         #region Password Reset
-        /// <summary>
-        /// 비밀번호 찾기 버튼 클릭 (Unity Editor에서 연결)
-        /// </summary>
-        public void OnFindPasswordButtonClicked()
+        public void OnClickFindPasswordButton()
         {
             UI.Shared.FindPasswordPopup.Show();
         }

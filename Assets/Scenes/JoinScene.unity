@@ -4603,7 +4603,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 199671815}
         m_TargetAssemblyTypeName: Manager.JoinManager, Assembly-CSharp
-        m_MethodName: OnFindPasswordButtonClicked
+        m_MethodName: OnClickFindPasswordButton
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
