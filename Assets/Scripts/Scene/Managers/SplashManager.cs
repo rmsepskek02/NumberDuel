@@ -94,6 +94,15 @@ namespace Manager
             // 자동 로그인 가능 여부 확인
             if (AuthManager.Instance.CanAutoLogin())
             {
+                // 이메일 전용 계정 + 인증 미완료 → 자동 로그인 차단
+                if (AuthManager.Instance.IsEmailOnlyAccount() &&
+                    !AuthManager.Instance.IsEmailVerified)
+                {
+                    AuthManager.Instance.SignOutWithoutSessionClear();
+                    SceneManager.LoadScene(SceneNameExtensions.GetSceneName(SceneName.JoinScene));
+                    yield break;
+                }
+
                 // 시스템 메시지: 세션 복원
                 if (SystemMessageManager.Instance != null)
                 {

@@ -363,6 +363,11 @@ MonoBehaviour:
     messageType: 0
     displayDuration: 1
     textColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  - messageKey: ConvertingAccount
+    messageText: "\uACC4\uC815\uC744 \uC804\uD658\uD558\uB294 \uC911..."
+    messageType: 0
+    displayDuration: 1
+    textColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   - messageKey: CreatingAccount
     messageText: "\uACC4\uC815\uC744 \uC0DD\uC131\uD558\uB294 \uC911..."
     messageType: 0
@@ -372,4 +377,14 @@ MonoBehaviour:
     messageText: "\uD68C\uC6D0\uAC00\uC785\uC774 \uC644\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4!"
     messageType: 3
     displayDuration: 2
+    textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}
+  - messageKey: CheckingEmail
+    messageText: "\uC774\uBA54\uC77C \uD655\uC778 \uC911..."
+    messageType: 0
+    displayDuration: 1
+    textColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  - messageKey: EmailLinkSuccess
+    messageText: "\uC774\uBA54\uC77C \uACC4\uC815\uC73C\uB85C \uC804\uD658\uB418\uC5C8\uC2B5\uB2C8\uB2E4!"
+    messageType: 3
+    displayDuration: 3
     textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}

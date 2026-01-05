@@ -58,6 +58,75 @@ namespace Manager
         /// 익명 로그인 여부 확인
         /// </summary>
         public bool IsAnonymous => currentUser?.IsAnonymous ?? false;
+
+        /// <summary>
+        /// 이메일/비밀번호 전용 계정 여부 확인
+        /// (소셜 로그인 없이 이메일로만 로그인 가능한 계정)
+        /// </summary>
+        public bool IsEmailOnlyAccount()
+        {
+            if (currentUser == null || currentUser.IsAnonymous)
+                return false;
+
+            bool hasPasswordProvider = false;
+            bool hasSocialProvider = false;
+
+            foreach (var provider in currentUser.ProviderData)
+            {
+                if (provider.ProviderId == "password")
+                    hasPasswordProvider = true;
+                else if (provider.ProviderId == "google.com" ||
+                         provider.ProviderId == "playgames.google.com")
+                    hasSocialProvider = true;
+            }
+
+            // 이메일 provider만 있고 소셜 provider 없음
+            return hasPasswordProvider && !hasSocialProvider;
+        }
+
+        /// <summary>
+        /// 계정 연동 완료 이벤트
+        /// 게스트 → 이메일, 게스트 → Google, 이메일 → Google 등 모든 계정 연동 시 발생
+        /// </summary>
+        public event Action OnAccountLinked;
+
+        /// <summary>
+        /// 이메일 계정 연동 완료 이벤트
+        /// 게스트 → 이메일 연동 시에만 발생
+        /// </summary>
+        public event Action OnEmailLinked;
+
+        /// <summary>
+        /// Google 계정 연동 완료 이벤트
+        /// 게스트 → Google, 이메일 → Google 연동 시에만 발생
+        /// </summary>
+        public event Action OnGoogleLinked;
+
+        /// <summary>
+        /// 이메일 연동 완료 알림
+        /// </summary>
+        public void NotifyEmailLinked()
+        {
+            OnEmailLinked?.Invoke();
+            OnAccountLinked?.Invoke();
+        }
+
+        /// <summary>
+        /// Google 연동 완료 알림
+        /// </summary>
+        public void NotifyGoogleLinked()
+        {
+            OnGoogleLinked?.Invoke();
+            OnAccountLinked?.Invoke();
+        }
+
+        /// <summary>
+        /// 계정 연동 완료 알림 (일반)
+        /// </summary>
+        public void NotifyAccountLinked()
+        {
+            OnAccountLinked?.Invoke();
+        }
         #endregion
 
         #region Initialization
@@ -1330,6 +1399,127 @@ namespace Manager
                 Debug.LogError($"[AuthManager] Google 전환 실패: {ex.Message}");
                 return (false, $"오류가 발생했습니다: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// 게스트 계정을 이메일 계정으로 전환
+        /// (Anonymous Auth → Email Auth with Link)
+        /// </summary>
+        /// <param name="email">연동할 이메일</param>
+        /// <param name="password">설정할 비밀번호</param>
+        /// <param name="nickname">새 닉네임 (null이면 기존 닉네임 유지)</param>
+        public async Task<(bool success, string message)> ConvertGuestToEmail(
+            string email,
+            string password,
+            string nickname = null)
+        {
+            try
+            {
+                // 1. 게스트 확인
+                if (currentUser == null)
+                    return (false, "로그인이 필요합니다.");
+
+                if (!IsAnonymous)
+                    return (false, "게스트 계정이 아닙니다.");
+
+                // 2. 입력 검증
+                if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+                    return (false, "이메일과 비밀번호를 입력해주세요.");
+
+                if (password.Length < 6)
+                    return (false, "비밀번호는 최소 6자 이상이어야 합니다.");
+
+                // 3. 이메일 중복 확인 (Firestore)
+                if (DatabaseManager.Instance != null)
+                {
+                    bool isRegistered = await DatabaseManager.Instance.IsEmailRegistered(email);
+                    if (isRegistered)
+                        return (false, "이미 사용 중인 이메일입니다.");
+                }
+
+                // 4. 닉네임 중복 확인 (새 닉네임이 제공된 경우만)
+                if (!string.IsNullOrEmpty(nickname) && DatabaseManager.Instance != null)
+                {
+                    bool isAvailable = await DatabaseManager.Instance.IsNicknameAvailable(nickname);
+                    if (!isAvailable)
+                        return (false, "이미 사용 중인 닉네임입니다.");
+                }
+
+                // 5. 게스트 UID 저장 (연동 후에도 유지됨)
+                string guestUID = currentUser.UserId;
+                Debug.Log($"[AuthManager] 게스트 UID: {guestUID}");
+
+                // 6. 이메일/비밀번호 Credential 생성
+                var emailCredential = Firebase.Auth.EmailAuthProvider.GetCredential(email, password);
+
+                // 7. 게스트 계정에 이메일 연동 (UID 유지)
+                var linkResult = await currentUser.LinkWithCredentialAsync(emailCredential);
+
+                if (linkResult == null || linkResult.User == null)
+                    return (false, "이메일 계정 연동에 실패했습니다.");
+
+                // 8. currentUser 업데이트 및 UID 유지 확인
+                currentUser = linkResult.User;
+                Debug.Log($"[AuthManager] 연동 후 UID: {currentUser.UserId} (유지: {guestUID == currentUser.UserId})");
+
+                // 9. Firestore 업데이트
+                if (DatabaseManager.Instance != null)
+                {
+                    // AuthProvider 변경 (Guest → Email)
+                    await DatabaseManager.Instance.UpdateUserAuthProvider(guestUID, "Email");
+
+                    // 이메일 업데이트
+                    await DatabaseManager.Instance.UpdateUserEmail(guestUID, email);
+
+                    // 닉네임 업데이트 (새 닉네임이 제공된 경우만)
+                    if (!string.IsNullOrEmpty(nickname))
+                    {
+                        await DatabaseManager.Instance.UpdateUserNickname(guestUID, nickname);
+                    }
+
+                    Debug.Log($"[AuthManager] 게스트 계정이 이메일 계정으로 전환되었습니다. UID: {guestUID}");
+                }
+
+                // 10. 이메일 인증 발송 (선택사항)
+                await SendEmailVerification();
+
+                return (true, "이메일 계정으로 전환되었습니다.");
+            }
+            catch (FirebaseException ex)
+            {
+                // 중복 연동 에러 체크
+                if (ex.ErrorCode == (int)AuthError.ProviderAlreadyLinked)
+                {
+                    return (false, "이미 이메일 계정이 연동되어 있습니다.");
+                }
+
+                // 이메일 중복 (Firebase Auth 레벨)
+                if (ex.Message.Contains("EMAIL_EXISTS") || ex.Message.Contains("already in use"))
+                {
+                    return (false, "이미 사용 중인 이메일입니다.");
+                }
+
+                Debug.LogError($"[AuthManager] 이메일 전환 실패: {ex.Message}");
+                return (false, GetFirebaseErrorMessage(ex));
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[AuthManager] 이메일 전환 실패: {ex.Message}");
+                return (false, $"오류가 발생했습니다: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 이메일 계정에 연동 가능 여부 확인
+        /// (게스트 계정이고 아직 이메일 provider가 없는 경우)
+        /// </summary>
+        public bool CanLinkEmailToGuest()
+        {
+            if (currentUser == null)
+                return false;
+
+            var providers = GetCurrentUserProviders();
+            return IsAnonymous && !providers.Contains("password");
         }
 
         #endregion

@@ -15,7 +15,6 @@ namespace UI.Shared
     {
         [Header("UI References")]
         [SerializeField] private TextMeshProUGUI titleText;
-        [SerializeField] private TextMeshProUGUI emailText;             // 이메일 표시 텍스트 (이메일 계정 전용)
         [SerializeField] private TextMeshProUGUI descriptionText;
         [SerializeField] private Button emailButton;            // 이메일 연동 버튼 (게스트 전용)
         [SerializeField] private Button googleButton;           // Google 연동 버튼
@@ -52,11 +51,105 @@ namespace UI.Shared
             gameObject.SetActive(false);
         }
 
+        private void OnEnable()
+        {
+            // 계정 연동 이벤트 구독
+            if (Manager.AuthManager.Instance != null)
+            {
+                Manager.AuthManager.Instance.OnAccountLinked += OnAccountLinked;
+            }
+        }
+
+        private void OnDisable()
+        {
+            // 계정 연동 이벤트 구독 해제
+            if (Manager.AuthManager.Instance != null)
+            {
+                Manager.AuthManager.Instance.OnAccountLinked -= OnAccountLinked;
+            }
+        }
+
         private void OnDestroy()
         {
             // Tween 정리
             showTween?.Kill();
             hideTween?.Kill();
+
+            // 이벤트 구독 해제 (안전장치)
+            if (Manager.AuthManager.Instance != null)
+            {
+                Manager.AuthManager.Instance.OnAccountLinked -= OnAccountLinked;
+            }
+        }
+
+        /// <summary>
+        /// 계정 연동 완료 이벤트 핸들러
+        /// AuthManager의 OnAccountLinked 이벤트 발생 시 호출되어 UI를 갱신
+        /// </summary>
+        private void OnAccountLinked()
+        {
+            // 팝업이 현재 표시 중일 때만 UI 갱신
+            if (!gameObject.activeSelf)
+                return;
+
+            RefreshAccountInfo();
+        }
+
+        /// <summary>
+        /// 계정 정보를 갱신하여 UI 업데이트
+        /// </summary>
+        private void RefreshAccountInfo()
+        {
+            if (Manager.AuthManager.Instance == null)
+                return;
+
+            // 현재 계정 정보 가져오기
+            displayText = Manager.AuthManager.Instance.CurrentUserEmail ?? "손님 계정";
+            isGuestMode = Manager.AuthManager.Instance.IsAnonymous;
+            bool hasEmailProvider = Manager.AuthManager.Instance.IsEmailOnlyAccount();
+
+            // UI 텍스트 업데이트
+            if (isGuestMode)
+            {
+                // 게스트 모드
+                if (titleText != null)
+                    titleText.text = "계정 연동하기";
+
+                if (descriptionText != null)
+                    descriptionText.text = $"현재: {displayText}\n\nSNS 또는 이메일로 계정을 연동하면\n게임 데이터를 안전하게 보관할 수 있습니다.";
+
+                // 이메일 버튼 표시
+                if (emailButton != null)
+                    emailButton.gameObject.SetActive(true);
+            }
+            else
+            {
+                // 이메일 계정 또는 SNS 계정 모드
+                if (titleText != null)
+                    titleText.text = hasEmailProvider ? "SNS 계정 연동" : "계정 연동하기";
+
+                if (descriptionText != null)
+                {
+                    if (hasEmailProvider)
+                    {
+                        descriptionText.text = $"현재 이메일: {displayText}\n\nSNS 계정을 추가로 연동할 수 있습니다.";
+                    }
+                    else
+                    {
+                        descriptionText.text = $"현재: {displayText}\n\n이메일 또는 다른 SNS로 계정을 연동하면\n게임 데이터를 안전하게 보관할 수 있습니다.";
+                    }
+                }
+
+                // 이메일 provider가 없는 경우(SNS 전용 계정) 이메일 버튼 표시
+                if (emailButton != null)
+                    emailButton.gameObject.SetActive(!hasEmailProvider);
+            }
+
+            // 에러 텍스트 초기화
+            if (errorText != null)
+                errorText.text = string.Empty;
+
+            Debug.Log($"[LinkSocialPopupUI] RefreshAccountInfo - displayText: {displayText}, isGuestMode: {isGuestMode}, hasEmailProvider: {hasEmailProvider}");
         }
 
         /// <summary>
@@ -71,16 +164,15 @@ namespace UI.Shared
             this.isGuestMode = isGuestMode;
             onCompleteCallback = onComplete;
 
+            // 이메일 provider 여부 확인
+            bool hasEmailProvider = Manager.AuthManager.Instance.IsEmailOnlyAccount();
+
             // UI 텍스트 업데이트
             if (isGuestMode)
             {
                 // 게스트 모드
                 if (titleText != null)
                     titleText.text = "계정 연동하기";
-
-                // 게스트는 이메일 텍스트 숨김
-                if (emailText != null)
-                    emailText.gameObject.SetActive(false);
 
                 if (descriptionText != null)
                     descriptionText.text = $"현재: {displayText}\n\nSNS 또는 이메일로 계정을 연동하면\n게임 데이터를 안전하게 보관할 수 있습니다.";
@@ -91,23 +183,25 @@ namespace UI.Shared
             }
             else
             {
-                // 이메일 계정 모드 (기존 로직)
+                // 이메일 계정 또는 SNS 계정 모드
                 if (titleText != null)
-                    titleText.text = "SNS 계정 연동";
-
-                // 이메일 계정은 이메일 텍스트 표시
-                if (emailText != null)
-                {
-                    emailText.gameObject.SetActive(true);
-                    emailText.text = displayText;
-                }
+                    titleText.text = hasEmailProvider ? "SNS 계정 연동" : "계정 연동하기";
 
                 if (descriptionText != null)
-                    descriptionText.text = $"현재 이메일: {displayText}\n\nSNS 계정의 이메일이 일치해야 연동됩니다.";
+                {
+                    if (hasEmailProvider)
+                    {
+                        descriptionText.text = $"현재 이메일: {displayText}\n\nSNS 계정을 추가로 연동할 수 있습니다.";
+                    }
+                    else
+                    {
+                        descriptionText.text = $"현재: {displayText}\n\n이메일 또는 다른 SNS로 계정을 연동하면\n게임 데이터를 안전하게 보관할 수 있습니다.";
+                    }
+                }
 
-                // 이메일 버튼 숨김
+                // 이메일 provider가 없는 경우(SNS 전용 계정) 이메일 버튼 표시
                 if (emailButton != null)
-                    emailButton.gameObject.SetActive(false);
+                    emailButton.gameObject.SetActive(!hasEmailProvider);
             }
 
             // 공통: Kakao 버튼 비활성화
@@ -170,14 +264,39 @@ namespace UI.Shared
         }
 
         /// <summary>
-        /// 이메일 버튼 클릭 (게스트 → 이메일 계정 전환, 향후 구현)
+        /// 이메일 버튼 클릭 (게스트/SNS 계정 → 이메일 계정 연동)
         /// Unity 에디터에서 이벤트 연결
         /// </summary>
         public void OnEmailButtonClicked()
         {
-            ShowError("이메일 연동은 준비 중입니다.");
+            if (isProcessing)
+                return;
 
+            // 사운드 재생
             Manager.SoundManager.Instance?.PlaySFX(Objects.SoundType.UI_ButtonClick);
+
+            // 이미 이메일 provider가 있는지 확인
+            if (Manager.AuthManager.Instance.IsEmailOnlyAccount())
+            {
+                ShowError("이미 이메일 계정이 연동되어 있습니다.");
+                return;
+            }
+
+            // LinkEmailPopupManager를 통해 이메일 연동 팝업 표시
+            LinkEmailPopupManager.Show((success) =>
+            {
+                if (success)
+                {
+                    // 이메일 연동 성공
+                    Hide();
+                    onCompleteCallback?.Invoke(true);
+                }
+                else
+                {
+                    // 이메일 연동 취소 또는 실패
+                    isProcessing = false;
+                }
+            });
         }
 
         /// <summary>
@@ -195,10 +314,10 @@ namespace UI.Shared
             if (isProcessing)
                 return;
 
-            isProcessing = true;
-
             // 사운드 재생
             Manager.SoundManager.Instance?.PlaySFX(Objects.SoundType.UI_ButtonClick);
+
+            isProcessing = true;
 
             if (isGuestMode)
             {

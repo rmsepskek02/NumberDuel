@@ -48,9 +48,33 @@ namespace UI.Settings.Tabs
 
         private void OnEnable()
         {
+            // 계정 연동 이벤트 구독
+            if (Manager.AuthManager.Instance != null)
+            {
+                Manager.AuthManager.Instance.OnAccountLinked += OnAccountLinkedEvent;
+            }
             LoadProfile();
         }
+
+        private void OnDisable()
+        {
+            // 이벤트 구독 해제
+            if (Manager.AuthManager.Instance != null)
+            {
+                Manager.AuthManager.Instance.OnAccountLinked -= OnAccountLinkedEvent;
+            }
+        }
         #endregion
+
+        /// <summary>
+        /// 계정 연동 완료 이벤트 핸들러
+        /// </summary>
+        private void OnAccountLinkedEvent()
+        {
+            // 프로필 재로드 및 UI 갱신
+            LoadProfile();
+            UpdateAccountLinkingUI();
+        }
 
         #region Profile Loading
         /// <summary>
@@ -93,7 +117,7 @@ namespace UI.Settings.Tabs
                 ShowError("프로필 정보를 불러오는 중 오류가 발생했습니다.");
             }
         }
-        
+
         /// <summary>
         /// UI 업데이트
         /// </summary>

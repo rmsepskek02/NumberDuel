@@ -397,6 +397,76 @@ namespace Manager
         }
 
         /// <summary>
+        /// 사용자 이메일 업데이트 (게스트 → 이메일 전환 시)
+        /// </summary>
+        /// <param name="uid">Firebase UID</param>
+        /// <param name="email">새 이메일</param>
+        public async Task<bool> UpdateUserEmail(string uid, string email)
+        {
+            if (!isInitialized)
+            {
+                Debug.LogError("[DatabaseManager] Firestore가 초기화되지 않았습니다.");
+                return false;
+            }
+
+            try
+            {
+                DocumentReference docRef = db.Collection(USERS_COLLECTION).Document(uid);
+
+                var updates = new System.Collections.Generic.Dictionary<string, object>
+                {
+                    { "Email", email },
+                    { "LastLoginAt", DateTime.UtcNow }
+                };
+
+                await docRef.UpdateAsync(updates);
+
+                Debug.Log($"[DatabaseManager] 이메일 업데이트 완료: {uid} → {email}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[DatabaseManager] 이메일 업데이트 실패: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 사용자 닉네임 업데이트
+        /// </summary>
+        /// <param name="uid">Firebase UID</param>
+        /// <param name="nickname">새 닉네임</param>
+        public async Task<bool> UpdateUserNickname(string uid, string nickname)
+        {
+            if (!isInitialized)
+            {
+                Debug.LogError("[DatabaseManager] Firestore가 초기화되지 않았습니다.");
+                return false;
+            }
+
+            try
+            {
+                DocumentReference docRef = db.Collection(USERS_COLLECTION).Document(uid);
+
+                var updates = new System.Collections.Generic.Dictionary<string, object>
+                {
+                    { "Nickname", nickname },
+                    { "LastLoginAt", DateTime.UtcNow }
+                };
+
+                await docRef.UpdateAsync(updates);
+
+                Debug.Log($"[DatabaseManager] 닉네임 업데이트 완료: {uid} → {nickname}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[DatabaseManager] 닉네임 업데이트 실패: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
         /// 이메일 인증 상태 업데이트 (로그인 시 호출)
         /// </summary>
         /// <param name="uid">Firebase UID</param>
