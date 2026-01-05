@@ -122,6 +122,10 @@ namespace Manager
         private TMP_InputField[] inputFieldOrder;
         private Photon.Realtime.ClientState lastClientState;
 
+        // Enter 키 쿨다운
+        private float lastEnterKeyPressTime = 0f;
+        private const float ENTER_KEY_COOLDOWN = 0.3f; // Enter 키 쿨다운 (0.3초)
+
         private const float PHOTON_CONNECT_TIMEOUT = 10f; // Photon 연결 타임아웃 (10초)
         private const float TASK_TIMEOUT = 10f; // Firebase Task 타임아웃 (10초)
         private const float MIN_LOADING_DURATION = 1.5f; // 최소 로딩 시간 (페이드인 + 여유)
@@ -1898,6 +1902,20 @@ namespace Manager
         /// </summary>
         private void HandleEnterKey()
         {
+            // 쿨다운 체크 (중복 입력 방지)
+            if (Time.time - lastEnterKeyPressTime < ENTER_KEY_COOLDOWN)
+            {
+                return;
+            }
+
+            // ⭐ 팝업이 떠있으면 Enter 키 처리 안 함 (팝업의 확인 버튼이 처리하도록)
+            if (UI.UIStackManager.Instance != null && UI.UIStackManager.Instance.HasOpenUI)
+            {
+                return;
+            }
+
+            lastEnterKeyPressTime = Time.time;
+
             // 로그인 섹션 활성화 시 - 로그인 버튼 클릭
             if (loginSection != null && loginSection.activeSelf)
             {

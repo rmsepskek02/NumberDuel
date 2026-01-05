@@ -92,6 +92,10 @@ namespace UI.Shared
         // Tab 키 네비게이션 (PC 전용)
         private TMP_InputField[] inputFieldOrder;
 
+        // Enter 키 쿨다운
+        private float lastEnterKeyPressTime = 0f;
+        private const float ENTER_KEY_COOLDOWN = 0.3f; // Enter 키 쿨다운 (0.3초)
+
         private void Awake()
         {
             // 실시간 비밀번호 검증
@@ -812,6 +816,14 @@ namespace UI.Shared
         /// </summary>
         private void HandleEnterKey()
         {
+            // 쿨다운 체크 (중복 입력 방지)
+            if (Time.time - lastEnterKeyPressTime < ENTER_KEY_COOLDOWN)
+            {
+                return;
+            }
+
+            lastEnterKeyPressTime = Time.time;
+
             if (nextButton == null || !nextButton.interactable)
                 return;
 

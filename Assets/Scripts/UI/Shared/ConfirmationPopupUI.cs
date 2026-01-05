@@ -76,8 +76,8 @@ namespace UI.Shared
                     return; // Do nothing - force explicit click
                 }
 
-                // 취소 버튼이 없으면 팝업 닫기 (안전한 종료)
-                OnCancelClicked();
+                // 취소 버튼이 없으면 확인 버튼 클릭 (onConfirmed 콜백 실행)
+                OnConfirmClicked();
 
                 // Enter 키 입력을 소비했다고 표시 (다른 곳에서 중복 처리하지 않도록)
                 UIStackManager.Instance?.ConsumeEnterKey();
