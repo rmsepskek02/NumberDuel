@@ -76,20 +76,8 @@ namespace Manager
             if (currentUser == null || currentUser.IsAnonymous)
                 return false;
 
-            bool hasPasswordProvider = false;
-            bool hasSocialProvider = false;
-
-            foreach (var provider in currentUser.ProviderData)
-            {
-                if (provider.ProviderId == "password")
-                    hasPasswordProvider = true;
-                else if (provider.ProviderId == "google.com" ||
-                         provider.ProviderId == "playgames.google.com")
-                    hasSocialProvider = true;
-            }
-
-            // 이메일 provider만 있고 소셜 provider 없음
-            return hasPasswordProvider && !hasSocialProvider;
+            var providers = GetCurrentUserProviders();
+            return HasPasswordProvider(providers) && !HasGoogleProvider(providers);
         }
 
         /// <summary>
@@ -337,7 +325,7 @@ namespace Manager
             try
             {
                 // Firebase 초기화 확인
-                if (!isInitialized || auth == null)
+                if (!IsFirebaseReady())
                 {
                     Debug.LogError("[AuthManager] Firebase가 초기화되지 않았습니다.");
                     return false;
@@ -511,14 +499,10 @@ namespace Manager
             try
             {
                 // 입력 검증
-                if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+                var (isValid, errorMessage) = ValidateEmailAndPassword(email, password);
+                if (!isValid)
                 {
-                    return (false, "이메일과 비밀번호를 입력해주세요.");
-                }
-
-                if (password.Length < 6)
-                {
-                    return (false, "비밀번호는 최소 6자 이상이어야 합니다.");
+                    return (false, errorMessage);
                 }
 
                 // Firebase 회원가입
@@ -529,7 +513,7 @@ namespace Manager
                     currentUser = result.User;
 
                     // 이메일 인증 발송
-                    await SendEmailVerification();
+                    await SendEmailVerificationInternal();
 
                     return (true, "회원가입이 완료되었습니다. 이메일 인증을 진행해주세요.");
                 }
@@ -544,9 +528,9 @@ namespace Manager
         }
 
         /// <summary>
-        /// 이메일 인증 발송
+        /// 이메일 인증 발송 (내부용 - 에러 처리 간소화)
         /// </summary>
-        public async Task<bool> SendEmailVerification()
+        private async Task<bool> SendEmailVerificationInternal()
         {
             if (currentUser == null)
             {
@@ -565,6 +549,15 @@ namespace Manager
                 return false;
             }
         }
+
+        /// <summary>
+        /// 이메일 인증 발송 (외부 공개 API)
+        /// SendVerificationEmail()과 통합됨
+        /// </summary>
+        public Task<bool> SendEmailVerification()
+        {
+            return SendEmailVerificationInternal();
+        }
         #endregion
 
         #region Public Methods - Login
@@ -579,9 +572,10 @@ namespace Manager
             try
             {
                 // 입력 검증
-                if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+                var (isValid, errorMessage) = ValidateEmailAndPassword(email, password);
+                if (!isValid)
                 {
-                    return (false, "이메일과 비밀번호를 입력해주세요.");
+                    return (false, errorMessage);
                 }
 
                 // Firebase 로그인
@@ -676,7 +670,7 @@ namespace Manager
         }
 
         /// <summary>
-        /// 현재 사용자에게 이메일 인증 메일 발송
+        /// 현재 사용자에게 이메일 인증 메일 발송 (메시지 반환)
         /// </summary>
         /// <returns>성공 여부와 메시지</returns>
         public async Task<(bool success, string message)> SendVerificationEmail()
@@ -726,13 +720,14 @@ namespace Manager
             try
             {
                 // 입력 검증
-                if (string.IsNullOrEmpty(email))
+                var (isValid, errorMessage) = ValidateEmail(email);
+                if (!isValid)
                 {
-                    return (false, "이메일을 입력해주세요.");
+                    return (false, errorMessage);
                 }
 
                 // Firebase 초기화 확인
-                if (!isInitialized || auth == null)
+                if (!IsFirebaseReady())
                 {
                     return (false, "Firebase가 초기화되지 않았습니다.");
                 }
@@ -846,7 +841,7 @@ namespace Manager
             try
             {
                 // Firebase 초기화 확인
-                if (!isInitialized || auth == null)
+                if (!IsFirebaseReady())
                 {
                     return (false, "Firebase가 초기화되지 않았습니다.", string.Empty);
                 }
@@ -915,7 +910,7 @@ namespace Manager
         {
             try
             {
-                if (!isInitialized || auth == null)
+                if (!IsFirebaseReady())
                 {
                     return new List<string>();
                 }
@@ -932,6 +927,71 @@ namespace Manager
         #endregion
 
         #region Helper Methods
+        /// <summary>
+        /// Firebase 초기화 확인
+        /// </summary>
+        private bool IsFirebaseReady()
+        {
+            return isInitialized && auth != null;
+        }
+
+        /// <summary>
+        /// Google Provider 확인 (google.com 또는 playgames.google.com)
+        /// </summary>
+        private bool HasGoogleProvider(List<string> providers)
+        {
+            return providers.Contains("google.com") || providers.Contains("playgames.google.com");
+        }
+
+        /// <summary>
+        /// Password Provider 확인
+        /// </summary>
+        private bool HasPasswordProvider(List<string> providers)
+        {
+            return providers.Contains("password");
+        }
+
+        /// <summary>
+        /// 이메일 검증
+        /// </summary>
+        private (bool isValid, string errorMessage) ValidateEmail(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+                return (false, "이메일을 입력해주세요.");
+
+            return (true, string.Empty);
+        }
+
+        /// <summary>
+        /// 비밀번호 검증
+        /// </summary>
+        private (bool isValid, string errorMessage) ValidatePassword(string password)
+        {
+            if (string.IsNullOrEmpty(password))
+                return (false, "비밀번호를 입력해주세요.");
+
+            if (password.Length < 6)
+                return (false, "비밀번호는 최소 6자 이상이어야 합니다.");
+
+            return (true, string.Empty);
+        }
+
+        /// <summary>
+        /// 이메일과 비밀번호 동시 검증
+        /// </summary>
+        private (bool isValid, string errorMessage) ValidateEmailAndPassword(string email, string password)
+        {
+            var emailValidation = ValidateEmail(email);
+            if (!emailValidation.isValid)
+                return emailValidation;
+
+            var passwordValidation = ValidatePassword(password);
+            if (!passwordValidation.isValid)
+                return passwordValidation;
+
+            return (true, string.Empty);
+        }
+
         /// <summary>
         /// Firebase 에러 메시지를 한글로 변환 (static으로 외부에서도 사용 가능)
         /// </summary>
@@ -1086,9 +1146,8 @@ namespace Manager
             if (currentUser == null)
                 return false;
 
-            var providers = currentUser.ProviderData;
-            return providers?.Any(p => p.ProviderId == "playgames.google.com" ||
-                                      p.ProviderId == "google.com") ?? false;
+            var providers = GetCurrentUserProviders();
+            return HasGoogleProvider(providers);
         }
 
         /// <summary>
@@ -1101,12 +1160,7 @@ namespace Manager
                 return false;
 
             var providers = GetCurrentUserProviders();
-
-            // Google 또는 Play Games는 있고, password는 없어야 함
-            bool hasGoogle = providers.Contains("google.com") || providers.Contains("playgames.google.com");
-            bool hasPassword = providers.Contains("password");
-
-            return hasGoogle && !hasPassword;
+            return HasGoogleProvider(providers) && !HasPasswordProvider(providers);
         }
 
         /// <summary>
@@ -1119,12 +1173,7 @@ namespace Manager
                 return false;
 
             var providers = GetCurrentUserProviders();
-
-            // password는 있고, Google/Play Games는 없어야 함
-            bool hasGoogle = providers.Contains("google.com") || providers.Contains("playgames.google.com");
-            bool hasPassword = providers.Contains("password");
-
-            return hasPassword && !hasGoogle;
+            return HasPasswordProvider(providers) && !HasGoogleProvider(providers);
         }
 
         /// <summary>
@@ -1150,21 +1199,11 @@ namespace Manager
                     return (false, "Google 계정이 아니거나 이미 연동되어 있습니다.");
                 }
 
-                // 이메일 검증
-                if (string.IsNullOrEmpty(email))
+                // 이메일과 비밀번호 검증
+                var (isValid, errorMessage) = ValidateEmailAndPassword(email, password);
+                if (!isValid)
                 {
-                    return (false, "이메일을 입력해주세요.");
-                }
-
-                // 비밀번호 검증
-                if (string.IsNullOrEmpty(password))
-                {
-                    return (false, "비밀번호를 입력해주세요.");
-                }
-
-                if (password.Length < 6)
-                {
-                    return (false, "비밀번호는 최소 6자 이상이어야 합니다.");
+                    return (false, errorMessage);
                 }
 
                 // Credential 생성 (사용자가 입력한 이메일 사용)
@@ -1340,14 +1379,10 @@ namespace Manager
                 }
 
                 // 3. 이메일/비밀번호 검증
-                if (string.IsNullOrEmpty(email))
+                var (isValid, errorMessage) = ValidateEmailAndPassword(email, password);
+                if (!isValid)
                 {
-                    return (false, "이메일을 입력해주세요.", null);
-                }
-
-                if (string.IsNullOrEmpty(password) || password.Length < 6)
-                {
-                    return (false, "비밀번호는 최소 6자 이상이어야 합니다.", null);
+                    return (false, errorMessage, null);
                 }
 
                 // 4. Credential 생성
@@ -1424,12 +1459,11 @@ namespace Manager
 
             var providers = GetCurrentUserProviders();
 
-            bool hasGoogle = providers.Contains("google.com");
-            bool hasPassword = providers.Contains("password");
-            bool hasPlayGames = providers.Contains("playgames.google.com");
+            bool hasGoogle = HasGoogleProvider(providers);
+            bool hasPassword = HasPasswordProvider(providers);
 
             // 두 방식 모두 연동된 경우
-            if ((hasGoogle || hasPlayGames) && hasPassword)
+            if (hasGoogle && hasPassword)
             {
                 if (showCurrentSessionOnly)
                 {
@@ -1450,7 +1484,7 @@ namespace Manager
             }
 
             // Google (Play Games) 로그인
-            if (hasGoogle || hasPlayGames)
+            if (hasGoogle)
                 return "구글";
 
             // 이메일/비밀번호 로그인
@@ -1470,12 +1504,7 @@ namespace Manager
                 return false;
 
             var providers = GetCurrentUserProviders();
-
-            // Google (또는 Play Games)과 password 둘 다 있으면 완전 연동
-            bool hasGoogle = providers.Contains("google.com") || providers.Contains("playgames.google.com");
-            bool hasPassword = providers.Contains("password");
-
-            return hasGoogle && hasPassword;
+            return HasGoogleProvider(providers) && HasPasswordProvider(providers);
         }
 
         /// <summary>
@@ -1588,11 +1617,9 @@ namespace Manager
                     return (false, "게스트 계정이 아닙니다.");
 
                 // 2. 입력 검증
-                if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
-                    return (false, "이메일과 비밀번호를 입력해주세요.");
-
-                if (password.Length < 6)
-                    return (false, "비밀번호는 최소 6자 이상이어야 합니다.");
+                var (isValid, errorMessage) = ValidateEmailAndPassword(email, password);
+                if (!isValid)
+                    return (false, errorMessage);
 
                 // 3. 이메일 중복 확인 (Firestore)
                 if (DatabaseManager.Instance != null)
