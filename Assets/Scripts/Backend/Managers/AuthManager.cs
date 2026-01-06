@@ -205,7 +205,7 @@ namespace Manager
                 // 이미 로그인되어 있는지 확인
                 OnAuthStateChanged(this, null);
 
-                // ⭐ 저장된 로그인 방식 불러오기
+                // 저장된 로그인 방식 불러오기
                 LoadLoginProvider();
 
                 isInitialized = true; // 초기화 완료 플래그 설정
@@ -218,7 +218,7 @@ namespace Manager
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"[AuthManager] ❌ Auth 인스턴스 초기화 실패: {ex.Message}");
+                Debug.LogError($"[AuthManager] Auth 인스턴스 초기화 실패: {ex.Message}");
                 isInitialized = false;
             }
         }
@@ -243,7 +243,7 @@ namespace Manager
             }
             else
             {
-                Debug.LogError($"[AuthManager] ⏱️ FirebaseInitializer 초기화 타임아웃 ({timeout}초)");
+                Debug.LogError($"[AuthManager] FirebaseInitializer 초기화 타임아웃 ({timeout}초)");
                 Debug.LogError($"[AuthManager]    마지막 상태: {FirebaseInitializer.DependencyStatus}");
                 isInitialized = false;
             }
@@ -279,7 +279,7 @@ namespace Manager
 
             if (!isInitialized)
             {
-                Debug.LogError($"⏱️ AuthManager 초기화 타임아웃 ({timeout}초)");
+                Debug.LogError($"AuthManager 초기화 타임아웃 ({timeout}초)");
             }
 
             return isInitialized;
@@ -601,7 +601,7 @@ namespace Manager
             {
                 Debug.LogError($"로그인 에러: {ex.Message}");
 
-                // ⭐ 소셜 로그인 전용 계정 체크
+                // 소셜 로그인 전용 계정 체크
                 if (ex.Message.Contains("INVALID_PASSWORD") || ex.Message.Contains("password is invalid"))
                 {
                     // Provider 확인
@@ -629,23 +629,23 @@ namespace Manager
             {
                 string uid = currentUser.UserId;
 
-                // ✅ 1. 먼저 SessionManager 리스너 중지 (자기 자신의 세션 삭제를 감지하지 않도록)
+                // 1. 먼저 SessionManager 리스너 중지 (자기 자신의 세션 삭제를 감지하지 않도록)
                 if (SessionManager.Instance != null)
                 {
                     SessionManager.Instance.StopSessionMonitoring();
                 }
 
-                // ✅ 2. Firestore 세션 정리
+                // 2. Firestore 세션 정리
                 if (SessionManager.Instance != null && SessionManager.Instance.IsInitialized)
                 {
                     await SessionManager.Instance.ClearSession(uid);
                 }
 
-                // ✅ 3. Firebase 세션 종료
+                // 3. Firebase 세션 종료
                 auth.SignOut();
                 currentUser = null;
 
-                // ✅ 4. 저장된 로그인 방식 삭제
+                // 4. 저장된 로그인 방식 삭제
                 ClearLoginProvider();
             }
         }
@@ -664,7 +664,7 @@ namespace Manager
                 auth.SignOut();
                 currentUser = null;
 
-                // ⚠️ 로그인 방식은 유지 (재로그인 시 복구용)
+                // 로그인 방식은 유지 (재로그인 시 복구용)
                 // ClearLoginProvider()를 호출하지 않음
             }
         }
@@ -877,14 +877,14 @@ namespace Manager
                     return (false, "로그인에 실패했습니다.", string.Empty);
                 }
 
-                // ⭐ 세션 로그인 방식 저장 (google.com 또는 playgames.google.com)
+                // 세션 로그인 방식 저장 (google.com 또는 playgames.google.com)
                 var providers = GetCurrentUserProviders();
                 if (providers.Contains("playgames.google.com"))
                     SaveLoginProvider("playgames.google.com");
                 else if (providers.Contains("google.com"))
                     SaveLoginProvider("google.com");
 
-                // ⭐ Google 로그인 시 이메일은 ProviderData에서 가져와야 함
+                // Google 로그인 시 이메일은 ProviderData에서 가져와야 함
                 string email = GetCurrentUserEmailFromProvider();
                 if (string.IsNullOrEmpty(email))
                     email = currentUser.Email ?? string.Empty;
@@ -1048,7 +1048,7 @@ namespace Manager
                 SettingsManager.Instance.HideSettings();
             }
 
-            // 🔥 중요: Logout() 대신 SignOutWithoutSessionClear() 사용!
+            // 중요: Logout() 대신 SignOutWithoutSessionClear() 사용!
             // 이유: 세션은 이미 다른 클라이언트(Client B)가 사용 중이므로 삭제하면 안됨
             // Logout()을 호출하면 ClearSession()이 실행되어 Client B의 세션까지 삭제됨
             SignOutWithoutSessionClear();
@@ -1217,7 +1217,7 @@ namespace Manager
                     // 사용자 정보 새로고침
                     await ReloadUserInfo();
 
-                    // ⭐ Google 계정은 이미 인증되어 있으므로 별도 이메일 인증 불필요
+                    // Google 계정은 이미 인증되어 있으므로 별도 이메일 인증 불필요
                     return (true, "PC 로그인 연동이 완료되었습니다!");
                 }
 
@@ -1467,7 +1467,7 @@ namespace Manager
             {
                 if (showCurrentSessionOnly)
                 {
-                    // ⭐ 현재 세션에서 사용한 로그인 방식만 표시
+                    // 현재 세션에서 사용한 로그인 방식만 표시
                     if (currentSessionLoginProvider == "password")
                         return "이메일";
                     else if (currentSessionLoginProvider == "google.com" || currentSessionLoginProvider == "playgames.google.com")
