@@ -85,6 +85,9 @@ namespace UI.Shared
         // 계정 전환 상태
         private bool isAccountConverted = false;
 
+        // 처리 중 플래그 (연속 클릭 방지)
+        private bool isProcessing = false;
+
         // 재발송 쿨다운
         private System.DateTime lastResendTime;
         private const int RESEND_COOLDOWN = 60; // 60초
@@ -216,6 +219,10 @@ namespace UI.Shared
                     backButtonText.text = "취소";
                     nextButtonText.text = "다음";
 
+                    // Step 1에서는 무조건 버튼 활성화
+                    if (nextButton != null)
+                        nextButton.interactable = true;
+
                     // 모드에 따라 안내 문구 변경
                     if (currentMode == ConversionMode.GoogleToEmail)
                     {
@@ -233,6 +240,11 @@ namespace UI.Shared
                     backButtonText.text = "뒤로가기";
                     nextButtonText.text = "다음";
                     messageText.text = "";
+
+                    // Step 2에서도 무조건 버튼 활성화
+                    if (nextButton != null)
+                        nextButton.interactable = true;
+
                     // 현재 닉네임 표시
                     if (currentNicknameText != null)
                     {
@@ -253,11 +265,33 @@ namespace UI.Shared
                         emailVerificationField.interactable = false;
                     }
 
-                    // MessageText
-                    messageText.text = "이메일 인증을 완료해야 계정을 사용할 수 있습니다.\n메일함을 확인하고 인증 링크를 클릭해주세요.";
-                    // 버튼 설정
-                    verifyEmailButton.gameObject.SetActive(true);
-                    resendEmailButton.gameObject.SetActive(false);
+                    // 계정 전환 완료 여부에 따라 버튼 상태 설정
+                    if (isAccountConverted)
+                    {
+                        // 이미 인증 메일 발송됨 (뒤로가기 후 재진입)
+                        verifyEmailButton.gameObject.SetActive(false);
+                        resendEmailButton.gameObject.SetActive(true);
+
+                        if (nextButton != null)
+                        {
+                            nextButton.interactable = true; // 완료 버튼 활성화
+                        }
+
+                        messageText.text = "인증 메일이 발송되었습니다.\n메일함을 확인하고 인증 링크를 클릭한 후\n[완료] 버튼을 눌러주세요.";
+                    }
+                    else
+                    {
+                        // 아직 인증하기 안 누름 (초기 진입)
+                        verifyEmailButton.gameObject.SetActive(true);
+                        resendEmailButton.gameObject.SetActive(false);
+
+                        if (nextButton != null)
+                        {
+                            nextButton.interactable = false; // 완료 버튼 비활성화
+                        }
+
+                        messageText.text = "이메일 인증을 완료해야 계정을 사용할 수 있습니다.\n메일함을 확인하고 인증 링크를 클릭해주세요.";
+                    }
                     break;
             }
         }
@@ -358,7 +392,7 @@ namespace UI.Shared
                 return;
             }
 
-            if (!IsValidEmail(email))
+            if (!Global.IsValidEmail(email))
             {
                 messageText.text = "올바른 이메일 형식이 아닙니다.";
                 messageText.color = Color.red;
@@ -407,13 +441,6 @@ namespace UI.Shared
             UpdateUI();
         }
 
-        /// <summary>
-        /// 이메일 형식 검증
-        /// </summary>
-        private bool IsValidEmail(string email)
-        {
-            return email.Contains("@") && email.Contains(".");
-        }
 
         /// <summary>
         /// 실시간 비밀번호 일치 검증
@@ -552,9 +579,19 @@ namespace UI.Shared
         /// </summary>
         public void OnVerifyEmailButtonClicked()
         {
+            // 처리 중이면 무시
+            if (isProcessing)
+            {
+                Debug.Log("[LinkEmailPopup] 이미 처리 중입니다.");
+                return;
+            }
+
             // 확인 팝업 표시
+            // 이메일을 파란색으로 강조 (Rich Text)
+            string coloredEmail = $"<color=#4DCCFF>{enteredEmail}</color>"; // 파란색 (MessageText와 동일)
+
             ConfirmationPopup.Show(
-                "입력된 정보는 수정할 수 없습니다.\n인증을 진행하시겠습니까?",
+                $"입력된 정보는 수정할 수 없습니다.\n{coloredEmail} \n로 연동되며, 이메일 인증 후 계정을 사용할 수 있습니다.\n진행하시겠습니까?",
                 onConfirm: async () =>
                 {
                     await ProcessEmailLinking();
@@ -573,10 +610,26 @@ namespace UI.Shared
         /// </summary>
         private async System.Threading.Tasks.Task ProcessEmailLinking()
         {
+            // 처리 중이면 무시
+            if (isProcessing)
+            {
+                Debug.Log("[LinkEmailPopup] 이미 처리 중입니다.");
+                return;
+            }
+
+            isProcessing = true;
+
             try
             {
                 // 뒤로가기 버튼 숨김
                 backButton.gameObject.SetActive(false);
+
+                // 모든 버튼 비활성화 (중복 클릭 방지)
+                if (verifyEmailButton != null)
+                    verifyEmailButton.interactable = false;
+                if (nextButton != null)
+                    nextButton.interactable = false;
+
                 isAccountConverted = true;
 
                 string userId = AuthManager.Instance.CurrentUserUID;
@@ -621,22 +674,32 @@ namespace UI.Shared
                     SystemMessageManager.Instance?.ShowMessage("EmailLinkSuccess");
                 }
 
+                // 재발송 쿨다운 시작
+                lastResendTime = System.DateTime.Now;
+
                 // 5. 이메일 발송 완료 팝업 표시
                 ConfirmationPopup.Show(
                     $"인증 메일이 '{enteredEmail}'로 발송되었습니다.\n\n" +
                     "이메일의 인증 링크를 클릭한 후\n" +
                     "\"완료\" 버튼을 눌러주세요.",
-                    onConfirm: () => { },
+                    onConfirm: () =>
+                    {
+                        // 6. 팝업 닫힌 후 UI 업데이트
+                        verifyEmailButton.gameObject.SetActive(false); // 인증하기 버튼 숨김
+                        resendEmailButton.gameObject.SetActive(true); // 재발송 버튼 표시
+
+                        // Footer 완료 버튼 활성화
+                        if (nextButton != null)
+                        {
+                            nextButton.interactable = true;
+                        }
+
+                        messageText.text = "인증 메일이 발송되었습니다.\n메일함을 확인하고 인증 링크를 클릭한 후\n[완료] 버튼을 눌러주세요.";
+                    },
                     onCancel: null,
                     confirmText: "확인"
                 );
-
-                // 6. UI 업데이트
-                verifyEmailButton.gameObject.SetActive(false); // 인증하기 버튼 숨김
-                resendEmailButton.gameObject.SetActive(true); // 재발송 버튼 표시
-
-                messageText.text = "인증 메일이 발송되었습니다.\n메일함을 확인하고 인증 링크를 클릭한 후\n[완료] 버튼을 눌러주세요.";
-                }
+            }
             catch (Exception ex)
             {
                 Debug.LogError($"[LinkEmailPopup] 계정 전환 실패: {ex.Message}");
@@ -645,8 +708,24 @@ namespace UI.Shared
                 backButton.gameObject.SetActive(true);
                 isAccountConverted = false;
 
+                // 버튼 상태 복구
+                if (verifyEmailButton != null)
+                {
+                    verifyEmailButton.gameObject.SetActive(true);
+                    verifyEmailButton.interactable = true;
+                }
+                if (nextButton != null)
+                {
+                    nextButton.interactable = false;
+                }
+
                 messageText.text = "계정 전환에 실패했습니다.";
                 messageText.color = Color.red;
+            }
+            finally
+            {
+                // 처리 완료
+                isProcessing = false;
             }
         }
 
@@ -656,14 +735,27 @@ namespace UI.Shared
         /// </summary>
         public async void OnResendEmailButtonClicked()
         {
+            // 처리 중이면 무시
+            if (isProcessing)
+            {
+                Debug.Log("[LinkEmailPopup] 이미 처리 중입니다.");
+                return;
+            }
+
             // 쿨다운 체크
             if ((System.DateTime.Now - lastResendTime).TotalSeconds < RESEND_COOLDOWN)
             {
                 int remaining = RESEND_COOLDOWN - (int)(System.DateTime.Now - lastResendTime).TotalSeconds;
                 messageText.text = $"{remaining}초 후에 재발송할 수 있습니다.";
-                messageText.color = new Color(1f, 0.92f, 0.016f); // 노란색
+                messageText.color = new Color(0.2f, 0.6f, 1f); // 파란색
                 return;
             }
+
+            isProcessing = true;
+
+            // 재발송 버튼 비활성화
+            if (resendEmailButton != null)
+                resendEmailButton.interactable = false;
 
             try
             {
@@ -704,6 +796,13 @@ namespace UI.Shared
                 messageText.text = "재발송에 실패했습니다.";
                 messageText.color = Color.red;
             }
+            finally
+            {
+                // 처리 완료, 버튼 복구
+                isProcessing = false;
+                if (resendEmailButton != null)
+                    resendEmailButton.interactable = true;
+            }
         }
 
         /// <summary>
@@ -712,6 +811,19 @@ namespace UI.Shared
         /// </summary>
         private async void OnStep3Complete()
         {
+            // 처리 중이면 무시
+            if (isProcessing)
+            {
+                Debug.Log("[LinkEmailPopup] 이미 처리 중입니다.");
+                return;
+            }
+
+            isProcessing = true;
+
+            // 완료 버튼 비활성화
+            if (nextButton != null)
+                nextButton.interactable = false;
+
             try
             {
                 // 재로그인하여 인증 상태 확인
@@ -748,7 +860,12 @@ namespace UI.Shared
                         "이메일 인증을 완료해주세요.\n\n" +
                         "메일함을 확인하고 인증 링크를 클릭하신 후\n" +
                         "다시 시도해주세요.",
-                        onConfirm: () => { },
+                        onConfirm: () =>
+                        {
+                            // 팝업 닫힌 후 완료 버튼 다시 활성화
+                            if (nextButton != null)
+                                nextButton.interactable = true;
+                        },
                         onCancel: null,
                         confirmText: "확인"
                     );
@@ -759,6 +876,12 @@ namespace UI.Shared
                 Debug.LogError($"[LinkEmailPopup] 인증 확인 실패: {ex.Message}");
                 messageText.text = "인증 확인에 실패했습니다.";
                 messageText.color = Color.red;
+            }
+            finally
+            {
+                // 처리 완료
+                isProcessing = false;
+                // 버튼 활성화는 팝업 콜백에서 처리됨 (인증 미완료 시에만)
             }
         }
 

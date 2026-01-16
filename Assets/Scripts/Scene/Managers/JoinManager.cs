@@ -111,7 +111,7 @@ namespace Manager
         #endregion
 
         #region Email Resend Tracking
-        private System.DateTime lastResendTime;
+        private CooldownTimer resendCooldown = new CooldownTimer(60f);
         #endregion
 
         #region Unity Lifecycle
@@ -221,10 +221,8 @@ namespace Manager
         /// </summary>
         private void OnApplicationFocus(bool hasFocus)
         {
-            if (hasFocus && AuthManager.Instance != null && AuthManager.Instance.IsLoggedIn)
-            {
-                _ = CheckEmailVerificationStatus();
-            }
+            // 비활성화: 로그인 화면에서는 필요 없음
+            // 회원가입 화면에서만 필요한 기능
         }
 
         void OnDestroy()
@@ -606,7 +604,7 @@ namespace Manager
             }
 
             // 이메일 형식 검증
-            if (!IsValidEmail(email))
+            if (!Global.IsValidEmail(email))
             {
                 if (validationErrorText != null)
                 {
@@ -673,8 +671,8 @@ namespace Manager
                     isVerificationEmailSent = true;
                     verifiedEmail = email;
 
-                    // 재발송 시간 초기화
-                    lastResendTime = System.DateTime.Now;
+                    // 쿨다운 시작
+                    resendCooldown.Start();
 
                     // 성공 팝업
                     UI.Shared.ConfirmationPopup.Show(
@@ -721,21 +719,6 @@ namespace Manager
             }
         }
 
-        /// <summary>
-        /// 이메일 형식 검증
-        /// </summary>
-        private bool IsValidEmail(string email)
-        {
-            try
-            {
-                var addr = new System.Net.Mail.MailAddress(email);
-                return addr.Address == email;
-            }
-            catch
-            {
-                return false;
-            }
-        }
 
         /// <summary>
         /// 이메일 재발송 버튼 클릭
@@ -1330,22 +1313,22 @@ namespace Manager
                 return;
             }
 
-            // 60초 쿨다운 체크
-            if (lastResendTime != default(System.DateTime))
+            // 쿨다운 체크
+            if (resendCooldown.IsActive)
             {
-                var timeSinceLastResend = (System.DateTime.Now - lastResendTime).TotalSeconds;
-                if (timeSinceLastResend < RESEND_COOLDOWN)
-                {
-                    int remainingSeconds = (int)(RESEND_COOLDOWN - timeSinceLastResend);
-                    UI.Shared.ConfirmationPopup.Show(
-                        $"재발송은 {remainingSeconds}초 후에\n다시 시도할 수 있습니다.",
-                        onConfirm: () => { },
-                        onCancel: null,
-                        confirmText: "확인",
-                        cancelText: null
-                    );
-                    return;
-                }
+                int remainingSeconds = resendCooldown.GetRemainingSeconds();
+                UI.Shared.ConfirmationPopup.Show(
+                    $"재발송은 {remainingSeconds}초 후에\n다시 시도할 수 있습니다.",
+                    onConfirm: () =>
+                    {
+                        // 팝업 닫힌 후 로그아웃
+                        AuthManager.Instance.SignOutWithoutSessionClear();
+                    },
+                    onCancel: null,
+                    confirmText: "확인",
+                    cancelText: null
+                );
+                return;
             }
 
             DisableAllButtons();
@@ -1357,14 +1340,18 @@ namespace Manager
 
                 if (result.success)
                 {
-                    // 재발송 시간 기록
-                    lastResendTime = System.DateTime.Now;
+                    // 쿨다운 시작
+                    resendCooldown.Start();
 
                     UI.Shared.ConfirmationPopup.Show(
                         "인증 메일이 재발송되었습니다.\n\n" +
                         "이메일의 인증 링크를 클릭한 후\n" +
                         "\"인증확인\" 버튼을 눌러주세요.",
-                        onConfirm: () => { },
+                        onConfirm: () =>
+                        {
+                            // 팝업 닫힌 후 로그아웃
+                            AuthManager.Instance.SignOutWithoutSessionClear();
+                        },
                         onCancel: null,
                         confirmText: "확인",
                         cancelText: null
@@ -1375,7 +1362,97 @@ namespace Manager
                     UI.Shared.ConfirmationPopup.Show(
                         "인증 메일 재발송에 실패했습니다.\n\n" +
                         "잠시 후 다시 시도해주세요.",
-                        onConfirm: () => { },
+                        onConfirm: () =>
+                        {
+                            // 팝업 닫힌 후 로그아웃
+                            AuthManager.Instance.SignOutWithoutSessionClear();
+                        },
+                        onCancel: null,
+                        confirmText: "확인",
+                        cancelText: null
+                    );
+                }
+            }
+            finally
+            {
+                EnableAllButtons();
+            }
+        }
+
+        /// <summary>
+        /// 확인 팝업에서 재발송 버튼 클릭 시 호출
+        /// async void로 실행하여 팝업이 닫힌 후 재발송 프로세스 시작
+        /// </summary>
+        private async void ResendVerificationEmailFromConfirmPopup()
+        {
+            // 로그인 체크
+            if (!AuthManager.Instance.IsLoggedIn)
+            {
+                UI.Shared.ConfirmationPopup.Show(
+                    "오류가 발생했습니다.\n다시 시도해주세요.",
+                    onConfirm: () => { },
+                    onCancel: null,
+                    confirmText: "확인",
+                    cancelText: null
+                );
+                return;
+            }
+
+            // 쿨다운 체크
+            if (resendCooldown.IsActive)
+            {
+                int remainingSeconds = resendCooldown.GetRemainingSeconds();
+                UI.Shared.ConfirmationPopup.Show(
+                    $"재발송은 {remainingSeconds}초 후에\n다시 시도할 수 있습니다.",
+                    onConfirm: () =>
+                    {
+                        // 팝업 닫힌 후 로그아웃
+                        AuthManager.Instance.SignOutWithoutSessionClear();
+                    },
+                    onCancel: null,
+                    confirmText: "확인",
+                    cancelText: null
+                );
+                return;
+            }
+
+            // 쿨다운 통과 시 실제 재발송 처리
+            DisableAllButtons();
+
+            try
+            {
+                // 인증 이메일 재발송
+                var result = await AuthManager.Instance.SendVerificationEmail();
+
+                if (result.success)
+                {
+                    // 쿨다운 시작
+                    resendCooldown.Start();
+
+                    UI.Shared.ConfirmationPopup.Show(
+                        "인증 메일이 재발송되었습니다.\n\n" +
+                        "이메일의 인증 링크를 클릭한 후\n" +
+                        "\"인증확인\" 버튼을 눌러주세요.",
+                        onConfirm: () =>
+                        {
+                            // 팝업 닫힌 후 로그아웃
+                            AuthManager.Instance.SignOutWithoutSessionClear();
+                        },
+                        onCancel: null,
+                        confirmText: "확인",
+                        cancelText: null
+                    );
+                }
+                else
+                {
+                    UI.Shared.ConfirmationPopup.Show(
+                        "인증 메일 재발송에 실패했습니다.\n\n" +
+                        "잠시 후 다시 시도해주세요.",
+                        onConfirm: () =>
+                        {
+                            // 팝업 닫힌 후 로그아웃
+                            AuthManager.Instance.SignOutWithoutSessionClear();
+                        },
                         onCancel: null,
                         confirmText: "확인",
                         cancelText: null
@@ -1422,21 +1499,60 @@ namespace Manager
                     // 이메일 인증 체크
                     if (!AuthManager.Instance.IsEmailVerified)
                     {
+                        // 쿨다운 체크
+                        bool isCooldown = resendCooldown.IsActive;
+                        int remainingSeconds = resendCooldown.GetRemainingSeconds();
+
+                        // 쿨다운 상태에 따라 다른 메시지 표시
+                        string message;
+                        string confirmText;
+                        string cancelText;
+
+                        if (isCooldown)
+                        {
+                            // 쿨다운 중
+                            message = "이메일 인증이 필요합니다.\n\n" +
+                                      $"{email}으로 발송된\n" +
+                                      "이메일의 인증 링크를 클릭해주세요.\n\n" +
+                                      $"재발송은 <color=red>{remainingSeconds}초</color> 후에\n다시 시도할 수 있습니다.";
+                            confirmText = "확인";
+                            cancelText = null;
+                        }
+                        else
+                        {
+                            // 재발송 가능
+                            message = "이메일 인증이 필요합니다.\n\n" +
+                                      $"{email}으로 발송된\n" +
+                                      "이메일의 인증 링크를 클릭해주세요.\n\n" +
+                                      "이메일을 받지 못하셨나요?";
+                            confirmText = "재발송";
+                            cancelText = "닫기";
+                        }
+
                         UI.Shared.ConfirmationPopup.Show(
-                            "이메일 인증이 필요합니다.\n\n" +
-                            $"{email}으로 발송된\n" +
-                            "이메일의 인증 링크를 클릭해주세요.\n\n" +
-                            "이메일을 받지 못하셨나요?",
-                            onConfirm: async () =>
+                            message,
+                            onConfirm: () =>
                             {
-                                await ResendVerificationEmail();
+                                if (isCooldown)
+                                {
+                                    // 쿨다운 중: 확인 버튼 → 로그아웃
+                                    AuthManager.Instance.SignOutWithoutSessionClear();
+                                }
+                                else
+                                {
+                                    // 재발송 가능: 재발송 버튼 → 재발송 실행
+                                    ResendVerificationEmailFromConfirmPopup();
+                                }
                             },
-                            onCancel: () => { },
-                            confirmText: "재발송",
-                            cancelText: "닫기"
+                            onCancel: isCooldown ? null : (() =>
+                            {
+                                // 재발송 가능할 때만 닫기 버튼 존재 → 로그아웃
+                                AuthManager.Instance.SignOutWithoutSessionClear();
+                            }),
+                            confirmText: confirmText,
+                            cancelText: cancelText
                         );
 
-                        AuthManager.Instance.SignOutWithoutSessionClear();
                         return;
                     }
 
