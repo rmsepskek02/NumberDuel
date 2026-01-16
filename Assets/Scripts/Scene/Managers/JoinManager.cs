@@ -670,8 +670,9 @@ namespace Manager
                     resendCooldown.Start();
 
                     // 성공 팝업
+                    string coloredEmail = $"<color=#{ColorUtility.ToHtmlStringRGB(Global.Purple)}>{email}</color>";
                     UI.Shared.ConfirmationPopup.Show(
-                        $"인증 메일이 '{email}'로 발송되었습니다.\n\n" +
+                        $"인증 메일이 {coloredEmail}로 발송되었습니다.\n\n" +
                         "이메일의 인증 링크를 클릭한 후\n" +
                         "\"인증확인\" 버튼을 눌러주세요.",
                         onConfirm: () => { },

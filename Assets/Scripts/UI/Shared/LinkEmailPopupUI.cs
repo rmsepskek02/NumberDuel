@@ -582,7 +582,7 @@ namespace UI.Shared
 
             // 확인 팝업 표시
             // 이메일을 파란색으로 강조 (Rich Text)
-            string coloredEmail = $"<color=#4DCCFF>{enteredEmail}</color>"; // 파란색 (MessageText와 동일)
+            string coloredEmail = $"<color=#{ColorUtility.ToHtmlStringRGB(Global.Purple)}>{enteredEmail}</color>";
 
             ConfirmationPopup.Show(
                 $"입력된 정보는 수정할 수 없습니다.\n{coloredEmail} \n로 연동되며, 이메일 인증 후 계정을 사용할 수 있습니다.\n진행하시겠습니까?",
@@ -672,8 +672,9 @@ namespace UI.Shared
                 lastResendTime = System.DateTime.Now;
 
                 // 5. 이메일 발송 완료 팝업 표시
+                string coloredEnteredEmail = $"<color=#{ColorUtility.ToHtmlStringRGB(Global.Purple)}>{enteredEmail}</color>";
                 ConfirmationPopup.Show(
-                    $"인증 메일이 '{enteredEmail}'로 발송되었습니다.\n\n" +
+                    $"인증 메일이 {coloredEnteredEmail}로 발송되었습니다.\n\n" +
                     "이메일의 인증 링크를 클릭한 후\n" +
                     "\"완료\" 버튼을 눌러주세요.",
                     onConfirm: () =>

@@ -386,7 +386,7 @@ namespace UI.Shared
                                 {
                                     // 닉네임 입력 취소 - 전환은 완료되었으므로 기본 닉네임으로 진행
                                     ConfirmationPopup.Show(
-                                        "✅ Google 계정 전환 완료!\n\n" +
+                                        "Google 계정 전환 완료!\n\n" +
                                         "이제 Google 계정으로\n" +
                                         "안전하게 로그인할 수 있습니다.",
                                         onConfirm: () =>
@@ -416,8 +416,7 @@ namespace UI.Shared
                 // ===== 이메일 계정 → Google 연동 (Android만) =====
                 ConfirmationPopup.Show(
                     $"Google 계정을 연동하시겠습니까?\n\n" +
-                    $"현재 이메일: {displayText}\n\n" +
-                    $"Google 계정의 이메일이\n일치해야 연동됩니다.",
+                    $"현재 이메일: <color=#{ColorUtility.ToHtmlStringRGB(Global.Purple)}>{displayText}</color>",
                     onConfirm: async () =>
                     {
                         // Google 연동 시도
@@ -427,7 +426,7 @@ namespace UI.Shared
                         {
                             // 성공
                             ConfirmationPopup.Show(
-                                "✅ Google 계정 연동 완료!\n\n" +
+                                "Google 계정 연동 완료!\n\n" +
                                 "이제 모바일에서도\n" +
                                 "Google 간편 로그인을 사용할 수 있습니다.",
                                 onConfirm: () =>

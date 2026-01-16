@@ -204,9 +204,9 @@ namespace Manager
                 if (string.IsNullOrEmpty(currentEmail))
                     return (false, "계정 이메일을 찾을 수 없습니다.");
 
-                // GoogleAuthProvider를 통해 Google 로그인 수행
+                // GoogleAuthProvider를 통해 Google Credential만 획득 (로그인 없이)
                 var googleProvider = new Objects.Auth.GoogleAuthProvider(Auth);
-                var googleResult = await googleProvider.SignIn();
+                var googleResult = await googleProvider.GetCredentialOnly();
 
                 if (!googleResult.Success)
                 {

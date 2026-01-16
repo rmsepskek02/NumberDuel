@@ -263,8 +263,9 @@ namespace UI.Shared
                     }
 
                     // ConfirmationPopup으로 성공 안내
+                    string coloredEmail = $"<color=#{ColorUtility.ToHtmlStringRGB(Global.Purple)}>{email}</color>";
                     ConfirmationPopup.Show(
-                        $"비밀번호 재설정 이메일이\n'{email}'\n(으)로 발송되었습니다.\n\n" +
+                        $"비밀번호 재설정 이메일이\n{coloredEmail}\n(으)로 발송되었습니다.\n\n" +
                         "이메일을 확인하여\n비밀번호를 재설정해주세요.",
                         onConfirm: () => { },
                         onCancel: null,
