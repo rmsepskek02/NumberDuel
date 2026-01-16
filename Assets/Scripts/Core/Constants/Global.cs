@@ -90,14 +90,14 @@ public static class Global
 
     #region Validation
     /// <summary>
-    /// 이메일 형식 검증 (정규표현식 기반)
+    /// 이메일 검증
     /// </summary>
-    /// <param name="email">검증할 이메일 주소</param>
-    /// <returns>유효한 이메일이면 true</returns>
-    public static bool IsValidEmail(string email)
+    /// <param name="email">검증할 이메일</param>
+    /// <returns>검증 결과와 에러 메시지</returns>
+    public static (bool isValid, string errorMessage) ValidateEmail(string email)
     {
         if (string.IsNullOrWhiteSpace(email))
-            return false;
+            return (false, "이메일을 입력해주세요.");
 
         // 정규표현식: 기본적인 이메일 형식 검증
         // - 로컬 파트: 영문/숫자/특수문자(._%+-)
@@ -105,7 +105,59 @@ public static class Global
         // - 도메인: 영문/숫자/하이픈/점
         // - TLD: 최소 2글자 이상
         string pattern = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
-        return System.Text.RegularExpressions.Regex.IsMatch(email, pattern);
+        if (!System.Text.RegularExpressions.Regex.IsMatch(email, pattern))
+            return (false, "올바른 이메일 형식이 아닙니다.");
+
+        return (true, string.Empty);
+    }
+
+    /// <summary>
+    /// 비밀번호 검증
+    /// </summary>
+    /// <param name="password">검증할 비밀번호</param>
+    /// <returns>검증 결과와 에러 메시지</returns>
+    public static (bool isValid, string errorMessage) ValidatePassword(string password)
+    {
+        if (string.IsNullOrWhiteSpace(password))
+            return (false, "비밀번호를 입력해주세요.");
+
+        if (password.Length < 6)
+            return (false, "비밀번호는 최소 6자 이상이어야 합니다.");
+
+        return (true, string.Empty);
+    }
+
+    /// <summary>
+    /// 닉네임 검증
+    /// </summary>
+    /// <param name="nickname">검증할 닉네임</param>
+    /// <returns>검증 결과와 에러 메시지</returns>
+    public static (bool isValid, string errorMessage) ValidateNickname(string nickname)
+    {
+        if (string.IsNullOrWhiteSpace(nickname))
+            return (false, "닉네임을 입력해주세요.");
+
+        if (nickname.Length < 2)
+            return (false, "닉네임은 최소 2자 이상이어야 합니다.");
+
+        if (nickname.Length > 12)
+            return (false, "닉네임은 최대 12자까지 가능합니다.");
+
+        return (true, string.Empty);
+    }
+
+    /// <summary>
+    /// 문자열이 비어있는지 검증
+    /// </summary>
+    /// <param name="value">검증할 문자열</param>
+    /// <param name="fieldName">필드 이름 (에러 메시지용)</param>
+    /// <returns>검증 결과와 에러 메시지</returns>
+    public static (bool isValid, string errorMessage) ValidateNotEmpty(string value, string fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return (false, $"{fieldName}을(를) 입력해주세요.");
+
+        return (true, string.Empty);
     }
     #endregion
 
@@ -116,5 +168,5 @@ public static class Global
     // string plusSymbol = Global.Plus; // "+" 기호 사용
     // string redMatName = Global.RedCardEmptyMat; // 머티리얼 이름 사용
     // string redImgName = Global.ColorRedEmptyImg; // 이미지 이름 사용
-    // bool isValid = Global.IsValidEmail("user@example.com"); // 이메일 검증
+    // var (isValid, errorMessage) = Global.ValidateEmail("user@example.com"); // 이메일 검증
 }

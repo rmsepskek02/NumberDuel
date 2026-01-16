@@ -385,16 +385,10 @@ namespace UI.Shared
             string confirmPassword = confirmPasswordInputField.text;
 
             // 1. 이메일 형식 검증
-            if (string.IsNullOrEmpty(email))
+            var (isValidEmail, emailError) = Global.ValidateEmail(email);
+            if (!isValidEmail)
             {
-                messageText.text = "이메일을 입력해주세요.";
-                messageText.color = Global.GlowRed;
-                return;
-            }
-
-            if (!Global.IsValidEmail(email))
-            {
-                messageText.text = "올바른 이메일 형식이 아닙니다.";
+                messageText.text = emailError;
                 messageText.color = Global.GlowRed;
                 return;
             }

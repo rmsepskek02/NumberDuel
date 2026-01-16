@@ -121,16 +121,11 @@ namespace UI.Shared
             // Step 1: 이메일 입력 확인
             string email = emailInputField?.text.Trim() ?? "";
 
-            if (string.IsNullOrEmpty(email))
-            {
-                ShowError("이메일을 입력해주세요");
-                return;
-            }
-
             // Step 2: 이메일 형식 검증
-            if (!Global.IsValidEmail(email))
+            var (isValidEmail, emailError) = Global.ValidateEmail(email);
+            if (!isValidEmail)
             {
-                ShowError("올바른 이메일 형식이 아닙니다");
+                ShowError(emailError);
                 return;
             }
 
