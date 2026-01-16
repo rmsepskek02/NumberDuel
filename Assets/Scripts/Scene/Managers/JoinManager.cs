@@ -417,7 +417,7 @@ namespace Manager
         {
             // 확인 팝업 표시
             UI.Shared.ConfirmationPopup.Show(
-                "게스트로 시작하시겠습니까?\n\n주의사항\n• 앱 삭제 시 데이터가 손실됩니다\n• 이메일/구글 계정과 연동 가능합니다",
+                "손님으로 시작하시겠습니까?\n\n주의사항\n• 앱 삭제 시 데이터가 손실됩니다\n• 이메일/구글 계정과 연동 가능합니다",
                 onConfirm: async () => await OnGuestLoginConfirm(),
                 onCancel: () => { }, // 빈 액션 전달 (취소 버튼 표시)
                 confirmText: "확인",
@@ -597,18 +597,13 @@ namespace Manager
 
             string email = verificationEmailInput?.text ?? "";
 
-            if (string.IsNullOrEmpty(email))
-            {
-                SystemMessageManager.Instance?.ShowMessage("EmailRequired");
-                return;
-            }
-
             // 이메일 형식 검증
-            if (!Global.IsValidEmail(email))
+            var (isValidEmail, emailError) = Global.ValidateEmail(email);
+            if (!isValidEmail)
             {
                 if (validationErrorText != null)
                 {
-                    validationErrorText.text = "올바른 이메일 형식이 아닙니다";
+                    validationErrorText.text = emailError;
                     validationErrorText.color = Global.GlowRed;
                 }
                 return;
@@ -1321,8 +1316,8 @@ namespace Manager
                     $"재발송은 {remainingSeconds}초 후에\n다시 시도할 수 있습니다.",
                     onConfirm: () =>
                     {
-                        // 팝업 닫힌 후 로그아웃
-                        AuthManager.Instance.SignOutWithoutSessionClear();
+                        // 팝업 닫힌 후 로그아웃 (세션까지 완전히 정리)
+                        AuthManager.Instance.Logout();
                     },
                     onCancel: null,
                     confirmText: "확인",
@@ -1349,8 +1344,8 @@ namespace Manager
                         "\"인증확인\" 버튼을 눌러주세요.",
                         onConfirm: () =>
                         {
-                            // 팝업 닫힌 후 로그아웃
-                            AuthManager.Instance.SignOutWithoutSessionClear();
+                            // 팝업 닫힌 후 로그아웃 (세션까지 완전히 정리)
+                            AuthManager.Instance.Logout();
                         },
                         onCancel: null,
                         confirmText: "확인",
@@ -1364,8 +1359,8 @@ namespace Manager
                         "잠시 후 다시 시도해주세요.",
                         onConfirm: () =>
                         {
-                            // 팝업 닫힌 후 로그아웃
-                            AuthManager.Instance.SignOutWithoutSessionClear();
+                            // 팝업 닫힌 후 로그아웃 (세션까지 완전히 정리)
+                            AuthManager.Instance.Logout();
                         },
                         onCancel: null,
                         confirmText: "확인",
@@ -1406,8 +1401,8 @@ namespace Manager
                     $"재발송은 {remainingSeconds}초 후에\n다시 시도할 수 있습니다.",
                     onConfirm: () =>
                     {
-                        // 팝업 닫힌 후 로그아웃
-                        AuthManager.Instance.SignOutWithoutSessionClear();
+                        // 팝업 닫힌 후 로그아웃 (세션까지 완전히 정리)
+                        AuthManager.Instance.Logout();
                     },
                     onCancel: null,
                     confirmText: "확인",
@@ -1435,8 +1430,8 @@ namespace Manager
                         "\"인증확인\" 버튼을 눌러주세요.",
                         onConfirm: () =>
                         {
-                            // 팝업 닫힌 후 로그아웃
-                            AuthManager.Instance.SignOutWithoutSessionClear();
+                            // 팝업 닫힌 후 로그아웃 (세션까지 완전히 정리)
+                            AuthManager.Instance.Logout();
                         },
                         onCancel: null,
                         confirmText: "확인",
@@ -1450,8 +1445,8 @@ namespace Manager
                         "잠시 후 다시 시도해주세요.",
                         onConfirm: () =>
                         {
-                            // 팝업 닫힌 후 로그아웃
-                            AuthManager.Instance.SignOutWithoutSessionClear();
+                            // 팝업 닫힌 후 로그아웃 (세션까지 완전히 정리)
+                            AuthManager.Instance.Logout();
                         },
                         onCancel: null,
                         confirmText: "확인",
@@ -1535,8 +1530,8 @@ namespace Manager
                             {
                                 if (isCooldown)
                                 {
-                                    // 쿨다운 중: 확인 버튼 → 로그아웃
-                                    AuthManager.Instance.SignOutWithoutSessionClear();
+                                    // 쿨다운 중: 확인 버튼 → 로그아웃 (세션까지 완전히 정리)
+                                    AuthManager.Instance.Logout();
                                 }
                                 else
                                 {
@@ -1546,8 +1541,8 @@ namespace Manager
                             },
                             onCancel: isCooldown ? null : (() =>
                             {
-                                // 재발송 가능할 때만 닫기 버튼 존재 → 로그아웃
-                                AuthManager.Instance.SignOutWithoutSessionClear();
+                                // 재발송 가능할 때만 닫기 버튼 존재 → 로그아웃 (세션까지 완전히 정리)
+                                AuthManager.Instance.Logout();
                             }),
                             confirmText: confirmText,
                             cancelText: cancelText
@@ -1563,7 +1558,7 @@ namespace Manager
                     if (sessionCheck.isDuplicate)
                     {
                         UI.Shared.ConfirmationPopup.Show(
-                            "이미 로그인 중인 계정입니다.\n기존 접속을 해제하고 로그인하시겠습니까?",
+                            "이미 접속 중인 계정입니다.\n기존 접속을 해제하고 로그인하시겠습니까?",
                             onConfirm: async () =>
                             {
                                 SystemMessageManager.Instance?.ShowMessage("ForceLoginInProgress");
@@ -1586,7 +1581,7 @@ namespace Manager
                                                 },
                             onCancel: () =>
                             {
-                                AuthManager.Instance.SignOutWithoutSessionClear();
+                                AuthManager.Instance.Logout();
                                 SystemMessageManager.Instance?.ShowMessage("LoginCanceled");
                                 isProcessing = false;
                                                 },
