@@ -482,7 +482,7 @@ namespace UI.Shared
             if (errorText != null)
             {
                 errorText.text = message;
-                errorText.color = Color.red;
+                errorText.color = Global.GlowRed;
             }
 
             Debug.LogWarning($"[LinkSocialPopupUI] {message}");

@@ -4,6 +4,7 @@ using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Utills;
 
 namespace UI.Shared
 {
@@ -30,8 +31,7 @@ namespace UI.Shared
 
         // 상태 관리
         private bool isEmailSent = false;
-        private DateTime lastSendTime;
-        private const int RESEND_COOLDOWN = 60;
+        private CooldownTimer sendCooldown = new CooldownTimer(60f);
 
         private bool isProcessing = false;
         private bool isAnimating = false;
@@ -128,29 +128,26 @@ namespace UI.Shared
             }
 
             // Step 2: 이메일 형식 검증
-            if (!IsValidEmail(email))
+            if (!Global.IsValidEmail(email))
             {
                 ShowError("올바른 이메일 형식이 아닙니다");
                 return;
             }
 
             // Step 3: 쿨다운 체크 (재발송인 경우)
-            if (isEmailSent)
+            if (isEmailSent && sendCooldown.IsActive)
             {
-                int remainingSeconds = GetRemainingCooldown();
+                int remainingSeconds = sendCooldown.GetRemainingSeconds();
 
-                if (remainingSeconds > 0)
-                {
-                    // ConfirmationPopup으로 쿨다운 안내
-                    ConfirmationPopup.Show(
-                        $"재발송은 {remainingSeconds}초 후에\n다시 시도할 수 있습니다.",
-                        onConfirm: null,
-                        onCancel: null,
-                        confirmText: "확인",
-                        cancelText: null
-                    );
-                    return;
-                }
+                // ConfirmationPopup으로 쿨다운 안내
+                ConfirmationPopup.Show(
+                    $"재발송은 {remainingSeconds}초 후에\n다시 시도할 수 있습니다.",
+                    onConfirm: null,
+                    onCancel: null,
+                    confirmText: "확인",
+                    cancelText: null
+                );
+                return;
             }
 
             // Step 4: 이메일 발송
@@ -183,7 +180,7 @@ namespace UI.Shared
             if (errorText != null)
             {
                 errorText.text = "";
-                errorText.color = Color.red; // 기본 색상으로 복원
+                errorText.color = Global.GlowRed; // 기본 색상으로 복원
             }
 
             // 버튼 텍스트 초기화
@@ -199,7 +196,7 @@ namespace UI.Shared
 
             // 발송 상태 초기화
             isEmailSent = false;
-            lastSendTime = default(DateTime);
+            sendCooldown.Reset();
         }
 
         /// <summary>
@@ -219,7 +216,7 @@ namespace UI.Shared
             if (errorText != null)
             {
                 errorText.text = "처리 중...";
-                errorText.color = Color.gray;
+                errorText.color = Global.Processing;
             }
 
             try
@@ -250,7 +247,7 @@ namespace UI.Shared
                 {
                     // 성공 처리
                     isEmailSent = true;
-                    lastSendTime = DateTime.Now;
+                    sendCooldown.Start();
 
                     if (sendButtonText != null)
                     {
@@ -267,7 +264,7 @@ namespace UI.Shared
                     if (errorText != null)
                     {
                         errorText.text = "비밀번호를 재설정하면 창을 닫고\n다시 로그인을 진행해주세요";
-                        errorText.color = new Color(0.2f, 0.6f, 1f); // 파란색 계열
+                        errorText.color = Global.Purple;
                     }
 
                     // ConfirmationPopup으로 성공 안내
@@ -296,35 +293,6 @@ namespace UI.Shared
             }
         }
 
-        /// <summary>
-        /// 남은 쿨다운 시간 계산
-        /// </summary>
-        private int GetRemainingCooldown()
-        {
-            if (lastSendTime == default(DateTime))
-                return 0;
-
-            var elapsed = (DateTime.Now - lastSendTime).TotalSeconds;
-            int remaining = RESEND_COOLDOWN - (int)elapsed;
-
-            return remaining > 0 ? remaining : 0;
-        }
-
-        /// <summary>
-        /// 이메일 형식 검증 (JoinManager에서 복사)
-        /// </summary>
-        private bool IsValidEmail(string email)
-        {
-            try
-            {
-                var addr = new System.Net.Mail.MailAddress(email);
-                return addr.Address == email;
-            }
-            catch
-            {
-                return false;
-            }
-        }
 
         /// <summary>
         /// 에러 메시지 표시
@@ -334,7 +302,7 @@ namespace UI.Shared
             if (errorText != null)
             {
                 errorText.text = message;
-                errorText.color = Color.red;
+                errorText.color = Global.GlowRed;
             }
 
             Debug.LogWarning($"[FindPasswordPopupUI] {message}");

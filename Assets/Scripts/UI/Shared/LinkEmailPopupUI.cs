@@ -388,14 +388,14 @@ namespace UI.Shared
             if (string.IsNullOrEmpty(email))
             {
                 messageText.text = "이메일을 입력해주세요.";
-                messageText.color = Color.red;
+                messageText.color = Global.GlowRed;
                 return;
             }
 
             if (!Global.IsValidEmail(email))
             {
                 messageText.text = "올바른 이메일 형식이 아닙니다.";
-                messageText.color = Color.red;
+                messageText.color = Global.GlowRed;
                 return;
             }
 
@@ -406,7 +406,7 @@ namespace UI.Shared
             if (isRegistered)
             {
                 messageText.text = "이미 등록된 이메일입니다.";
-                messageText.color = Color.red;
+                messageText.color = Global.GlowRed;
                 return;
             }
 
@@ -414,21 +414,21 @@ namespace UI.Shared
             if (string.IsNullOrEmpty(password))
             {
                 messageText.text = "비밀번호를 입력해주세요.";
-                messageText.color = Color.red;
+                messageText.color = Global.GlowRed;
                 return;
             }
 
             if (password.Length < 6)
             {
                 messageText.text = "비밀번호는 6자 이상이어야 합니다.";
-                messageText.color = Color.red;
+                messageText.color = Global.GlowRed;
                 return;
             }
 
             if (password != confirmPassword)
             {
                 messageText.text = "비밀번호가 일치하지 않습니다.";
-                messageText.color = Color.red;
+                messageText.color = Global.GlowRed;
                 return;
             }
 
@@ -453,12 +453,12 @@ namespace UI.Shared
                 if (passwordInputField.text == confirmPasswordInputField.text)
                 {
                     messageText.text = "비밀번호가 일치합니다.";
-                    messageText.color = Color.green;
+                    messageText.color = Global.GlowGreen;
                 }
                 else
                 {
                     messageText.text = "비밀번호가 일치하지 않습니다.";
-                    messageText.color = Color.red;
+                    messageText.color = Global.GlowRed;
                 }
             }
             else
@@ -482,7 +482,7 @@ namespace UI.Shared
             if (!ValidateNickname(newNickname, out string errorMessage))
             {
                 messageText.text = errorMessage;
-                messageText.color = Color.red;
+                messageText.color = Global.GlowRed;
                 return;
             }
 
@@ -493,7 +493,7 @@ namespace UI.Shared
             if (!isAvailable)
             {
                 messageText.text = "이미 사용 중인 닉네임입니다.";
-                messageText.color = Color.red;
+                messageText.color = Global.GlowRed;
                 return;
             }
 
@@ -560,12 +560,12 @@ namespace UI.Shared
             if (pixelLength > maxNicknamePixelLength)
             {
                 messageText.text = $"닉네임이 너무 깁니다 ({pixelLength}/{maxNicknamePixelLength})";
-                messageText.color = Color.red;
+                messageText.color = Global.GlowRed;
             }
             else
             {
                 messageText.text = $"{pixelLength}/{maxNicknamePixelLength}";
-                messageText.color = new Color(0.3f, 0.8f, 1f); // 파란색
+                messageText.color = Global.Purple;
             }
         }
 
@@ -720,7 +720,7 @@ namespace UI.Shared
                 }
 
                 messageText.text = "계정 전환에 실패했습니다.";
-                messageText.color = Color.red;
+                messageText.color = Global.GlowRed;
             }
             finally
             {
@@ -747,7 +747,7 @@ namespace UI.Shared
             {
                 int remaining = RESEND_COOLDOWN - (int)(System.DateTime.Now - lastResendTime).TotalSeconds;
                 messageText.text = $"{remaining}초 후에 재발송할 수 있습니다.";
-                messageText.color = new Color(0.2f, 0.6f, 1f); // 파란색
+                messageText.color = Global.Purple;
                 return;
             }
 
@@ -765,7 +765,7 @@ namespace UI.Shared
                 if (!loginResult.success)
                 {
                     messageText.text = "재발송 실패: 로그인할 수 없습니다.";
-                    messageText.color = Color.red;
+                    messageText.color = Global.GlowRed;
                     return;
                 }
 
@@ -788,13 +788,13 @@ namespace UI.Shared
                 );
 
                 messageText.text = "인증 메일이 재발송되었습니다.";
-                messageText.color = Color.green;
+                messageText.color = Global.GlowGreen;
             }
             catch (Exception ex)
             {
                 Debug.LogError($"[LinkEmailPopup] 재발송 실패: {ex.Message}");
                 messageText.text = "재발송에 실패했습니다.";
-                messageText.color = Color.red;
+                messageText.color = Global.GlowRed;
             }
             finally
             {
@@ -832,7 +832,7 @@ namespace UI.Shared
                 if (!loginResult.success)
                 {
                     messageText.text = "로그인할 수 없습니다.";
-                    messageText.color = Color.red;
+                    messageText.color = Global.GlowRed;
                     return;
                 }
 
@@ -875,7 +875,7 @@ namespace UI.Shared
             {
                 Debug.LogError($"[LinkEmailPopup] 인증 확인 실패: {ex.Message}");
                 messageText.text = "인증 확인에 실패했습니다.";
-                messageText.color = Color.red;
+                messageText.color = Global.GlowRed;
             }
             finally
             {

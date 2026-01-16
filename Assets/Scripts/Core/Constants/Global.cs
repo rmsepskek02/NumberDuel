@@ -14,6 +14,11 @@ public static class Global
     public static readonly Color GlowGreen = HexToColor("#05FF00"); // 공격 Glow
     public static readonly Color GlowRed = HexToColor("#FF000A");   // 피격 Glow
 
+    // UI 상태 색상
+    public static readonly Color Processing = HexToColor("#808080"); // 처리 중
+    public static readonly Color White = HexToColor("#FFFFFF");      // 기본 (밝은색)
+    public static readonly Color Black = HexToColor("#000000");      // 기본 (어두운색)
+
     // 주요 색상 (HEX 값)
     public static readonly string RedHex = "#BE373B";
     public static readonly string GreenHex = "#18AD83";
@@ -83,6 +88,27 @@ public static class Global
     public static readonly string SpriteColorBlack = "color_back 1_0";
     #endregion
 
+    #region Validation
+    /// <summary>
+    /// 이메일 형식 검증 (정규표현식 기반)
+    /// </summary>
+    /// <param name="email">검증할 이메일 주소</param>
+    /// <returns>유효한 이메일이면 true</returns>
+    public static bool IsValidEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+
+        // 정규표현식: 기본적인 이메일 형식 검증
+        // - 로컬 파트: 영문/숫자/특수문자(._%+-)
+        // - @ 필수
+        // - 도메인: 영문/숫자/하이픈/점
+        // - TLD: 최소 2글자 이상
+        string pattern = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
+        return System.Text.RegularExpressions.Regex.IsMatch(email, pattern);
+    }
+    #endregion
+
     // 사용 Sample
     // Color selectedColor = Global.GetColorByName("red"); // 색상명 변환
     // textMeshPro.color = Global.Purple; // 보라색 적용
@@ -90,4 +116,5 @@ public static class Global
     // string plusSymbol = Global.Plus; // "+" 기호 사용
     // string redMatName = Global.RedCardEmptyMat; // 머티리얼 이름 사용
     // string redImgName = Global.ColorRedEmptyImg; // 이미지 이름 사용
+    // bool isValid = Global.IsValidEmail("user@example.com"); // 이메일 검증
 }

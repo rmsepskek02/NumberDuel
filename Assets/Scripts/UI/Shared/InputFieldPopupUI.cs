@@ -160,7 +160,7 @@ namespace UI.Shared
         {
             if (input.Length < 1)
             {
-                UpdateValidationText("최소 1자 이상 입력해주세요.", new Color(1f, 0.3f, 0.3f));
+                UpdateValidationText("최소 1자 이상 입력해주세요.", Global.GlowRed);
                 isValidationPassed = false;
                 return;
             }
@@ -169,12 +169,12 @@ namespace UI.Shared
 
             if (totalPixels > 24)
             {
-                UpdateValidationText($"닉네임이 너무 깁니다. ({totalPixels}/24)", new Color(1f, 0.3f, 0.3f));
+                UpdateValidationText($"닉네임이 너무 깁니다. ({totalPixels}/24)", Global.GlowRed);
                 isValidationPassed = false;
                 return;
             }
 
-            UpdateValidationText($"중복 확인을 진행해주세요 ({totalPixels}/24)", new Color(0.5f, 0.8f, 1f));
+            UpdateValidationText($"중복 확인을 진행해주세요 ({totalPixels}/24)", Global.Purple);
             isValidationPassed = true;
         }
 
@@ -189,7 +189,7 @@ namespace UI.Shared
 
                 if (!isKorean && !isEnglish)
                 {
-                    UpdateValidationText("한글, 영문만 사용 가능합니다.", new Color(1f, 0.3f, 0.3f));
+                    UpdateValidationText("한글, 영문만 사용 가능합니다.", Global.GlowRed);
                     isValidationPassed = false;
                     return -1;
                 }
@@ -220,13 +220,13 @@ namespace UI.Shared
 
             if (string.IsNullOrWhiteSpace(input))
             {
-                UpdateValidationText("입력값을 입력해주세요.", new Color(1f, 0.3f, 0.3f));
+                UpdateValidationText("입력값을 입력해주세요.", Global.GlowRed);
                 return;
             }
 
             if (!isValidationPassed)
             {
-                UpdateValidationText("입력 규칙을 확인해주세요.", new Color(1f, 0.3f, 0.3f));
+                UpdateValidationText("입력 규칙을 확인해주세요.", Global.GlowRed);
                 return;
             }
 
@@ -252,13 +252,13 @@ namespace UI.Shared
             isProcessing = true;
             SetButtonsInteractable(false);
 
-            UpdateValidationText("중복 확인 중...", new Color(1f, 1f, 0.5f));
+            UpdateValidationText("중복 확인 중...", Global.Yellow);
 
             var (valid, message) = await customValidator(input);
 
             if (!valid)
             {
-                UpdateValidationText(message, new Color(1f, 0.3f, 0.3f));
+                UpdateValidationText(message, Global.GlowRed);
                 isProcessing = false;
                 SetButtonsInteractable(true);
 
@@ -274,7 +274,7 @@ namespace UI.Shared
             }
 
             if (!string.IsNullOrEmpty(message))
-                UpdateValidationText(message, new Color(0.3f, 1f, 0.3f));
+                UpdateValidationText(message, Global.GlowGreen);
 
             isProcessing = false;
             SetButtonsInteractable(true);

@@ -609,7 +609,7 @@ namespace Manager
                 if (validationErrorText != null)
                 {
                     validationErrorText.text = "올바른 이메일 형식이 아닙니다";
-                    validationErrorText.color = Color.red;
+                    validationErrorText.color = Global.GlowRed;
                 }
                 return;
             }

@@ -93,7 +93,7 @@ namespace UI.Settings
             }
 
             // 유효성 메시지 초기화
-            UpdateValidationText(string.Empty, Color.white);
+            UpdateValidationText(string.Empty, Global.White);
 
             // 활성화
             gameObject.SetActive(true);
@@ -146,7 +146,7 @@ namespace UI.Settings
             // 유효성 검사
             if (!ValidateNickname(newNickname, out string errorMessage))
             {
-                UpdateValidationText(errorMessage, Color.red);
+                UpdateValidationText(errorMessage, Global.GlowRed);
                 return;
             }
 
@@ -160,7 +160,7 @@ namespace UI.Settings
             if (success)
             {
                 // 성공 메시지
-                UpdateValidationText("닉네임이 변경되었습니다!", Color.green);
+                UpdateValidationText("닉네임이 변경되었습니다!", Global.GlowGreen);
 
                 // 콜백 호출
                 onNicknameChanged?.Invoke(newNickname);
@@ -172,7 +172,7 @@ namespace UI.Settings
             else
             {
                 // 실패 메시지
-                UpdateValidationText("닉네임 변경에 실패했습니다. 다시 시도해주세요.", Color.red);
+                UpdateValidationText("닉네임 변경에 실패했습니다. 다시 시도해주세요.", Global.GlowRed);
             }
 
             // 처리 중 플래그 해제
