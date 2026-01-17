@@ -416,7 +416,7 @@ namespace Manager
         public void OnClickGuestLoginButton()
         {
             // 확인 팝업 표시
-            UI.Shared.ConfirmationPopup.Show(
+            UI.Shared.ConfirmationPopupUI.Show(
                 "손님으로 시작하시겠습니까?\n\n주의사항\n• 앱 삭제 시 데이터가 손실됩니다\n• 이메일/구글 계정과 연동 가능합니다",
                 onConfirm: async () => await OnGuestLoginConfirm(),
                 onCancel: () => { }, // 빈 액션 전달 (취소 버튼 표시)
@@ -573,6 +573,12 @@ namespace Manager
                 emailVerificationSection.SetActive(true);
             }
 
+            // 비밀번호 찾기 버튼 숨기기 (회원가입 중에는 불필요)
+            if (findPasswordButton != null)
+            {
+                findPasswordButton.gameObject.SetActive(false);
+            }
+
             if (verificationEmailInput != null)
             {
                 verificationEmailInput.text = "";
@@ -671,7 +677,7 @@ namespace Manager
 
                     // 성공 팝업
                     string coloredEmail = $"<color=#{ColorUtility.ToHtmlStringRGB(Global.Purple)}>{email}</color>";
-                    UI.Shared.ConfirmationPopup.Show(
+                    UI.Shared.ConfirmationPopupUI.Show(
                         $"인증 메일이 {coloredEmail}로 발송되었습니다.\n\n" +
                         "이메일의 인증 링크를 클릭한 후\n" +
                         "\"인증확인\" 버튼을 눌러주세요.",
@@ -695,7 +701,7 @@ namespace Manager
                 }
                 else
                 {
-                    UI.Shared.ConfirmationPopup.Show(
+                    UI.Shared.ConfirmationPopupUI.Show(
                         "인증 메일 발송에 실패했습니다.\n\n" +
                         "잠시 후 다시 시도해주세요.",
                         onConfirm: () => { },
@@ -830,7 +836,7 @@ namespace Manager
             if (AuthManager.Instance.IsLoggedIn &&
                 (emailVerificationSection.activeSelf || passwordSection.activeSelf || nicknameSection.activeSelf))
             {
-                UI.Shared.ConfirmationPopup.Show(
+                UI.Shared.ConfirmationPopupUI.Show(
                     "회원가입을 중단하시겠습니까?\n\n" +
                     "진행 중인 계정 정보가 삭제됩니다.",
                     onConfirm: async () =>
@@ -914,6 +920,12 @@ namespace Manager
             if (resendEmailButton != null)
             {
                 resendEmailButton.gameObject.SetActive(false);
+            }
+
+            // 비밀번호 찾기 버튼 다시 표시 (소셜 로그인 화면에서는 숨김 상태 유지)
+            if (findPasswordButton != null)
+            {
+                findPasswordButton.gameObject.SetActive(false);
             }
         }
 
@@ -1000,6 +1012,12 @@ namespace Manager
             {
                 resendEmailButton.gameObject.SetActive(false);
             }
+
+            // 비밀번호 찾기 버튼 다시 표시 (로그인 화면으로 복귀)
+            if (findPasswordButton != null)
+            {
+                findPasswordButton.gameObject.SetActive(true);
+            }
         }
         #endregion
 
@@ -1050,7 +1068,7 @@ namespace Manager
         /// </summary>
         private void ShowSimpleAlert(string message)
         {
-            UI.Shared.ConfirmationPopup.Show(
+            UI.Shared.ConfirmationPopupUI.Show(
                 message,
                 onConfirm: () => { },
                 onCancel: null,
@@ -1233,7 +1251,7 @@ namespace Manager
 
                 if (AuthManager.Instance.IsEmailVerified)
                 {
-                    UI.Shared.ConfirmationPopup.Show(
+                    UI.Shared.ConfirmationPopupUI.Show(
                         "이메일 인증이 완료되었습니다!\n\n" +
                         "비밀번호를 설정해주세요.",
                         onConfirm: () => { },
@@ -1275,7 +1293,7 @@ namespace Manager
                 }
                 else
                 {
-                    UI.Shared.ConfirmationPopup.Show(
+                    UI.Shared.ConfirmationPopupUI.Show(
                         "이메일 인증이 아직 완료되지 않았습니다.\n\n" +
                         "이메일의 인증 링크를 클릭한 후\n다시 시도해주세요.",
                         onConfirm: () => { },
@@ -1299,7 +1317,7 @@ namespace Manager
         {
             if (!AuthManager.Instance.IsLoggedIn)
             {
-                UI.Shared.ConfirmationPopup.Show(
+                UI.Shared.ConfirmationPopupUI.Show(
                     "오류가 발생했습니다.\n다시 시도해주세요.",
                     onConfirm: () => { },
                     onCancel: null,
@@ -1313,7 +1331,7 @@ namespace Manager
             if (resendCooldown.IsActive)
             {
                 int remainingSeconds = resendCooldown.GetRemainingSeconds();
-                UI.Shared.ConfirmationPopup.Show(
+                UI.Shared.ConfirmationPopupUI.Show(
                     $"재발송은 {remainingSeconds}초 후에\n다시 시도할 수 있습니다.",
                     onConfirm: () =>
                     {
@@ -1339,7 +1357,7 @@ namespace Manager
                     // 쿨다운 시작
                     resendCooldown.Start();
 
-                    UI.Shared.ConfirmationPopup.Show(
+                    UI.Shared.ConfirmationPopupUI.Show(
                         "인증 메일이 재발송되었습니다.\n\n" +
                         "이메일의 인증 링크를 클릭한 후\n" +
                         "\"인증확인\" 버튼을 눌러주세요.",
@@ -1355,7 +1373,7 @@ namespace Manager
                 }
                 else
                 {
-                    UI.Shared.ConfirmationPopup.Show(
+                    UI.Shared.ConfirmationPopupUI.Show(
                         "인증 메일 재발송에 실패했습니다.\n\n" +
                         "잠시 후 다시 시도해주세요.",
                         onConfirm: () =>
@@ -1384,7 +1402,7 @@ namespace Manager
             // 로그인 체크
             if (!AuthManager.Instance.IsLoggedIn)
             {
-                UI.Shared.ConfirmationPopup.Show(
+                UI.Shared.ConfirmationPopupUI.Show(
                     "오류가 발생했습니다.\n다시 시도해주세요.",
                     onConfirm: () => { },
                     onCancel: null,
@@ -1398,7 +1416,7 @@ namespace Manager
             if (resendCooldown.IsActive)
             {
                 int remainingSeconds = resendCooldown.GetRemainingSeconds();
-                UI.Shared.ConfirmationPopup.Show(
+                UI.Shared.ConfirmationPopupUI.Show(
                     $"재발송은 {remainingSeconds}초 후에\n다시 시도할 수 있습니다.",
                     onConfirm: () =>
                     {
@@ -1425,7 +1443,7 @@ namespace Manager
                     // 쿨다운 시작
                     resendCooldown.Start();
 
-                    UI.Shared.ConfirmationPopup.Show(
+                    UI.Shared.ConfirmationPopupUI.Show(
                         "인증 메일이 재발송되었습니다.\n\n" +
                         "이메일의 인증 링크를 클릭한 후\n" +
                         "\"인증확인\" 버튼을 눌러주세요.",
@@ -1441,7 +1459,7 @@ namespace Manager
                 }
                 else
                 {
-                    UI.Shared.ConfirmationPopup.Show(
+                    UI.Shared.ConfirmationPopupUI.Show(
                         "인증 메일 재발송에 실패했습니다.\n\n" +
                         "잠시 후 다시 시도해주세요.",
                         onConfirm: () =>
@@ -1525,7 +1543,7 @@ namespace Manager
                             cancelText = "닫기";
                         }
 
-                        UI.Shared.ConfirmationPopup.Show(
+                        UI.Shared.ConfirmationPopupUI.Show(
                             message,
                             onConfirm: () =>
                             {
@@ -1558,7 +1576,7 @@ namespace Manager
 
                     if (sessionCheck.isDuplicate)
                     {
-                        UI.Shared.ConfirmationPopup.Show(
+                        UI.Shared.ConfirmationPopupUI.Show(
                             "이미 접속 중인 계정입니다.\n기존 접속을 해제하고 로그인하시겠습니까?",
                             onConfirm: async () =>
                             {
@@ -1613,7 +1631,7 @@ namespace Manager
                     {
                         string provider = result.message.Split("::")[1];
 
-                        UI.Shared.ConfirmationPopup.Show(
+                        UI.Shared.ConfirmationPopupUI.Show(
                             $"이 계정은 {provider} 로그인 전용입니다.\n\n" +
                             $"'{email}'은(는)\n" +
                             $"{provider}로 가입된 계정입니다.\n\n" +
@@ -1689,7 +1707,7 @@ namespace Manager
                 bool profileCreated = await DatabaseManager.Instance.CreateUserProfile(uid, email, nickname, emailVerified: true);
                 if (!profileCreated)
                 {
-                    UI.Shared.ConfirmationPopup.Show(
+                    UI.Shared.ConfirmationPopupUI.Show(
                         "프로필 생성에 실패했습니다.\n\n다시 시도해주세요.",
                         onConfirm: () => { },
                         onCancel: null,
@@ -1700,7 +1718,7 @@ namespace Manager
                 }
 
                 // 회원가입 완료 - 세션 생성 없이 로그인 유도
-                UI.Shared.ConfirmationPopup.Show(
+                UI.Shared.ConfirmationPopupUI.Show(
                     "회원가입을 환영합니다!\n\n로그인을 진행해주세요.",
                     onConfirm: () =>
                     {
@@ -1745,7 +1763,7 @@ namespace Manager
                 // 신규 사용자 - 닉네임 입력 팝업 표시 (재귀 호출 가능하도록 로컬 함수로 정의)
                 void ShowNicknameInputPopup()
                 {
-                    UI.Shared.InputFieldPopup.ShowNicknameInput(
+                    UI.Shared.InputFieldPopupUI.ShowNicknameInput(
                         onConfirm: async (nickname) =>
                         {
                             // 프로필 생성
@@ -1770,13 +1788,13 @@ namespace Manager
                         onCancel: () =>
                         {
                             // 취소 확인 팝업 (닉네임 입력 팝업은 유지된 상태)
-                            UI.Shared.ConfirmationPopup.Show(
+                            UI.Shared.ConfirmationPopupUI.Show(
                                 "닉네임 설정을 취소하시겠습니까?\n\n" +
                                 "로그인이 취소되며\n처음부터 다시 진행해야 합니다.",
                                 onConfirm: async () =>
                                 {
                                     // 닉네임 입력 팝업 닫기
-                                    UI.Shared.InputFieldPopup.Hide();
+                                    UI.Shared.InputFieldPopupUI.Hide();
 
                                     try
                                     {
@@ -1845,7 +1863,7 @@ namespace Manager
 
             if (sessionCheck.isDuplicate)
             {
-                UI.Shared.ConfirmationPopup.Show(
+                UI.Shared.ConfirmationPopupUI.Show(
                     "이미 로그인 중인 계정입니다.\n기존 접속을 해제하고 로그인하시겠습니까?",
                     onConfirm: async () =>
                     {
@@ -2028,6 +2046,7 @@ namespace Manager
             if (passwordConfirmButton != null) passwordConfirmButton.interactable = false;
             if (nicknameConfirmButton != null) nicknameConfirmButton.interactable = false;
             if (backToSocialButton != null) backToSocialButton.interactable = false;
+            if (findPasswordButton != null) findPasswordButton.interactable = false;
         }
 
         /// <summary>
@@ -2046,6 +2065,7 @@ namespace Manager
             if (passwordConfirmButton != null) passwordConfirmButton.interactable = true;
             if (nicknameConfirmButton != null) nicknameConfirmButton.interactable = true;
             if (backToSocialButton != null) backToSocialButton.interactable = true;
+            if (findPasswordButton != null) findPasswordButton.interactable = true;
         }
 
         /// <summary>
@@ -2138,7 +2158,7 @@ namespace Manager
         #region Password Reset
         public void OnClickFindPasswordButton()
         {
-            UI.Shared.FindPasswordPopup.Show();
+            UI.Shared.FindPasswordPopupUI.Show();
         }
         #endregion
     }
