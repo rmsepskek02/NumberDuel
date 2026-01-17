@@ -208,7 +208,7 @@ namespace UI.Shared
                 return;
 
             onCanceled?.Invoke();
-            Hide();
+            // Hide()를 여기서 호출하지 않음 - 콜백에서 필요 시 InputFieldPopup.Hide() 호출
         }
 
         private async void OnConfirmClicked()

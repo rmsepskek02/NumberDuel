@@ -90,6 +90,15 @@ namespace UI.Shared
         }
 
         /// <summary>
+        /// 팝업 숨기기
+        /// </summary>
+        public static void Hide()
+        {
+            if (instance != null)
+                instance.Hide();
+        }
+
+        /// <summary>
         /// 팝업 인스턴스 제거
         /// </summary>
         public static void Destroy()

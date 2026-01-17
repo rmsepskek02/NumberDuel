@@ -1742,35 +1742,75 @@ namespace Manager
 
             if (!profileExists)
             {
-                // 신규 사용자 - 닉네임 입력 팝업 표시
-                UI.Shared.InputFieldPopup.ShowNicknameInput(
-                    onConfirm: async (nickname) =>
-                    {
-                        // 프로필 생성
-                        bool profileCreated = await DatabaseManager.Instance.CreateSocialUserProfile(
-                            uid,
-                            email,
-                            nickname,
-                            "Google"
-                        // AuthManager.Instance.CurrentUser.PhotoUrl?.ToString() ?? ""
-                        );
-
-                        if (!profileCreated)
+                // 신규 사용자 - 닉네임 입력 팝업 표시 (재귀 호출 가능하도록 로컬 함수로 정의)
+                void ShowNicknameInputPopup()
+                {
+                    UI.Shared.InputFieldPopup.ShowNicknameInput(
+                        onConfirm: async (nickname) =>
                         {
-                            SystemMessageManager.Instance?.ShowMessage("ProfileCreateFailed");
-                            AuthManager.Instance.SignOutWithoutSessionClear();
-                            return;
-                        }
+                            // 프로필 생성
+                            bool profileCreated = await DatabaseManager.Instance.CreateSocialUserProfile(
+                                uid,
+                                email,
+                                nickname,
+                                "Google"
+                            // AuthManager.Instance.CurrentUser.PhotoUrl?.ToString() ?? ""
+                            );
 
-                        // 세션 생성 및 로비 진입
-                        await ProceedToLobby(uid);
-                    },
-                    onCancel: () =>
-                    {
-                        // 닉네임 입력 취소 - 로그아웃
-                        AuthManager.Instance.SignOutWithoutSessionClear();
-                    }
-                );
+                            if (!profileCreated)
+                            {
+                                SystemMessageManager.Instance?.ShowMessage("ProfileCreateFailed");
+                                AuthManager.Instance.SignOutWithoutSessionClear();
+                                return;
+                            }
+
+                            // 세션 생성 및 로비 진입
+                            await ProceedToLobby(uid);
+                        },
+                        onCancel: () =>
+                        {
+                            // 취소 확인 팝업 (닉네임 입력 팝업은 유지된 상태)
+                            UI.Shared.ConfirmationPopup.Show(
+                                "닉네임 설정을 취소하시겠습니까?\n\n" +
+                                "로그인이 취소되며\n처음부터 다시 진행해야 합니다.",
+                                onConfirm: async () =>
+                                {
+                                    // 닉네임 입력 팝업 닫기
+                                    UI.Shared.InputFieldPopup.Hide();
+
+                                    try
+                                    {
+                                        // 계정 삭제
+                                        var user = AuthManager.Instance.CurrentUser;
+                                        if (user != null)
+                                        {
+                                            await user.DeleteAsync();
+                                        }
+                                    }
+                                    catch (System.Exception ex)
+                                    {
+                                        Debug.LogError($"[JoinManager] Google 계정 삭제 실패: {ex.Message}");
+                                    }
+                                    finally
+                                    {
+                                        AuthManager.Instance.SignOutWithoutSessionClear();
+                                        isProcessing = false;
+                                        EnableAllButtons();
+                                    }
+                                },
+                                onCancel: () =>
+                                {
+                                    // "계속 입력" 선택 시 - 닉네임 입력 팝업이 이미 유지되어 있으므로 아무것도 안 함
+                                },
+                                confirmText: "취소하기",
+                                cancelText: "계속 입력"
+                            );
+                        }
+                    );
+                }
+
+                // 닉네임 입력 팝업 표시
+                ShowNicknameInputPopup();
             }
             else
             {
