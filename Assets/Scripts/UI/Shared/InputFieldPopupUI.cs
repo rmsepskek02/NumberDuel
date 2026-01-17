@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,9 +10,10 @@ namespace UI.Shared
     /// 범용 입력 팝업 UI
     /// 닉네임, 비밀번호 등 다양한 입력 상황에 재사용 가능
     /// </summary>
-    public class InputFieldPopupUI : MonoBehaviour
+    public class InputFieldPopupUI : PopupBase<InputFieldPopupUI>
     {
         #region Serialized Fields
+
         [Header("UI References")]
         [SerializeField] private TextMeshProUGUI titleText;
         [SerializeField] private TMP_InputField inputField;
@@ -21,57 +21,78 @@ namespace UI.Shared
         [SerializeField] private TextMeshProUGUI validationText;
         [SerializeField] private Button confirmButton;
         [SerializeField] private Button cancelButton;
-        [SerializeField] private CanvasGroup canvasGroup;
-        [SerializeField] private RectTransform popupRect;
 
-        [Header("Animation Settings")]
-        [SerializeField] private float showDuration = 0.2f;
-        [SerializeField] private float hideDuration = 0.15f;
         #endregion
 
         #region Private Fields
+
         private Action<string> onConfirmed;
         private Action onCanceled;
         private Func<string, Task<(bool valid, string message)>> customValidator;
-        private Tween showTween;
-        private Tween hideTween;
         private bool isProcessing;
         private bool isValidationPassed;
+
         #endregion
 
         #region Unity Lifecycle
-        private void Awake()
+
+        protected override void Awake()
         {
+            base.Awake();
+
             confirmButton?.onClick.AddListener(OnConfirmClicked);
             cancelButton?.onClick.AddListener(OnCancelClicked);
 
-            if (canvasGroup != null)
-            {
-                canvasGroup.alpha = 0f;
-                canvasGroup.interactable = false;
-                canvasGroup.blocksRaycasts = false;
-            }
-
             // KeyboardManager에 InputField 등록 (모바일 키보드 대응)
-            RegisterInputFieldToKeyboardManager();
-
-            gameObject.SetActive(false);
+            RegisterInputFieldToKeyboard(inputField);
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
-            showTween?.Kill();
-            hideTween?.Kill();
+            base.OnDestroy();
+
             confirmButton?.onClick.RemoveListener(OnConfirmClicked);
             cancelButton?.onClick.RemoveListener(OnCancelClicked);
         }
+
         #endregion
 
-        #region Public Methods
+        #region Public Static Methods
+
         /// <summary>
-        /// 팝업 표시
+        /// 닉네임 입력 팝업 표시
         /// </summary>
-        public void Show(
+        public static void ShowNicknameInput(Action<string> onConfirm, Action onCancel = null)
+        {
+            Show(
+                "닉네임 입력",
+                "닉네임을 입력하세요",
+                TMP_InputField.ContentType.Standard,
+                onConfirm,
+                onCancel,
+                ValidateNickname
+            );
+        }
+
+        /// <summary>
+        /// 비밀번호 입력 팝업 표시
+        /// </summary>
+        public static void ShowPasswordInput(string title, Action<string> onConfirm, Action onCancel = null)
+        {
+            Show(
+                title,
+                "비밀번호를 입력하세요",
+                TMP_InputField.ContentType.Password,
+                onConfirm,
+                onCancel,
+                null
+            );
+        }
+
+        /// <summary>
+        /// 커스텀 입력 팝업 표시
+        /// </summary>
+        public static void ShowCustomInput(
             string title,
             string placeholder,
             TMP_InputField.ContentType contentType,
@@ -79,8 +100,41 @@ namespace UI.Shared
             Action onCancel = null,
             Func<string, Task<(bool valid, string message)>> validator = null)
         {
-            hideTween?.Kill();
+            Show(title, placeholder, contentType, onConfirm, onCancel, validator);
+        }
 
+        /// <summary>
+        /// 팝업 표시
+        /// </summary>
+        public static void Show(
+            string title,
+            string placeholder,
+            TMP_InputField.ContentType contentType,
+            Action<string> onConfirm,
+            Action onCancel = null,
+            Func<string, Task<(bool valid, string message)>> validator = null)
+        {
+            if (instance == null && !LoadPopup())
+                return;
+
+            instance.ShowInternal(title, placeholder, contentType, onConfirm, onCancel, validator);
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        /// <summary>
+        /// 팝업 표시 (Instance)
+        /// </summary>
+        private void ShowInternal(
+            string title,
+            string placeholder,
+            TMP_InputField.ContentType contentType,
+            Action<string> onConfirm,
+            Action onCancel,
+            Func<string, Task<(bool valid, string message)>> validator)
+        {
             onConfirmed = onConfirm;
             onCanceled = onCancel;
             customValidator = validator;
@@ -89,22 +143,11 @@ namespace UI.Shared
             InitializeValidation();
 
             gameObject.SetActive(true);
+            RegisterToUIStack();
             PlayShowAnimation();
-            Manager.SoundManager.Instance?.PlaySFX(Objects.SoundType.UI_ButtonClick);
+            PlayClickSound();
         }
 
-        /// <summary>
-        /// 팝업 숨기기
-        /// </summary>
-        public void Hide()
-        {
-            showTween?.Kill();
-            PlayHideAnimation();
-            Manager.SoundManager.Instance?.PlaySFX(Objects.SoundType.UI_ButtonClick);
-        }
-        #endregion
-
-        #region UI Setup
         private void SetupUI(string title, string placeholder, TMP_InputField.ContentType contentType)
         {
             if (titleText != null)
@@ -136,9 +179,11 @@ namespace UI.Shared
                 validationText.color = new Color(1f, 1f, 1f, 0f);
             }
         }
+
         #endregion
 
         #region Input Validation
+
         private void OnInputValueChanged(string input)
         {
             if (customValidator == null || validationText == null)
@@ -199,16 +244,34 @@ namespace UI.Shared
 
             return totalPixels;
         }
+
+        /// <summary>
+        /// 닉네임 검증 (서버 중복 확인 포함)
+        /// </summary>
+        private static async Task<(bool valid, string message)> ValidateNickname(string nickname)
+        {
+            // 서버에서 닉네임 중복 확인
+            bool isAvailable = await Manager.DatabaseManager.Instance.IsNicknameAvailable(nickname);
+
+            if (!isAvailable)
+            {
+                return (false, "이미 사용 중인 닉네임입니다.");
+            }
+
+            return (true, "사용 가능한 닉네임입니다.");
+        }
+
         #endregion
 
         #region Button Handlers
+
         private void OnCancelClicked()
         {
             if (isProcessing)
                 return;
 
             onCanceled?.Invoke();
-            // Hide()를 여기서 호출하지 않음 - 콜백에서 필요 시 InputFieldPopup.Hide() 호출
+            // Hide()를 여기서 호출하지 않음 - 콜백에서 필요 시 Hide() 호출
         }
 
         private async void OnConfirmClicked()
@@ -244,7 +307,7 @@ namespace UI.Shared
             // 검증 성공 - 콜백 실행 및 팝업 닫기
             onConfirmed?.Invoke(input);
             await Task.Delay(300);
-            Hide();
+            HideInternal();
         }
 
         private async Task<bool> ValidateWithServer(string input)
@@ -270,7 +333,7 @@ namespace UI.Shared
                     inputField.selectionAnchorPosition = inputField.text.Length;
                     inputField.selectionFocusPosition = inputField.text.Length;
                 }
-                return false; // 검증 실패
+                return false;
             }
 
             if (!string.IsNullOrEmpty(message))
@@ -278,11 +341,13 @@ namespace UI.Shared
 
             isProcessing = false;
             SetButtonsInteractable(true);
-            return true; // 검증 성공
+            return true;
         }
+
         #endregion
 
         #region UI Helpers
+
         private void UpdateValidationText(string message, Color color)
         {
             if (validationText != null)
@@ -303,70 +368,7 @@ namespace UI.Shared
             if (inputField != null)
                 inputField.interactable = interactable;
         }
-        #endregion
 
-        #region Keyboard Manager Integration
-        /// <summary>
-        /// KeyboardManager에 InputField 등록
-        /// 팝업이 생성될 때 호출되어 모바일 키보드 대응 활성화
-        /// </summary>
-        private void RegisterInputFieldToKeyboardManager()
-        {
-            if (inputField == null)
-                return;
-
-#if UNITY_ANDROID || UNITY_IOS
-            // 모바일 플랫폼에서만 KeyboardManager에 등록
-            var keyboardManager = Manager.KeyboardManager.Instance;
-            if (keyboardManager != null)
-            {
-                keyboardManager.RegisterInputFieldRuntime(inputField);
-            }
-#endif
-        }
-        #endregion
-
-        #region Animations
-        private void PlayShowAnimation()
-        {
-            if (canvasGroup == null || popupRect == null)
-                return;
-
-            canvasGroup.alpha = 0f;
-            popupRect.localScale = Vector3.one * 0.9f;
-            canvasGroup.interactable = false;
-            canvasGroup.blocksRaycasts = false;
-
-            Sequence showSequence = DOTween.Sequence();
-            showSequence.Append(canvasGroup.DOFade(1f, showDuration).SetEase(Ease.OutQuad));
-            showSequence.Join(popupRect.DOScale(1f, showDuration).SetEase(Ease.OutBack));
-            showSequence.OnComplete(() =>
-            {
-                canvasGroup.interactable = true;
-                canvasGroup.blocksRaycasts = true;
-            });
-
-            showTween = showSequence;
-        }
-
-        private void PlayHideAnimation()
-        {
-            if (canvasGroup == null || popupRect == null)
-            {
-                gameObject.SetActive(false);
-                return;
-            }
-
-            canvasGroup.interactable = false;
-            canvasGroup.blocksRaycasts = false;
-
-            Sequence hideSequence = DOTween.Sequence();
-            hideSequence.Append(canvasGroup.DOFade(0f, hideDuration).SetEase(Ease.InQuad));
-            hideSequence.Join(popupRect.DOScale(0.9f, hideDuration).SetEase(Ease.InBack));
-            hideSequence.OnComplete(() => gameObject.SetActive(false));
-
-            hideTween = hideSequence;
-        }
         #endregion
     }
 }

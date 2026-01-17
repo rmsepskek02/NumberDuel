@@ -1,6 +1,4 @@
 using System;
-using DG.Tweening;
-using Objects;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,52 +10,35 @@ namespace UI.Shared
     /// 재사용 가능한 확인 팝업
     /// 동적으로 메시지와 액션 설정 가능
     /// </summary>
-    public class ConfirmationPopupUI : MonoBehaviour, ICloseable
+    public class ConfirmationPopupUI : PopupBase<ConfirmationPopupUI>
     {
-        #region Fields and Properties
+        #region Serialized Fields
+
         [Header("UI References")]
         [SerializeField] private TextMeshProUGUI messageText;
         [SerializeField] private Button cancelButton;
         [SerializeField] private Button confirmButton;
         [SerializeField] private TextMeshProUGUI cancelButtonText;
         [SerializeField] private TextMeshProUGUI confirmButtonText;
-        [SerializeField] private CanvasGroup canvasGroup;
-        [SerializeField] private RectTransform popupRect;
 
-        [Header("Animation Settings")]
-        [SerializeField] private float showDuration = 0.2f;
-        [SerializeField] private float hideDuration = 0.15f;
+        #endregion
+
+        #region Private Fields
 
         private Action onConfirmed;
         private Action onCanceled;
-        private Tween showTween;
-        private Tween hideTween;
 
-        // 애니메이션 진행 상태
-        private bool isAnimating = false;
-
-        /// <summary>
-        /// 애니메이션 진행 중인지 여부
-        /// </summary>
-        public bool IsAnimating => isAnimating;
         #endregion
 
         #region Unity Lifecycle
-        private void Awake()
+
+        protected override void Awake()
         {
+            base.Awake();
+
             // 버튼 이벤트 등록
             cancelButton?.onClick.AddListener(OnCancelClicked);
             confirmButton?.onClick.AddListener(OnConfirmClicked);
-
-            // 초기 상태: 숨김
-            if (canvasGroup != null)
-            {
-                canvasGroup.alpha = 0f;
-                canvasGroup.interactable = false;
-                canvasGroup.blocksRaycasts = false;
-            }
-
-            gameObject.SetActive(false);
         }
 
         private void Update()
@@ -70,61 +51,36 @@ namespace UI.Shared
             if (Keyboard.current != null && Keyboard.current.enterKey.wasPressedThisFrame)
             {
                 // 취소 버튼이 활성화되어 있으면 Enter 무시 (명시적 클릭 유도)
-                // 예: "재발송"과 "닫기" 버튼이 같이 있는 경우, 실수로 Enter를 눌러 작업이 실행되는 것을 방지
                 if (cancelButton != null && cancelButton.gameObject.activeSelf)
                 {
-                    return; // Do nothing - force explicit click
+                    return;
                 }
 
-                // 취소 버튼이 없으면 확인 버튼 클릭 (onConfirmed 콜백 실행)
+                // 취소 버튼이 없으면 확인 버튼 클릭
                 OnConfirmClicked();
 
-                // Enter 키 입력을 소비했다고 표시 (다른 곳에서 중복 처리하지 않도록)
+                // Enter 키 입력을 소비했다고 표시
                 UIStackManager.Instance?.ConsumeEnterKey();
             }
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
-            // Tween 정리
-            showTween?.Kill();
-            hideTween?.Kill();
+            base.OnDestroy();
 
             // 버튼 이벤트 해제
             cancelButton?.onClick.RemoveListener(OnCancelClicked);
             confirmButton?.onClick.RemoveListener(OnConfirmClicked);
         }
+
         #endregion
 
-        #region ICloseable Implementation
-        /// <summary>
-        /// ICloseable 구현: 팝업 닫기 (취소 버튼 클릭과 동일)
-        /// UIStackManager의 ESC 키 처리에서 호출됨
-        /// </summary>
-        public void Close()
-        {
-            // 취소 버튼 클릭과 동일하게 처리
-            OnCancelClicked();
-        }
+        #region Public Static Methods
 
-        /// <summary>
-        /// ICloseable 구현: 닫을 수 있는 상태인지 확인
-        /// </summary>
-        /// <returns>애니메이션 진행 중이 아니면 true</returns>
-        public bool CanClose()
-        {
-            // 애니메이션 진행 중이면 닫을 수 없음
-            return !isAnimating;
-        }
-        #endregion
-
-        #region Public Methods
         /// <summary>
         /// 확인 팝업 표시
         /// </summary>
-        /// <param name="message">표시할 메시지</param>
-        /// <param name="onConfirm">확인 버튼 클릭 시 실행할 액션</param>
-        public void Show(string message, Action onConfirm)
+        public static void Show(string message, Action onConfirm)
         {
             Show(message, onConfirm, null);
         }
@@ -132,10 +88,7 @@ namespace UI.Shared
         /// <summary>
         /// 확인 팝업 표시 (취소 콜백 포함)
         /// </summary>
-        /// <param name="message">표시할 메시지</param>
-        /// <param name="onConfirm">확인 버튼 클릭 시 실행할 액션</param>
-        /// <param name="onCancel">취소 버튼 클릭 시 실행할 액션</param>
-        public void Show(string message, Action onConfirm, Action onCancel)
+        public static void Show(string message, Action onConfirm, Action onCancel)
         {
             Show(message, onConfirm, onCancel, "확인", "취소");
         }
@@ -143,16 +96,23 @@ namespace UI.Shared
         /// <summary>
         /// 확인 팝업 표시 (버튼 텍스트 커스터마이징 포함)
         /// </summary>
-        /// <param name="message">표시할 메시지</param>
-        /// <param name="onConfirm">확인 버튼 클릭 시 실행할 액션</param>
-        /// <param name="onCancel">취소 버튼 클릭 시 실행할 액션</param>
-        /// <param name="confirmText">확인 버튼 텍스트 (기본값: "확인")</param>
-        /// <param name="cancelText">취소 버튼 텍스트 (기본값: "취소")</param>
-        public void Show(string message, Action onConfirm, Action onCancel, string confirmText, string cancelText)
+        public static void Show(string message, Action onConfirm, Action onCancel, string confirmText, string cancelText = "취소")
         {
-            // 이전 Tween 정리
-            hideTween?.Kill();
+            if (instance == null && !LoadPopup())
+                return;
 
+            instance.ShowInternal(message, onConfirm, onCancel, confirmText, cancelText);
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        /// <summary>
+        /// 팝업 표시 (Instance)
+        /// </summary>
+        private void ShowInternal(string message, Action onConfirm, Action onCancel, string confirmText, string cancelText)
+        {
             // 메시지 설정
             if (messageText != null)
             {
@@ -185,44 +145,22 @@ namespace UI.Shared
             gameObject.SetActive(true);
 
             // UIStackManager에 등록
-            UIStackManager.Instance?.Push(this);
+            RegisterToUIStack();
 
             // 애니메이션
             PlayShowAnimation();
 
             // 사운드 재생
-            Manager.SoundManager.Instance?.PlaySFX(SoundType.UI_ButtonClick);
+            PlayClickSound();
         }
 
-        /// <summary>
-        /// 확인 팝업 숨기기
-        /// </summary>
-        public void Hide()
-        {
-            // 이전 Tween 정리
-            showTween?.Kill();
-
-            // UIStackManager에서 제거
-            UIStackManager.Instance?.Pop();
-
-            // 애니메이션
-            PlayHideAnimation();
-
-            // 사운드 재생
-            Manager.SoundManager.Instance?.PlaySFX(SoundType.UI_ButtonClick);
-        }
-        #endregion
-
-        #region Button Handlers
         /// <summary>
         /// 취소 버튼 클릭
         /// </summary>
         private void OnCancelClicked()
         {
-            // 취소 액션 실행
             onCanceled?.Invoke();
-
-            Hide();
+            HideInternal();
         }
 
         /// <summary>
@@ -230,92 +168,22 @@ namespace UI.Shared
         /// </summary>
         private void OnConfirmClicked()
         {
-            // 액션 실행
             onConfirmed?.Invoke();
-
-            // 팝업 닫기
-            Hide();
+            HideInternal();
         }
+
         #endregion
 
-        #region Animations
-        /// <summary>
-        /// 표시 애니메이션 (Scale 0.9 → 1.0 + Fade In)
-        /// </summary>
-        private void PlayShowAnimation()
-        {
-            if (canvasGroup == null || popupRect == null)
-            {
-                // CanvasGroup이 없으면 즉시 표시
-                return;
-            }
-
-            // 애니메이션 시작
-            isAnimating = true;
-
-            // 초기 상태
-            canvasGroup.alpha = 0f;
-            popupRect.localScale = Vector3.one * 0.9f;
-            canvasGroup.interactable = false;
-            canvasGroup.blocksRaycasts = false;
-
-            // Tween 시퀀스
-            Sequence showSequence = DOTween.Sequence();
-
-            // Fade In
-            showSequence.Append(canvasGroup.DOFade(1f, showDuration).SetEase(Ease.OutQuad));
-
-            // Scale Up
-            showSequence.Join(popupRect.DOScale(1f, showDuration).SetEase(Ease.OutBack));
-
-            // 완료 시 상호작용 활성화
-            showSequence.OnComplete(() =>
-            {
-                canvasGroup.interactable = true;
-                canvasGroup.blocksRaycasts = true;
-                isAnimating = false; // 애니메이션 완료
-            });
-
-            showTween = showSequence;
-        }
+        #region ICloseable Override
 
         /// <summary>
-        /// 숨김 애니메이션 (Scale 1.0 → 0.9 + Fade Out)
+        /// ICloseable 구현: 팝업 닫기 (취소 버튼 클릭과 동일)
         /// </summary>
-        private void PlayHideAnimation()
+        public override void Close()
         {
-            if (canvasGroup == null || popupRect == null)
-            {
-                // CanvasGroup이 없으면 즉시 비활성화
-                gameObject.SetActive(false);
-                return;
-            }
-
-            // 애니메이션 시작
-            isAnimating = true;
-
-            // 상호작용 비활성화
-            canvasGroup.interactable = false;
-            canvasGroup.blocksRaycasts = false;
-
-            // Tween 시퀀스
-            Sequence hideSequence = DOTween.Sequence();
-
-            // Fade Out
-            hideSequence.Append(canvasGroup.DOFade(0f, hideDuration).SetEase(Ease.InQuad));
-
-            // Scale Down
-            hideSequence.Join(popupRect.DOScale(0.9f, hideDuration).SetEase(Ease.InBack));
-
-            // 완료 시 비활성화
-            hideSequence.OnComplete(() =>
-            {
-                gameObject.SetActive(false);
-                isAnimating = false; // 애니메이션 완료
-            });
-
-            hideTween = hideSequence;
+            OnCancelClicked();
         }
+
         #endregion
     }
 }

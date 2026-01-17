@@ -149,7 +149,7 @@ namespace UI.Settings.Tabs
             }
 
             // ConfirmationPopup 표시
-            UI.Shared.ConfirmationPopup.Show(
+            UI.Shared.ConfirmationPopupUI.Show(
                 "변경사항을 저장하시겠습니까?",
                 () =>
                 {
@@ -209,7 +209,7 @@ namespace UI.Settings.Tabs
                 return;
 
             // ConfirmationPopup 표시
-            UI.Shared.ConfirmationPopup.Show(
+            UI.Shared.ConfirmationPopupUI.Show(
                 "정말 변경하시겠습니까?",
                 () =>
                 {
@@ -271,7 +271,7 @@ namespace UI.Settings.Tabs
                 return;
 
             // ConfirmationPopup 표시
-            UI.Shared.ConfirmationPopup.Show(
+            UI.Shared.ConfirmationPopupUI.Show(
                 "기본 설정으로 복원하시겠습니까?",
                 () =>
                 {

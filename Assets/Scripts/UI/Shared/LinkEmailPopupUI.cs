@@ -30,10 +30,9 @@ namespace UI.Shared
         GoogleToEmail    // Google → 이메일 (Link)
     }
 
-    public class LinkEmailPopupUI : MonoBehaviour
+    public class LinkEmailPopupUI : PopupBase<LinkEmailPopupUI>
     {
-        [Header("Popup Root")]
-        [SerializeField] private GameObject popupRoot;
+        #region Serialized Fields
 
         [Header("Header")]
         [SerializeField] private TextMeshProUGUI stepText; // "Step 1/3"
@@ -73,6 +72,10 @@ namespace UI.Shared
         [Header("Validation Settings")]
         [SerializeField] private int maxNicknamePixelLength = 24; // 픽셀 기반 (한글 2px, 영문/숫자 1px)
 
+        #endregion
+
+        #region Private Fields
+
         // 데이터 저장
         private LinkEmailStep currentStep = LinkEmailStep.EmailAndPassword;
         private ConversionMode currentMode = ConversionMode.Guest; // 전환 모드
@@ -99,8 +102,14 @@ namespace UI.Shared
         private float lastEnterKeyPressTime = 0f;
         private const float ENTER_KEY_COOLDOWN = 0.3f; // Enter 키 쿨다운 (0.3초)
 
-        private void Awake()
+        #endregion
+
+        #region Unity Lifecycle
+
+        protected override void Awake()
         {
+            base.Awake();
+
             // 실시간 비밀번호 검증
             passwordInputField.onValueChanged.AddListener(OnPasswordChanged);
             confirmPasswordInputField.onValueChanged.AddListener(OnPasswordChanged);
@@ -113,15 +122,13 @@ namespace UI.Shared
 
             // InputField 순서 설정
             UpdateInputFieldOrder();
-
-            Hide();
         }
 
         private void Update()
         {
             // PC에서만 Tab 키 및 Enter 키 처리
             #if !UNITY_ANDROID && !UNITY_IOS
-            if (popupRoot.activeSelf && UnityEngine.InputSystem.Keyboard.current != null)
+            if (gameObject.activeSelf && UnityEngine.InputSystem.Keyboard.current != null)
             {
                 // Tab 키로 다음 InputField 이동
                 if (UnityEngine.InputSystem.Keyboard.current.tabKey.wasPressedThisFrame)
@@ -139,16 +146,34 @@ namespace UI.Shared
             #endif
         }
 
+        #endregion
+
+        #region Public Static Methods
+
         /// <summary>
         /// 팝업 표시
         /// </summary>
         /// <param name="callback">완료 콜백</param>
         /// <param name="mode">전환 모드 (기본: 게스트)</param>
-        public void Show(Action<bool> callback, ConversionMode mode = ConversionMode.Guest)
+        public static void Show(Action<bool> callback, ConversionMode mode = ConversionMode.Guest)
+        {
+            if (instance == null && !LoadPopup())
+                return;
+
+            instance.ShowInternal(callback, mode);
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        /// <summary>
+        /// 팝업 표시 (Instance)
+        /// </summary>
+        private void ShowInternal(Action<bool> callback, ConversionMode mode)
         {
             onComplete = callback;
             currentMode = mode;
-            popupRoot.SetActive(true);
 
             // 초기화
             currentStep = LinkEmailStep.EmailAndPassword;
@@ -166,17 +191,29 @@ namespace UI.Shared
             // 현재 게스트 닉네임 로드
             LoadCurrentNickname();
 
+            // 활성화
+            gameObject.SetActive(true);
+
+            // UIStackManager에 등록
+            RegisterToUIStack();
+
+            // 애니메이션
+            PlayShowAnimation();
+
+            // 사운드 재생
+            PlayClickSound();
+
             // UI 업데이트
             UpdateUI();
         }
 
         /// <summary>
-        /// 팝업 숨김
+        /// 팝업 숨기기 내부 구현
         /// </summary>
-        public void Hide()
+        protected override void HideInternal()
         {
-            popupRoot.SetActive(false);
             onComplete = null;
+            base.HideInternal();
         }
 
         /// <summary>
@@ -309,6 +346,8 @@ namespace UI.Shared
             }
         }
 
+        #endregion
+
         #region Button Handlers
 
         /// <summary>
@@ -320,7 +359,7 @@ namespace UI.Shared
             // 계정 전환 후에는 뒤로가기 불가 (방어 코드)
             if (isAccountConverted)
             {
-                ConfirmationPopup.Show(
+                ConfirmationPopupUI.Show(
                     "이미 계정 전환이 완료되었습니다.\n취소할 수 없으니 계속 진행해주세요.",
                     onConfirm: () => { },
                     onCancel: null,
@@ -343,7 +382,7 @@ namespace UI.Shared
                     break;
 
                 default:
-                    Hide();
+                    HideInternal();
                     onComplete?.Invoke(false);
                     break;
             }
@@ -584,7 +623,7 @@ namespace UI.Shared
             // 이메일을 파란색으로 강조 (Rich Text)
             string coloredEmail = $"<color=#{ColorUtility.ToHtmlStringRGB(Global.Purple)}>{enteredEmail}</color>";
 
-            ConfirmationPopup.Show(
+            ConfirmationPopupUI.Show(
                 $"입력된 정보는 수정할 수 없습니다.\n{coloredEmail} \n로 연동되며, 이메일 인증 후 계정을 사용할 수 있습니다.\n진행하시겠습니까?",
                 onConfirm: async () =>
                 {
@@ -673,7 +712,7 @@ namespace UI.Shared
 
                 // 5. 이메일 발송 완료 팝업 표시
                 string coloredEnteredEmail = $"<color=#{ColorUtility.ToHtmlStringRGB(Global.Purple)}>{enteredEmail}</color>";
-                ConfirmationPopup.Show(
+                ConfirmationPopupUI.Show(
                     $"인증 메일이 {coloredEnteredEmail}로 발송되었습니다.\n\n" +
                     "이메일의 인증 링크를 클릭한 후\n" +
                     "\"완료\" 버튼을 눌러주세요.",
@@ -773,7 +812,7 @@ namespace UI.Shared
                 lastResendTime = System.DateTime.Now;
 
                 // 재발송 완료 팝업
-                ConfirmationPopup.Show(
+                ConfirmationPopupUI.Show(
                     "인증 메일이 재발송되었습니다.\n\n" +
                     "이메일의 인증 링크를 클릭한 후\n" +
                     "\"완료\" 버튼을 눌러주세요.",
@@ -843,7 +882,7 @@ namespace UI.Shared
                     // 이메일 연동 완료 이벤트 발생
                     AuthManager.Instance.NotifyEmailLinked();
 
-                    Hide();
+                    HideInternal();
                     onComplete?.Invoke(true);
                 }
                 else
@@ -851,7 +890,7 @@ namespace UI.Shared
                     // 인증 미완료 - 경고 팝업
                     AuthManager.Instance.SignOutWithoutSessionClear();
 
-                    ConfirmationPopup.Show(
+                    ConfirmationPopupUI.Show(
                         "이메일 인증을 완료해주세요.\n\n" +
                         "메일함을 확인하고 인증 링크를 클릭하신 후\n" +
                         "다시 시도해주세요.",
@@ -1034,6 +1073,15 @@ namespace UI.Shared
             }
 #endif
         }
+        #endregion
+
+        #region ICloseable Override
+
+        public override void Close()
+        {
+            OnBackClicked();
+        }
+
         #endregion
     }
 }

@@ -140,7 +140,7 @@ namespace Manager
                 return;
 
             // 계정 연동 팝업 미리 로드 (최초 지연 방지)
-            UI.Shared.LinkSocialPopupManager.PreloadPopup();
+            UI.Shared.LinkSocialPopupUI.Preload();
 
             settingsPanelUI.Show();
             isSettingsOpen = true;
@@ -232,7 +232,7 @@ namespace Manager
             string message = GetConfirmationMessage(type);
 
             // 확인 + 취소 버튼 표시
-            UI.Shared.ConfirmationPopup.Show(
+            UI.Shared.ConfirmationPopupUI.Show(
                 message,
                 onConfirm: () => ExecuteConfirmationAction(type),
                 onCancel: () => { } // 취소 시 팝업만 닫힘

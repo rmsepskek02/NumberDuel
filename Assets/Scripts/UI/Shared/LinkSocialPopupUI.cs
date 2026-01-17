@@ -1,5 +1,4 @@
 using System;
-using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,8 +10,10 @@ namespace UI.Shared
     /// - 게스트: SNS 또는 이메일로 계정 전환
     /// - 이메일 계정 사용자: SNS 계정을 추가로 연동
     /// </summary>
-    public class LinkSocialPopupUI : MonoBehaviour, ICloseable
+    public class LinkSocialPopupUI : PopupBase<LinkSocialPopupUI>
     {
+        #region Serialized Fields
+
         [Header("UI References")]
         [SerializeField] private TextMeshProUGUI titleText;
         [SerializeField] private TextMeshProUGUI descriptionText;
@@ -21,34 +22,24 @@ namespace UI.Shared
         [SerializeField] private Button kakaoButton;            // Kakao 연동 버튼 (향후 구현)
         [SerializeField] private Button closeButton;
         [SerializeField] private TextMeshProUGUI errorText;
-        [SerializeField] private CanvasGroup canvasGroup;
-        [SerializeField] private RectTransform popupRect;
 
-        [Header("Animation Settings")]
-        [SerializeField] private float showDuration = 0.2f;
-        [SerializeField] private float hideDuration = 0.15f;
+        #endregion
+
+        #region Private Fields
 
         private bool isGuestMode = false;                       // 게스트 모드 플래그
         private string displayText;                             // 표시 텍스트 ("손님 계정" 또는 실제 이메일)
         private Action<bool> onCompleteCallback;
         private bool isProcessing = false;
-        private bool isAnimating = false;
-        private Tween showTween;
-        private Tween hideTween;
 
-        private void Awake()
+        #endregion
+
+        #region Unity Lifecycle
+
+        protected override void Awake()
         {
+            base.Awake();
             // 버튼 이벤트는 Unity 에디터에서 수동으로 연결
-
-            // 초기 상태: 숨김
-            if (canvasGroup != null)
-            {
-                canvasGroup.alpha = 0f;
-                canvasGroup.interactable = false;
-                canvasGroup.blocksRaycasts = false;
-            }
-
-            gameObject.SetActive(false);
         }
 
         private void OnEnable()
@@ -69,11 +60,9 @@ namespace UI.Shared
             }
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
-            // Tween 정리
-            showTween?.Kill();
-            hideTween?.Kill();
+            base.OnDestroy();
 
             // 이벤트 구독 해제 (안전장치)
             if (Manager.AuthManager.Instance != null)
@@ -82,87 +71,9 @@ namespace UI.Shared
             }
         }
 
-        /// <summary>
-        /// 계정 연동 완료 이벤트 핸들러
-        /// AuthManager의 OnAccountLinked 이벤트 발생 시 호출되어 UI를 갱신
-        /// </summary>
-        private void OnAccountLinked()
-        {
-            // 팝업이 현재 표시 중일 때만 처리
-            if (!gameObject.activeSelf)
-                return;
+        #endregion
 
-            // 이메일 연동이 완료된 경우 팝업 닫기
-            // (Google 연동은 기존 콜백 방식으로 처리되므로 여기서는 이메일만 처리)
-            if (!isProcessing)
-            {
-                // 이메일 연동 완료로 인한 이벤트 → 팝업 닫기
-                Hide();
-                onCompleteCallback?.Invoke(true);
-            }
-            else
-            {
-                // 처리 중이면 UI만 갱신 (Google 연동 중)
-                RefreshAccountInfo();
-            }
-        }
-
-        /// <summary>
-        /// 계정 정보를 갱신하여 UI 업데이트
-        /// </summary>
-        private void RefreshAccountInfo()
-        {
-            if (Manager.AuthManager.Instance == null)
-                return;
-
-            // 현재 계정 정보 가져오기
-            displayText = Manager.AuthManager.Instance.CurrentUserEmail ?? "손님 계정";
-            isGuestMode = Manager.AuthManager.Instance.IsAnonymous;
-            bool hasEmailProvider = Manager.AuthManager.Instance.IsEmailOnlyAccount();
-
-            // UI 텍스트 업데이트
-            if (isGuestMode)
-            {
-                // 게스트 모드
-                if (titleText != null)
-                    titleText.text = "계정 연동하기";
-
-                if (descriptionText != null)
-                    descriptionText.text = $"현재: {displayText}\n\nSNS 또는 이메일로 계정을 연동하면\n게임 데이터를 안전하게 보관할 수 있습니다.";
-
-                // 이메일 버튼 표시
-                if (emailButton != null)
-                    emailButton.gameObject.SetActive(true);
-            }
-            else
-            {
-                // 이메일 계정 또는 SNS 계정 모드
-                if (titleText != null)
-                    titleText.text = hasEmailProvider ? "SNS 계정 연동" : "계정 연동하기";
-
-                if (descriptionText != null)
-                {
-                    if (hasEmailProvider)
-                    {
-                        descriptionText.text = $"현재 이메일: {displayText}\n\nSNS 계정을 추가로 연동할 수 있습니다.";
-                    }
-                    else
-                    {
-                        descriptionText.text = $"현재: {displayText}\n\n이메일 또는 다른 SNS로 계정을 연동하면\n게임 데이터를 안전하게 보관할 수 있습니다.";
-                    }
-                }
-
-                // 이메일 provider가 없는 경우(SNS 전용 계정) 이메일 버튼 표시
-                if (emailButton != null)
-                    emailButton.gameObject.SetActive(!hasEmailProvider);
-            }
-
-            // 에러 텍스트 초기화
-            if (errorText != null)
-                errorText.text = string.Empty;
-
-            Debug.Log($"[LinkSocialPopupUI] RefreshAccountInfo - displayText: {displayText}, isGuestMode: {isGuestMode}, hasEmailProvider: {hasEmailProvider}");
-        }
+        #region Public Static Methods
 
         /// <summary>
         /// 팝업 표시
@@ -170,7 +81,22 @@ namespace UI.Shared
         /// <param name="displayText">표시할 텍스트 (이메일 계정: 실제 이메일, 게스트: "손님 계정")</param>
         /// <param name="isGuestMode">게스트 모드 여부</param>
         /// <param name="onComplete">완료 콜백</param>
-        public void Show(string displayText, bool isGuestMode, Action<bool> onComplete)
+        public static void Show(string displayText, bool isGuestMode, Action<bool> onComplete)
+        {
+            if (instance == null && !LoadPopup())
+                return;
+
+            instance.ShowInternal(displayText, isGuestMode, onComplete);
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        /// <summary>
+        /// 팝업 표시 (Instance)
+        /// </summary>
+        private void ShowInternal(string displayText, bool isGuestMode, Action<bool> onComplete)
         {
             this.displayText = displayText;
             this.isGuestMode = isGuestMode;
@@ -248,32 +174,122 @@ namespace UI.Shared
             gameObject.SetActive(true);
 
             // UIStackManager에 등록
-            UIStackManager.Instance?.Push(this);
+            RegisterToUIStack();
 
             // 애니메이션
             PlayShowAnimation();
 
             // 사운드 재생
-            Manager.SoundManager.Instance?.PlaySFX(Objects.SoundType.UI_ButtonClick);
+            PlayClickSound();
         }
 
         /// <summary>
-        /// 팝업 숨기기
+        /// 팝업 숨기기 내부 구현
         /// </summary>
-        public void Hide()
+        protected override void HideInternal()
         {
-            // 이전 Tween 정리
-            showTween?.Kill();
-
-            // UIStackManager에서 제거
-            UIStackManager.Instance?.Pop();
-
-            // 애니메이션
-            PlayHideAnimation();
-
-            // 사운드 재생
-            Manager.SoundManager.Instance?.PlaySFX(Objects.SoundType.UI_ButtonClick);
+            base.HideInternal();
         }
+
+        /// <summary>
+        /// 계정 연동 완료 이벤트 핸들러
+        /// AuthManager의 OnAccountLinked 이벤트 발생 시 호출되어 UI를 갱신
+        /// </summary>
+        private void OnAccountLinked()
+        {
+            // 팝업이 현재 표시 중일 때만 처리
+            if (!gameObject.activeSelf)
+                return;
+
+            // 이메일 연동이 완료된 경우 팝업 닫기
+            // (Google 연동은 기존 콜백 방식으로 처리되므로 여기서는 이메일만 처리)
+            if (!isProcessing)
+            {
+                // 이메일 연동 완료로 인한 이벤트 → 팝업 닫기
+                HideInternal();
+                onCompleteCallback?.Invoke(true);
+            }
+            else
+            {
+                // 처리 중이면 UI만 갱신 (Google 연동 중)
+                RefreshAccountInfo();
+            }
+        }
+
+        /// <summary>
+        /// 계정 정보를 갱신하여 UI 업데이트
+        /// </summary>
+        private void RefreshAccountInfo()
+        {
+            if (Manager.AuthManager.Instance == null)
+                return;
+
+            // 현재 계정 정보 가져오기
+            displayText = Manager.AuthManager.Instance.CurrentUserEmail ?? "손님 계정";
+            isGuestMode = Manager.AuthManager.Instance.IsAnonymous;
+            bool hasEmailProvider = Manager.AuthManager.Instance.IsEmailOnlyAccount();
+
+            // UI 텍스트 업데이트
+            if (isGuestMode)
+            {
+                // 게스트 모드
+                if (titleText != null)
+                    titleText.text = "계정 연동하기";
+
+                if (descriptionText != null)
+                    descriptionText.text = $"현재: {displayText}\n\nSNS 또는 이메일로 계정을 연동하면\n게임 데이터를 안전하게 보관할 수 있습니다.";
+
+                // 이메일 버튼 표시
+                if (emailButton != null)
+                    emailButton.gameObject.SetActive(true);
+            }
+            else
+            {
+                // 이메일 계정 또는 SNS 계정 모드
+                if (titleText != null)
+                    titleText.text = hasEmailProvider ? "SNS 계정 연동" : "계정 연동하기";
+
+                if (descriptionText != null)
+                {
+                    if (hasEmailProvider)
+                    {
+                        descriptionText.text = $"현재 이메일: {displayText}\n\nSNS 계정을 추가로 연동할 수 있습니다.";
+                    }
+                    else
+                    {
+                        descriptionText.text = $"현재: {displayText}\n\n이메일 또는 다른 SNS로 계정을 연동하면\n게임 데이터를 안전하게 보관할 수 있습니다.";
+                    }
+                }
+
+                // 이메일 provider가 없는 경우(SNS 전용 계정) 이메일 버튼 표시
+                if (emailButton != null)
+                    emailButton.gameObject.SetActive(!hasEmailProvider);
+            }
+
+            // 에러 텍스트 초기화
+            if (errorText != null)
+                errorText.text = string.Empty;
+
+            Debug.Log($"[LinkSocialPopupUI] RefreshAccountInfo - displayText: {displayText}, isGuestMode: {isGuestMode}, hasEmailProvider: {hasEmailProvider}");
+        }
+
+        /// <summary>
+        /// 에러 메시지 표시
+        /// </summary>
+        private void ShowError(string message)
+        {
+            if (errorText != null)
+            {
+                errorText.text = message;
+                errorText.color = Global.GlowRed;
+            }
+
+            Debug.LogWarning($"[LinkSocialPopupUI] {message}");
+        }
+
+        #endregion
+
+        #region Button Events
 
         /// <summary>
         /// 이메일 버튼 클릭 (게스트/SNS 계정 → 이메일 계정 연동)
@@ -285,7 +301,7 @@ namespace UI.Shared
                 return;
 
             // 사운드 재생
-            Manager.SoundManager.Instance?.PlaySFX(Objects.SoundType.UI_ButtonClick);
+            PlayClickSound();
 
             // 이미 이메일 provider가 있는지 확인
             if (Manager.AuthManager.Instance.IsEmailOnlyAccount())
@@ -294,13 +310,13 @@ namespace UI.Shared
                 return;
             }
 
-            // LinkEmailPopupManager를 통해 이메일 연동 팝업 표시
-            LinkEmailPopupManager.Show((success) =>
+            // LinkEmailPopupUI를 통해 이메일 연동 팝업 표시
+            LinkEmailPopupUI.Show((success) =>
             {
                 if (success)
                 {
                     // 이메일 연동 성공
-                    Hide();
+                    HideInternal();
                     onCompleteCallback?.Invoke(true);
                 }
                 else
@@ -327,14 +343,14 @@ namespace UI.Shared
                 return;
 
             // 사운드 재생
-            Manager.SoundManager.Instance?.PlaySFX(Objects.SoundType.UI_ButtonClick);
+            PlayClickSound();
 
             isProcessing = true;
 
             if (isGuestMode)
             {
                 // ===== 게스트 → Google 전환 (Android만) =====
-                ConfirmationPopup.Show(
+                ConfirmationPopupUI.Show(
                     $"Google 계정으로 전환하시겠습니까?\n\n" +
                     $"게스트 계정의 데이터가\n" +
                     $"Google 계정으로 이전됩니다.",
@@ -346,7 +362,7 @@ namespace UI.Shared
                         if (result.success)
                         {
                             // 성공: 닉네임 입력 팝업 표시
-                            InputFieldPopup.ShowNicknameInput(
+                            InputFieldPopupUI.ShowNicknameInput(
                                 onConfirm: async (nickname) =>
                                 {
                                     // 닉네임을 Firebase에 저장
@@ -364,14 +380,14 @@ namespace UI.Shared
                                         }
 
                                         // 성공 팝업
-                                        ConfirmationPopup.Show(
+                                        ConfirmationPopupUI.Show(
                                             "Google 계정 전환 완료!\n\n" +
                                             $"닉네임: {nickname}\n\n" +
                                             "이제 Google 계정으로\n" +
                                             "안전하게 로그인할 수 있습니다.",
                                             onConfirm: () =>
                                             {
-                                                Hide();
+                                                HideInternal();
                                                 onCompleteCallback?.Invoke(true);
                                             }
                                         );
@@ -385,13 +401,13 @@ namespace UI.Shared
                                 onCancel: () =>
                                 {
                                     // 닉네임 입력 취소 - 전환은 완료되었으므로 기본 닉네임으로 진행
-                                    ConfirmationPopup.Show(
+                                    ConfirmationPopupUI.Show(
                                         "Google 계정 전환 완료!\n\n" +
                                         "이제 Google 계정으로\n" +
                                         "안전하게 로그인할 수 있습니다.",
                                         onConfirm: () =>
                                         {
-                                            Hide();
+                                            HideInternal();
                                             onCompleteCallback?.Invoke(true);
                                         }
                                     );
@@ -414,7 +430,7 @@ namespace UI.Shared
             else
             {
                 // ===== 이메일 계정 → Google 연동 (Android만) =====
-                ConfirmationPopup.Show(
+                ConfirmationPopupUI.Show(
                     $"Google 계정을 연동하시겠습니까?\n\n" +
                     $"현재 이메일: <color=#{ColorUtility.ToHtmlStringRGB(Global.Purple)}>{displayText}</color>",
                     onConfirm: async () =>
@@ -425,13 +441,13 @@ namespace UI.Shared
                         if (result.success)
                         {
                             // 성공
-                            ConfirmationPopup.Show(
+                            ConfirmationPopupUI.Show(
                                 "Google 계정 연동 완료!\n\n" +
                                 "이제 모바일에서도\n" +
                                 "Google 간편 로그인을 사용할 수 있습니다.",
                                 onConfirm: () =>
                                 {
-                                    Hide();
+                                    HideInternal();
                                     onCompleteCallback?.Invoke(true);
                                 }
                             );
@@ -459,8 +475,7 @@ namespace UI.Shared
         public void OnKakaoButtonClicked()
         {
             ShowError("Kakao 연동은 준비 중입니다.");
-
-            Manager.SoundManager.Instance?.PlaySFX(Objects.SoundType.UI_ButtonClick);
+            PlayClickSound();
         }
 
         /// <summary>
@@ -469,118 +484,22 @@ namespace UI.Shared
         /// </summary>
         public void OnCloseButtonClicked()
         {
-            Hide();
+            HideInternal();
             onCompleteCallback?.Invoke(false);
         }
 
-        /// <summary>
-        /// 에러 메시지 표시
-        /// </summary>
-        private void ShowError(string message)
-        {
-            if (errorText != null)
-            {
-                errorText.text = message;
-                errorText.color = Global.GlowRed;
-            }
+        #endregion
 
-            Debug.LogWarning($"[LinkSocialPopupUI] {message}");
-        }
+        #region ICloseable Override
 
-        #region ICloseable Implementation
         /// <summary>
         /// UIStackManager에서 호출 (ESC 키 등)
         /// </summary>
-        public void Close()
+        public override void Close()
         {
             OnCloseButtonClicked();
         }
 
-        /// <summary>
-        /// 닫기 가능 여부 확인
-        /// </summary>
-        public bool CanClose()
-        {
-            return !isAnimating;
-        }
-        #endregion
-
-        #region Animations
-        /// <summary>
-        /// 표시 애니메이션 (Scale 0.9 → 1.0 + Fade In)
-        /// </summary>
-        private void PlayShowAnimation()
-        {
-            if (canvasGroup == null || popupRect == null)
-            {
-                return;
-            }
-
-            // 애니메이션 시작
-            isAnimating = true;
-
-            // 초기 상태
-            canvasGroup.alpha = 0f;
-            popupRect.localScale = Vector3.one * 0.9f;
-            canvasGroup.interactable = false;
-            canvasGroup.blocksRaycasts = false;
-
-            // Tween 시퀀스
-            Sequence showSequence = DOTween.Sequence();
-
-            // Fade In
-            showSequence.Append(canvasGroup.DOFade(1f, showDuration).SetEase(Ease.OutQuad));
-
-            // Scale Up
-            showSequence.Join(popupRect.DOScale(1f, showDuration).SetEase(Ease.OutBack));
-
-            // 완료 시 상호작용 활성화
-            showSequence.OnComplete(() =>
-            {
-                canvasGroup.interactable = true;
-                canvasGroup.blocksRaycasts = true;
-                isAnimating = false;
-            });
-
-            showTween = showSequence;
-        }
-
-        /// <summary>
-        /// 숨김 애니메이션 (Scale 1.0 → 0.9 + Fade Out)
-        /// </summary>
-        private void PlayHideAnimation()
-        {
-            if (canvasGroup == null || popupRect == null)
-            {
-                gameObject.SetActive(false);
-                return;
-            }
-
-            // 애니메이션 시작
-            isAnimating = true;
-
-            // 상호작용 비활성화
-            canvasGroup.interactable = false;
-            canvasGroup.blocksRaycasts = false;
-
-            // Tween 시퀀스
-            Sequence hideSequence = DOTween.Sequence();
-
-            // Fade Out
-            hideSequence.Append(canvasGroup.DOFade(0f, hideDuration).SetEase(Ease.InQuad));
-
-            // Scale Down
-            hideSequence.Join(popupRect.DOScale(0.9f, hideDuration).SetEase(Ease.InBack));
-
-            // 완료 시 비활성화
-            hideSequence.OnComplete(() =>
-            {
-                gameObject.SetActive(false);
-                isAnimating = false;
-            });
-
-            hideTween = hideSequence;
-        }
         #endregion
     }
 }

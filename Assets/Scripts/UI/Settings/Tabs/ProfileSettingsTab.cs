@@ -404,7 +404,7 @@ namespace UI.Settings.Tabs
         public void OnLinkPasswordClicked()
         {
             // Google → Email Link (게스트 전환과 동일한 3단계 프로세스)
-            UI.Shared.LinkEmailPopupManager.Show((success) =>
+            UI.Shared.LinkEmailPopupUI.Show((success) =>
             {
                 if (success)
                 {
@@ -426,13 +426,13 @@ namespace UI.Settings.Tabs
             if (isAnonymous)
             {
                 // 게스트: "손님 계정" 텍스트와 게스트 모드 플래그 전달
-                UI.Shared.LinkSocialPopupManager.Show("손님 계정", true, OnAccountLinked);
+                UI.Shared.LinkSocialPopupUI.Show("손님 계정", true, OnAccountLinked);
             }
             else
             {
                 // 이메일 계정: 실제 이메일과 일반 모드 플래그 전달
                 string currentEmail = Manager.AuthManager.Instance.GetCurrentUserEmailFromProvider();
-                UI.Shared.LinkSocialPopupManager.Show(currentEmail, false, OnAccountLinked);
+                UI.Shared.LinkSocialPopupUI.Show(currentEmail, false, OnAccountLinked);
             }
         }
 

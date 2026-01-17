@@ -1,6 +1,4 @@
-using System;
 using System.Threading.Tasks;
-using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,9 +10,10 @@ namespace UI.Shared
     /// 비밀번호 찾기 팝업 UI
     /// 이메일 입력 → 비밀번호 재설정 이메일 발송
     /// </summary>
-    public class FindPasswordPopupUI : MonoBehaviour, ICloseable
+    public class FindPasswordPopupUI : PopupBase<FindPasswordPopupUI>
     {
-        #region Fields
+        #region Serialized Fields
+
         [Header("UI References")]
         [SerializeField] private TMP_InputField emailInputField;
         [SerializeField] private TextMeshProUGUI errorText;
@@ -22,60 +21,63 @@ namespace UI.Shared
         [SerializeField] private Button cancelButton;
         [SerializeField] private TextMeshProUGUI sendButtonText;
         [SerializeField] private TextMeshProUGUI cancelButtonText;
-        [SerializeField] private CanvasGroup canvasGroup;
-        [SerializeField] private RectTransform popupRect;
 
-        [Header("Animation Settings")]
-        [SerializeField] private float showDuration = 0.2f;
-        [SerializeField] private float hideDuration = 0.15f;
+        #endregion
+
+        #region Private Fields
 
         // 상태 관리
         private bool isEmailSent = false;
         private CooldownTimer sendCooldown = new CooldownTimer(60f);
-
         private bool isProcessing = false;
-        private bool isAnimating = false;
-        private Tween showTween;
-        private Tween hideTween;
+
         #endregion
 
         #region Unity Lifecycle
-        private void Awake()
+
+        protected override void Awake()
         {
+            base.Awake();
+
             // 버튼 이벤트 등록
             sendButton?.onClick.AddListener(OnSendButtonClicked);
             cancelButton?.onClick.AddListener(OnCancelButtonClicked);
 
-            // 초기 상태: 숨김
-            if (canvasGroup != null)
-            {
-                canvasGroup.alpha = 0f;
-                canvasGroup.interactable = false;
-                canvasGroup.blocksRaycasts = false;
-            }
-
             // KeyboardManager에 InputField 등록
-            RegisterInputFieldsToKeyboardManager();
-
-            gameObject.SetActive(false);
+            RegisterInputFieldToKeyboard(emailInputField);
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
-            // Tween 정리
-            showTween?.Kill();
-            hideTween?.Kill();
+            base.OnDestroy();
 
             sendButton?.onClick.RemoveListener(OnSendButtonClicked);
             cancelButton?.onClick.RemoveListener(OnCancelButtonClicked);
         }
+
         #endregion
 
-        #region Public Methods
+        #region Public Static Methods
+
         /// <summary>
         /// 팝업 표시
         /// </summary>
-        public void Show()
+        public static void Show()
+        {
+            if (instance == null && !LoadPopup())
+                return;
+
+            instance.ShowInternal();
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        /// <summary>
+        /// 팝업 표시 (Instance)
+        /// </summary>
+        private void ShowInternal()
         {
             // 상태 초기화
             ResetState();
@@ -84,81 +86,15 @@ namespace UI.Shared
             gameObject.SetActive(true);
 
             // UIStackManager에 등록
-            UIStackManager.Instance?.Push(this);
+            RegisterToUIStack();
 
             // 애니메이션
             PlayShowAnimation();
 
             // 사운드 재생
-            Manager.SoundManager.Instance?.PlaySFX(Objects.SoundType.UI_ButtonClick);
+            PlayClickSound();
         }
 
-        /// <summary>
-        /// 팝업 숨기기
-        /// </summary>
-        public void Hide()
-        {
-            // 이전 Tween 정리
-            showTween?.Kill();
-
-            // UIStackManager에서 제거
-            UIStackManager.Instance?.Pop();
-
-            // 애니메이션
-            PlayHideAnimation();
-
-            // 사운드 재생
-            Manager.SoundManager.Instance?.PlaySFX(Objects.SoundType.UI_ButtonClick);
-        }
-        #endregion
-
-        #region Button Events
-        /// <summary>
-        /// 발송/재발송 버튼 클릭
-        /// </summary>
-        private async void OnSendButtonClicked()
-        {
-            // Step 1: 이메일 입력 확인
-            string email = emailInputField?.text.Trim() ?? "";
-
-            // Step 2: 이메일 형식 검증
-            var (isValidEmail, emailError) = Global.ValidateEmail(email);
-            if (!isValidEmail)
-            {
-                ShowError(emailError);
-                return;
-            }
-
-            // Step 3: 쿨다운 체크 (재발송인 경우)
-            if (isEmailSent && sendCooldown.IsActive)
-            {
-                int remainingSeconds = sendCooldown.GetRemainingSeconds();
-
-                // ConfirmationPopup으로 쿨다운 안내
-                ConfirmationPopup.Show(
-                    $"재발송은 {remainingSeconds}초 후에\n다시 시도할 수 있습니다.",
-                    onConfirm: null,
-                    onCancel: null,
-                    confirmText: "확인",
-                    cancelText: null
-                );
-                return;
-            }
-
-            // Step 4: 이메일 발송
-            await SendPasswordResetEmail(email);
-        }
-
-        /// <summary>
-        /// 취소 버튼 클릭
-        /// </summary>
-        private void OnCancelButtonClicked()
-        {
-            Hide();
-        }
-        #endregion
-
-        #region Private Methods
         /// <summary>
         /// 상태 초기화
         /// </summary>
@@ -175,7 +111,7 @@ namespace UI.Shared
             if (errorText != null)
             {
                 errorText.text = "";
-                errorText.color = Global.GlowRed; // 기본 색상으로 복원
+                errorText.color = Global.GlowRed;
             }
 
             // 버튼 텍스트 초기화
@@ -264,7 +200,7 @@ namespace UI.Shared
 
                     // ConfirmationPopup으로 성공 안내
                     string coloredEmail = $"<color=#{ColorUtility.ToHtmlStringRGB(Global.Purple)}>{email}</color>";
-                    ConfirmationPopup.Show(
+                    ConfirmationPopupUI.Show(
                         $"비밀번호 재설정 이메일이\n{coloredEmail}\n(으)로 발송되었습니다.\n\n" +
                         "이메일을 확인하여\n비밀번호를 재설정해주세요.",
                         onConfirm: () => { },
@@ -289,7 +225,6 @@ namespace UI.Shared
             }
         }
 
-
         /// <summary>
         /// 에러 메시지 표시
         /// </summary>
@@ -303,120 +238,67 @@ namespace UI.Shared
 
             Debug.LogWarning($"[FindPasswordPopupUI] {message}");
         }
+
         #endregion
 
-        #region ICloseable Implementation
+        #region Button Events
+
+        /// <summary>
+        /// 발송/재발송 버튼 클릭
+        /// </summary>
+        private async void OnSendButtonClicked()
+        {
+            // Step 1: 이메일 입력 확인
+            string email = emailInputField?.text.Trim() ?? "";
+
+            // Step 2: 이메일 형식 검증
+            var (isValidEmail, emailError) = Global.ValidateEmail(email);
+            if (!isValidEmail)
+            {
+                ShowError(emailError);
+                return;
+            }
+
+            // Step 3: 쿨다운 체크 (재발송인 경우)
+            if (isEmailSent && sendCooldown.IsActive)
+            {
+                int remainingSeconds = sendCooldown.GetRemainingSeconds();
+
+                // ConfirmationPopup으로 쿨다운 안내
+                ConfirmationPopupUI.Show(
+                    $"재발송은 {remainingSeconds}초 후에\n다시 시도할 수 있습니다.",
+                    onConfirm: null,
+                    onCancel: null,
+                    confirmText: "확인",
+                    cancelText: null
+                );
+                return;
+            }
+
+            // Step 4: 이메일 발송
+            await SendPasswordResetEmail(email);
+        }
+
+        /// <summary>
+        /// 취소 버튼 클릭
+        /// </summary>
+        private void OnCancelButtonClicked()
+        {
+            HideInternal();
+        }
+
+        #endregion
+
+        #region ICloseable Override
+
         /// <summary>
         /// UIStackManager에서 호출 (ESC 키 등)
         /// </summary>
-        public void Close()
+        public override void Close()
         {
             OnCancelButtonClicked();
         }
 
-        /// <summary>
-        /// 닫기 가능 여부 확인
-        /// </summary>
-        public bool CanClose()
-        {
-            return !isAnimating;
-        }
-        #endregion
-
-        #region Keyboard Manager Integration
-        /// <summary>
-        /// KeyboardManager에 InputField 등록
-        /// 팝업이 생성될 때 호출되어 모바일 키보드 대응 활성화
-        /// </summary>
-        private void RegisterInputFieldsToKeyboardManager()
-        {
-#if UNITY_ANDROID || UNITY_IOS
-            // 모바일 플랫폼에서만 KeyboardManager에 등록
-            var keyboardManager = Manager.KeyboardManager.Instance;
-            if (keyboardManager != null && emailInputField != null)
-            {
-                keyboardManager.RegisterInputFieldRuntime(emailInputField);
-            }
-#endif
-        }
-        #endregion
-
-        #region Animations
-        /// <summary>
-        /// 표시 애니메이션 (Scale 0.9 → 1.0 + Fade In)
-        /// </summary>
-        private void PlayShowAnimation()
-        {
-            if (canvasGroup == null || popupRect == null)
-            {
-                return;
-            }
-
-            // 애니메이션 시작
-            isAnimating = true;
-
-            // 초기 상태
-            canvasGroup.alpha = 0f;
-            popupRect.localScale = Vector3.one * 0.9f;
-            canvasGroup.interactable = false;
-            canvasGroup.blocksRaycasts = false;
-
-            // Tween 시퀀스
-            Sequence showSequence = DOTween.Sequence();
-
-            // Fade In
-            showSequence.Append(canvasGroup.DOFade(1f, showDuration).SetEase(Ease.OutQuad));
-
-            // Scale Up
-            showSequence.Join(popupRect.DOScale(1f, showDuration).SetEase(Ease.OutBack));
-
-            // 완료 시 상호작용 활성화
-            showSequence.OnComplete(() =>
-            {
-                canvasGroup.interactable = true;
-                canvasGroup.blocksRaycasts = true;
-                isAnimating = false;
-            });
-
-            showTween = showSequence;
-        }
-
-        /// <summary>
-        /// 숨김 애니메이션 (Scale 1.0 → 0.9 + Fade Out)
-        /// </summary>
-        private void PlayHideAnimation()
-        {
-            if (canvasGroup == null || popupRect == null)
-            {
-                gameObject.SetActive(false);
-                return;
-            }
-
-            // 애니메이션 시작
-            isAnimating = true;
-
-            // 상호작용 비활성화
-            canvasGroup.interactable = false;
-            canvasGroup.blocksRaycasts = false;
-
-            // Tween 시퀀스
-            Sequence hideSequence = DOTween.Sequence();
-
-            // Fade Out
-            hideSequence.Append(canvasGroup.DOFade(0f, hideDuration).SetEase(Ease.InQuad));
-
-            // Scale Down
-            hideSequence.Join(popupRect.DOScale(0.9f, hideDuration).SetEase(Ease.InBack));
-
-            // 완료 시 비활성화
-            hideSequence.OnComplete(() =>
-            {
-                gameObject.SetActive(false);
-                isAnimating = false;
-            });
-
-            hideTween = hideSequence;
-        }
         #endregion
     }
 }

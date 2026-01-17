@@ -722,7 +722,7 @@ namespace Manager
         public void OnClickQuit()
         {
             // 확인 팝업 표시
-            UI.Shared.ConfirmationPopup.Show(
+            UI.Shared.ConfirmationPopupUI.Show(
                 "게임을 종료하시겠습니까?",
                 onConfirm: () =>
                 {
