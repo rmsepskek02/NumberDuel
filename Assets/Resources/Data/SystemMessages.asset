@@ -398,3 +398,18 @@ MonoBehaviour:
     messageType: 3
     displayDuration: 3
     textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}
+  - messageKey: AccountDeletionFailed
+    messageText: "\uD0C8\uD1F4\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD574\uC8FC\uC138\uC694."
+    messageType: 2
+    displayDuration: 3
+    textColor: {r: 1, g: 0.3019608, b: 0.3019608, a: 1}
+  - messageKey: ReauthenticationFailed
+    messageText: "\uC778\uC99D\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uBE44\uBC00\uBC88\uD638\uB97C \uD655\uC778\uD574\uC8FC\uC138\uC694."
+    messageType: 2
+    displayDuration: 3
+    textColor: {r: 1, g: 0.3019608, b: 0.3019608, a: 1}
+  - messageKey: GoogleReauthInProgress
+    messageText: "Google \uACC4\uC815 \uC778\uC99D \uC911..."
+    messageType: 0
+    displayDuration: 1
+    textColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}

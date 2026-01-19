@@ -4019,7 +4019,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8273a069ebbd864babbe7ab84ecc69e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  popupRoot: {fileID: 5123166880276913820}
+  canvasGroup: {fileID: 0}
+  popupRect: {fileID: 0}
+  showDuration: 0.2
+  hideDuration: 0.15
   stepText: {fileID: 6474433739461887587}
   progressDots:
   - {fileID: 6264260109439586591}

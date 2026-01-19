@@ -1766,7 +1766,8 @@ namespace Manager
                 // 신규 사용자 - 닉네임 입력 팝업 표시 (재귀 호출 가능하도록 로컬 함수로 정의)
                 void ShowNicknameInputPopup()
                 {
-                    UI.Shared.InputFieldPopupUI.ShowNicknameInput(
+                    UI.Shared.InputFieldPopupUI.Show(
+                        UI.Shared.InputPopupType.Nickname,
                         onConfirm: async (nickname) =>
                         {
                             // 프로필 생성

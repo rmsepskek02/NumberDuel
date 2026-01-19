@@ -159,8 +159,14 @@ namespace UI.Shared
         /// </summary>
         private void OnCancelClicked()
         {
-            onCanceled?.Invoke();
+            // 콜백 저장 (HideInternal에서 초기화될 수 있으므로)
+            var callback = onCanceled;
+
+            // 먼저 숨기기 (UIStack에서 제거)
             HideInternal();
+
+            // 콜백 실행
+            callback?.Invoke();
         }
 
         /// <summary>
@@ -168,8 +174,15 @@ namespace UI.Shared
         /// </summary>
         private void OnConfirmClicked()
         {
-            onConfirmed?.Invoke();
+            // 콜백 저장 (HideInternal에서 초기화될 수 있으므로)
+            var callback = onConfirmed;
+
+            // 먼저 숨기기 (UIStack에서 제거)
+            // 콜백에서 다른 팝업을 열 때 스택 순서가 올바르게 유지됨
             HideInternal();
+
+            // 콜백 실행
+            callback?.Invoke();
         }
 
         #endregion

@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Objects;
 using Objects.Data;
 using TMPro;
@@ -35,6 +36,9 @@ namespace UI.Settings.Tabs
 
         [Header("Error UI")]
         [SerializeField] private GameObject errorPanel;
+
+        [Header("Account Deletion")]
+        [SerializeField] private Button deleteAccountButton;
         #endregion
 
         #region Unity Lifecycle
@@ -44,6 +48,9 @@ namespace UI.Settings.Tabs
 
             if (errorPanel != null)
                 errorPanel.SetActive(false);
+
+            // 회원 탈퇴 버튼 이벤트 등록
+            deleteAccountButton?.onClick.AddListener(OnDeleteAccountClicked);
         }
 
         private void OnEnable()
@@ -462,6 +469,223 @@ namespace UI.Settings.Tabs
             }
         }
 
+        #endregion
+
+        #region Account Deletion
+        /// <summary>
+        /// 회원 탈퇴 버튼 클릭
+        /// </summary>
+        public void OnDeleteAccountClicked()
+        {
+            if (Manager.AuthManager.Instance == null)
+                return;
+
+            bool isAnonymous = Manager.AuthManager.Instance.IsAnonymous;
+
+            if (isAnonymous)
+            {
+                // Guest: 로그아웃 = 탈퇴 안내
+                ShowGuestDeletionPopup();
+            }
+            else
+            {
+                // Email/Google: 재인증 후 탈퇴
+                ShowDeletionConfirmPopup();
+            }
+        }
+
+        /// <summary>
+        /// Guest 계정 탈퇴 안내 팝업
+        /// </summary>
+        private void ShowGuestDeletionPopup()
+        {
+            Shared.ConfirmationPopupUI.Show(
+                "손님 계정은 로그아웃 시\n자동으로 삭제됩니다.\n\n" +
+                "[주의사항]\n" +
+                "• 로그아웃하면 계정이 영구 삭제됩니다\n" +
+                "• 게임 데이터가 모두 사라집니다\n" +
+                "• 복구가 불가능합니다\n\n" +
+                "계정을 유지하려면 먼저\n" +
+                "이메일 또는 Google 계정을 연동해주세요.",
+                onConfirm: async () =>
+                {
+                    await ExecuteGuestDeletion();
+                },
+                onCancel: () => { },
+                confirmText: "로그아웃",
+                cancelText: "취소"
+            );
+        }
+
+        /// <summary>
+        /// Email/Google 계정 탈퇴 확인 팝업 (1단계)
+        /// </summary>
+        private void ShowDeletionConfirmPopup()
+        {
+            Shared.ConfirmationPopupUI.Show(
+                "정말 탈퇴하시겠습니까?\n\n" +
+                "[주의사항]\n" +
+                "• 모든 게임 데이터가 삭제됩니다\n" +
+                "• 복구가 불가능합니다",
+                onConfirm: () =>
+                {
+                    // 재인증 단계로 이동
+                    ShowReauthPopup();
+                },
+                onCancel: () => { },
+                confirmText: "탈퇴하기",
+                cancelText: "취소"
+            );
+        }
+
+        /// <summary>
+        /// 재인증 팝업 표시 (2단계)
+        /// </summary>
+        private void ShowReauthPopup()
+        {
+            var providers = Manager.AuthManager.Instance.GetCurrentUserProviders();
+            bool hasPassword = providers.Contains("password");
+            bool hasGoogle = providers.Contains("google.com") || providers.Contains("playgames.google.com");
+
+            // 현재 세션 로그인 방식 확인
+            string currentProvider = Manager.AuthManager.Instance.GetLoginMethodDisplayName(showCurrentSessionOnly: true);
+
+            if (currentProvider == "이메일" || (hasPassword && !hasGoogle))
+            {
+                // 비밀번호 재인증
+                ShowPasswordReauthPopup();
+            }
+            else if (currentProvider == "Google" || hasGoogle)
+            {
+                // Google 재인증
+                ExecuteGoogleReauth();
+            }
+        }
+
+        /// <summary>
+        /// 비밀번호 재인증 팝업
+        /// </summary>
+        private void ShowPasswordReauthPopup()
+        {
+            Shared.InputFieldPopupUI.Show(
+                Shared.InputPopupType.Password,
+                onConfirm: async (password) =>
+                {
+                    // validator에서 재인증 성공 시에만 호출됨
+                    await ExecuteAccountDeletion();
+                },
+                onCancel: () => { Shared.InputFieldPopupUI.Hide(); },
+                title: "비밀번호 확인",
+                validator: ValidatePasswordReauth
+            );
+        }
+
+        /// <summary>
+        /// 비밀번호 재인증 검증 (validator)
+        /// 재입력 가능한 에러: 검증 텍스트로 표시 + 팝업 유지
+        /// 복구 불가능한 에러: 검증 텍스트로 표시 + 팝업 유지 (사용자가 취소 선택하도록)
+        /// </summary>
+        private async Task<(bool valid, string message)> ValidatePasswordReauth(string password)
+        {
+            var result = await Manager.AuthManager.Instance.ReauthenticateForDeletion(password);
+
+            if (result.success)
+            {
+                return (true, string.Empty);
+            }
+
+            // 모든 에러는 검증 텍스트로 표시하고 팝업 유지
+            return (false, result.message);
+        }
+
+        /// <summary>
+        /// Google 재인증 실행
+        /// </summary>
+        private async void ExecuteGoogleReauth()
+        {
+            Manager.SystemMessageManager.Instance?.ShowMessage("GoogleReauthInProgress");
+
+            var result = await Manager.AuthManager.Instance.ReauthenticateWithGoogleForDeletion();
+
+            if (result.success)
+            {
+                await ExecuteAccountDeletion();
+            }
+            else
+            {
+                // 사용자 취소는 메시지 표시 안함
+                if (result.message != "CANCELED")
+                {
+                    Manager.SystemMessageManager.Instance?.ShowMessage("ReauthenticationFailed");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Guest 계정 삭제 실행
+        /// </summary>
+        private async Task ExecuteGuestDeletion()
+        {
+            Manager.SystemMessageManager.Instance?.ShowMessage("AccountDeletionInProgress");
+
+            var result = await Manager.AuthManager.Instance.DeleteGuestAccount();
+
+            if (result.success)
+            {
+                Manager.SystemMessageManager.Instance?.ShowMessage("AccountDeletionComplete");
+                NavigateToJoinScene();
+            }
+            else
+            {
+                Manager.SystemMessageManager.Instance?.ShowMessage("AccountDeletionFailed");
+            }
+        }
+
+        /// <summary>
+        /// 계정 삭제 실행 (재인증 후)
+        /// </summary>
+        private async Task ExecuteAccountDeletion()
+        {
+            Manager.SystemMessageManager.Instance?.ShowMessage("AccountDeletionInProgress");
+
+            var result = await Manager.AuthManager.Instance.DeleteAccountCompletely();
+
+            if (result.success)
+            {
+                Manager.SystemMessageManager.Instance?.ShowMessage("AccountDeletionComplete");
+                NavigateToJoinScene();
+            }
+            else
+            {
+                Manager.SystemMessageManager.Instance?.ShowMessage("AccountDeletionFailed");
+            }
+        }
+
+        /// <summary>
+        /// JoinScene으로 이동
+        /// </summary>
+        private void NavigateToJoinScene()
+        {
+            // 설정 화면 닫기
+            if (Manager.SettingsManager.Instance != null)
+            {
+                Manager.SettingsManager.Instance.HideSettings();
+            }
+
+            // JoinScene으로 이동
+            if (Manager.LoadingScreenManager.Instance != null)
+            {
+                Manager.LoadingScreenManager.Instance.ShowThenLoadLocal(
+                    Objects.SceneNameExtensions.GetSceneName(Objects.SceneName.JoinScene)
+                );
+            }
+            else
+            {
+                UnityEngine.SceneManagement.SceneManager.LoadScene(
+                    Objects.SceneNameExtensions.GetSceneName(Objects.SceneName.JoinScene)
+                );
+            }
+        }
         #endregion
     }
 }

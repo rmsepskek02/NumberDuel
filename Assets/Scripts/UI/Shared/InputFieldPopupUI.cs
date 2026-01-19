@@ -8,8 +8,19 @@ using Utills;
 namespace UI.Shared
 {
     /// <summary>
+    /// 입력 타입 enum
+    /// </summary>
+    public enum InputPopupType
+    {
+        Nickname,   // 닉네임 입력 (한글/영문, 픽셀 길이 검증)
+        Password,   // 비밀번호 입력 (최소 6자)
+        Custom      // 커스텀 검증 (validator 직접 지정)
+    }
+
+    /// <summary>
     /// 범용 입력 팝업 UI
     /// 닉네임, 비밀번호 등 다양한 입력 상황에 재사용 가능
+    /// ValidationHelper를 활용하여 입력 검증
     /// </summary>
     public class InputFieldPopupUI : PopupBase<InputFieldPopupUI>
     {
@@ -30,6 +41,7 @@ namespace UI.Shared
         private Action<string> onConfirmed;
         private Action onCanceled;
         private Func<string, Task<(bool valid, string message)>> customValidator;
+        private InputPopupType currentInputType;
         private bool isProcessing;
         private bool isValidationPassed;
 
@@ -61,64 +73,51 @@ namespace UI.Shared
         #region Public Static Methods
 
         /// <summary>
-        /// 닉네임 입력 팝업 표시
+        /// 일반화된 입력 팝업 표시
         /// </summary>
-        public static void ShowNicknameInput(Action<string> onConfirm, Action onCancel = null)
-        {
-            Show(
-                "닉네임 입력",
-                "닉네임을 입력하세요",
-                TMP_InputField.ContentType.Standard,
-                onConfirm,
-                onCancel,
-                ValidateNickname
-            );
-        }
-
-        /// <summary>
-        /// 비밀번호 입력 팝업 표시
-        /// </summary>
-        public static void ShowPasswordInput(string title, Action<string> onConfirm, Action onCancel = null)
-        {
-            Show(
-                title,
-                "비밀번호를 입력하세요",
-                TMP_InputField.ContentType.Password,
-                onConfirm,
-                onCancel,
-                null
-            );
-        }
-
-        /// <summary>
-        /// 커스텀 입력 팝업 표시
-        /// </summary>
-        public static void ShowCustomInput(
-            string title,
-            string placeholder,
-            TMP_InputField.ContentType contentType,
-            Action<string> onConfirm,
-            Action onCancel = null,
-            Func<string, Task<(bool valid, string message)>> validator = null)
-        {
-            Show(title, placeholder, contentType, onConfirm, onCancel, validator);
-        }
-
-        /// <summary>
-        /// 팝업 표시
-        /// </summary>
+        /// <param name="type">입력 타입 (Nickname, Password, Custom)</param>
+        /// <param name="onConfirm">확인 버튼 콜백</param>
+        /// <param name="onCancel">취소 버튼 콜백 (null이면 취소 버튼 숨김)</param>
+        /// <param name="title">팝업 제목 (null이면 타입별 기본값 사용)</param>
+        /// <param name="placeholder">입력 필드 placeholder (null이면 타입별 기본값 사용)</param>
+        /// <param name="validator">서버 검증 함수 (Nickname: 중복 체크, Custom: 직접 지정)</param>
         public static void Show(
-            string title,
-            string placeholder,
-            TMP_InputField.ContentType contentType,
+            InputPopupType type,
             Action<string> onConfirm,
             Action onCancel = null,
+            string title = null,
+            string placeholder = null,
             Func<string, Task<(bool valid, string message)>> validator = null)
         {
             if (instance == null && !LoadPopup())
                 return;
 
-            instance.ShowInternal(title, placeholder, contentType, onConfirm, onCancel, validator);
+            // 타입별 기본값 설정
+            var (defaultTitle, defaultPlaceholder, contentType, defaultValidator) = GetDefaultsForType(type);
+
+            instance.ShowInternal(
+                title ?? defaultTitle,
+                placeholder ?? defaultPlaceholder,
+                contentType,
+                type,
+                onConfirm,
+                onCancel,
+                validator ?? defaultValidator
+            );
+        }
+
+        /// <summary>
+        /// 타입별 기본값 반환
+        /// </summary>
+        private static (string title, string placeholder, TMP_InputField.ContentType contentType, Func<string, Task<(bool valid, string message)>> validator) GetDefaultsForType(InputPopupType type)
+        {
+            return type switch
+            {
+                InputPopupType.Nickname => ("닉네임 입력", "닉네임을 입력하세요", TMP_InputField.ContentType.Standard, ValidateNicknameAsync),
+                InputPopupType.Password => ("비밀번호 입력", "비밀번호를 입력하세요", TMP_InputField.ContentType.Password, null),
+                InputPopupType.Custom => ("입력", "입력하세요", TMP_InputField.ContentType.Standard, null),
+                _ => ("입력", "입력하세요", TMP_InputField.ContentType.Standard, null)
+            };
         }
 
         #endregion
@@ -132,6 +131,7 @@ namespace UI.Shared
             string title,
             string placeholder,
             TMP_InputField.ContentType contentType,
+            InputPopupType inputType,
             Action<string> onConfirm,
             Action onCancel,
             Func<string, Task<(bool valid, string message)>> validator)
@@ -139,6 +139,7 @@ namespace UI.Shared
             onConfirmed = onConfirm;
             onCanceled = onCancel;
             customValidator = validator;
+            currentInputType = inputType;
 
             SetupUI(title, placeholder, contentType);
             InitializeValidation();
@@ -185,9 +186,12 @@ namespace UI.Shared
 
         #region Input Validation
 
+        /// <summary>
+        /// 입력값 변경 시 호출 - InputPopupType에 따라 검증 분기
+        /// </summary>
         private void OnInputValueChanged(string input)
         {
-            if (customValidator == null || validationText == null)
+            if (validationText == null)
                 return;
 
             string trimmedInput = input.Trim();
@@ -199,46 +203,65 @@ namespace UI.Shared
                 return;
             }
 
-            ValidateInputRules(trimmedInput);
+            // InputPopupType에 따라 검증 분기
+            switch (currentInputType)
+            {
+                case InputPopupType.Nickname:
+                    ValidateNicknameInput(trimmedInput);
+                    break;
+                case InputPopupType.Password:
+                    ValidatePasswordInput(trimmedInput);
+                    break;
+                case InputPopupType.Custom:
+                    // Custom 타입은 실시간 검증 없이 확인 버튼 클릭 시 서버 검증
+                    isValidationPassed = true;
+                    break;
+            }
         }
 
-        private void ValidateInputRules(string input)
+        /// <summary>
+        /// 닉네임 입력 검증 (ValidationHelper 사용)
+        /// </summary>
+        private void ValidateNicknameInput(string input)
         {
-            if (input.Length < 1)
+            var (isValid, errorMessage) = ValidationHelper.ValidateNickname(input);
+
+            if (!isValid)
             {
-                UpdateValidationText("최소 1자 이상 입력해주세요.", Global.GlowRed);
+                UpdateValidationText(errorMessage, Global.GlowRed);
                 isValidationPassed = false;
                 return;
             }
 
-            // 허용 문자 검증 (한글, 영문만)
-            foreach (char c in input)
-            {
-                if (!ValidationHelper.IsValidNicknameCharacter(c))
-                {
-                    UpdateValidationText("한글, 영문만 사용 가능합니다.", Global.GlowRed);
-                    isValidationPassed = false;
-                    return;
-                }
-            }
-
+            // 검증 통과 - 중복 확인 안내
             int totalPixels = ValidationHelper.CalculatePixelLength(input);
-
-            if (totalPixels > ValidationHelper.MAX_NICKNAME_PIXEL_LENGTH)
-            {
-                UpdateValidationText($"닉네임이 너무 깁니다. ({totalPixels}/{ValidationHelper.MAX_NICKNAME_PIXEL_LENGTH})", Global.GlowRed);
-                isValidationPassed = false;
-                return;
-            }
-
             UpdateValidationText($"중복 확인을 진행해주세요 ({totalPixels}/{ValidationHelper.MAX_NICKNAME_PIXEL_LENGTH})", Global.Purple);
             isValidationPassed = true;
         }
 
         /// <summary>
-        /// 닉네임 검증 (서버 중복 확인 포함)
+        /// 비밀번호 입력 검증 (ValidationHelper 사용)
         /// </summary>
-        private static async Task<(bool valid, string message)> ValidateNickname(string nickname)
+        private void ValidatePasswordInput(string input)
+        {
+            var (isValid, errorMessage) = ValidationHelper.ValidatePassword(input);
+
+            if (!isValid)
+            {
+                UpdateValidationText(errorMessage, Global.GlowRed);
+                isValidationPassed = false;
+                return;
+            }
+
+            // 검증 통과
+            UpdateValidationText("ㅤ", new Color(1f, 1f, 1f, 0f));
+            isValidationPassed = true;
+        }
+
+        /// <summary>
+        /// 닉네임 서버 검증 (중복 확인)
+        /// </summary>
+        private static async Task<(bool valid, string message)> ValidateNicknameAsync(string nickname)
         {
             // 서버에서 닉네임 중복 확인
             bool isAvailable = await Manager.DatabaseManager.Instance.IsNicknameAvailable(nickname);
@@ -279,7 +302,7 @@ namespace UI.Shared
 
             if (!isValidationPassed)
             {
-                UpdateValidationText("입력 규칙을 확인해주세요.", Global.GlowRed);
+                // 기존 검증 메시지 유지 (메시지를 덮어쓰지 않음)
                 return;
             }
 
@@ -305,7 +328,9 @@ namespace UI.Shared
             isProcessing = true;
             SetButtonsInteractable(false);
 
-            UpdateValidationText("중복 확인 중...", Global.Yellow);
+            // 타입별 검증 중 메시지
+            string validatingMessage = currentInputType == InputPopupType.Nickname ? "중복 확인 중..." : "확인 중...";
+            UpdateValidationText(validatingMessage, Global.Yellow);
 
             var (valid, message) = await customValidator(input);
 

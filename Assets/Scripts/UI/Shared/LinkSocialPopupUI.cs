@@ -362,7 +362,8 @@ namespace UI.Shared
                         if (result.success)
                         {
                             // 성공: 닉네임 입력 팝업 표시
-                            InputFieldPopupUI.ShowNicknameInput(
+                            InputFieldPopupUI.Show(
+                                InputPopupType.Nickname,
                                 onConfirm: async (nickname) =>
                                 {
                                     // 닉네임을 Firebase에 저장

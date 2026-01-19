@@ -571,6 +571,41 @@ namespace Manager
         }
         #endregion
 
+        #region User Profile Deletion
+        /// <summary>
+        /// 사용자 프로필 삭제 (회원 탈퇴 시 사용)
+        /// </summary>
+        /// <param name="uid">Firebase UID</param>
+        /// <returns>삭제 성공 여부</returns>
+        public async Task<bool> DeleteUserProfile(string uid)
+        {
+            if (!isInitialized)
+            {
+                Debug.LogError("[DatabaseManager] Firestore가 초기화되지 않았습니다.");
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(uid))
+            {
+                Debug.LogError("[DatabaseManager] UID가 비어있습니다.");
+                return false;
+            }
+
+            try
+            {
+                DocumentReference docRef = db.Collection(USERS_COLLECTION).Document(uid);
+                await docRef.DeleteAsync();
+                Debug.Log($"[DatabaseManager] 사용자 프로필 삭제 완료: {uid}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[DatabaseManager] 사용자 프로필 삭제 실패: {ex.Message}");
+                return false;
+            }
+        }
+        #endregion
+
         #region Helper Methods
         /// <summary>
         /// 사용자 프로필이 존재하는지 확인

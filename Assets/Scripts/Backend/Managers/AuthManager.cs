@@ -30,6 +30,7 @@ namespace Manager
         private GoogleAuthService googleAuthService;
         private AnonymousAuthService anonymousAuthService;
         private AccountLinkingService accountLinkingService;
+        private AccountDeletionService accountDeletionService;
 
         // Public Properties
         public FirebaseAuth Auth => auth;
@@ -88,6 +89,7 @@ namespace Manager
                 googleAuthService = new GoogleAuthService(this);
                 anonymousAuthService = new AnonymousAuthService(this);
                 accountLinkingService = new AccountLinkingService(this);
+                accountDeletionService = new AccountDeletionService(this);
 
                 LoadLoginProvider();
                 isInitialized = true;
@@ -369,6 +371,45 @@ namespace Manager
 
             var providers = GetCurrentUserProviders();
             return IsAnonymous && !providers.Contains("password");
+        }
+        #endregion
+
+        #region Public Methods - Account Deletion (파사드)
+        /// <summary>
+        /// 이메일 계정 재인증 (회원 탈퇴용)
+        /// </summary>
+        /// <param name="password">비밀번호</param>
+        /// <returns>재인증 결과</returns>
+        public Task<(bool success, string message)> ReauthenticateForDeletion(string password)
+        {
+            return accountDeletionService.ReauthenticateWithEmail(password);
+        }
+
+        /// <summary>
+        /// Google 계정 재인증 (회원 탈퇴용)
+        /// </summary>
+        /// <returns>재인증 결과</returns>
+        public Task<(bool success, string message)> ReauthenticateWithGoogleForDeletion()
+        {
+            return accountDeletionService.ReauthenticateWithGoogle();
+        }
+
+        /// <summary>
+        /// 계정 완전 삭제 (재인증 후 호출)
+        /// </summary>
+        /// <returns>삭제 결과</returns>
+        public Task<(bool success, string message)> DeleteAccountCompletely()
+        {
+            return accountDeletionService.DeleteAccountCompletely();
+        }
+
+        /// <summary>
+        /// Guest 계정 삭제 (재인증 불필요)
+        /// </summary>
+        /// <returns>삭제 결과</returns>
+        public Task<(bool success, string message)> DeleteGuestAccount()
+        {
+            return accountDeletionService.DeleteGuestAccount();
         }
         #endregion
 
