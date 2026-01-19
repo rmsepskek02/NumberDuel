@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Firebase;
 using Firebase.Auth;
 using UnityEngine;
+using Utills;
 
 namespace Manager
 {
@@ -142,11 +143,11 @@ namespace Manager
                     return (false, "Google 계정이 아니거나 이미 연동되어 있습니다.");
 
                 // 이메일과 비밀번호 검증
-                var (isValidEmail, emailError) = Global.ValidateEmail(email);
+                var (isValidEmail, emailError) = ValidationHelper.ValidateEmail(email);
                 if (!isValidEmail)
                     return (false, emailError);
 
-                var (isValidPassword, passwordError) = Global.ValidatePassword(password);
+                var (isValidPassword, passwordError) = ValidationHelper.ValidatePassword(password);
                 if (!isValidPassword)
                     return (false, passwordError);
 
@@ -279,11 +280,11 @@ namespace Manager
                     return (false, "Google 계정이 아니거나 이미 연동되어 있습니다.", null);
 
                 // 이메일/비밀번호 검증
-                var (isValidEmail, emailError) = Global.ValidateEmail(email);
+                var (isValidEmail, emailError) = ValidationHelper.ValidateEmail(email);
                 if (!isValidEmail)
                     return (false, emailError, null);
 
-                var (isValidPassword, passwordError) = Global.ValidatePassword(password);
+                var (isValidPassword, passwordError) = ValidationHelper.ValidatePassword(password);
                 if (!isValidPassword)
                     return (false, passwordError, null);
 

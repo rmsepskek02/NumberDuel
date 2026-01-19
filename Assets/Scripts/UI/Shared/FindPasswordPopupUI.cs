@@ -252,7 +252,7 @@ namespace UI.Shared
             string email = emailInputField?.text.Trim() ?? "";
 
             // Step 2: 이메일 형식 검증
-            var (isValidEmail, emailError) = Global.ValidateEmail(email);
+            var (isValidEmail, emailError) = ValidationHelper.ValidateEmail(email);
             if (!isValidEmail)
             {
                 ShowError(emailError);

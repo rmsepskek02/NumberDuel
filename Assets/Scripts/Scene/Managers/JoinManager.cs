@@ -25,7 +25,6 @@ namespace Manager
         private const float MIN_LOADING_DURATION = 1.5f;
         private const int RESEND_COOLDOWN = 60;
         private const float LOGIN_TRANSITION_DELAY = 0.5f;
-        private const int MAX_NICKNAME_PIXEL_LENGTH = 24;
         private const int MIN_PASSWORD_LENGTH = 6;
         #endregion
 
@@ -397,6 +396,10 @@ namespace Manager
             {
                 nicknameSection.SetActive(false);
             }
+            if (findPasswordButton != null)
+            {
+                findPasswordButton.gameObject.SetActive(true);
+            }
 
             // "다른 방식으로 로그인하기" 버튼 표시
             if (backToSocialButton != null)
@@ -604,7 +607,7 @@ namespace Manager
             string email = verificationEmailInput?.text ?? "";
 
             // 이메일 형식 검증
-            var (isValidEmail, emailError) = Global.ValidateEmail(email);
+            var (isValidEmail, emailError) = Utills.ValidationHelper.ValidateEmail(email);
             if (!isValidEmail)
             {
                 if (validationErrorText != null)
@@ -1672,8 +1675,8 @@ namespace Manager
             }
 
             // 픽셀 길이 검증
-            int pixelLength = CalculatePixelLength(nickname);
-            if (pixelLength > MAX_NICKNAME_PIXEL_LENGTH)
+            int pixelLength = Utills.ValidationHelper.CalculatePixelLength(nickname);
+            if (pixelLength > Utills.ValidationHelper.MAX_NICKNAME_PIXEL_LENGTH)
             {
                 if (validationErrorText != null)
                 {
@@ -2083,44 +2086,21 @@ namespace Manager
             }
 
             // 픽셀 길이 계산
-            int pixelLength = CalculatePixelLength(input);
+            int pixelLength = Utills.ValidationHelper.CalculatePixelLength(input);
 
             // 최대 픽셀 길이 초과 시 경고
-            if (pixelLength > MAX_NICKNAME_PIXEL_LENGTH)
+            if (pixelLength > Utills.ValidationHelper.MAX_NICKNAME_PIXEL_LENGTH)
             {
-                validationErrorText.text = $"닉네임이 너무 깁니다 ({pixelLength}/{MAX_NICKNAME_PIXEL_LENGTH})";
+                validationErrorText.text = $"닉네임이 너무 깁니다 ({pixelLength}/{Utills.ValidationHelper.MAX_NICKNAME_PIXEL_LENGTH})";
                 validationErrorText.color = Color.red;
             }
             else
             {
-                validationErrorText.text = $"{pixelLength}/{MAX_NICKNAME_PIXEL_LENGTH}";
+                validationErrorText.text = $"{pixelLength}/{Utills.ValidationHelper.MAX_NICKNAME_PIXEL_LENGTH}";
                 validationErrorText.color = Color.blue;
             }
         }
 
-        /// <summary>
-        /// 닉네임 픽셀 길이 계산
-        /// 한글: 2px, 영문/숫자/특수문자: 1px
-        /// </summary>
-        private int CalculatePixelLength(string input)
-        {
-            int totalPixels = 0;
-
-            foreach (char c in input)
-            {
-                // 한글 유니코드 범위: AC00-D7A3
-                if (c >= 0xAC00 && c <= 0xD7A3)
-                {
-                    totalPixels += 2; // 한글 2px
-                }
-                else
-                {
-                    totalPixels += 1; // 영문/숫자/특수문자 1px
-                }
-            }
-
-            return totalPixels;
-        }
 
         /// <summary>
         /// 플랫폼별 UI 설정

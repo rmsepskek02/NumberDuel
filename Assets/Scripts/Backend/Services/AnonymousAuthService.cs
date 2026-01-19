@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Firebase;
 using Firebase.Auth;
 using UnityEngine;
+using Utills;
 
 namespace Manager
 {
@@ -284,11 +285,11 @@ namespace Manager
                     return (false, "게스트 계정이 아닙니다.");
 
                 // 입력 검증
-                var (isValidEmail, emailError) = Global.ValidateEmail(email);
+                var (isValidEmail, emailError) = ValidationHelper.ValidateEmail(email);
                 if (!isValidEmail)
                     return (false, emailError);
 
-                var (isValidPassword, passwordError) = Global.ValidatePassword(password);
+                var (isValidPassword, passwordError) = ValidationHelper.ValidatePassword(password);
                 if (!isValidPassword)
                     return (false, passwordError);
 

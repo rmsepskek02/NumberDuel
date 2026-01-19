@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Utills;
 
 namespace UI.Shared
 {
@@ -210,39 +211,28 @@ namespace UI.Shared
                 return;
             }
 
-            int totalPixels = CalculatePixelLength(input);
-
-            if (totalPixels > 24)
+            // 허용 문자 검증 (한글, 영문만)
+            foreach (char c in input)
             {
-                UpdateValidationText($"닉네임이 너무 깁니다. ({totalPixels}/24)", Global.GlowRed);
+                if (!ValidationHelper.IsValidNicknameCharacter(c))
+                {
+                    UpdateValidationText("한글, 영문만 사용 가능합니다.", Global.GlowRed);
+                    isValidationPassed = false;
+                    return;
+                }
+            }
+
+            int totalPixels = ValidationHelper.CalculatePixelLength(input);
+
+            if (totalPixels > ValidationHelper.MAX_NICKNAME_PIXEL_LENGTH)
+            {
+                UpdateValidationText($"닉네임이 너무 깁니다. ({totalPixels}/{ValidationHelper.MAX_NICKNAME_PIXEL_LENGTH})", Global.GlowRed);
                 isValidationPassed = false;
                 return;
             }
 
-            UpdateValidationText($"중복 확인을 진행해주세요 ({totalPixels}/24)", Global.Purple);
+            UpdateValidationText($"중복 확인을 진행해주세요 ({totalPixels}/{ValidationHelper.MAX_NICKNAME_PIXEL_LENGTH})", Global.Purple);
             isValidationPassed = true;
-        }
-
-        private int CalculatePixelLength(string input)
-        {
-            int totalPixels = 0;
-
-            foreach (char c in input)
-            {
-                bool isKorean = (c >= '가' && c <= '힣') || (c >= 'ㄱ' && c <= 'ㅎ') || (c >= 'ㅏ' && c <= 'ㅣ');
-                bool isEnglish = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
-
-                if (!isKorean && !isEnglish)
-                {
-                    UpdateValidationText("한글, 영문만 사용 가능합니다.", Global.GlowRed);
-                    isValidationPassed = false;
-                    return -1;
-                }
-
-                totalPixels += isKorean ? 2 : 1;
-            }
-
-            return totalPixels;
         }
 
         /// <summary>

@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using TMPro;
 using Manager;
 using Objects;
+using Utills;
 
 namespace UI.Shared
 {
@@ -424,7 +425,7 @@ namespace UI.Shared
             string confirmPassword = confirmPasswordInputField.text;
 
             // 1. 이메일 형식 검증
-            var (isValidEmail, emailError) = Global.ValidateEmail(email);
+            var (isValidEmail, emailError) = ValidationHelper.ValidateEmail(email);
             if (!isValidEmail)
             {
                 messageText.text = emailError;
