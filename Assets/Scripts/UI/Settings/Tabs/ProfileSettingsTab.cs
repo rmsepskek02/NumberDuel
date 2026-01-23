@@ -39,6 +39,9 @@ namespace UI.Settings.Tabs
 
         [Header("Account Deletion")]
         [SerializeField] private Button deleteAccountButton;
+
+        [Header("Privacy Policy")]
+        [SerializeField] private Button privacyPolicyButton;
         #endregion
 
         #region Unity Lifecycle
@@ -48,9 +51,6 @@ namespace UI.Settings.Tabs
 
             if (errorPanel != null)
                 errorPanel.SetActive(false);
-
-            // 회원 탈퇴 버튼 이벤트 등록
-            deleteAccountButton?.onClick.AddListener(OnDeleteAccountClicked);
         }
 
         private void OnEnable()
@@ -685,6 +685,40 @@ namespace UI.Settings.Tabs
                     Objects.SceneNameExtensions.GetSceneName(Objects.SceneName.JoinScene)
                 );
             }
+        }
+        #endregion
+
+        #region Privacy Policy
+        /// <summary>
+        /// 개인정보처리방침 버튼 클릭
+        /// </summary>
+        public void OnPrivacyPolicyClicked()
+        {
+            string content =
+                "최종 수정일: 2026년 1월 19일\n\n" +
+                "<b>1. 수집하는 개인정보</b>\n" +
+                "• 이메일 주소 (이메일 로그인 시)\n" +
+                "• Google 계정 정보 (Google 로그인 시)\n" +
+                "• 닉네임\n\n" +
+                "<b>2. 수집 목적</b>\n" +
+                "• 회원 식별 및 로그인\n" +
+                "• 멀티플레이어 게임 서비스 제공\n\n" +
+                "<b>3. 보관 기간</b>\n" +
+                "• 회원 탈퇴 시까지\n\n" +
+                "<b>4. 제3자 제공</b>\n" +
+                "본 앱은 다음 서비스를 이용합니다:\n" +
+                "• Google Firebase (인증, 데이터베이스)\n" +
+                "• Photon (멀티플레이어)\n\n" +
+                "각 서비스의 개인정보처리방침:\n" +
+                "• Google: policies.google.com/privacy\n" +
+                "• Photon: photonengine.com/privacy\n\n" +
+                "<b>5. 개인정보 삭제</b>\n" +
+                "앱 내 설정 > 회원탈퇴 기능을 통해\n" +
+                "모든 개인정보를 삭제할 수 있습니다.\n\n" +
+                "<b>6. 문의</b>\n" +
+                "이메일: rmsepskek02@gmail.com";
+
+            Shared.ScrollableTextPopupUI.Show("NumberDuel 개인정보처리방침", content);
         }
         #endregion
     }

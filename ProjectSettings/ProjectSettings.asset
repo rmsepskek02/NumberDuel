@@ -146,8 +146,6 @@ PlayerSettings:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  - {fileID: -9167291403580591109, guid: 8a7125149f04aca4ba45cacffbcc0268, type: 2}
-  - {fileID: 11400000, guid: 142eb4b6fcd4dd548ad2a021ab866174, type: 2}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -272,8 +270,8 @@ PlayerSettings:
   AndroidTargetArchitectures: 2
   AndroidSplashScreenScale: 0
   androidSplashScreen: {fileID: 0}
-  AndroidKeystoreName: '{inproject}: Keystores/debug.keystore'
-  AndroidKeyaliasName: androiddebugkey
+  AndroidKeystoreName: D:/Dmain/dev/Portfolio/!!KeyStore/numberduel-release.keystore
+  AndroidKeyaliasName: numberduel
   AndroidEnableArmv9SecurityFeatures: 0
   AndroidEnableArm64MTE: 0
   AndroidBuildApkPerCpuArchitecture: 0
