@@ -216,6 +216,7 @@ namespace Manager.Network.Sync
                 {
                     attackerText.SetRawValue(data.newAttackerValue);
                 }
+                attacker.SetSecret(false);  // 전투로 값이 변경되면 시크릿 해제
             }
 
             if (data.newDefenderValue > 0 && defender != null && !data.destroyDefender)
@@ -225,6 +226,7 @@ namespace Manager.Network.Sync
                 {
                     defenderText.SetRawValue(data.newDefenderValue);
                 }
+                defender.SetSecret(false);  // 전투로 값이 변경되면 시크릿 해제
             }
 
             // 카드 제거 처리
