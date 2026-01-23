@@ -19,7 +19,6 @@ namespace UI.Shared
         [SerializeField] private TextMeshProUGUI descriptionText;
         [SerializeField] private Button emailButton;            // 이메일 연동 버튼 (게스트 전용)
         [SerializeField] private Button googleButton;           // Google 연동 버튼
-        [SerializeField] private Button kakaoButton;            // Kakao 연동 버튼 (향후 구현)
         [SerializeField] private Button closeButton;
         [SerializeField] private TextMeshProUGUI errorText;
 
@@ -140,16 +139,6 @@ namespace UI.Shared
                 // 이메일 provider가 없는 경우(SNS 전용 계정) 이메일 버튼 표시
                 if (emailButton != null)
                     emailButton.gameObject.SetActive(!hasEmailProvider);
-            }
-
-            // 공통: Kakao 버튼 비활성화
-            if (kakaoButton != null)
-            {
-                kakaoButton.interactable = false;
-
-                var kakaoText = kakaoButton.GetComponentInChildren<TextMeshProUGUI>();
-                if (kakaoText != null)
-                    kakaoText.text = "Kakao (준비 중)";
             }
 
             // 공통: PC/Editor에서는 Google 버튼 비활성화
@@ -467,16 +456,6 @@ namespace UI.Shared
                 );
             }
             #endif
-        }
-
-        /// <summary>
-        /// Kakao 버튼 클릭 (향후 구현)
-        /// Unity 에디터에서 이벤트 연결
-        /// </summary>
-        public void OnKakaoButtonClicked()
-        {
-            ShowError("Kakao 연동은 준비 중입니다.");
-            PlayClickSound();
         }
 
         /// <summary>

@@ -64,7 +64,6 @@ namespace Manager
         public Button guestLoginButton;
         public Button emailLoginModeButton;
         public Button googleLoginButton;
-        public Button kakaoLoginButton;
 
         [Header("Login Section Buttons")]
         public Button emailLoginExecuteButton;
@@ -2042,7 +2041,6 @@ namespace Manager
             if (guestLoginButton != null) guestLoginButton.interactable = false;
             if (emailLoginModeButton != null) emailLoginModeButton.interactable = false;
             if (googleLoginButton != null) googleLoginButton.interactable = false;
-            if (kakaoLoginButton != null) kakaoLoginButton.interactable = false;
             if (emailLoginExecuteButton != null) emailLoginExecuteButton.interactable = false;
             if (emailSignupButton != null) emailSignupButton.interactable = false;
             if (verifyEmailButton != null) verifyEmailButton.interactable = false;
@@ -2061,7 +2059,6 @@ namespace Manager
             if (guestLoginButton != null) guestLoginButton.interactable = true;
             if (emailLoginModeButton != null) emailLoginModeButton.interactable = true;
             if (googleLoginButton != null) googleLoginButton.interactable = true;
-            if (kakaoLoginButton != null) kakaoLoginButton.interactable = true;
             if (emailLoginExecuteButton != null) emailLoginExecuteButton.interactable = true;
             if (emailSignupButton != null) emailSignupButton.interactable = true;
             if (verifyEmailButton != null) verifyEmailButton.interactable = true;
@@ -2115,21 +2112,11 @@ namespace Manager
             {
                 googleLoginButton.gameObject.SetActive(true);
             }
-
-            if (kakaoLoginButton != null)
-            {
-                kakaoLoginButton.gameObject.SetActive(true);
-            }
 #else
             // PC/에디터: SNS 버튼 숨김
             if (googleLoginButton != null)
             {
                 googleLoginButton.gameObject.SetActive(false);
-            }
-
-            if (kakaoLoginButton != null)
-            {
-                kakaoLoginButton.gameObject.SetActive(false);
             }
 #endif
         }

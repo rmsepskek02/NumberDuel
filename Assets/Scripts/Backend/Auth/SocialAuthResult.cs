@@ -2,7 +2,7 @@ namespace Objects.Auth
 {
     /// <summary>
     /// 소셜 로그인 결과 데이터
-    /// Google, Kakao 등 모든 소셜 로그인에서 공통으로 사용
+    /// Google 등 소셜 로그인에서 공통으로 사용
     /// </summary>
     public class SocialAuthResult
     {

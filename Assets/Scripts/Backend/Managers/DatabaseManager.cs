@@ -233,7 +233,7 @@ namespace Manager
         /// <param name="uid">Firebase UID</param>
         /// <param name="email">이메일</param>
         /// <param name="nickname">닉네임</param>
-        /// <param name="authProvider">인증 제공자 ("Google", "Kakao" 등)</param>
+        /// <param name="authProvider">인증 제공자 ("Google" 등)
         /// <returns>성공 여부</returns>
         public async Task<bool> CreateSocialUserProfile(string uid, string email, string nickname, string authProvider)
         {
