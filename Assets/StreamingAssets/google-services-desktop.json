@@ -22,6 +22,22 @@
           }
         },
         {
+          "client_id": "48353818417-flsmv29m1gdinrss4ldbdaptdj4rmau9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.GoroCompany.NumberDuel",
+            "certificate_hash": "aacc1eb9b9f9c7ab610856ae464bcb208b9dfb13"
+          }
+        },
+        {
+          "client_id": "48353818417-ij7usti22i8dmg121pelnhoirnthkl03.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.GoroCompany.NumberDuel",
+            "certificate_hash": "347e13292a73a7e96fc75ed23d489b80891e3669"
+          }
+        },
+        {
           "client_id": "48353818417-drfplr3ov7brp2iq9iau9mj85khta10m.apps.googleusercontent.com",
           "client_type": 3
         }
