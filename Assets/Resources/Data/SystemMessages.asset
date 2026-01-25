@@ -289,12 +289,12 @@ MonoBehaviour:
     displayDuration: 3
     textColor: {r: 1, g: 0.29803923, b: 0.29803923, a: 1}
   - messageKey: GuestLoginInProgress
-    messageText: "\uAC8C\uC2A4\uD2B8 \uB85C\uADF8\uC778 \uC911..."
+    messageText: "\uC190\uB2D8\uC73C\uB85C \uB85C\uADF8\uC778 \uC911..."
     messageType: 0
     displayDuration: 1
     textColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   - messageKey: GuestLoginSuccess
-    messageText: "\uAC8C\uC2A4\uD2B8 \uB85C\uADF8\uC778 \uC131\uACF5!"
+    messageText: "\uC190\uB2D8\uC73C\uB85C \uB85C\uADF8\uC778 \uC131\uACF5!"
     messageType: 3
     displayDuration: 1
     textColor: {r: 0.3019608, g: 1, b: 0.3019608, a: 1}
