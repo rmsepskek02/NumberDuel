@@ -436,8 +436,8 @@ namespace Manager
                 return;
             }
 
-            // 선공은 4장, 후공은 5장 드로우
-            int drawCount = isLocalPlayerFirst ? 4 : 5;
+            // 선공은 7장, 후공은 8장 드로우
+            int drawCount = isLocalPlayerFirst ? 7 : 8;
 
             // 모든 플레이어가 Player 존으로 드로우 (로컬 관점에서 자신의 카드)
             InGameManager.Instance.DrawCardsToHand(drawCount, CardZone.OwnerType.Player);
