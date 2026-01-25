@@ -105,7 +105,8 @@ namespace Manager
         #region Room Management
         /// <summary>
         /// 방 생성
-        /// 성공 시 OnCreatedRoom()에서 로딩 화면과 함께 씬 전환
+        /// 페이드인 완료 후 PhotonNetwork.CreateRoom() 호출
+        /// 성공 시 OnJoinedRoom()에서 씬 전환
         /// </summary>
         public void CreateRoom(string roomName, string roomPassword)
         {
@@ -138,8 +139,18 @@ namespace Manager
                 CustomRoomPropertiesForLobby = new[] { "roomName", "roomPassword", "currentPlayers" }
             };
 
-            // 로딩 화면 없이 바로 호출 (성공 시 OnCreatedRoom에서 로딩 화면 표시)
-            PhotonNetwork.CreateRoom(roomName, roomOptions);
+            // 방 참가와 동일한 패턴: 페이드인 완료 후 CreateRoom 호출
+            if (LoadingScreenManager.Instance != null)
+            {
+                LoadingScreenManager.Instance.FadeInThenAction(() =>
+                {
+                    PhotonNetwork.CreateRoom(roomName, roomOptions);
+                });
+            }
+            else
+            {
+                PhotonNetwork.CreateRoom(roomName, roomOptions);
+            }
         }
 
         /// <summary>
@@ -296,30 +307,13 @@ namespace Manager
         {
             base.OnCreatedRoom();
 
-            // 일반 방 생성인지 매칭 방 생성인지 확인
+            // 매칭 방 생성인 경우만 처리
             if (MatchmakingManager.Instance != null && MatchmakingManager.Instance.IsSearching)
             {
-                // 매칭 방 생성 성공
                 MatchmakingManager.Instance.OnCreatedMatchmakingRoom();
             }
-            else
-            {
-                // 일반 방 생성 성공 시 로딩 화면과 함께 씬 전환
-                if (LoadingScreenManager.Instance != null)
-                {
-                    LoadingScreenManager.Instance.FadeInThenAction(() =>
-                    {
-                        // 씬 전환 중 메시지 큐 일시 정지
-                        PhotonNetwork.IsMessageQueueRunning = false;
-                        PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.GameScene));
-                    });
-                }
-                else
-                {
-                    PhotonNetwork.IsMessageQueueRunning = false;
-                    PhotonNetwork.LoadLevel(SceneNameExtensions.GetSceneName(SceneName.GameScene));
-                }
-            }
+            // 일반 방 생성은 OnJoinedRoom()에서 씬 전환 처리
+            // (CreateRoom에서 이미 페이드인 완료 상태)
         }
 
         public override void OnJoinedRoom()
