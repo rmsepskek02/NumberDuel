@@ -2724,8 +2724,6 @@ MonoBehaviour:
   scaleEase: 27
   winText: "\uC2B9\uB9AC!!"
   loseText: "\uD328\uBC30.."
-  winColor: {r: 0, g: 1, b: 0, a: 1}
-  loseColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!1 &653544628
 GameObject:
   m_ObjectHideFlags: 0
@@ -5258,7 +5256,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Secret
+  m_text: "\uB4B7\uBA74"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 96af9a121e352e245859ce1ae3a13b2b, type: 2}
   m_sharedMaterial: {fileID: -1800040148378677894, guid: 96af9a121e352e245859ce1ae3a13b2b, type: 2}
@@ -6011,7 +6009,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 1, z: 1}
-  m_LocalScale: {x: 1.843602, y: 1, z: 1}
+  m_LocalScale: {x: 1.8293839, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 696535037}
@@ -6680,7 +6678,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aafc7191abcbfa24cb1476d10c71d539, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  turnTimeLimit: 60
 --- !u!114 &1518440373
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10157,7 +10154,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Open
+  m_text: "\uC55E\uBA74"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 96af9a121e352e245859ce1ae3a13b2b, type: 2}
   m_sharedMaterial: {fileID: -1800040148378677894, guid: 96af9a121e352e245859ce1ae3a13b2b, type: 2}

@@ -92,7 +92,7 @@ public class CardModeSelector : MonoBehaviour
         var cardText = card.GetComponentInChildren<CardText>();
         if (cardText != null && openValueText != null)
         {
-            openValueText.text = "Open\n" + cardText.TextValue;
+            openValueText.text = "앞면\n" + cardText.TextValue;
         }
 
         // DOTween 애니메이션 재생
